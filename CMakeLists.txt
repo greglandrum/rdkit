@@ -174,6 +174,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${RDKit_CodeDir})
 
+include_directories("${RDKit_ExternalDir}/rapidjson/include")
+
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
 # detect it.
