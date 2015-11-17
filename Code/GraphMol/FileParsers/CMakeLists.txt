@@ -8,6 +8,7 @@ rdkit_library(FileParsers
               PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
+              JSONParser.cpp
               LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h
@@ -32,3 +33,5 @@ rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesPars
 
 rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
+rdkit_test(JSONTest testJSON.cpp 
+           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
