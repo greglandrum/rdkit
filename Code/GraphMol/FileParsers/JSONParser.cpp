@@ -110,6 +110,29 @@ bool ParseJSONProperties(std::istream *inStream, unsigned int &line,
   return fileComplete;
 }
 
+namespace {
+int getIntDefaultValue(const char *key, const rapidjson::Value &from,
+                       const rapidjson::Value &defaults) {
+  rapidjson::Value::ConstMemberIterator miter = from.FindMember(key);
+  if (miter != from.MemberEnd()) {
+    if (!miter->value.IsInt())
+      throw FileParseException(std::string("Bad format: ") + std::string(key) +
+                               std::string(" is not an int"));
+    return miter->value.GetInt();
+  } else {
+    rapidjson::Value::ConstMemberIterator miter = defaults.FindMember(key);
+    if (miter != defaults.MemberEnd()) {
+      if (!miter->value.IsInt())
+        throw FileParseException(std::string("Bad format: default value of ") +
+                                 std::string(key) +
+                                 std::string(" is not an int"));
+      return miter->value.GetInt();
+    }
+  }
+  return 0;
+}
+}  // end of anonymous namespace
+
 RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
                          bool removeHs, bool strictParsing) {
   std::string tempStr;
@@ -144,10 +167,10 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   // -----------
   // parse atoms:
-  rapidjson::Value atomDefs;
+  rapidjson::Value atomDefaults;
   if (jsondoc.HasMember("atomdefaults")) {
-    atomDefs = jsondoc["atomdefaults"];
-    if (!atomDefs.IsObject())
+    atomDefaults = jsondoc["atomdefaults"];
+    if (!atomDefaults.IsObject())
       throw FileParseException("Bad Format: atomdefaults is not an object");
   }
 
@@ -157,8 +180,11 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
     if (!atoms.IsArray())
       throw FileParseException("Bad Format: atoms not in a json array");
     nAtoms = atoms.Size();
+    conf = new Conformer(nAtoms);
     for (size_t i = 0; i < nAtoms; ++i) {
       const rapidjson::Value &av = atoms[i];
+      unsigned int num = getIntDefaultValue("element", av, atomDefaults);
+      Atom *at = new Atom(num);
     }
   }
 
