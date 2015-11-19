@@ -20,7 +20,6 @@
 using namespace RDKit;
 
 namespace local_data {
-// basic example from Brian Cole
 std::string basic_json_ethane =
     "{"
     "   \"type\":\"mol\","
@@ -57,8 +56,47 @@ std::string basic_json_ethane =
     "         \"atoms\":["
     "            0,"
     "            1"
-    "         ],"
-    "         \"order\":1"
+    "         ]"
+    "      }"
+    "   ]"
+    "   }";
+std::string basic_json_ethene =
+    "{"
+    "   \"type\":\"mol\","
+    "   \"version\":\"0.9\","
+    "   \"title\":\"ethene\","
+    "   \"dimension\":2,"
+    "   \"atomdefaults\":{"
+    "      \"implicithcount\":2,"
+    "      \"formalcharge\":0,"
+    "      \"stereo\":\"Undefined\""
+    "   },"
+    "   \"atoms\":["
+    "      {"
+    "         \"element\":6,"
+    "         \"coords\":["
+    "            0.0,"
+    "            0.0"
+    "         ]"
+    "      },"
+    "      {"
+    "         \"element\":6,"
+    "         \"coords\":["
+    "            0.0,"
+    "            1.0"
+    "         ]"
+    "      }"
+    "   ],"
+    "   \"bonddefaults\":{"
+    "      \"stereo\" : \"Undefined\","
+    "      \"order\":2"
+    "   },"
+    "   \"bonds\":["
+    "      {"
+    "         \"atoms\":["
+    "            0,"
+    "            1"
+    "         ]"
     "      }"
     "   ]"
     "   }";
@@ -100,8 +138,7 @@ std::string basic_json_ethanol_anion =
     "         \"atoms\":["
     "            0,"
     "            1"
-    "         ],"
-    "         \"order\":1"
+    "         ]"
     "      }"
     "   ]"
     "   }";
@@ -262,8 +299,31 @@ void testBasics() {
     TEST_ASSERT(mol->getAtomWithIdx(1)->getNumExplicitHs() == 0);
     TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(mol->getAtomWithIdx(1)->getFormalCharge() == -1);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
     delete mol;
   }
+
+  {
+    // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
+    RWMol *mol = JSONToMol(local_data::basic_json_ethene);
+    TEST_ASSERT(mol);
+    std::cerr << MolToSmiles(*mol) << std::endl;
+    TEST_ASSERT(mol->hasProp("_Name"));
+    TEST_ASSERT(mol->getProp<std::string>("_Name") == "ethene");
+    TEST_ASSERT(mol->getNumAtoms() == 2);
+    TEST_ASSERT(mol->getNumBonds() == 1);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    TEST_ASSERT(feq(mol->getConformer().getAtomPos(0).x, 0.0));
+    TEST_ASSERT(feq(mol->getConformer().getAtomPos(0).y, 0.0));
+    TEST_ASSERT(feq(mol->getConformer().getAtomPos(1).x, 0.0));
+    TEST_ASSERT(feq(mol->getConformer().getAtomPos(1).y, 1.0));
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs() == 2);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DOUBLE);
+    delete mol;
+  }
+
   {
     // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
     RWMol *mol = JSONToMol(local_data::basic_json_phenol);
