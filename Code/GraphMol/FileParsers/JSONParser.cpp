@@ -184,8 +184,27 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
     for (size_t i = 0; i < nAtoms; ++i) {
       const rapidjson::Value &av = atoms[i];
       unsigned int num = getIntDefaultValue("element", av, atomDefaults);
-      Atom *at = new Atom(num);
+      Atom *atom = new Atom(num);
+
+      if (av.HasMember("coords")) {
+        const rapidjson::Value &cv = av["coords"];
+        if (!cv.IsArray())
+          throw FileParseException("Bad Format: coords not in a json array");
+        if (cv.Size() < 2)
+          throw FileParseException("Bad Format: coords array too short");
+        if (cv.Size() == 2) conf->set3D(false);
+        RDGeom::Point3D p(0, 0, 0);
+        p.x = cv[0].GetDouble();
+        p.y = cv[1].GetDouble();
+        if (cv.Size() > 2) p.z = cv[2].GetDouble();
+        conf->setAtomPos(i, p);
+      }
+
+      // add the atom
+      res->addAtom(atom, true, true);
     }
+    res->addConformer(conf);
+    conf = NULL;
   }
 
   // -----------
@@ -203,6 +222,43 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
     if (!bonds.IsArray())
       throw FileParseException("Bad Format: bonds not in a json array");
     nBonds = bonds.Size();
+
+    for (size_t i = 0; i < nBonds; ++i) {
+      const rapidjson::Value &bv = bonds[i];
+      unsigned int oi = getIntDefaultValue("order", bv, bondDefs);
+      Bond::BondType bt;
+      switch (oi) {
+        case 0:
+          bt = Bond::UNSPECIFIED;
+          break;
+        case 1:
+          bt = Bond::SINGLE;
+          break;
+        case 2:
+          bt = Bond::DOUBLE;
+          break;
+        case 3:
+          bt = Bond::TRIPLE;
+          break;
+        default:
+          throw FileParseException("Bad Format: unrecognized bond order");
+      }
+
+      if (!bv.HasMember("atoms"))
+        throw FileParseException(
+            "Bad Format: bond object has no atoms element");
+      const rapidjson::Value &bAts = bv["atoms"];
+      if (!bonds.IsArray())
+        throw FileParseException("Bad Format: bond atoms not in a json array");
+      if (bAts.Size() != 2)
+        throw FileParseException("Bad Format: bond atoms array not 2 long");
+      unsigned int begAt = bAts[0].GetInt();
+      unsigned int endAt = bAts[1].GetInt();
+
+      // add the bond
+      unsigned int bidx = res->addBond(begAt, endAt, bt);
+      // do some stuff
+    }
   }
 
   if (!fileComplete) {
