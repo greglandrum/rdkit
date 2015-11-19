@@ -21,6 +21,48 @@ using namespace RDKit;
 
 namespace local_data {
 // basic example from Brian Cole
+std::string basic_json_ethane =
+    "{"
+    "   \"type\":\"mol\","
+    "   \"version\":\"0.9\","
+    "   \"title\":\"ethane\","
+    "   \"dimension\":2,"
+    "   \"atomdefaults\":{"
+    "      \"implicithcount\":3,"
+    "      \"formalcharge\":0,"
+    "      \"stereo\":\"Undefined\""
+    "   },"
+    "   \"atoms\":["
+    "      {"
+    "         \"element\":6,"
+    "         \"coords\":["
+    "            0.0,"
+    "            0.0"
+    "         ]"
+    "      },"
+    "      {"
+    "         \"element\":6,"
+    "         \"coords\":["
+    "            0.0,"
+    "            1.0"
+    "         ]"
+    "      }"
+    "   ],"
+    "   \"bonddefaults\":{"
+    "      \"stereo\" : \"Undefined\","
+    "      \"order\":1"
+    "   },"
+    "   \"bonds\":["
+    "      {"
+    "         \"atoms\":["
+    "            0,"
+    "            1"
+    "         ],"
+    "         \"order\":1"
+    "      }"
+    "   ]"
+    "   }";
+// basic example from Brian Cole
 std::string basic_json_phenol =
     "{"
     "   \"type\":\"mol\","
@@ -142,7 +184,17 @@ void testBasics(const std::string &rdbase) {
   BOOST_LOG(rdInfoLog) << "testing JSON basics" << std::endl;
 
   {
-    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/";
+    // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
+    RWMol *mol = JSONToMol(local_data::basic_json_ethane);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    TEST_ASSERT(mol->getProp<std::string>("_Name") == "ethane");
+    TEST_ASSERT(mol->getNumAtoms() == 2);
+    TEST_ASSERT(mol->getNumBonds() == 1);
+    delete mol;
+  }
+
+  {
     // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
     RWMol *mol = JSONToMol(local_data::basic_json_phenol);
     TEST_ASSERT(mol);
