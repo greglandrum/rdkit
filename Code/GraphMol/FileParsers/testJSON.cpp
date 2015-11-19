@@ -250,7 +250,7 @@ void testBasics() {
     TEST_ASSERT(mol);
     std::cerr << MolToSmiles(*mol) << std::endl;
     TEST_ASSERT(mol->hasProp("_Name"));
-    TEST_ASSERT(mol->getProp<std::string>("_Name") == "ethane");
+    TEST_ASSERT(mol->getProp<std::string>("_Name") == "ethanol");
     TEST_ASSERT(mol->getNumAtoms() == 2);
     TEST_ASSERT(mol->getNumBonds() == 1);
     TEST_ASSERT(mol->getNumConformers() == 1);
