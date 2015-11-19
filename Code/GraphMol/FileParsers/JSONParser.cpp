@@ -165,6 +165,13 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   fileComplete = true;
 
+  int dimension = 2;
+  if (jsondoc.HasMember("dimension")) {
+    if (!jsondoc["dimension"].IsNumber())
+      throw FileParseException("Bad Format: dimension should be int");
+    dimension = jsondoc["dimension"].GetInt();
+  }
+
   // -----------
   // parse atoms:
   rapidjson::Value atomDefaults;
@@ -181,22 +188,27 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
       throw FileParseException("Bad Format: atoms not in a json array");
     nAtoms = atoms.Size();
     conf = new Conformer(nAtoms);
+    if (dimension == 3) conf->set3D(true);
     for (size_t i = 0; i < nAtoms; ++i) {
       const rapidjson::Value &av = atoms[i];
       unsigned int num = getIntDefaultValue("element", av, atomDefaults);
       Atom *atom = new Atom(num);
 
+      atom->setNumExplicitHs(
+          getIntDefaultValue("implicithcount", av, atomDefaults));
+      atom->setFormalCharge(
+          getIntDefaultValue("formalcharge", av, atomDefaults));
+
       if (av.HasMember("coords")) {
         const rapidjson::Value &cv = av["coords"];
         if (!cv.IsArray())
           throw FileParseException("Bad Format: coords not in a json array");
-        if (cv.Size() < 2)
+        if (cv.Size() < dimension)
           throw FileParseException("Bad Format: coords array too short");
-        if (cv.Size() == 2) conf->set3D(false);
         RDGeom::Point3D p(0, 0, 0);
         p.x = cv[0].GetDouble();
         p.y = cv[1].GetDouble();
-        if (cv.Size() > 2) p.z = cv[2].GetDouble();
+        if (dimension > 2) p.z = cv[2].GetDouble();
         conf->setAtomPos(i, p);
       }
 
