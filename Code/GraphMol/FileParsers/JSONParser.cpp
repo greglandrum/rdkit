@@ -135,6 +135,10 @@ int getIntDefaultValue(const char *key, const rapidjson::Value &from,
 
 RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
                          bool removeHs, bool strictParsing) {
+  // TODO:
+  //  - stereochemistry
+  //  - representations
+  //
   std::string tempStr;
   bool fileComplete = false;
   bool chiralityPossible = false;
@@ -196,6 +200,7 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
       atom->setNumExplicitHs(
           getIntDefaultValue("implicithcount", av, atomDefaults));
+      atom->setNoImplicit(true);
       atom->setFormalCharge(
           getIntDefaultValue("formalcharge", av, atomDefaults));
 

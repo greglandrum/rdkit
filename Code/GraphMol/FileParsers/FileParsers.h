@@ -57,6 +57,17 @@ RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize = true,
 RWMol *JSONToMol(const std::string &json, bool sanitize = true,
                  bool removeHs = true, bool strictParsing = true);
 
+// \brief generates an JSON string for a molecule
+/*!
+ *   \param mol           - the molecule in question
+ *   \param includeStereo - toggles inclusion of stereochemistry information
+ *   \param confId        - selects the conformer to be used
+ *   \param kekulize      - triggers kekulization of the molecule before it is
+ * written
+ */
+std::string MolToJSON(const ROMol &mol, bool includeStereo = true,
+                      int confId = -1, bool kekulize = true);
+
 //-----
 // mol files
 //-----

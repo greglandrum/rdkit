@@ -11,6 +11,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include "FileParsers.h"
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -260,8 +261,8 @@ std::string basic_json_phenol =
     "   }";
 }
 
-void testBasics() {
-  BOOST_LOG(rdInfoLog) << "testing JSON basics" << std::endl;
+void testReadBasics() {
+  BOOST_LOG(rdInfoLog) << "testing JSON read basics" << std::endl;
 
   {
     // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
@@ -341,6 +342,58 @@ void testBasics() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testWriteBasics() {
+  BOOST_LOG(rdInfoLog) << "testing JSON write basics" << std::endl;
+
+  {
+    // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
+    RWMol *mol = SmilesToMol("CCO");
+    TEST_ASSERT(mol);
+    mol->setProp("_Name", "ethanol");
+
+    std::string json = MolToJSON(*mol);
+    std::cerr << json << std::endl;
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+namespace {
+void _validateFromSmiles(std::string &smiles) {
+  RWMol *mol = SmilesToMol(smiles);
+  TEST_ASSERT(mol);
+  mol->setProp(common_properties::_Name, "validate");
+  std::string json = MolToJSON(*mol);
+  RWMol *mol2 = JSONToMol(json);
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getProp<std::string>(common_properties::_Name) ==
+              "validate");
+  TEST_ASSERT(mol2->getNumAtoms() == mol->getNumAtoms());
+  TEST_ASSERT(mol2->getNumBonds() == mol->getNumBonds());
+  std::string smi1 = MolToSmiles(*mol, true);
+  std::string smi2 = MolToSmiles(*mol2, true);
+  if (smi1 != smi2) {
+    std::cerr << "   " << smi1 << std::endl;
+    std::cerr << "   " << smi2 << std::endl;
+  }
+  TEST_ASSERT(smi1 == smi2);
+  delete mol;
+  delete mol2;
+}
+}
+void testRoundTripSmiles() {
+  BOOST_LOG(rdInfoLog) << "testing JSON round-tripping from Smiles"
+                       << std::endl;
+
+  {
+    std::string smis[] = {"CCCC", "C1=CCC1", "CC[O-]", "C[CH2]", "EOS"};
+    for (unsigned int i = 0; smis[i] != "EOS"; ++i) {
+      _validateFromSmiles(smis[i]);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -348,7 +401,9 @@ int main(int argc, char *argv[]) {
 
   std::string rdbase = getenv("RDBASE");
 
-  testBasics();
+  testReadBasics();
+  testWriteBasics();
+  testRoundTripSmiles();
 
   return 0;
 }

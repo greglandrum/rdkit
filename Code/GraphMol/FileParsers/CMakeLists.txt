@@ -8,7 +8,7 @@ rdkit_library(FileParsers
               PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
-              JSONParser.cpp
+              JSONParser.cpp JSONWriter.cpp
               LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h
