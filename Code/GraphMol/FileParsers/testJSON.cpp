@@ -347,10 +347,19 @@ void testWriteBasics() {
 
   {
     // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
-    RWMol *mol = SmilesToMol("CCO");
+    RWMol *mol = SmilesToMol("C1CC1O");
     TEST_ASSERT(mol);
     mol->setProp("_Name", "ethanol");
 
+    std::string json = MolToJSON(*mol);
+    std::cerr << json << std::endl;
+    delete mol;
+  }
+  {
+    // std::cerr << local_data::basic_json_phenol.substr(1520, 50) << std::endl;
+    RWMol *mol = SmilesToMol("c1ccccc1O");
+    TEST_ASSERT(mol);
+    mol->setProp("_Name", "phenol");
     std::string json = MolToJSON(*mol);
     std::cerr << json << std::endl;
     delete mol;

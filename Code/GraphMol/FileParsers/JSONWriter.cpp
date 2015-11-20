@@ -12,6 +12,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/versions.h>
 
 #include <fstream>
 #include <rapidjson/document.h>
@@ -19,21 +20,28 @@
 #include <rapidjson/writer.h>
 
 namespace rj = rapidjson;
-
 namespace RDKit {
-
 namespace JSONWriterUtils {}  // end of JSONParserUtils namespace
 
 //------------------------------------------------
 //
-//  Generate JSON from a molecule
+//  Generate JSON from a molecule. blah
 //
 //------------------------------------------------
 
 std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
                       bool kekulize) {
+  ROMol tromol(mol);
+  RWMol& trwmol = static_cast<RWMol&>(tromol);
+  // NOTE: kekulize the molecule before writing it out
+  // because of the way mol files handle aromaticity
+  if (trwmol.needsUpdatePropertyCache()) {
+    trwmol.updatePropertyCache(false);
+  }
+  if (kekulize) MolOps::Kekulize(trwmol, false);
+
   const Conformer* conf = NULL;
-  if (mol.getNumConformers()) conf = &mol.getConformer(confId);
+  if (trwmol.getNumConformers()) conf = &trwmol.getConformer(confId);
 
   rj::Document doc;
   doc.SetObject();
@@ -46,16 +54,15 @@ std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
   val = (conf && conf->is3D()) ? 3 : 2;
   doc.AddMember("dimension", val, allocator);
   std::string nm = "";
-  mol.getPropIfPresent(common_properties::_Name, nm);
+  trwmol.getPropIfPresent(common_properties::_Name, nm);
   val = rj::StringRef(nm.c_str());
   doc.AddMember("title", val, allocator);
-
   // -----
   // write atoms
   // FIX: defaults
   rj::Value atoms(rj::kArrayType);
-  atoms.Reserve(mol.getNumAtoms(), allocator);
-  for (RWMol::ConstAtomIterator at = mol.beginAtoms(); at != mol.endAtoms();
+  atoms.Reserve(trwmol.getNumAtoms(), allocator);
+  for (RWMol::AtomIterator at = trwmol.beginAtoms(); at != trwmol.endAtoms();
        ++at) {
     rj::Value atomV(rj::kObjectType);
     val = (*at)->getAtomicNum();
@@ -96,8 +103,8 @@ std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
   // write bonds
   // FIX: defaults
   rj::Value bonds(rj::kArrayType);
-  bonds.Reserve(mol.getNumBonds(), allocator);
-  for (RWMol::ConstBondIterator bnd = mol.beginBonds(); bnd != mol.endBonds();
+  bonds.Reserve(trwmol.getNumBonds(), allocator);
+  for (RWMol::BondIterator bnd = trwmol.beginBonds(); bnd != trwmol.endBonds();
        ++bnd) {
     rj::Value bndV(rj::kObjectType);
     rj::Value atV(rj::kArrayType);
@@ -125,6 +132,48 @@ std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
     bonds.PushBack(bndV, allocator);
   }
   doc.AddMember("bonds", bonds, allocator);
+
+  // -------
+  // Now capture our internal representation
+  /*
+          {
+              "tookit":"rdkit",
+              "version":"2015.09.1",
+              "aromatic_bonds":[0,1,2,3,4,5],
+              "bond_rings":[ [0,1,2,3,4,5] ]
+          }
+  */
+  rj::Value rdk(rj::kObjectType);
+  val = "rdkit";
+  rdk.AddMember("toolkit", val, allocator);
+  val = rj::StringRef(rdkitVersion);
+  rdk.AddMember("version", val, allocator);
+  {
+    rj::Value tarr(rj::kArrayType);
+    for (unsigned int i = 0; i < trwmol.getNumBonds(); ++i) {
+      if (trwmol.getBondWithIdx(i)->getIsAromatic()) {
+        val = i;
+        tarr.PushBack(val, allocator);
+      }
+    }
+    rdk.AddMember("aromatic_bonds", tarr, allocator);
+  }
+  {
+    rj::Value tarr(rj::kArrayType);
+    const RingInfo* ri = trwmol.getRingInfo();
+    BOOST_FOREACH (const INT_VECT& iv, ri->atomRings()) {
+      rj::Value barr(rj::kArrayType);
+      BOOST_FOREACH (int v, iv) {
+        val = v;
+        barr.PushBack(val, allocator);
+      }
+      tarr.PushBack(barr, allocator);
+    }
+    rdk.AddMember("atom_rings", tarr, allocator);
+  }
+  rj::Value reprs(rj::kArrayType);
+  reprs.PushBack(rdk, allocator);
+  doc.AddMember("representations", reprs, allocator);
 
   // get the text and return it
   rj::StringBuffer buffer;

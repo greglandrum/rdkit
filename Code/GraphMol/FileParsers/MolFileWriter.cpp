@@ -969,7 +969,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 
 #if 0
     if(includeStereo){
-      // assign "any" status to any stereo bonds that are not 
+      // assign "any" status to any stereo bonds that are not
       // marked with "E" or "Z" code - these bonds need to be explictly written
       // out to the mol file
       MolOps::findPotentialStereoBonds(trwmol);
