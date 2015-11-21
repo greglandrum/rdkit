@@ -25,12 +25,11 @@ namespace JSONWriterUtils {}  // end of JSONParserUtils namespace
 
 //------------------------------------------------
 //
-//  Generate JSON from a molecule. blah
+//  Generate JSON from a molecule.
 //
 //------------------------------------------------
 
-std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
-                      bool kekulize) {
+std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
   ROMol tromol(mol);
   RWMol& trwmol = static_cast<RWMol&>(tromol);
   // NOTE: kekulize the molecule before writing it out
@@ -128,6 +127,8 @@ std::string MolToJSON(const ROMol& mol, bool includeStereo, int confId,
         val = 0;
     }
     bndV.AddMember("order", val, allocator);
+    val = "Undefined";  // FIX
+    bndV.AddMember("stereo", val, allocator);
 
     bonds.PushBack(bndV, allocator);
   }

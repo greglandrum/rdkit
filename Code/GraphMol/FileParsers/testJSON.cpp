@@ -384,6 +384,8 @@ void _validateFromSmiles(std::string &smiles) {
   if (smi1 != smi2) {
     std::cerr << "   " << smi1 << std::endl;
     std::cerr << "   " << smi2 << std::endl;
+    mol->debugMol(std::cerr);
+    mol2->debugMol(std::cerr);
   }
   TEST_ASSERT(smi1 == smi2);
   delete mol;
@@ -395,7 +397,8 @@ void testRoundTripSmiles() {
                        << std::endl;
 
   {
-    std::string smis[] = {"CCCC", "C1=CCC1", "CC[O-]", "C[CH2]", "EOS"};
+    std::string smis[] = {"CCCC",     "C1=CCC1",    "CC[O-]", "C[CH2]",
+                          "c1ccccc1", "c1ccc[nH]1", "EOS"};
     for (unsigned int i = 0; smis[i] != "EOS"; ++i) {
       _validateFromSmiles(smis[i]);
     }

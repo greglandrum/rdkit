@@ -48,7 +48,8 @@ RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize = true,
 /*!
  *   \param json     - string containing the chemical json
  *   \param sanitize - toggles sanitization and stereochemistry
- *                     perception of the molecule
+ *                     perception of the molecule if no RDKit representation
+ *                     is present in the JSON
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param strictParsing - if set, the parser is more lax about correctness
@@ -60,13 +61,11 @@ RWMol *JSONToMol(const std::string &json, bool sanitize = true,
 // \brief generates an JSON string for a molecule
 /*!
  *   \param mol           - the molecule in question
- *   \param includeStereo - toggles inclusion of stereochemistry information
  *   \param confId        - selects the conformer to be used
  *   \param kekulize      - triggers kekulization of the molecule before it is
- * written
+ * written //FIX: probably needs to always be true
  */
-std::string MolToJSON(const ROMol &mol, bool includeStereo = true,
-                      int confId = -1, bool kekulize = true);
+std::string MolToJSON(const ROMol &mol, int confId = -1, bool kekulize = true);
 
 //-----
 // mol files

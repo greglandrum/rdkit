@@ -30,6 +30,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+namespace rj = rapidjson;
+
 namespace RDKit {
 
 namespace JSONParserUtils {
@@ -65,62 +67,17 @@ class IStreamWrapper {
   std::istream &is_;
 };
 
-void ParseJSONAtoms(std::istream *inStream, unsigned int &line,
-                    unsigned int nAtoms, RWMol *mol, Conformer *conf) {
-  PRECONDITION(inStream, "bad stream");
-  PRECONDITION(mol, "bad molecule");
-  PRECONDITION(conf, "bad conformer");
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    RDGeom::Point3D pos;
-    Atom *atom = NULL;
-    unsigned int aid = mol->addAtom(atom, false, true);
-    conf->setAtomPos(aid, pos);
-  }
-}
-
-// returns whether or not any sign of chirality was detected
-void ParseJSONBonds(std::istream *inStream, unsigned int &line,
-                    unsigned int nBonds, RWMol *mol, bool &chiralityPossible) {
-  PRECONDITION(inStream, "bad stream");
-  PRECONDITION(mol, "bad molecule");
-  for (unsigned int i = 0; i < nBonds; ++i) {
-    Bond *bond = NULL;
-    // if we got an aromatic bond set the flag on the bond and the connected
-    // atoms
-    if (bond->getBondType() == Bond::AROMATIC) {
-      bond->setIsAromatic(true);
-      mol->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
-      mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
-    }
-    // if the bond might have chirality info associated with it, set a flag:
-    if (bond->getBondDir() != Bond::NONE &&
-        bond->getBondDir() != Bond::UNKNOWN) {
-      chiralityPossible = true;
-    }
-    mol->addBond(bond, true);
-  }
-}
-
-bool ParseJSONProperties(std::istream *inStream, unsigned int &line,
-                         RWMol *mol) {
-  PRECONDITION(inStream, "bad stream");
-  PRECONDITION(mol, "bad molecule");
-
-  bool fileComplete = false;
-  return fileComplete;
-}
-
 namespace {
-int getIntDefaultValue(const char *key, const rapidjson::Value &from,
-                       const rapidjson::Value &defaults) {
-  rapidjson::Value::ConstMemberIterator miter = from.FindMember(key);
+int getIntDefaultValue(const char *key, const rj::Value &from,
+                       const rj::Value &defaults) {
+  rj::Value::ConstMemberIterator miter = from.FindMember(key);
   if (miter != from.MemberEnd()) {
     if (!miter->value.IsInt())
       throw FileParseException(std::string("Bad format: ") + std::string(key) +
                                std::string(" is not an int"));
     return miter->value.GetInt();
   } else {
-    rapidjson::Value::ConstMemberIterator miter = defaults.FindMember(key);
+    rj::Value::ConstMemberIterator miter = defaults.FindMember(key);
     if (miter != defaults.MemberEnd()) {
       if (!miter->value.IsInt())
         throw FileParseException(std::string("Bad format: default value of ") +
@@ -133,11 +90,10 @@ int getIntDefaultValue(const char *key, const rapidjson::Value &from,
 }
 }  // end of anonymous namespace
 
-RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
-                         bool removeHs, bool strictParsing) {
+RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
+                         bool strictParsing) {
   // TODO:
   //  - stereochemistry
-  //  - representations
   //
   std::string tempStr;
   bool fileComplete = false;
@@ -178,7 +134,7 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   // -----------
   // parse atoms:
-  rapidjson::Value atomDefaults;
+  rj::Value atomDefaults;
   if (jsondoc.HasMember("atomdefaults")) {
     atomDefaults = jsondoc["atomdefaults"];
     if (!atomDefaults.IsObject())
@@ -187,14 +143,14 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   size_t nAtoms = 0;
   if (jsondoc.HasMember("atoms")) {
-    const rapidjson::Value &atoms = jsondoc["atoms"];
+    const rj::Value &atoms = jsondoc["atoms"];
     if (!atoms.IsArray())
       throw FileParseException("Bad Format: atoms not in a json array");
     nAtoms = atoms.Size();
     conf = new Conformer(nAtoms);
     if (dimension == 3) conf->set3D(true);
     for (size_t i = 0; i < nAtoms; ++i) {
-      const rapidjson::Value &av = atoms[i];
+      const rj::Value &av = atoms[i];
       unsigned int num = getIntDefaultValue("element", av, atomDefaults);
       Atom *atom = new Atom(num);
 
@@ -205,7 +161,7 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
           getIntDefaultValue("formalcharge", av, atomDefaults));
 
       if (av.HasMember("coords")) {
-        const rapidjson::Value &cv = av["coords"];
+        const rj::Value &cv = av["coords"];
         if (!cv.IsArray())
           throw FileParseException("Bad Format: coords not in a json array");
         if (cv.Size() < dimension)
@@ -226,7 +182,7 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   // -----------
   // parse bonds:
-  rapidjson::Value bondDefs;
+  rj::Value bondDefs;
   if (jsondoc.HasMember("bonddefaults")) {
     bondDefs = jsondoc["bonddefaults"];
     if (!bondDefs.IsObject())
@@ -235,13 +191,13 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
 
   size_t nBonds = 0;
   if (jsondoc.HasMember("bonds")) {
-    const rapidjson::Value &bonds = jsondoc["bonds"];
+    const rj::Value &bonds = jsondoc["bonds"];
     if (!bonds.IsArray())
       throw FileParseException("Bad Format: bonds not in a json array");
     nBonds = bonds.Size();
 
     for (size_t i = 0; i < nBonds; ++i) {
-      const rapidjson::Value &bv = bonds[i];
+      const rj::Value &bv = bonds[i];
       unsigned int oi = getIntDefaultValue("order", bv, bondDefs);
       Bond::BondType bt;
       switch (oi) {
@@ -264,7 +220,7 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
       if (!bv.HasMember("atoms"))
         throw FileParseException(
             "Bad Format: bond object has no atoms element");
-      const rapidjson::Value &bAts = bv["atoms"];
+      const rj::Value &bAts = bv["atoms"];
       if (!bonds.IsArray())
         throw FileParseException("Bad Format: bond atoms not in a json array");
       if (bAts.Size() != 2)
@@ -278,6 +234,61 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
     }
   }
 
+  //----------
+  // Representations
+  bool foundRepr = false;
+  if (jsondoc.HasMember("representations")) {
+    const rj::Value &reprs = jsondoc["representations"];
+    if (!reprs.IsArray())
+      throw FileParseException(
+          "Bad Format: representations not in a json array");
+    for (size_t i = 0; i < reprs.Size(); ++i) {
+      const rj::Value &repr = reprs[i];
+      rj::Value::ConstMemberIterator miter = repr.FindMember("toolkit");
+      // FIX: set property with other representations so that we can save them
+      if (miter != repr.MemberEnd() && miter->value == "rdkit") {
+        foundRepr = true;
+        rj::Value::ConstMemberIterator child =
+            repr.FindMember("aromatic_bonds");
+        if (child != repr.MemberEnd() && child->value.IsArray()) {
+          for (size_t j = 0; j < child->value.Size(); ++j) {
+            Bond *bnd = res->getBondWithIdx(child->value[j].GetInt());
+            bnd->setIsAromatic(true);
+            bnd->setBondType(Bond::AROMATIC);
+            res->getAtomWithIdx(bnd->getBeginAtomIdx())->setIsAromatic(true);
+            res->getAtomWithIdx(bnd->getEndAtomIdx())->setIsAromatic(true);
+          }
+        }
+        child = repr.FindMember("bond_rings");
+        if (child != repr.MemberEnd() && child->value.IsArray()) {
+          for (size_t j = 0; j < child->value.Size(); ++j) {
+            if (!child->value[i].IsArray())
+              throw FileParseException(
+                  "Bad Format: bond_rings entry not in a json array");
+            INT_VECT bondRing;
+            INT_VECT atomRing;
+            for (size_t k = 0; k < child->value[i].Size(); ++k) {
+              int bi = child->value[i][k].GetInt();
+              bondRing.push_back(bi);
+              if (std::find(atomRing.begin(), atomRing.end(),
+                            res->getBondWithIdx(bi)->getBeginAtomIdx()) ==
+                  atomRing.end()) {
+                atomRing.push_back(res->getBondWithIdx(bi)->getBeginAtomIdx());
+              }
+              if (std::find(atomRing.begin(), atomRing.end(),
+                            res->getBondWithIdx(bi)->getEndAtomIdx()) ==
+                  atomRing.end()) {
+                atomRing.push_back(res->getBondWithIdx(bi)->getEndAtomIdx());
+              }
+            }
+            res->getRingInfo()->addRing(atomRing, bondRing);
+          }
+        }
+        break;
+      }
+    }
+  }
+
   if (!fileComplete) {
     delete res;
     delete conf;
@@ -286,15 +297,19 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
     throw FileParseException("file incomplete");
   }
 
-  if (res) {
-    // calculate explicit valence on each atom:
-    for (RWMol::AtomIterator atomIt = res->beginAtoms();
-         atomIt != res->endAtoms(); ++atomIt) {
-      (*atomIt)->calcExplicitValence(false);
-    }
+  if (!res) return res;
 
-    // postprocess mol file flags
-    // ProcessMolProps(res);
+  // calculate explicit valence on each atom:
+  for (RWMol::AtomIterator atomIt = res->beginAtoms();
+       atomIt != res->endAtoms(); ++atomIt) {
+    (*atomIt)->calcExplicitValence(false);
+  }
+
+  // postprocess mol file flags
+  // ProcessMolProps(res);
+  if (!foundRepr) {
+    // we didn't find a representations section for the RDKit,
+    // do some additional cleanup
 
     // update the chirality and stereo-chemistry
     //
@@ -319,8 +334,8 @@ RWMol *JSONDocumentToMol(rapidjson::Document &jsondoc, bool sanitize,
       MolOps::cleanUp(*res);
       DetectAtomStereoChemistry(*res, &conf);
     }
-
     if (sanitize) {
+      std::cerr << "\n\nSANITIZE!\n\n";
       try {
         if (removeHs) {
           MolOps::removeHs(*res, false, false);
@@ -362,10 +377,10 @@ RWMol *JSONDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
                            bool strictParsing) {
   PRECONDITION(inStream, "no stream");
 
-  rapidjson::Document jsondoc;
+  rj::Document jsondoc;
   JSONParserUtils::IStreamWrapper isw(*inStream);
   if (jsondoc.ParseStream(isw).HasParseError()) {
-    std::string msg = rapidjson::GetParseError_En(jsondoc.GetParseError());
+    std::string msg = rj::GetParseError_En(jsondoc.GetParseError());
     BOOST_LOG(rdErrorLog) << "JSON Parse Error: " << msg
                           << " at position: " << jsondoc.GetErrorOffset()
                           << std::endl;
@@ -386,9 +401,9 @@ RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
 //------------------------------------------------
 RWMol *JSONToMol(const std::string &json, bool sanitize, bool removeHs,
                  bool strictParsing) {
-  rapidjson::Document jsondoc;
+  rj::Document jsondoc;
   if (jsondoc.Parse(json.c_str()).HasParseError()) {
-    std::string msg = rapidjson::GetParseError_En(jsondoc.GetParseError());
+    std::string msg = rj::GetParseError_En(jsondoc.GetParseError());
     BOOST_LOG(rdErrorLog) << "JSON Parse Error: " << msg
                           << " at position: " << jsondoc.GetErrorOffset()
                           << std::endl;
