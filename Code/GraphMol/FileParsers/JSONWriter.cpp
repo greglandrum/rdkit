@@ -56,9 +56,19 @@ std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
   trwmol.getPropIfPresent(common_properties::_Name, nm);
   val = rj::StringRef(nm.c_str());
   doc.AddMember("title", val, allocator);
+
   // -----
   // write atoms
-  // FIX: defaults
+
+  // atom defaults
+  rj::Value adefs(rj::kObjectType);
+  val = 0;
+  adefs.AddMember("formalcharge", val, allocator);
+  val = "Undefined";
+  adefs.AddMember("stereo", val, allocator);
+  doc.AddMember("atomdefaults", adefs, allocator);
+
+  // and the atoms themselves
   rj::Value atoms(rj::kArrayType);
   atoms.Reserve(trwmol.getNumAtoms(), allocator);
   for (RWMol::AtomIterator at = trwmol.beginAtoms(); at != trwmol.endAtoms();
@@ -89,10 +99,12 @@ std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
     atomV.AddMember("implicithcount", val, allocator);
 
     val = (*at)->getFormalCharge();
-    atomV.AddMember("formalcharge", val, allocator);
+    if (val != doc["atomdefaults"]["formalcharge"])
+      atomV.AddMember("formalcharge", val, allocator);
 
     val = "Undefined";  // FIX
-    atomV.AddMember("stereo", val, allocator);
+    if (val != doc["atomdefaults"]["stereo"])
+      atomV.AddMember("stereo", val, allocator);
 
     atoms.PushBack(atomV, allocator);
   }
@@ -100,7 +112,15 @@ std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
 
   // -----
   // write bonds
-  // FIX: defaults
+
+  // bond defaults
+  rj::Value bdefs(rj::kObjectType);
+  val = 1;
+  bdefs.AddMember("order", val, allocator);
+  val = "Undefined";
+  bdefs.AddMember("stereo", val, allocator);
+  doc.AddMember("bonddefaults", bdefs, allocator);
+
   rj::Value bonds(rj::kArrayType);
   bonds.Reserve(trwmol.getNumBonds(), allocator);
   for (RWMol::BondIterator bnd = trwmol.beginBonds(); bnd != trwmol.endBonds();
@@ -126,9 +146,11 @@ std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
       default:
         val = 0;
     }
-    bndV.AddMember("order", val, allocator);
+    if (val != doc["bonddefaults"]["order"])
+      bndV.AddMember("order", val, allocator);
     val = "Undefined";  // FIX
-    bndV.AddMember("stereo", val, allocator);
+    if (val != doc["bonddefaults"]["stereo"])
+      bndV.AddMember("stereo", val, allocator);
 
     bonds.PushBack(bndV, allocator);
   }
