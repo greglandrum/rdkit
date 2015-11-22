@@ -16,6 +16,7 @@ enable_testing()
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
+option(RDK_USE_BOOST_LOG "use boost.log for logging" OFF )
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
@@ -169,6 +170,11 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
+if(RDK_USE_BOOST_LOG)
+  find_package(Boost COMPONENTS log REQUIRED)
+  ADD_DEFINITIONS("-DRDK_USE_BOOST_LOG")
+endif(RDK_USE_BOOST_LOG)
+
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
@@ -193,7 +199,7 @@ if(RDK_BUILD_THREADSAFE_SSS)
   else()
     message("Boost thread or system not found. Disabling RDK_BUILD_THREADSAFE_SSS.")
     set(RDK_BUILD_THREADSAFE_SSS OFF)
-    set(RDK_TEST_MULTITHREADED OFF)    
+    set(RDK_TEST_MULTITHREADED OFF)
     set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
   endif()
 else()
@@ -221,7 +227,7 @@ if (RDK_TEST_COVERAGE)
  message(" If any of the RDKit tests fail, coverage will probably not be generated.")
  message("====== Installing test coverage support ======")
  message("")
- 
+
  INCLUDE(CodeCoverage)
  SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
  SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")

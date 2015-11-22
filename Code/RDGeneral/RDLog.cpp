@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C)  2005-2010 Greg Landrum and Rational Discovery LLC
 //
@@ -9,8 +8,10 @@
 //  of the RDKit source tree.
 //
 #include "RDLog.h"
+#ifdef RDK_USE_BOOST_LOG
+void InitLogs() {}
 
-#if 1
+#elif 1
 #include <iomanip>
 #include <string>
 #include <time.h>

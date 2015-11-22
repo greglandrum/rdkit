@@ -11,7 +11,19 @@
 #ifndef _RDLOG_H_29JUNE2005_
 #define _RDLOG_H_29JUNE2005_
 
-#if 1
+#ifdef RDK_USE_BOOST_LOG
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+namespace blt = boost::log::trivial;
+
+blt::severity_level rdAppLog = blt::trace;
+blt::severity_level rdDebugLog = blt::debug;
+blt::severity_level rdInfoLog = blt::info;
+blt::severity_level rdErrorLog = blt::error;
+blt::severity_level rdWarningLog = blt::warning;
+blt::severity_level rdStatusLog = blt::info;
+
+#elif 1
 #include <iostream>
 namespace boost {
 namespace logging {
