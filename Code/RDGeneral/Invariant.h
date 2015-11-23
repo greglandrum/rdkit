@@ -95,7 +95,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
   if (!(expr)) {                                                       \
     Invar::Invariant inv("Invariant Violation", mess, #expr, __FILE__, \
                          __LINE__);                                    \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";        \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";        \
     throw inv;                                                         \
   }
 
@@ -103,7 +103,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
   if (!(expr)) {                                                           \
     Invar::Invariant inv("Pre-condition Violation", mess, #expr, __FILE__, \
                          __LINE__);                                        \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";            \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";            \
     throw inv;                                                             \
   }
 
@@ -111,7 +111,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
   if (!(expr)) {                                                            \
     Invar::Invariant inv("Post-condition Violation", mess, #expr, __FILE__, \
                          __LINE__);                                         \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
     throw inv;                                                              \
   }
 
@@ -119,7 +119,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
   Invar::Invariant inv("Incomplete Code",                             \
                        "This routine is still under development", fn, \
                        __FILE__, __LINE__);                           \
-  BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";         \
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";         \
   throw inv;
 
 #define RANGE_CHECK(lo, x, hi)                                              \
@@ -128,7 +128,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
     errstr << lo << " <= " << x << " <= " << hi;                            \
     Invar::Invariant inv("Range Error", #x, errstr.str().c_str(), __FILE__, \
                          __LINE__);                                         \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
     throw inv;                                                              \
   }
 
@@ -138,7 +138,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
     errstr << x << " <= " << hi;                                            \
     Invar::Invariant inv("Range Error", #x, errstr.str().c_str(), __FILE__, \
                          __LINE__);                                         \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
     throw inv;                                                              \
   }
 
@@ -146,7 +146,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
   if (!(expr)) {                                                      \
     Invar::Invariant inv("Test Assert", "Expression Failed: ", #expr, \
                          __FILE__, __LINE__);                         \
-    BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";       \
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";       \
     throw inv;                                                        \
   }
 

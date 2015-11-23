@@ -141,11 +141,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         } else {
           if (!warningIssued) {
             if (hasProp)
-              BOOST_LOG(rdWarningLog) << "Property <" << dlabel
+              BOOST_LOG_TRIVIAL(rdWarningLog) << "Property <" << dlabel
                                       << "> will be truncated after "
                                       << "the first blank line" << std::endl;
             else
-              BOOST_LOG(rdWarningLog)
+              BOOST_LOG_TRIVIAL(rdWarningLog)
                   << "Spurious data before the first property will be "
                      "ignored" << std::endl;
             warningIssued = true;
@@ -205,8 +205,8 @@ ROMol *ForwardSDMolSupplier::_next() {
     // advance forward in the stream until we hit the next record and then
     // rethrow
     // the exception. This should allow us to read the next molecule.
-    BOOST_LOG(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: moving to the begining of the next molecule\n";
 
     // FIX: report files missing the $$$$ marker
@@ -220,10 +220,10 @@ ROMol *ForwardSDMolSupplier::_next() {
     // We couldn't sanitize a molecule we got - write out an error message and
     // move to
     // the beginning of the next molecule
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: Could not sanitize molecule ending on line " << d_line
         << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: " << se.message() << "\n";
 
     while (!(dp_inStream->eof()) &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
@@ -233,9 +233,9 @@ ROMol *ForwardSDMolSupplier::_next() {
   } catch (...) {
     if (d_line < static_cast<int>(line)) d_line = line;
 
-    BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "Unexpected error hit on line " << d_line
                           << std::endl;
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: moving to the begining of the next molecule\n";
     while (!(dp_inStream->eof()) &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {

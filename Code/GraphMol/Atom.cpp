@@ -265,7 +265,7 @@ int Atom::calcExplicitValence(bool strict) {
              << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << ", "
              << effectiveValence << ", is greater than permitted";
       std::string msg = errout.str();
-      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
       throw MolSanitizeException(msg);
     }
   }
@@ -380,7 +380,7 @@ int Atom::calcImplicitValence(bool strict) {
         errout << "Explicit valence for aromatic atom # " << getIdx()
                << " not equal to any accepted valence\n";
         std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
         throw MolSanitizeException(msg);
       }
       res = 0;
@@ -406,7 +406,7 @@ int Atom::calcImplicitValence(bool strict) {
                << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
                << " greater than permitted";
         std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
         throw MolSanitizeException(msg);
       } else {
         res = 0;

@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
   if (argc > 1) {
     fname = argv[1];
   } else {
-    BOOST_LOG(rdErrorLog) << "Pass in the list of smiles\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "Pass in the list of smiles\n";
   }
 
   std::ifstream inStream(fname.c_str());
@@ -124,12 +124,12 @@ int main(int argc, char *argv[]) {
   while (tmpstr.size() > 0) {
     lineCount++;
     if (!(lineCount % 100)) {
-      BOOST_LOG(rdErrorLog) << "Doing: " << lineCount << std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog) << "Doing: " << lineCount << std::endl;
     }
     if (tmpstr[0] != '#') {
       std::string name = getSmiles(tmpstr, smi);
 #ifdef VERBOSE_CANON
-      BOOST_LOG(rdInfoLog) << "\n-----------------\nSTART: " << smi
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "\n-----------------\nSTART: " << smi
                            << std::endl;
 #endif
       // std::cout << " \n";
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
             permuteAtoms(m);
             std::string postSmi = MolToSmiles(*m);
 #else
-            BOOST_LOG(rdInfoLog) << " ----------------- 2 --------------"
+            BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------------- 2 --------------"
                                  << std::endl;
             std::string postSmi = MolToSmiles(*SmilesToMol(preSmi));
 #endif
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
             int nmat = SubstructMatch(*om, *m, fgpMatches);
 
             if (preSmi != postSmi) {
-              BOOST_LOG(rdInfoLog) << lineCount << " " << name << " " << smi
+              BOOST_LOG_TRIVIAL(rdInfoLog) << lineCount << " " << name << " " << smi
                                    << " " << preSmi << " " << postSmi
                                    << std::endl;
               iter = 100;
@@ -163,14 +163,14 @@ int main(int argc, char *argv[]) {
               MatchVectType::const_iterator matchI;
               for (matchI = fgpMatches[0].begin();
                    matchI != fgpMatches[0].end(); matchI++) {
-                BOOST_LOG(rdInfoLog) << "\t" << matchI->second << "\t"
+                BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << matchI->second << "\t"
                                      << matchI->first << std::endl;
               }
               break;
             }
 
             if (nmat < 1) {
-              BOOST_LOG(rdInfoLog) << lineCount << " Not the same mol: " << name
+              BOOST_LOG_TRIVIAL(rdInfoLog) << lineCount << " Not the same mol: " << name
                                    << "\n";
               exit(-1);
             }
@@ -178,19 +178,19 @@ int main(int argc, char *argv[]) {
           delete om;
           delete m;
         } catch (MolSanitizeException) {
-          BOOST_LOG(rdErrorLog) << smi << "\n";
+          BOOST_LOG_TRIVIAL(rdErrorLog) << smi << "\n";
           delete om;
           delete m;
         }
       } else {
-        BOOST_LOG(rdErrorLog) << lineCount << " Parse Failed: " << smi
+        BOOST_LOG_TRIVIAL(rdErrorLog) << lineCount << " Parse Failed: " << smi
                               << std::endl;
       }
     }
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     tmpstr = inLine;
   }
-  BOOST_LOG(rdErrorLog) << "FINISHED after " << lineCount << " lines."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "FINISHED after " << lineCount << " lines."
                         << std::endl;
   return 0;
 }

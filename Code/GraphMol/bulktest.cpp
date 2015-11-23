@@ -35,12 +35,12 @@ void test1() {
   }
   vector<string>::const_iterator smilIt;
   for (int i = 0; i < 5; i++) {
-    BOOST_LOG(rdInfoLog) << "******* Pass " << i + 1 << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "******* Pass " << i + 1 << endl;
     for (smilIt = smis.begin(); smilIt != smis.end(); smilIt++) {
       m = SmilesToMol(*smilIt, false);
       // m = SmilesToMol(*(smis.begin()),false);
       if (!m) {
-        BOOST_LOG(rdErrorLog) << "failure:" << *smilIt << endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "failure:" << *smilIt << endl;
       }
 #if 0
       CHECK_INVARIANT(m,"Smiles parse failed:");
@@ -50,10 +50,10 @@ void test1() {
       Mol newM(pickle);
       string trySmi = MolToSmiles(newM);
       if(canonSmi!=trySmi){
-	BOOST_LOG(rdErrorLog) << "failure:" << *smilIt << endl;
-	BOOST_LOG(rdErrorLog) << canonSmi << endl;
-	BOOST_LOG(rdErrorLog) << " != " << endl;
-	BOOST_LOG(rdErrorLog) << trySmi << endl;
+	BOOST_LOG_TRIVIAL(rdErrorLog) << "failure:" << *smilIt << endl;
+	BOOST_LOG_TRIVIAL(rdErrorLog) << canonSmi << endl;
+	BOOST_LOG_TRIVIAL(rdErrorLog) << " != " << endl;
+	BOOST_LOG_TRIVIAL(rdErrorLog) << trySmi << endl;
       }
       CHECK_INVARIANT(canonSmi==trySmi,(char *)(string("pickling/depickling failed: ")+trySmi).c_str());
 #endif

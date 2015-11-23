@@ -40,7 +40,7 @@ void debugVect(const std::vector<T> arg) {
   for (viIt = arg.begin(); viIt != arg.end(); viIt++) {
     outS << *viIt << " ";
   }
-  BOOST_LOG(rdDebugLog) << outS.str() << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << outS.str() << std::endl;
 }
 
 // --------------------------------------------------
@@ -135,18 +135,18 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     allIndices.push_back(i);
   }
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "invariants:" << std::endl;
   for (unsigned int i = 0; i < numAtoms; i++) {
-    BOOST_LOG(rdDebugLog) << i << ": " << invars[i] << std::endl;
+    BOOST_LOG_TRIVIAL(rdDebugLog) << i << ": " << invars[i] << std::endl;
   }
 #endif
 
   // rank those:
   Rankers::rankVect(invars, ranks);
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "initial ranks:" << std::endl;
   for (unsigned int i = 0; i < numAtoms; ++i) {
-    BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
+    BOOST_LOG_TRIVIAL(rdDebugLog) << i << ": " << ranks[i] << std::endl;
   }
 #endif
   // Start each atom's rank vector with its atomic number:
@@ -269,9 +269,9 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
 
     ++numIts;
 #ifdef VERBOSE_CANON
-    BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
+    BOOST_LOG_TRIVIAL(rdDebugLog) << "strings and ranks:" << std::endl;
     for (unsigned int i = 0; i < numAtoms; i++) {
-      BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << " > ";
+      BOOST_LOG_TRIVIAL(rdDebugLog) << i << ": " << ranks[i] << " > ";
       debugVect(cipEntries[i]);
     }
 #endif
@@ -771,9 +771,9 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   while (factor < mol.getNumAtoms()) factor *= 10;
 
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << "rerank PRE: " << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "rerank PRE: " << std::endl;
   for (int i = 0; i < mol.getNumAtoms(); i++) {
-    BOOST_LOG(rdDebugLog) << "  " << i << ": " << ranks[i] << std::endl;
+    BOOST_LOG_TRIVIAL(rdDebugLog) << "  " << i << ": " << ranks[i] << std::endl;
   }
 #endif
 
@@ -812,9 +812,9 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   }
 
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << "   post: " << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "   post: " << std::endl;
   for (int i = 0; i < mol.getNumAtoms(); i++) {
-    BOOST_LOG(rdDebugLog) << "  " << i << ": " << ranks[i] << std::endl;
+    BOOST_LOG_TRIVIAL(rdDebugLog) << "  " << i << ": " << ranks[i] << std::endl;
   }
 #endif
 }

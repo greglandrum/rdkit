@@ -28,8 +28,8 @@ typedef ROMol Mol;
 void testPass() {
   int i = 0;
   Mol *mol;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
 #if 1
     "C",
@@ -96,17 +96,17 @@ void testPass() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFail() {
   int i = 0;
   Mol *mol;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing patterns which should fail to parse."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing patterns which should fail to parse."
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "\tExpect Parse error messages" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tExpect Parse error messages" << std::endl;
 
   // alternate good and bad smiles here to ensure that the parser can resume
   // parsing
@@ -132,7 +132,7 @@ void testFail() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 std::vector<MatchVectType> _checkMatches(std::string smarts, std::string smiles,
@@ -231,18 +231,18 @@ void _checkNoMatches(std::string smarts, std::string smiles,
 }
 
 void testMatches() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching" << std::endl;
 
   _checkMatches("C#,=O", "CC(=O)O", 1, 2);
   _checkNoMatches("C#,=O", "CC(O)O");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMatches2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching2" << std::endl;
 
   _checkMatches("C#*", "C#CO", 1, 2);
 
@@ -277,12 +277,12 @@ void testMatches2() {
   _checkNoMatches("[x0]", "C1CCC1");
   _checkMatches("[x0]", "CC1CCC1", 1, 1);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMatches3() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching3" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching3" << std::endl;
 
   _checkMatches("[#6]!@[!#6]", "C1CC1CO", 1, 2);
 
@@ -364,12 +364,12 @@ void testMatches3() {
   _checkMatches("[#7h1]", "c1cnc[nH]1", 1, 1);
   _checkNoMatches("[#7h1]", "c1cnc[nH]1", true);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMatches4() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching4" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching4" << std::endl;
 
   _checkMatches("[X3]", "C(C)(C)=CC(C)(C)N", 3, 1);
 
@@ -377,12 +377,12 @@ void testMatches4() {
 
   _checkMatches("[v3]", "C(C)(C)=CC(C)(C)N", 1, 1);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMatches5() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching 5" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching 5" << std::endl;
 
   _checkMatches("[$(CO)]", "COCCC", 2, 1);
 
@@ -398,23 +398,23 @@ void testMatches5() {
   CHECK_INVARIANT(mVV[0][0].second == 6, "");
   CHECK_INVARIANT(mVV[0][1].second == 5, "");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 void testMatches6() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing matching 6" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing matching 6" << std::endl;
 
   _checkMatches("[C^3]", "CCC", 3, 1);
   _checkMatches("[C^3]", "CC=C", 1, 1);
   _checkMatches("[C^2]", "CC=C", 2, 1);
   _checkNoMatches("[C^2]", "CCC");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testProblems() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing former problems" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing former problems" << std::endl;
 
 #if 1
   _checkMatches("[$(C(=O)O)]", "CC(=O)OC", 1, 1);
@@ -460,7 +460,7 @@ void testProblems() {
   // nested recursion (yick!)
   _checkNoMatches("[O]-[!$(*=O)]", "CC(=O)O");
 
-// BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-" << std::endl;
+// BOOST_LOG_TRIVIAL(rdInfoLog) << "-*-*-*-*-*-*-*-*-" << std::endl;
 #endif
   _checkNoMatches("[$([O]-[!$(*=O)])]", "CC(=O)O");
 
@@ -493,14 +493,14 @@ void testProblems() {
   _checkMatches("*-[N;H2,H1&-1,-2]", "CC([N-2])C", 1, 2);
   _checkNoMatches("*-[N;H2,H1&-1,-2]", "CC(=N)C");
   _checkNoMatches("*-[N;H2,H1&-1,-2]", "CC(NC)C");
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFrags() {
   int i = 0;
   Mol *mol;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragment patterns." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fragment patterns." << std::endl;
   string smis[] = {
       "C=O", "[C!$(C-[OH])]=O", "[C!$(C=O)]-[OH]", "c[OH]", "O(-[#6])-C",
       "[NH2]", "[NH1,nH1]", "[NH0,nH0]", "n", "[Nv3](=C)-[#6]", "C#N",
@@ -527,14 +527,14 @@ void testFrags() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSmartsWrite() {
   int i = 0;
   Mol *mol;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Smarts Writer." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Smarts Writer." << std::endl;
   string smis[] = {
       "[v3]", "n1cncc1", "c[OH]", "S(=,-[O])", "CC", "C=O", "[$(C=O)]",
       "[C!$(C=O)]", "[C!$(C-[OH])]=O", "[C!$(C=O)]-[OH]", "O(-[#6])-C", "[NH2]",
@@ -617,15 +617,15 @@ void testSmartsWrite() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue196() {
   ROMol *mol1 = 0, *matcher1 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 196: Smarts handling of 'aa' incorrect"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 196: Smarts handling of 'aa' incorrect"
                        << std::endl;
 
   smi = "c1ccccc1";
@@ -641,7 +641,7 @@ void testIssue196() {
   TEST_ASSERT(mts1);
   TEST_ASSERT(mV1.size() == 2);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue254() {
@@ -651,8 +651,8 @@ void testIssue254() {
   MatchVectType mV;
   bool mts;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 254: Bad handling of unspecified bonds in SMARTS"
       << std::endl;
 
@@ -704,14 +704,14 @@ void testIssue254() {
   delete matcher1;
   delete matcher2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue255() {
   ROMol *matcher1;
   std::string sma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 255: Core leaks in smarts parsing.  "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 255: Core leaks in smarts parsing.  "
                           "Watch memory consumption." << std::endl;
 
   for (int i = 0; i < 10000; i++) {
@@ -750,32 +750,32 @@ void testIssue255() {
 #endif
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue330() {
   ROMol *matcher1;
   std::string sma, wsma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 330: problems writing some recursive smarts."
       << std::endl;
   sma = "[$(C=O)]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
   wsma = MolToSmarts(*matcher1);
-  BOOST_LOG(rdInfoLog) << "sma: " << wsma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "sma: " << wsma << std::endl;
 
   delete matcher1;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 #endif
 void testIssue351() {
   ROMol *matcher1;
   std::string sma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 351:" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 351:" << std::endl;
 
   sma = "[$(C),S&v2]";
   matcher1 = SmartsToMol(sma);
@@ -789,14 +789,14 @@ void testIssue351() {
   TEST_ASSERT(matcher1);
   delete matcher1;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAtomMap() {
   ROMol *matcher1;
   std::string sma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing atom map assignment:" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing atom map assignment:" << std::endl;
 
   int mapNum;
 
@@ -849,15 +849,15 @@ void testAtomMap() {
   sma = MolToSmarts(*matcher1);
   TEST_ASSERT(sma == "[C&$(C=O):2]-[O:3]");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 #if 1
 void testIssue1804420() {
   ROMol *matcher1;
   std::string sma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing issue 1804420, missing assignment of atoms maps" << std::endl;
 
   sma = "[N;D3:1]";
@@ -888,7 +888,7 @@ void testIssue1804420() {
                   ->hasProp(common_properties::molAtomMapNumber));
   delete matcher1;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 #endif
 
@@ -896,8 +896,8 @@ void testSmartsSmiles() {
   RWMol *mol;
   std::string sma, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing cleaner SMARTS -> SMILES " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing cleaner SMARTS -> SMILES " << std::endl;
 
   smi = "c1ccccc1";
   mol = SmartsToMol(smi);
@@ -913,15 +913,15 @@ void testSmartsSmiles() {
   TEST_ASSERT(smi == "C1CCCCC1");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSmilesSmarts() {
   RWMol *mol;
   std::string sma, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing SMILES -> SMARTS" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing SMILES -> SMARTS" << std::endl;
 
   smi = "CC";
   mol = SmilesToMol(smi);
@@ -972,22 +972,22 @@ void testSmilesSmarts() {
   TEST_ASSERT(sma == "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue1914154() {
   RWMol *mol;
   std::string sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 1914154: problems with generating "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 1914154: problems with generating "
                           "smarts for recursive queries" << std::endl;
 
   sma = "[$(C);$(O)]";
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[$(C)&$(O)]");
   delete mol;
 
@@ -995,7 +995,7 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[$(C),$(O)]");
   delete mol;
 
@@ -1003,7 +1003,7 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[!$(C)&$(O)]");
   delete mol;
 
@@ -1011,7 +1011,7 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[C&$(C-O)&$(C=O)]");
   delete mol;
 
@@ -1019,7 +1019,7 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[$(C=O),$(C-O);$(C-N)]");
   delete mol;
 
@@ -1027,7 +1027,7 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[$(C-N);$(C=O),$(C-O)]");
   delete mol;
 
@@ -1035,19 +1035,19 @@ void testIssue1914154() {
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  BOOST_LOG(rdInfoLog) << sma << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << sma << std::endl;
   TEST_ASSERT(sma == "[$(C-N)&$(C=O),$(C-O)]");
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMiscSmartsWriting() {
   RWMol *mol;
   std::string sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing miscellaneous bits of SMARTS writing"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing miscellaneous bits of SMARTS writing"
                        << std::endl;
 
   sma = "[13C]";
@@ -1069,12 +1069,12 @@ void testMiscSmartsWriting() {
   TEST_ASSERT(sma == "");
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSmartsStereochem() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling (or lack thereof) of stereochem in "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling (or lack thereof) of stereochem in "
                           "smarts (sf.net issue 2738320)" << std::endl;
 
   _checkMatches("C/C=C/C", "CC=CC", 1, 4);
@@ -1082,12 +1082,12 @@ void testSmartsStereochem() {
   _checkMatches("C/C=C/C", "C\\C=C\\C", 1, 4);
   _checkMatches("C/C=C/C", "C/C=C\\C", 1, 4);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue2884178_part1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part1: SubstructMatch not "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 2884178 part1: SubstructMatch not "
                           "returning correct number of matches" << std::endl;
 
   {
@@ -1107,12 +1107,12 @@ void testIssue2884178_part1() {
     delete patt;
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue2884178_part2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part2: SubstructMatch not "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 2884178 part2: SubstructMatch not "
                           "returning correct number of matches" << std::endl;
 
   {
@@ -1223,12 +1223,12 @@ void testIssue2884178_part2() {
     delete patt;
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue3000399() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 3000399: incorrect behavior of X queries" << std::endl;
 
   {
@@ -1256,12 +1256,12 @@ void testIssue3000399() {
     delete patt;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testRecursiveSerialNumbers() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing serial numbers in recursive SMARTS queries"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing serial numbers in recursive SMARTS queries"
                        << std::endl;
 
   {
@@ -1300,12 +1300,12 @@ void testRecursiveSerialNumbers() {
     delete patt;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplacementPatterns() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing use of replacement patterns in input"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing use of replacement patterns in input"
                        << std::endl;
 
   {
@@ -1367,12 +1367,12 @@ void testReplacementPatterns() {
     delete patt;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithub313() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github #313: problems with 'h' in SMARTS"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github #313: problems with 'h' in SMARTS"
                        << std::endl;
 
   {
@@ -1401,12 +1401,12 @@ void testGithub313() {
     delete matcher;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithub314() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github #314: problems with 'x' in SMARTS"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github #314: problems with 'x' in SMARTS"
                        << std::endl;
 
   {
@@ -1435,12 +1435,12 @@ void testGithub314() {
     delete matcher;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithub378() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong "
                           "thing for odd dot-disconnected construct"
                        << std::endl;
   {
@@ -1465,12 +1465,12 @@ void testGithub378() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub544() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Github 544: merging query Hs failing on recursive SMARTS"
       << std::endl;
   {
@@ -1701,7 +1701,7 @@ void testGithub544() {
     delete p;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

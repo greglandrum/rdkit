@@ -171,9 +171,12 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_USE_BOOST_LOG)
-  find_package(Boost COMPONENTS log REQUIRED)
-  ADD_DEFINITIONS("-DRDK_USE_BOOST_LOG")
+   ADD_DEFINITIONS("-DRDK_USE_BOOST_LOG")
+   set(T_LIBS ${Boost_LIBRARIES})
+   find_package(Boost 1.55.0 COMPONENTS log REQUIRED)
+   set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
 endif(RDK_USE_BOOST_LOG)
+
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

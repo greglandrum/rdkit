@@ -76,7 +76,7 @@ void embedCisTransSystems(const RDKit::ROMol &mol,
         (!(*cbi)->getOwningMol().getRingInfo()->numBondRings(
             (*cbi)->getIdx()))) {  // not in a ring
       if ((*cbi)->getStereoAtoms().size() != 2) {
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << "WARNING: bond found with stereo spec but no stereo atoms"
             << std::endl;
         continue;

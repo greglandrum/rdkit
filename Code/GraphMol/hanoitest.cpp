@@ -61,7 +61,7 @@ class int_compare_ftor {
 };
 
 void qs1(const std::vector<std::vector<int> > &vects) {
-  BOOST_LOG(rdInfoLog) << "sorting (qsort) vectors" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "sorting (qsort) vectors" << std::endl;
   for (unsigned int i = 0; i < vects.size(); ++i) {
     std::vector<int> tv = vects[i];
     int *data = &tv.front();
@@ -70,11 +70,11 @@ void qs1(const std::vector<std::vector<int> > &vects) {
       TEST_ASSERT(tv[j] >= tv[j - 1]);
     }
   }
-  BOOST_LOG(rdInfoLog) << "done: " << vects.size() << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done: " << vects.size() << std::endl;
 }
 
 void hs1(const std::vector<std::vector<int> > &vects) {
-  BOOST_LOG(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
   for (unsigned int i = 0; i < vects.size(); ++i) {
     const int *data = &vects[i].front();
     int_compare_ftor icmp(data);
@@ -90,11 +90,11 @@ void hs1(const std::vector<std::vector<int> > &vects) {
     free(count);
     free(indices);
   }
-  BOOST_LOG(rdInfoLog) << "done: " << vects.size() << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done: " << vects.size() << std::endl;
 }
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "Testing the hanoi sort" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing the hanoi sort" << std::endl;
 
   typedef boost::random::mersenne_twister<boost::uint32_t, 32, 4, 2, 31,
                                           0x9908b0df, 11, 7, 0x9d2c5680, 15,
@@ -110,7 +110,7 @@ void test1() {
   distrib_type dist(0, nClasses);
   source_type randomSource(generator, dist);
 
-  BOOST_LOG(rdInfoLog) << "populating vectors" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "populating vectors" << std::endl;
   std::vector<std::vector<int> > vects(nVects);
   for (unsigned int i = 0; i < nVects; ++i) {
     vects[i] = std::vector<int>(vectSize);
@@ -121,7 +121,7 @@ void test1() {
 
   // qs1(vects);
   hs1(vects);
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 class atomcomparefunctor {
@@ -191,7 +191,7 @@ class atomcomparefunctor2 {
 };
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "Testing hanoi with a functor." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing hanoi with a functor." << std::endl;
   // make sure that hanoi works with a functor and "molecule data"
   {
     std::string smi = "FC1C(Cl)C1C";
@@ -229,11 +229,11 @@ void test2() {
       }
     }
   }
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "Testing basic partition refinement." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing basic partition refinement." << std::endl;
   // basic partition refinement
   {
     std::string smi = "FC1C(Cl)CCC1C";
@@ -329,7 +329,7 @@ void test3() {
     TEST_ASSERT(count[order[5]] == 3);
     TEST_ASSERT(count[order[6]] == 0);
   }
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 class atomcomparefunctor3 {
@@ -413,7 +413,7 @@ class atomcomparefunctor3 {
 };
 
 void test4() {
-  BOOST_LOG(rdInfoLog) << "Testing partition refinement with neighbors."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing partition refinement with neighbors."
                        << std::endl;
   // partition refinement with neighbors
   {
@@ -587,11 +587,11 @@ void test4() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 void test5() {
-  BOOST_LOG(rdInfoLog) << "testing canonicalization via tie breaking."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing canonicalization via tie breaking."
                        << std::endl;
   // canonicalization via tie breaking
   {
@@ -658,11 +658,11 @@ void test5() {
     }
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 void test6() {
-  BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing canonicalization using the wrapper."
                        << std::endl;
 // canonicalization using the wrapper
 #if 1
@@ -801,7 +801,7 @@ void test6() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Done" << std::endl;
 };
 
 namespace {
@@ -907,7 +907,7 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
 }
 
 void test7a() {
-  BOOST_LOG(rdInfoLog) << "testing some specific ordering problems"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing some specific ordering problems"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string smi1, smi2;
@@ -947,7 +947,7 @@ void test7a() {
     std::cerr << smi1 << "\n" << smi2 << std::endl;
   }
   TEST_ASSERT(smi1 == smi2);
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 std::string smis[] = {
@@ -1090,7 +1090,7 @@ std::string smis[] = {
     "C1C2C3C4CC5C6C1C17C8C61C5C48C3C27", "EOS"};
 
 void test7() {
-  BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
   unsigned int i = 0;
   while (smis[i] != "EOS") {
     std::string smiles = smis[i++];
@@ -1100,7 +1100,7 @@ void test7() {
     _renumberTest(m, smiles, 500);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 std::string molbl1 =
@@ -1166,7 +1166,7 @@ std::string molbl2 =
     "M  END";
 
 void test8() {
-  BOOST_LOG(rdInfoLog) << "testing smiles round-tripping." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing smiles round-tripping." << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName = rdbase + "/Code/GraphMol/test_data/iChi1b.mol";
@@ -1239,11 +1239,11 @@ void test8() {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test9() {
-  BOOST_LOG(rdInfoLog) << "testing chiral invariants." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing chiral invariants." << std::endl;
   std::string rdbase = getenv("RDBASE");
 
   {
@@ -1389,11 +1389,11 @@ void test9() {
     TEST_ASSERT(atomRanks[1] < atomRanks[4]);
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test10() {
-  BOOST_LOG(rdInfoLog) << "testing unique ranks in w.r.t. renumbering."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing unique ranks in w.r.t. renumbering."
                        << std::endl;
   unsigned int i = 0;
   while (smis[i] != "EOS") {
@@ -1405,11 +1405,11 @@ void test10() {
     _renumberTest2(m, smiles, 1);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test11() {
-  BOOST_LOG(rdInfoLog) << "testing mol fragments." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol fragments." << std::endl;
   {
     std::string smi =
         "C[C@H]([C@H](c1ccccc1)O)N2CCCCC2.C[C@@H]([C@H](c1ccccc1)O)N2CCCCC2";
@@ -1434,11 +1434,11 @@ void test11() {
     // std::cout << smi1 << "\n" << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test12() {
-  BOOST_LOG(rdInfoLog) << "testing protein round-tripping." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing protein round-tripping." << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -1455,7 +1455,7 @@ void test12() {
     // std::cout << smi1 << "\n" << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {

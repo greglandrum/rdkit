@@ -22,7 +22,7 @@ using namespace std;
 using namespace RDKit;
 
 void testBasics() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Basic Allocations"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Basic Allocations"
                        << std::endl;
   Atom *a1 = new Atom(6);
   Bond *b1 = new Bond();
@@ -31,11 +31,11 @@ void testBasics() {
   (void)b1;
   (void)m1;
   a1 = NULL;  // intentional leak
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSMILES() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n SMILES Read" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n SMILES Read" << std::endl;
   string smi = "CCOC";
   ROMol *m = SmilesToMol(smi);
   (void)m;  // leak al the things
@@ -62,7 +62,7 @@ void testSMILES() {
   MolOps::sanitizeMol(*m2);
   MolOps::assignStereochemistry(*m2, true, true, true);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMol() {
@@ -99,7 +99,7 @@ void testMols() {
 }
 
 void testProps() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n properties" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n properties" << std::endl;
   string smi = "C1COC1";
   RWMol *m = SmilesToMol(smi, 0, false);
   m = SmilesToMol(smi, 0, false);
@@ -143,11 +143,11 @@ void testProps() {
     (*ai)->setProp("bar", v, false);
     (*ai)->setProp("baz", v, false);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testDict() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n dict" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n dict" << std::endl;
   int val = 1;
   Dict *d = new Dict();
   d = new Dict();
@@ -159,7 +159,7 @@ void testDict() {
   d->setVal<int>("foo", val);
   d->setVal<int>("bar", val);
   d->setVal<int>("baz", val);
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 // -------------------------------------------------------------------
 int main() {

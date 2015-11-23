@@ -34,7 +34,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types. 
+ * if you want the limit (max/min) macros for int types.
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -52,7 +52,7 @@ typedef uint64_t flex_uint64_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t; 
+typedef unsigned char flex_uint8_t;
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 #endif /* ! C99 */
@@ -181,7 +181,7 @@ typedef size_t yy_size_t;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
-    
+
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
@@ -238,7 +238,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -690,19 +690,19 @@ static yyconst flex_int16_t yy_chk[776] =
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior
 //       written permission.
 //
@@ -723,7 +723,7 @@ static yyconst flex_int16_t yy_chk[776] =
 
 #include <cstdio>
 #ifdef WIN32
-#include <io.h> 	 
+#include <io.h>
 #endif
 
 #include <RDGeneral/Exceptions.h>
@@ -744,7 +744,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
 
 #define YY_FATAL_ERROR(msg) sln_lexer_error(msg)
 void sln_lexer_error(const char *msg) {
-     BOOST_LOG(rdErrorLog) << msg<<std::endl;
+     BOOST_LOG_TRIVIAL(rdErrorLog) << msg<<std::endl;
      throw ValueErrorException(msg);
 }
 
@@ -816,7 +816,7 @@ static int yy_init_globals (yyscan_t yyscanner );
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
-    
+
 int yysln_lex_init (yyscan_t* scanner);
 
 int yysln_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
@@ -867,7 +867,7 @@ extern int yysln_wrap (yyscan_t yyscanner );
 #endif
 
     static void yyunput (int c,char *buf_ptr  ,yyscan_t yyscanner);
-    
+
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
 #endif
@@ -887,11 +887,11 @@ static int input (yyscan_t yyscanner );
 #endif
 
     static void yy_push_state (int new_state ,yyscan_t yyscanner);
-    
+
     static void yy_pop_state (yyscan_t yyscanner );
-    
+
     static int yy_top_state (yyscan_t yyscanner );
-    
+
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
 #define YY_READ_BUF_SIZE 8192
@@ -1092,31 +1092,31 @@ YY_RULE_SETUP
 #line 80 "sln.ll"
 {
   yylval->text_T=new std::string(yytext);
-  return TEXT_BLOCK; 
+  return TEXT_BLOCK;
 }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 85 "sln.ll"
-{ 
+{
   yylval->text_T=new std::string(yytext);
-  return TEXT_BLOCK; 
+  return TEXT_BLOCK;
 }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 90 "sln.ll"
-{ 
+{
   yylval->text_T=new std::string(yytext);
-  return TEXT_BLOCK; 
+  return TEXT_BLOCK;
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 95 "sln.ll"
-{ 
+{
   yylval->text_T=new std::string(yytext);
-  return TEXT_BLOCK; 
+  return TEXT_BLOCK;
 }
 	YY_BREAK
 case 5:
@@ -1330,9 +1330,9 @@ YY_RULE_SETUP
         } else {
           yylval->atom_T = new Atom(PeriodicTable::getTable()->getAtomicNumber(yytext));
         }
-  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:
   yylval->atom_T->setNoImplicit(true);
-        
+
   return ATOM_TOKEN;
 }
 	YY_BREAK
@@ -1342,7 +1342,7 @@ YY_RULE_SETUP
 {
   yylval->atom_T = new QueryAtom();
   yylval->atom_T->setQuery(makeAtomNullQuery());
-  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:
   yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
@@ -1356,7 +1356,7 @@ YY_RULE_SETUP
   // FIX: are 2H or 3H heavy atoms or Hs?
   yylval->atom_T->getQuery()->setNegation(true);
 
-  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:
   yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
@@ -1371,7 +1371,7 @@ YY_RULE_SETUP
   yylval->atom_T->expandQuery(makeAtomNumQuery(35),Queries::COMPOSITE_OR,true);
   yylval->atom_T->expandQuery(makeAtomNumQuery(53),Queries::COMPOSITE_OR,true);
 
-  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:
   yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
@@ -1385,7 +1385,7 @@ YY_RULE_SETUP
   yylval->atom_T->expandQuery(makeAtomNumQuery(1),Queries::COMPOSITE_OR,true);
   yylval->atom_T->getQuery()->setNegation(true);
 
-  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:
   yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
@@ -1448,17 +1448,17 @@ YY_RULE_SETUP
 case 128:
 YY_RULE_SETUP
 #line 272 "sln.ll"
-{ return HASH_TOKEN; }  
+{ return HASH_TOKEN; }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
 #line 273 "sln.ll"
-{ return TILDE_TOKEN; } 
+{ return TILDE_TOKEN; }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
 #line 274 "sln.ll"
-{ return COLON_TOKEN; } 
+{ return COLON_TOKEN; }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
@@ -1486,7 +1486,7 @@ YY_RULE_SETUP
 {
   yy_push_state(IN_PROP_VAL_STATE,yyscanner);
   yylval->text_T=new std::string(yytext);
-  return COMPARE_TOKEN; 
+  return COMPARE_TOKEN;
 }
 	YY_BREAK
 case 139:
@@ -1495,7 +1495,7 @@ YY_RULE_SETUP
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
-  return EQUALS_TOKEN; 
+  return EQUALS_TOKEN;
 }
 	YY_BREAK
 case 140:
@@ -1504,7 +1504,7 @@ YY_RULE_SETUP
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
-  return COLON_EQUALS_TOKEN; 
+  return COLON_EQUALS_TOKEN;
 }
 	YY_BREAK
 case 141:
@@ -1513,36 +1513,36 @@ YY_RULE_SETUP
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
-  return CARET_EQUALS_TOKEN; 
+  return CARET_EQUALS_TOKEN;
 }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
 #line 306 "sln.ll"
 {
- return EQUALS_TOKEN; 
+ return EQUALS_TOKEN;
 }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
 #line 312 "sln.ll"
 {
-  yy_pop_state(yyscanner); 
-  return SEMI_TOKEN; 
+  yy_pop_state(yyscanner);
+  return SEMI_TOKEN;
 }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
 #line 316 "sln.ll"
 {
-  yy_pop_state(yyscanner); 
-  return AND_TOKEN; 
+  yy_pop_state(yyscanner);
+  return AND_TOKEN;
 }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
 #line 320 "sln.ll"
-{  
+{
   return SEMI_TOKEN;
  }
 	YY_BREAK
@@ -1559,7 +1559,7 @@ YY_RULE_SETUP
 {
  yy_pop_state(yyscanner);
  yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
- return SEMI_TOKEN; 
+ return SEMI_TOKEN;
 }
 	YY_BREAK
 case 148:
@@ -1568,7 +1568,7 @@ YY_RULE_SETUP
 {
  yy_pop_state(yyscanner);
  yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
- return AND_TOKEN; 
+ return AND_TOKEN;
 }
 	YY_BREAK
 case 149:
@@ -1645,7 +1645,7 @@ YY_RULE_SETUP
   yy_pop_state(yyscanner);
   if(YY_START==IN_SLN_PARAM_STATE) {
     yy_pop_state(yyscanner);
-  } 
+  }
   return CLOSE_BRACKET_TOKEN;
 }
 	YY_BREAK
@@ -1672,14 +1672,14 @@ YY_RULE_SETUP
 case 162:
 YY_RULE_SETUP
 #line 388 "sln.ll"
-{ 
+{
   // if we're currently in a CTAB property block (e.g. in <>'s), we need
   // to pop both the prop_val state and the property block state:
   yy_pop_state(yyscanner);
   if(YY_START==IN_CTAB_PARAM_VAL_STATE) {
     yy_pop_state(yyscanner);
-  } 
-  return CLOSE_ANGLE_TOKEN; 
+  }
+  return CLOSE_ANGLE_TOKEN;
 }
 	YY_BREAK
 case 163:
@@ -1690,8 +1690,8 @@ YY_RULE_SETUP
 case 164:
 YY_RULE_SETUP
 #line 400 "sln.ll"
-{ 
-  return COMMA_TOKEN; 
+{
+  return COMMA_TOKEN;
 }
 	YY_BREAK
 case 165:
@@ -2250,7 +2250,7 @@ static void yysln__load_buffer_state  (yyscan_t yyscanner)
     YY_BUFFER_STATE yysln__create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	b = (YY_BUFFER_STATE) yysln_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yysln__create_buffer()" );
@@ -2294,7 +2294,7 @@ static void yysln__load_buffer_state  (yyscan_t yyscanner)
 #ifndef __cplusplus
 extern int isatty (int );
 #endif /* __cplusplus */
-    
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a yysln_restart() or at EOF.
@@ -2320,7 +2320,7 @@ extern int isatty (int );
     }
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-    
+
 	errno = oerrno;
 }
 
@@ -2426,9 +2426,9 @@ static void yysln_ensure_buffer_stack (yyscan_t yyscanner)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in yysln_ensure_buffer_stack()" );
-								  
+
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -2457,12 +2457,12 @@ static void yysln_ensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE yysln__scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	if ( size < 2 ||
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -2498,7 +2498,7 @@ YY_BUFFER_STATE yysln__scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
  */
 YY_BUFFER_STATE yysln__scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
-    
+
 	return yysln__scan_bytes(yystr,strlen(yystr) ,yyscanner);
 }
 
@@ -2514,7 +2514,7 @@ YY_BUFFER_STATE yysln__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n, i;
-    
+
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
 	buf = (char *) yysln_alloc(n ,yyscanner );
@@ -2622,10 +2622,10 @@ YY_EXTRA_TYPE yysln_get_extra  (yyscan_t yyscanner)
 int yysln_get_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yylineno;
 }
 
@@ -2635,10 +2635,10 @@ int yysln_get_lineno  (yyscan_t yyscanner)
 int yysln_get_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yycolumn;
 }
 
@@ -2699,8 +2699,8 @@ void yysln_set_lineno (int  line_number , yyscan_t yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yysln_set_lineno called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "yysln_set_lineno called with no buffer" , yyscanner);
+
     yylineno = line_number;
 }
 
@@ -2714,8 +2714,8 @@ void yysln_set_column (int  column_no , yyscan_t yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yysln_set_column called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "yysln_set_column called with no buffer" , yyscanner);
+
     yycolumn = column_no;
 }
 
@@ -2810,20 +2810,20 @@ int yysln_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals 
         errno = EINVAL;
         return 1;
     }
-	
+
     *ptr_yy_globals = (yyscan_t) yysln_alloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-	
+
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-    
+
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-    
+
     yysln_set_extra (yy_user_defined, *ptr_yy_globals);
-    
+
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -2944,8 +2944,3 @@ void yysln_free (void * ptr , yyscan_t yyscanner)
 
 #undef yysln_wrap
 int yysln_wrap( void ) { return 1; }
-
-
-
-
-

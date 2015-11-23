@@ -1708,7 +1708,7 @@ int main(int argc, const char* argv[]) {
   else {
     testGregSDFFileSetFiltered();
   }
-  //  BOOST_LOG(rdInfoLog) <<
+  //  BOOST_LOG_TRIVIAL(rdInfoLog) <<
   //  "*******************************************************\n";
 
   unsigned long long t1 = nanoClock();

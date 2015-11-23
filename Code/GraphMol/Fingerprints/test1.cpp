@@ -30,7 +30,7 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "testing basics" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basics" << std::endl;
   {
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
@@ -148,23 +148,23 @@ void test1() {
     delete fp2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 void test2() {
-  BOOST_LOG(rdInfoLog) << "testing subgraph invariants" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing subgraph invariants" << std::endl;
 
   std::string smi = "CC(=O)COC";
   RWMol *m1 = SmilesToMol(smi);
   TEST_ASSERT(m1->getNumAtoms() == 6);
-  BOOST_LOG(rdInfoLog) << "--------------------  fp1 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp1 " << std::endl;
   ExplicitBitVect *fp1 = RDKFingerprintMol(*m1, 1, 4, 2048, 4, false);
-  BOOST_LOG(rdInfoLog) << "--------------------  fp2 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp2 " << std::endl;
   ExplicitBitVect *fp2 = RDKFingerprintMol(*m1, 1, 4, 2048, 4, false);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) == 1.0);
 
   RWMol *m2 = SmilesToMol("CC");
   delete fp2;
-  BOOST_LOG(rdInfoLog) << "--------------------  fp2 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp2 " << std::endl;
   fp2 = RDKFingerprintMol(*m2, 1, 4, 2048, 4, false);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) < 1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) > 0.0);
@@ -191,11 +191,11 @@ void test2() {
   delete fp1;
   delete fp2;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "testing auto folding" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing auto folding" << std::endl;
 
   RWMol *m = SmilesToMol("CCCOC");
 
@@ -214,11 +214,11 @@ void test3() {
   delete m;
   delete fp1;
   delete fp2;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test1alg2() {
-  BOOST_LOG(rdInfoLog) << "testing basics alg2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basics alg2" << std::endl;
 
   std::string smi = "C1=CC=CC=C1";
   RWMol *m1 = SmilesToMol(smi);
@@ -238,24 +238,24 @@ void test1alg2() {
   delete m2;
   delete fp1;
   delete fp2;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2alg2() {
-  BOOST_LOG(rdInfoLog) << "testing subgraph invariants alg2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing subgraph invariants alg2" << std::endl;
 
   std::string smi = "CC(=O)COC";
   RWMol *m1 = SmilesToMol(smi);
   TEST_ASSERT(m1->getNumAtoms() == 6);
-  BOOST_LOG(rdInfoLog) << "--------------------  fp1 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp1 " << std::endl;
   ExplicitBitVect *fp1 = RDKFingerprintMol(*m1, 1, 4, 2048, 4, false);
-  BOOST_LOG(rdInfoLog) << "--------------------  fp2 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp2 " << std::endl;
   ExplicitBitVect *fp2 = RDKFingerprintMol(*m1, 1, 4, 2048, 4, false);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) == 1.0);
 
   RWMol *m2 = SmilesToMol("CC");
   delete fp2;
-  BOOST_LOG(rdInfoLog) << "--------------------  fp2 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------  fp2 " << std::endl;
   fp2 = RDKFingerprintMol(*m2, 1, 4, 2048, 4, false);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) < 1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1, *fp2) > 0.0);
@@ -282,11 +282,11 @@ void test2alg2() {
   delete fp1;
   delete fp2;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test4Trends() {
-  BOOST_LOG(rdInfoLog) << "testing similarity trends" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing similarity trends" << std::endl;
 
   double sim1, sim2;
   RWMol *m;
@@ -351,11 +351,11 @@ void test4Trends() {
   delete fp1;
   delete fp2;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test5BackwardsCompatibility() {
-  BOOST_LOG(rdInfoLog) << "testing backwards compatibility of fingerprints"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing backwards compatibility of fingerprints"
                        << std::endl;
 
   RWMol *m;
@@ -381,11 +381,11 @@ void test5BackwardsCompatibility() {
 
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test1Layers() {
-  BOOST_LOG(rdInfoLog) << "testing basics layered fps" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basics layered fps" << std::endl;
 #if 1
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
@@ -598,11 +598,11 @@ void test1Layers() {
     delete m2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2Layers() {
-  BOOST_LOG(rdInfoLog) << "testing advanced layered fps" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing advanced layered fps" << std::endl;
   {
     std::vector<unsigned int> atomCounts;
     RWMol *m1 = SmilesToMol("CC(C)C");
@@ -664,11 +664,11 @@ void test2Layers() {
     delete m2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test3Layers() {
-  BOOST_LOG(rdInfoLog) << "testing layered fps and queries" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing layered fps and queries" << std::endl;
   {
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC(C)C");
@@ -863,12 +863,12 @@ void test3Layers() {
     delete m2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test1MorganFPs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Morgan Fingerprints." << std::endl;
 
   {
     ROMol *mol;
@@ -1023,12 +1023,12 @@ void test1MorganFPs() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test2MorganFPsFromAtoms() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Morgan Fingerprints using fromAtoms argument." << std::endl;
 
   {
@@ -1112,12 +1112,12 @@ void test2MorganFPsFromAtoms() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test3MorganFPs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints as bit vects."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Morgan Fingerprints as bit vects."
                         << std::endl;
 
   {
@@ -1140,12 +1140,12 @@ void test3MorganFPs() {
 
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test4MorganFPs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Morgan Fingerprints with feature invariants." << std::endl;
 
   {
@@ -1196,12 +1196,12 @@ void test4MorganFPs() {
     TEST_ASSERT(invars[0] == invars[7]);
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test5MorganFPs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test additional Morgan fingerprints options."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test additional Morgan fingerprints options."
                         << std::endl;
 
   {
@@ -1287,11 +1287,11 @@ void test5MorganFPs() {
     delete m2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue2875658() {
-  BOOST_LOG(rdInfoLog) << "testing issue 2875658" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing issue 2875658" << std::endl;
 
   RWMol *m;
   ExplicitBitVect *fp1, *fp2;
@@ -1335,8 +1335,8 @@ void testIssue2875658() {
 }
 
 void testAtomCodes() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Atom Codes." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Atom Codes." << std::endl;
 
   ROMol *mol;
   boost::uint32_t tgt;
@@ -1380,12 +1380,12 @@ void testAtomCodes() {
   TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(2)) == tgt);
 
   delete mol;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testAtomPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Atom Pairs." << std::endl;
 
   ROMol *mol;
   SparseIntVect<boost::int32_t> *fp;
@@ -1435,12 +1435,12 @@ void testAtomPairs() {
 
   delete mol;
   delete fp;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testAtomPairs2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs part 2." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Atom Pairs part 2." << std::endl;
 
   {
     ROMol *mol;
@@ -1457,12 +1457,12 @@ void testAtomPairs2() {
     TEST_ASSERT(fp->getNonzeroElements().size() == 1);
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testHashedAtomPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Hashed Atom Pairs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Hashed Atom Pairs." << std::endl;
 
   {
     ROMol *mol;
@@ -1504,12 +1504,12 @@ void testHashedAtomPairs() {
     delete fp2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Topological Torsions." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Topological Torsions." << std::endl;
 
   ROMol *mol;
   SparseIntVect<boost::int64_t> *fp;
@@ -1550,12 +1550,12 @@ void testTorsions() {
 
   delete mol;
   delete fp;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testHashedTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Hashed torsions." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Hashed torsions." << std::endl;
 
   {
     ROMol *mol;
@@ -1599,12 +1599,12 @@ void testHashedTorsions() {
     delete fp2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testBulkTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Bulk Topological Torsions." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Bulk Topological Torsions." << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Projects/DbCLI/testData/pubchem.200.sdf";
@@ -1617,12 +1617,12 @@ void testBulkTorsions() {
     delete mol;
     delete fp;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testRootedAtomPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Rooted Atom Pairs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Rooted Atom Pairs." << std::endl;
 
   ROMol *mol;
   SparseIntVect<boost::int32_t> *fp1, *fp2;
@@ -1649,12 +1649,12 @@ void testRootedAtomPairs() {
   delete fp1;
   delete fp2;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIgnoreAtomPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test ignoring atoms in Atom Pairs."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test ignoring atoms in Atom Pairs."
                         << std::endl;
 
   {
@@ -1723,12 +1723,12 @@ void testIgnoreAtomPairs() {
     delete fp2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testRootedTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Rooted Topological Torsions." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Rooted Topological Torsions." << std::endl;
 
   ROMol *mol;
   SparseIntVect<boost::int64_t> *fp1, *fp2;
@@ -1755,12 +1755,12 @@ void testRootedTorsions() {
   delete mol;
   delete fp1;
   delete fp2;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIgnoreTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test ignoring atoms in Topological Torsions."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test ignoring atoms in Topological Torsions."
                         << std::endl;
 
   {
@@ -1821,12 +1821,12 @@ void testIgnoreTorsions() {
     delete fp2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMorganAtomInfo() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test atom info from morgan fingerprints."
                         << std::endl;
 
   {
@@ -1942,12 +1942,12 @@ void testMorganAtomInfo() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testRDKitFPOptions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "testing RDKit fingerprint options" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing RDKit fingerprint options" << std::endl;
   {
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
@@ -1999,12 +1999,12 @@ void testRDKitFPOptions() {
     delete fp1;
     delete fp2;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testPairsAndTorsionsOptions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "testing atom pair and torsions options" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing atom pair and torsions options" << std::endl;
   {
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
@@ -2178,12 +2178,12 @@ void testPairsAndTorsionsOptions() {
     delete fp2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRDKitFromAtoms() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing RDKit fingerprints rooted at particular atoms" << std::endl;
   {
     std::string smi = "CCCCCC";
@@ -2261,12 +2261,12 @@ void testRDKitFromAtoms() {
     delete m1;
     delete fp1;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMACCS() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "testing MACCS key calculation" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing MACCS key calculation" << std::endl;
   {
     std::string smi = "CNO";
     RWMol *m1 = SmilesToMol(smi);
@@ -2317,12 +2317,12 @@ void testMACCS() {
     delete m1;
     delete fp1;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRDKitAtomBits() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "testing RDKit fingerprints reporting atomBits"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing RDKit fingerprints reporting atomBits"
                        << std::endl;
   {
     std::string smi = "CCCCCC";
@@ -2353,12 +2353,12 @@ void testRDKitAtomBits() {
     delete m1;
     delete fp1;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testChiralPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs including info about chirality."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Atom Pairs including info about chirality."
                         << std::endl;
 
   ROMol *m1, *m2, *m3;
@@ -2454,11 +2454,11 @@ void testChiralPairs() {
   delete m1;
   delete m2;
   delete m3;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 void testChiralTorsions() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Topological Torsions including info about chirality."
       << std::endl;
 
@@ -2555,12 +2555,12 @@ void testChiralTorsions() {
   delete m1;
   delete m2;
   delete m3;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue25() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test GitHub Issue 25: fingerprint backwards compatibility."
       << std::endl;
 
@@ -2619,12 +2619,12 @@ void testGitHubIssue25() {
     delete m1;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue151() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test GitHub Issue 151: PatternFingerprint problems" << std::endl;
 
   {
@@ -2686,12 +2686,12 @@ void testGitHubIssue151() {
     delete qm;
     delete m;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test3DAtomPairs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test 3D atom pairs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test 3D atom pairs." << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Code/GraphMol/Fingerprints/testData/triangle.sdf";
@@ -2742,12 +2742,12 @@ void test3DAtomPairs() {
     delete fp;
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue195() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub Issue 195: GenMACCSKeys() raises "
                            "an exception with an empty molecule" << std::endl;
 
   {
@@ -2757,12 +2757,12 @@ void testGitHubIssue195() {
 
     delete m1;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue258() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test GitHub Issue 258: Bad pattern fingerprint for query molecule"
       << std::endl;
 
@@ -2868,7 +2868,7 @@ void testGitHubIssue258() {
     delete mbv;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -2893,8 +2893,8 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 #include <boost/thread.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 void testMultithreadedPatternFP() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test multithreading with the pattern FP"
                         << std::endl;
 
   std::string fName = getenv("RDBASE");
@@ -2943,15 +2943,15 @@ void testMultithreadedPatternFP() {
     delete referenceData[i];
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #else
 void testMultithreadedPatternFP() {}
 #endif
 
 void testGitHubIssue334() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 334: explicit Hs in SMILES "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub Issue 334: explicit Hs in SMILES "
                            "modifies atom pair (and topological torsion) FP."
                         << std::endl;
 
@@ -2997,7 +2997,7 @@ void testGitHubIssue334() {
     delete fp1;
     delete fp2;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

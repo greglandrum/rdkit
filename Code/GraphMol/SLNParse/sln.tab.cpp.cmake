@@ -157,19 +157,19 @@
   //
   //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
   //  All rights reserved.
-  // 
+  //
   // Redistribution and use in source and binary forms, with or without
   // modification, are permitted provided that the following conditions are
-  // met: 
+  // met:
   //
-  //     * Redistributions of source code must retain the above copyright 
+  //     * Redistributions of source code must retain the above copyright
   //       notice, this list of conditions and the following disclaimer.
   //     * Redistributions in binary form must reproduce the above
-  //       copyright notice, this list of conditions and the following 
-  //       disclaimer in the documentation and/or other materials provided 
+  //       copyright notice, this list of conditions and the following
+  //       disclaimer in the documentation and/or other materials provided
   //       with the distribution.
-  //     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-  //       nor the names of its contributors may be used to endorse or promote 
+  //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+  //       nor the names of its contributors may be used to endorse or promote
   //       products derived from this software without specific prior
   //       written permission.
   //
@@ -211,7 +211,7 @@ yysln_error( const char *input,
              std::vector<RDKit::RWMol *> *ms,bool doQ,
 	     void *scanner,const char * msg )
 {
-  BOOST_LOG(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
  namespace SLNParse = RDKit::SLNParse;
@@ -1693,7 +1693,7 @@ yyreduce:
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
-  
+
   (yyval.mol_T)=SLNParse::startMol(*molList,newAtom,doQueries);
 ;}
     break;
@@ -1781,7 +1781,7 @@ yyreduce:
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
-  
+
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,(yyvsp[(2) - (3)].bond_T),doQueries);
   (yyval.mol_T)=(yyvsp[(1) - (3)].mol_T);
 ;}
@@ -1815,7 +1815,7 @@ yyreduce:
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,doQueries);
-  
+
   (yyval.mol_T)=(yyvsp[(1) - (5)].mol_T);
 ;}
     break;
@@ -1831,7 +1831,7 @@ yyreduce:
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,doQueries);
-  
+
   (yyval.mol_T)=(yyvsp[(1) - (5)].mol_T);
 ;}
     break;
@@ -1849,7 +1849,7 @@ yyreduce:
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,doQueries);
-  
+
   (yyval.mol_T)=(yyvsp[(1) - (6)].mol_T);
 ;}
     break;
@@ -1865,7 +1865,7 @@ yyreduce:
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,doQueries);
-  
+
   (yyval.mol_T)=(yyvsp[(1) - (6)].mol_T);
 ;}
     break;
@@ -1881,7 +1881,7 @@ yyreduce:
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,(yyval.mol_T),newAtom,doQueries);
-  
+
   (yyval.mol_T)=(yyvsp[(1) - (7)].mol_T);
 ;}
     break;
@@ -1998,9 +1998,9 @@ yyreduce:
 
   case 41:
 #line 392 "sln.yy"
-    { 
+    {
   RDKit::Bond *bond=new RDKit::QueryBond();
-  bond->setQuery(RDKit::makeBondNullQuery());   
+  bond->setQuery(RDKit::makeBondNullQuery());
   (yyval.bond_T) = bond;
 ;}
     break;
@@ -2009,7 +2009,7 @@ yyreduce:
 #line 397 "sln.yy"
     {
   RDKit::Bond *bond=new RDKit::QueryBond();
-  bond->setQuery(RDKit::makeBondNullQuery());   
+  bond->setQuery(RDKit::makeBondNullQuery());
   SLNParse::parseBondAttribs(bond,*(yyvsp[(3) - (4)].attriblist_T),doQueries);
   delete (yyvsp[(3) - (4)].attriblist_T);
   (yyval.bond_T) = bond;
@@ -2557,7 +2557,3 @@ yyreturn:
 
 
 #line 637 "sln.yy"
-
-
-
-

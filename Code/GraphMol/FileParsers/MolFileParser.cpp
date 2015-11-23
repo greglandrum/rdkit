@@ -310,7 +310,7 @@ void ParseSGroup2000STYLine(RWMol *mol, const std::string &text,
       errout << "S group " << typ;
       throw MolFileUnhandledFeatureException(errout.str());
     } else {
-      BOOST_LOG(rdWarningLog) << " S group " << typ << " ignored on line "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << " S group " << typ << " ignored on line "
                               << line << std::endl;
     }
     spos += 4;
@@ -399,7 +399,7 @@ void ParseIsotopeLine(RWMol *mol, const std::string &text, unsigned int line) {
       if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
         int isotope = FileParserUtils::toInt(text.substr(spos, 4));
         if (isotope < 0) {
-          BOOST_LOG(rdErrorLog)
+          BOOST_LOG_TRIVIAL(rdErrorLog)
               << " atom " << aid
               << " has a negative isotope value. line:  " << line << std::endl;
         } else {
@@ -458,7 +458,7 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
             q->setVal(count);
             break;
           case 6:
-            BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. "
+            BOOST_LOG_TRIVIAL(rdWarningLog) << " atom degree query with value 6 found. "
                                        "This will not match degree >6. The MDL "
                                        "spec says it should.  line: " << line;
             q->setVal(6);
@@ -1118,7 +1118,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
         PeriodicTable::getTable()->getMostCommonIsotope(res->getAtomicNum());
     int dIso = defIso + massDiff;
     if (dIso < 0) {
-      BOOST_LOG(rdWarningLog)
+      BOOST_LOG_TRIVIAL(rdWarningLog)
           << " atom " << res->getIdx()
           << " has a negative isotope offset. line:  " << line << std::endl;
     }
@@ -1284,7 +1284,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
     case 0:
       type = Bond::UNSPECIFIED;
       res = new Bond;
-      BOOST_LOG(rdWarningLog) << "bond with order 0 found on line " << line
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "bond with order 0 found on line " << line
                               << ". This is not part of the MDL specification."
                               << std::endl;
       break;
@@ -1326,7 +1326,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
-        BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "unrecognized query bond type, " << bType
                                 << ", found on line " << line
                                 << ". Using an \"any\" query." << std::endl;
       }
@@ -1471,7 +1471,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
         ParseAtomAlias(mol, tempStr, nextLine, line);
       }
     } else if (tempStr[0] == 'G') {
-      BOOST_LOG(rdWarningLog)
+      BOOST_LOG_TRIVIAL(rdWarningLog)
           << " deprecated group abbreviation ignored on line " << line
           << std::endl;
       // we need to skip the next line, which holds the abbreviation:
@@ -1957,7 +1957,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         break;
       case 0:
         bond = new Bond(Bond::UNSPECIFIED);
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << "bond with order 0 found on line " << line
             << ". This is not part of the MDL specification." << std::endl;
         break;
@@ -1998,7 +1998,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           bond->setQuery(q);
-          BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType
+          BOOST_LOG_TRIVIAL(rdWarningLog) << "unrecognized query bond type, " << bType
                                   << ", found on line" << line
                                   << ". Using an \"any\" query." << std::endl;
         }
@@ -2099,7 +2099,7 @@ void ProcessMolProps(RWMol *mol) {
         atom->setNumExplicitHs(0);
       } else {
         if (atom->getExplicitValence() > totV) {
-          BOOST_LOG(rdWarningLog)
+          BOOST_LOG_TRIVIAL(rdWarningLog)
               << "atom " << atom->getIdx() << " has specified valence (" << totV
               << ") smaller than the drawn valence "
               << atom->getExplicitValence() << "." << std::endl;
@@ -2190,7 +2190,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
         errout << "S group " << typ << " on line " << line;
         throw MolFileUnhandledFeatureException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog) << " S group " << typ << " ignored on line "
+        BOOST_LOG_TRIVIAL(rdWarningLog) << " S group " << typ << " ignored on line "
                                 << line << "." << std::endl;
       }
     }
@@ -2203,7 +2203,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     }
   }
   if (n3DConstraints) {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG_TRIVIAL(rdWarningLog)
         << "3d constraint information in mol block igored at line " << line
         << std::endl;
     tempStr = getV3000Line(inStream, line);
@@ -2234,7 +2234,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
     // skip blocks we don't know how to read
-    BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": "
+    BOOST_LOG_TRIVIAL(rdWarningLog) << "skipping block at line " << line << ": "
                             << tempStr << std::endl;
     tempStr = getV3000Line(inStream, line);
 
@@ -2418,7 +2418,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         res = NULL;
         throw FileParseException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        BOOST_LOG_TRIVIAL(rdWarningLog) << errout.str() << std::endl;
       }
     } else if (tempStr.substr(34, 5) == "V3000") {
       ctabVersion = 3000;
@@ -2431,7 +2431,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         res = NULL;
         throw FileParseException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        BOOST_LOG_TRIVIAL(rdWarningLog) << errout.str() << std::endl;
       }
     }
   }
@@ -2456,7 +2456,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
           res = NULL;
           throw FileParseException(errout.str());
         } else {
-          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          BOOST_LOG_TRIVIAL(rdWarningLog) << errout.str() << std::endl;
         }
       }
       fileComplete = FileParserUtils::ParseV3000CTAB(inStream, line, res, conf,
@@ -2469,7 +2469,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     delete conf;
     res = NULL;
     conf = NULL;
-    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message()
+    BOOST_LOG_TRIVIAL(rdErrorLog) << " Unhandled CTAB feature: " << e.message()
                           << " on line: " << line << ". Molecule skipped."
                           << std::endl;
 

@@ -37,8 +37,8 @@ void showFeatTree(FeatTreeGraph &featGraph) {
 }
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test1: building FeatTreeGraphs \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test1: building FeatTreeGraphs \n\n";
 
   std::string smi;
   ROMol *m;
@@ -188,20 +188,20 @@ void test1() {
   TEST_ASSERT(boost::num_vertices(*fGraph) == 3);
   TEST_ASSERT(boost::num_edges(*fGraph) == 2);
 
-  BOOST_LOG(rdInfoLog) << "\tDone\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tDone\n";
 }
 
 int main() {
   RDLog::InitLogs();
   // boost::logging::disable_logs("rdApp.info");
 
-  // BOOST_LOG(rdInfoLog) <<
+  // BOOST_LOG_TRIVIAL(rdInfoLog) <<
   // "********************************************************\n";
-  // BOOST_LOG(rdInfoLog) << "Testing FeatTrees\n";
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FeatTrees\n";
 
   test1();
 
-  // BOOST_LOG(rdInfoLog) <<
+  // BOOST_LOG_TRIVIAL(rdInfoLog) <<
   // "*******************************************************\n";
   return (0);
 }

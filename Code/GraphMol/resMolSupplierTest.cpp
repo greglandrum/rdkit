@@ -46,7 +46,7 @@ void cmpFormalChargeBondOrder(const ROMol *mol1, const ROMol *mol2) {
 }
 
 void testBaseFunctionality() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testBaseFunctionality" << std::endl;
   ResonanceMolSupplier *resMolSuppl;
   RWMol *mol;
@@ -132,7 +132,7 @@ void testBaseFunctionality() {
 }
 
 void testBenzylCation() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testBenzylCation" << std::endl;
   RWMol *mol = SmilesToMol("[CH2+]c1ccccc1");
   ResonanceMolSupplier *resMolSuppl;
@@ -153,7 +153,7 @@ void testBenzylCation() {
 }
 
 void testBenzylAnion() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testBenzylAnion" << std::endl;
   RWMol *mol = SmilesToMol("[CH2-]c1ccccc1");
   ResonanceMolSupplier *resMolSuppl;
@@ -174,7 +174,7 @@ void testBenzylAnion() {
 }
 
 void testButadiene() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testButadiene" << std::endl;
   RWMol *mol = SmilesToMol("C=CC=C");
   ResonanceMolSupplier *resMolSuppl;
@@ -204,7 +204,7 @@ void testButadiene() {
 }
 
 void testZwitterion() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testZwitterion" << std::endl;
   RWMol *mol = SmilesToMol("NC=CC=CC=O");
   ResonanceMolSupplier *resMolSuppl;
@@ -228,7 +228,7 @@ void testZwitterion() {
 }
 
 void testChargeMigration() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testChargeMigration" << std::endl;
   RWMol *mol = SmilesToMol("C=CC=CC=C[CH2+]");
   ResonanceMolSupplier *resMolSuppl;
@@ -250,7 +250,7 @@ void testChargeMigration() {
 }
 
 void testChargeSeparation1() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testChargeSeparation1" << std::endl;
   RWMol *mol = SmilesToMol("[NH2+]=C1C=CC(C=C1)=CN=CN");
   ResonanceMolSupplier *resMolSuppl;
@@ -282,7 +282,7 @@ void testChargeSeparation1() {
 }
 
 void testChargeSeparation2() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testChargeSeparation2" << std::endl;
   RWMol *mol = SmilesToMol("NC(C(=O)[O-])=CC=CC=O");
   ResonanceMolSupplier *resMolSuppl;
@@ -337,7 +337,7 @@ void testChargeSeparation2() {
 }
 
 void testMultipleConjGroups1() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testMultipleConjGroups1" << std::endl;
   RWMol *mol = SmilesToMol("NC(C(=O)[O-])=CC=C(CCC(=O)[O-])C=O");
   ResonanceMolSupplier *resMolSuppl;
@@ -389,7 +389,7 @@ void testMultipleConjGroups1() {
 void testMultipleConjGroups2() {
   // if breadth-first resonance structure enumeration works properly
   // all N(2-) should be at the end of the supplier
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testMultipleConjGroups2" << std::endl;
   RWMol *mol = SmilesToMol("[N-]=[N+]=NCN=[N+]=[N-]");
   ResonanceMolSupplier *resMolSuppl;
@@ -414,7 +414,7 @@ void testMultipleConjGroups2() {
 
 void testDimethylMalonate() {
   // carbanion should be last
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testDimethylMalonate" << std::endl;
   RWMol *mol = SmilesToMol("COC(=O)[CH-]C(=O)OC");
   ResonanceMolSupplier *resMolSuppl;
@@ -438,7 +438,7 @@ void testDimethylMalonate() {
 void testMethylAcetate() {
   // cation on oxygen should appear only when UNCONSTRAINED_CATIONS
   // and ALLOW_CHARGE_SEPARATION are set
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testMethylAcetate" << std::endl;
   RWMol *mol = SmilesToMol("CC(=O)OC");
   ResonanceMolSupplier *resMolSuppl;
@@ -478,7 +478,7 @@ void testPyranium2_6dicarboxylate() {
   // when there is no alternative cation on elements right of N
   // should be accepted even though the total formal charge is not
   // positive
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testPyranium2_6dicarboxylate" << std::endl;
   RWMol *mol = SmilesToMol("[o+]1c(C(=O)[O-])cccc1C(=O)[O-]");
   ResonanceMolSupplier *resMolSuppl;
@@ -494,7 +494,7 @@ void testPyranium2_6dicarboxylate() {
 }
 
 void testSubstructMatchAcetate() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testSubstructMatchAcetate" << std::endl;
   RWMol *mol = SmilesToMol("CC(=O)[O-]");
   RWMol *query = SmartsToMol("C(=O)[O-]");
@@ -515,7 +515,7 @@ void testSubstructMatchAcetate() {
 }
 
 void testSubstructMatchDMAP() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testSubstructMatchDMAP" << std::endl;
   RWMol *mol = SmilesToMol("C(C)Nc1cc[nH+]cc1");
   RWMol *query = SmartsToMol("[#7+]");
@@ -582,7 +582,7 @@ void getBtVectVect(ResonanceMolSupplier *resMolSuppl,
 }
 
 void testCrambin() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n"
                        << "testCrambin" << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/FileParsers/test_data/1CRN.pdb";

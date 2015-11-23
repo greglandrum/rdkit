@@ -57,8 +57,8 @@ namespace {
 
 #include <boost/thread.hpp>  
 void testMultiThread(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test multithreading" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
@@ -98,7 +98,7 @@ void testMultiThread(){
   for(unsigned int i=0;i<mols.size();++i) delete mols[i];
 
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #else
 void testMultiThread(){
@@ -108,8 +108,8 @@ void testMultiThread(){
 #endif
 
 void testGithubIssue3(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 3: bad inchis when mol has no stereoinfo" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 3: bad inchis when mol has no stereoinfo" << std::endl;
   {
     std::string fName= getenv("RDBASE");
     fName += "/External/INCHI-API/test_data/github3.mol";
@@ -134,12 +134,12 @@ void testGithubIssue3(){
     delete m2;
     
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue8(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing a consequence of the fix for github issue 8: bad mols from some inchis" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing a consequence of the fix for github issue 8: bad mols from some inchis" << std::endl;
   {
     std::string fName= getenv("RDBASE");
     fName += "/External/INCHI-API/test_data/github8_extra.mol";
@@ -163,12 +163,12 @@ void testGithubIssue8(){
     delete m2;
     
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue40(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 40: bad MWs from inchis" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 40: bad MWs from inchis" << std::endl;
   {
     ExtraInchiReturnValues tmp;
     std::string inchi="InChI=1S/C10H9N3O/c1-7-11-10(14)9(13-12-7)8-5-3-2-4-6-8/h2-6H,1H3,(H,11,12,14)";
@@ -180,12 +180,12 @@ void testGithubIssue40(){
     
     delete m;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue67(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 67: seg fault from inchi" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 67: seg fault from inchi" << std::endl;
   {
     ExtraInchiReturnValues tmp;
     std::string inchi="InChI=1S/C18H17N3/c19-18(20)21-14-17-12-10-16(11-13-17)9-5-4-8-15-6-2-1-3-7-15/h1-3,6-13H,14H2,(H4,19,20,21)/b9-8+";
@@ -195,18 +195,18 @@ void testGithubIssue67(){
     
     delete m;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue68(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 68: hang while reading InChI" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 68: hang while reading InChI" << std::endl;
   {
     ExtraInchiReturnValues tmp;
     std::string inchi="InChI=1S/C11H20NSSi2.Li/c1-14(2)8-9-15(3,4)12(14)10-11-6-5-7-13-11;/h6-7H,8-10H2,1-4H3;/q-1;+1";
-    BOOST_LOG(rdInfoLog) <<"  parse 1:" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) <<"  parse 1:" << std::endl;
     ROMol *m = InchiToMol(inchi,tmp);
-    BOOST_LOG(rdInfoLog) <<"  done" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) <<"  done" << std::endl;
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==16);
     
@@ -215,20 +215,20 @@ void testGithubIssue68(){
   {
     ExtraInchiReturnValues tmp;
     std::string inchi="InChI=1S/C12H22NSSi2.Li/c1-15(2)10-11-16(3,4)13(15)8-7-12-6-5-9-14-12;/h6,9H,7-8,10-11H2,1-4H3;/q-1;+1";
-    BOOST_LOG(rdInfoLog) <<"  parse 2:" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) <<"  parse 2:" << std::endl;
     ROMol *m = InchiToMol(inchi,tmp);
-    BOOST_LOG(rdInfoLog) <<"  done" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) <<"  done" << std::endl;
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==17);
     
     delete m;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue296(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 296: problems with chiral S and inchi" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 296: problems with chiral S and inchi" << std::endl;
   {
     std::string smiles="C[S@@](=O)C(C)(C)C";
     ROMol *m = SmilesToMol(smiles);
@@ -250,12 +250,12 @@ void testGithubIssue296(){
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue437(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 437: problems with InChI and ring stereochemistry" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 437: problems with InChI and ring stereochemistry" << std::endl;
 
   // start with some general chirality checks
   {
@@ -427,12 +427,12 @@ void testGithubIssue437(){
     std::string smi2 = MolToSmiles(*m,true);
     TEST_ASSERT(smi1==smi2);
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue562(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 562: InChI radicals not properly converted" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 562: InChI radicals not properly converted" << std::endl;
 
   {
     std::string inchi="InChI=1S/HO/h1H";
@@ -450,12 +450,12 @@ void testGithubIssue562(){
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 void testGithubIssue614(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) <<"testing github issue 614: segfault from MolToInchi when bad bond stereochem info is present" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"testing github issue 614: segfault from MolToInchi when bad bond stereochem info is present" << std::endl;
 
   {
     std::string smiles="C/C=C/C";
@@ -467,7 +467,7 @@ void testGithubIssue614(){
     TEST_ASSERT(inchi=="InChI=1S/C3H6/c1-3-2/h3H,1H2,2H3");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) <<"done" << std::endl;
 }
 
 

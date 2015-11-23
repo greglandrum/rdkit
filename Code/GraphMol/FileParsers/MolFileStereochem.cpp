@@ -233,7 +233,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
             (bond2->getBondDir() != Bond::NONE &&
              bond2->getBeginAtomIdx() == bond->getBeginAtomIdx() &&
              bond2->getBondDir() != bond->getBondDir())) {
-          BOOST_LOG(rdWarningLog)
+          BOOST_LOG_TRIVIAL(rdWarningLog)
               << "Warning: conflicting stereochemistry at atom "
               << bond->getBeginAtomIdx() << " ignored."
               << std::endl;  // by rule 1." << std::endl;
@@ -244,7 +244,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
           bond1->getBeginAtomIdx() == bond->getBeginAtomIdx()) {
         if (!(bond2->getBondDir() != Bond::NONE &&
               bond2->getBeginAtomIdx() == bond->getBeginAtomIdx())) {
-          BOOST_LOG(rdWarningLog)
+          BOOST_LOG_TRIVIAL(rdWarningLog)
               << "Warning: conflicting stereochemistry at atom "
               << bond->getBeginAtomIdx() << " ignored."
               << std::endl;  // by rule 2a." << std::endl;
@@ -262,7 +262,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
           //
           if ((angle0 > M_PI && angle0 < angle1) ||
               (angle0 < M_PI && angle0 > angle1)) {
-            BOOST_LOG(rdWarningLog)
+            BOOST_LOG_TRIVIAL(rdWarningLog)
                 << "Warning: conflicting stereochemistry at atom "
                 << bond->getBeginAtomIdx() << " ignored."
                 << std::endl;  // by rule 2b." << std::endl;
@@ -282,7 +282,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
             //
             if ((angle1 > M_PI && angle1 < angle0) ||
                 (angle1 < M_PI && angle1 > angle0)) {
-              BOOST_LOG(rdWarningLog)
+              BOOST_LOG_TRIVIAL(rdWarningLog)
                   << "Warning: conflicting stereochemistry at atom "
                   << bond->getBeginAtomIdx() << " ignored."
                   << std::endl;  // by rule 2c." << std::endl;
@@ -295,7 +295,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
                  bond2->getBondDir() != bond->getBondDir()) {
         // bond2 has a spec and does not match the bond0 spec, but bond1
         // is not set: this is never allowed.
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << "Warning: conflicting stereochemistry at atom "
             << bond->getBeginAtomIdx() << " ignored."
             << std::endl;  // by rule 3." << std::endl;
@@ -590,13 +590,13 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   }
 
 #ifdef VERBOSE_STEREOCHEM
-  BOOST_LOG(rdDebugLog) << "--------- " << nSwaps << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "--------- " << nSwaps << std::endl;
   std::copy(neighborBondIndices.begin(), neighborBondIndices.end(),
-            std::ostream_iterator<int>(BOOST_LOG(rdDebugLog), " "));
-  BOOST_LOG(rdDebugLog) << std::endl;
+            std::ostream_iterator<int>(BOOST_LOG_TRIVIAL(rdDebugLog), " "));
+  BOOST_LOG_TRIVIAL(rdDebugLog) << std::endl;
   std::copy(neighborBondAngles.begin(), neighborBondAngles.end(),
-            std::ostream_iterator<double>(BOOST_LOG(rdDebugLog), " "));
-  BOOST_LOG(rdDebugLog) << std::endl;
+            std::ostream_iterator<double>(BOOST_LOG_TRIVIAL(rdDebugLog), " "));
+  BOOST_LOG_TRIVIAL(rdDebugLog) << std::endl;
 #endif
   if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
     if (nSwaps % 2 == 1) {  // ^ reverse) {

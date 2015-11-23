@@ -188,7 +188,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       res->setProp(common_properties::_Name, mname);
     } else {
       if (d_name >= static_cast<int>(recs.size())) {
-        BOOST_LOG(rdWarningLog) << "WARNING: no name column found on line "
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "WARNING: no name column found on line "
                                 << d_line << std::endl;
       } else {
         res->setProp(common_properties::_Name, recs[d_name]);
@@ -220,20 +220,20 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
   } catch (const SmilesParseException &pe) {
     // Couldn't parse the passed in smiles
     // Simply print out a message
-    BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
-    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: " << pe.message() << "\n";
     res = NULL;
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
-    BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: " << se.message() << "\n";
     res = NULL;
   } catch (...) {
     //  write out an error message
-    BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: Could not process molecule on line "
                           << d_line << std::endl;
     res = NULL;
   }

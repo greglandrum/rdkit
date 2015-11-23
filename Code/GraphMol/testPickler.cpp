@@ -34,8 +34,8 @@ void test1(bool doLong = 0) {
   std::string fName = getenv("RDBASE");
   fName += "/Code/GraphMol/test_data/canonSmiles.smi";
 
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing String Pickle Roundtrips." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing String Pickle Roundtrips." << std::endl;
 
   SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
 
@@ -51,10 +51,10 @@ void test1(bool doLong = 0) {
     ROMol m2;
     MolPickler::molFromPickle(pickle, m2);
     std::string smi1 = MolToSmiles(*m);
-    // BOOST_LOG(rdInfoLog) << smi << " " << smi1 << std::endl;
+    // BOOST_LOG_TRIVIAL(rdInfoLog) << smi << " " << smi1 << std::endl;
     std::string smi2 = MolToSmiles(m2);
     if (smi1 != smi2) {
-      BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "Line: " << count << "\n  " << smi1
                            << "\n != \n  " << smi2 << std::endl;
     }
     TEST_ASSERT(smi1 == smi2);
@@ -62,7 +62,7 @@ void test1(bool doLong = 0) {
     count++;
     if (!doLong && count >= 100) break;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void _createPickleFile() {
@@ -74,8 +74,8 @@ void _createPickleFile() {
 #else
   pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
 #endif
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "creating pickle file." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "creating pickle file." << std::endl;
 
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
   std::ofstream outStream(pklName.c_str(), std::ios_base::binary);
@@ -89,7 +89,7 @@ void _createPickleFile() {
     delete m;
     count++;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void test2(bool doLong = 0) {
@@ -98,8 +98,8 @@ void test2(bool doLong = 0) {
   std::string pklName = getenv("RDBASE");
   pklName += "/Code/GraphMol/test_data/canonSmiles.v1.pkl";
 
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing reading existing pickle file (v1)."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing reading existing pickle file (v1)."
                         << std::endl;
 
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
@@ -115,7 +115,7 @@ void test2(bool doLong = 0) {
     std::string smi2 = MolToSmiles(m2);
 
     if (smi1 != smi2) {
-      BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "Line: " << count << "\n  " << smi1
                            << "\n != \n  " << smi2 << std::endl;
     }
     TEST_ASSERT(smi1 == smi2);
@@ -123,7 +123,7 @@ void test2(bool doLong = 0) {
     count++;
     if (!doLong && count >= 100) break;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void test3(bool doLong = 0) {
@@ -132,8 +132,8 @@ void test3(bool doLong = 0) {
   std::string pklName = getenv("RDBASE");
   pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
 
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing reading existing pickle file (v2)."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing reading existing pickle file (v2)."
                         << std::endl;
 
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
@@ -149,7 +149,7 @@ void test3(bool doLong = 0) {
     std::string smi2 = MolToSmiles(m2, 1);
 
     if (smi1 != smi2) {
-      BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "Line: " << count << "\n  " << smi1
                            << "\n != \n  " << smi2 << std::endl;
     }
     TEST_ASSERT(smi1 == smi2);
@@ -157,7 +157,7 @@ void test3(bool doLong = 0) {
     count++;
     if (!doLong && count >= 100) break;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void timeTest(bool doLong = 0) {
@@ -168,8 +168,8 @@ void timeTest(bool doLong = 0) {
   std::string pklName = getenv("RDBASE");
   pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
 
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Timing reads." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Timing reads." << std::endl;
 
   t1 = std::time(0);
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
@@ -182,7 +182,7 @@ void timeTest(bool doLong = 0) {
     delete m1;
   }
   t2 = std::time(0);
-  BOOST_LOG(rdInfoLog) << " Smiles time: " << std::difftime(t2, t1)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Smiles time: " << std::difftime(t2, t1)
                        << std::endl;
   ;
 
@@ -195,16 +195,16 @@ void timeTest(bool doLong = 0) {
     if (!doLong && count >= 100) break;
   }
   t2 = std::time(0);
-  BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
                        << std::endl;
   ;
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void test4() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing combining molecules using pickles."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing combining molecules using pickles."
                         << std::endl;
 
   ROMol *m1 = SmilesToMol("C1CC1");
@@ -232,12 +232,12 @@ void test4() {
   TEST_ASSERT(!m3.getRingInfo()->isBondInRingOfSize(4, 3));
   TEST_ASSERT(m3.getRingInfo()->isBondInRingOfSize(4, 4));
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue164() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Issue164: Roundtrip Pickle Failure."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Issue164: Roundtrip Pickle Failure."
                         << std::endl;
 
   std::string smi =
@@ -268,12 +268,12 @@ void testIssue164() {
 
   TEST_ASSERT(m3->getNumAtoms() == m4.getNumAtoms());
   TEST_ASSERT(m3->getNumBonds() == m4.getNumBonds());
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue219() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "Testing Issue219: Pickle Failure with Conformations." << std::endl;
 
   std::string smi = "CC";
@@ -296,12 +296,12 @@ void testIssue219() {
   TEST_ASSERT(m1->getNumAtoms() == m2->getNumAtoms());
   TEST_ASSERT(m2->getConformer().getId() == 23);
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue220() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "Testing Issue220: Pickle problems with bond stereochemistry."
       << std::endl;
 
@@ -324,12 +324,12 @@ void testIssue220() {
                 m2->getBondWithIdx(i)->getStereoAtoms());
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testQueries() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing query serialization." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing query serialization." << std::endl;
   std::string smi, pickle, smi2;
   int tmpInt;
   ROMol *m1, *m2;
@@ -604,7 +604,7 @@ void testQueries() {
   MolPickler::molFromPickle(pickle, *m1);
   TEST_ASSERT(m1->getNumAtoms() == 2);
   smi = MolToSmarts(*m1);
-  BOOST_LOG(rdErrorLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << smi << std::endl;
   TEST_ASSERT(smi == "C=[$(C=O)]");
 
   smi = "S(=O)(=O)-[C;H2]([F,Br,I,Cl])";
@@ -616,7 +616,7 @@ void testQueries() {
   m1 = new ROMol();
   MolPickler::molFromPickle(pickle, *m1);
   smi2 = MolToSmarts(*m1);
-  BOOST_LOG(rdErrorLog) << smi << " " << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << smi << " " << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
 
   // more complex recursive queries:
@@ -670,12 +670,12 @@ void testQueries() {
   delete m2;
 
   delete m1;
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testRadicals() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing radical handling in pickles." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing radical handling in pickles." << std::endl;
 
   std::string smi = "C[CH]C";
   ROMol *m1 = SmilesToMol(smi);
@@ -690,13 +690,13 @@ void testRadicals() {
   TEST_ASSERT(m1->getNumBonds() == m2->getNumBonds());
   TEST_ASSERT(m2->getAtomWithIdx(1)->getNumRadicalElectrons() == 1);
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue2788233(bool doLong = 0) {
   (void)doLong;
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 2788233." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 2788233." << std::endl;
 
   {
     std::string fName = getenv("RDBASE");
@@ -717,12 +717,12 @@ void testIssue2788233(bool doLong = 0) {
     delete m;
     delete m2;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue3202580() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3202580." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 3202580." << std::endl;
 
   {
     ROMol *m1 = SmilesToMol("C");
@@ -764,12 +764,12 @@ void testIssue3202580() {
     delete m2;
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue3316407() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3316407." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 3316407." << std::endl;
 
   {
     std::string fName = getenv("RDBASE");
@@ -798,12 +798,12 @@ void testIssue3316407() {
     delete m2;
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue3496759() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3496759." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 3496759." << std::endl;
 
   {
     ROMol *m1 = SmartsToMol("c1ncncn1");
@@ -857,12 +857,12 @@ void testIssue3496759() {
     }
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue280() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 280." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 280." << std::endl;
 
   {
     ROMol *m1 = SmilesToMol("CCC");
@@ -905,12 +905,12 @@ void testIssue280() {
     delete m2;
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testIssue285() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 285." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing sf.net issue 285." << std::endl;
 
   {
     ROMol *m1 = SmilesToMol("*C");
@@ -929,12 +929,12 @@ void testIssue285() {
     delete m2;
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testAtomResidues() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing residue information handling on atoms"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing residue information handling on atoms"
                        << std::endl;
   {
     RWMol *m = new RWMol();
@@ -967,12 +967,12 @@ void testAtomResidues() {
     TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
     TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testGithub149() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Github issue 149: cannot pickle unsanitized molecules"
       << std::endl;
   {
@@ -988,7 +988,7 @@ void testGithub149() {
     TEST_ASSERT(m->getNumAtoms() == 3);
     delete m;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

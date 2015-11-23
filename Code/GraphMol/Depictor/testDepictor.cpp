@@ -235,7 +235,7 @@ void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
     CHECK_INVARIANT(fabs(pt2.x) < tol, "");
     CHECK_INVARIANT(fabs(pt2.y) < tol, "");
     // if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol) ) {
-    //  BOOST_LOG(rdInfoLog)<< pt1 << " " << pt2 << "\n";
+    //  BOOST_LOG_TRIVIAL(rdInfoLog)<< pt1 << " " << pt2 << "\n";
     //}
   }
 }
@@ -349,7 +349,7 @@ void tempTest() {
     trans.TransformPoint(pt3);
     dt = pt1.dotProduct(pt3);
     if (fabs(dt + 1.0) > 1.0e-3) {
-      BOOST_LOG(rdInfoLog) << i << " (" << pt1 << ") (" << pt2 << ") (" << pt3
+      BOOST_LOG_TRIVIAL(rdInfoLog) << i << " (" << pt1 << ") (" << pt2 << ") (" << pt3
                            << ") (" << rotnAxis << ") " << dt << "\n";
     }
   }
@@ -772,158 +772,158 @@ void testGitHubIssue78() {
 int main() {
   RDLog::InitLogs();
 #if 1
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   test1 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   test1 \n";
   test1();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   testCollisions \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   testCollisions \n";
   testCollisions();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   testAddHs \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   testAddHs \n";
   testAddHs();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   test198 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   test198 \n";
   testIssue198();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   test2 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   test2 \n";
   test2();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   test3 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   test3 \n";
   test3();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   test4 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   test4 \n";
   test4();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   tempTest \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   tempTest \n";
   tempTest();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Issue248 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Issue248 \n";
   testIssue248();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Queries \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Queries \n";
   testQueries();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test crashes associated with RemoveHs \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test crashes associated with RemoveHs \n";
   testRemoveHsCrash();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2091304\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 2091304\n";
   testIssue2091304();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 2303566\n";
   testIssue2303566();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2821647\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 2821647\n";
   testIssue2821647();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2948402\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 2948402\n";
   testIssue2948402();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2995724\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 2995724\n";
   testIssue2995724();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Testing a change of the depictor bond length\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Testing a change of the depictor bond length\n";
   testBondLengthChange();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 3122141\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 3122141\n";
   testIssue3122141();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 3135833\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 3135833\n";
   testIssue3135833();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 3487469\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test Issue 3487469\n";
   testIssue3487469();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 8\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test GitHub Issue 8\n";
   testGitHubIssue8();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 #endif
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 78\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "   Test GitHub Issue 78\n";
   testGitHubIssue78();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "***********************************************************\n";
 
   return (0);

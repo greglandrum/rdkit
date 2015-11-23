@@ -847,7 +847,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         path14.type = Path14Configuration::CIS;
         accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
         accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
-        // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 << "\n";
+        // BOOST_LOG_TRIVIAL(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 << "\n";
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
         Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
         if (stype == Bond::STEREOZ) {
@@ -855,12 +855,12 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                GEN_DIST_TOL;
           du = dl + 2 * GEN_DIST_TOL;
           path14.type = Path14Configuration::CIS;
-          // BOOST_LOG(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4 <<
+          // BOOST_LOG_TRIVIAL(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4 <<
           // "\n";
           accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
           accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
         } else {
-          // BOOST_LOG(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
+          // BOOST_LOG_TRIVIAL(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
           // "\n";
           du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
           dl = du;
@@ -910,7 +910,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
         path14.type = Path14Configuration::OTHER;
-        // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 << "\n";
+        // BOOST_LOG_TRIVIAL(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 << "\n";
       } else if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
 // It's an amide or ester:
@@ -959,7 +959,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         dl -= GEN_DIST_TOL;
         du += GEN_DIST_TOL;
 
-        // BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": "
+        // BOOST_LOG_TRIVIAL(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": "
         // << dl << "->" << du << "\n";
       } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
                                      atm4)) ||
@@ -1003,7 +1003,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         du = dl;
         dl -= GEN_DIST_TOL;
         du += GEN_DIST_TOL;
-        // BOOST_LOG(rdDebugLog) << "    amide neighbor: " << aid1 << " " <<
+        // BOOST_LOG_TRIVIAL(rdDebugLog) << "    amide neighbor: " << aid1 << " " <<
         // aid4 << ": " << dl << "->" << du << "\n";
       } else {
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -1012,7 +1012,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     default:
-      // BOOST_LOG(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 << "\n";
+      // BOOST_LOG_TRIVIAL(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 << "\n";
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
       du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
 

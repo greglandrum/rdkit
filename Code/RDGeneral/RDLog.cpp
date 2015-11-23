@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "RDLog.h"
-#ifdef RDK_USE_BOOST_LOG
+#ifdef RDK_USE_BOOST_LOG_TRIVIAL
 void InitLogs() {}
 
 #elif 1

@@ -34,8 +34,8 @@ class DictCon {
 };
 
 void testStringVals() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing String Pickle Roundtrips." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing String Pickle Roundtrips." << std::endl;
   {
     Dict d;
     std::string sv;
@@ -62,12 +62,12 @@ void testStringVals() {
     TEST_ASSERT(feq(dv, 1.3));
   }
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testVectToString() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing conversion of vect to string." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing conversion of vect to string." << std::endl;
   {
     Dict d;
     std::vector<int> v;
@@ -103,12 +103,12 @@ void testVectToString() {
     }
     TEST_ASSERT(ok);
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 void testConstReturns() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing returning const references." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing returning const references." << std::endl;
   {
     std::string v = "foo";
     boost::any anyv(v);
@@ -135,19 +135,19 @@ void testConstReturns() {
     d.setVal("foo",v);
 
     double ls=0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;    
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "copy" << std::endl;    
     for(int i=0;i<100000000;++i){
       std::string nv=d.getVal<std::string>("foo");
       ls+= nv.size();
     }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "<<ls << std::endl;
     ls=0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;    
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ref" << std::endl;    
     for(int i=0;i<100000000;++i){
       const std::string &nv=d.getVal<const std::string &>("foo");
       ls+= nv.size();
     }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;    
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "<<ls << std::endl;    
     //std::string nv=d.getVal<std::string>("foo");
   }
 #else
@@ -162,55 +162,55 @@ void testConstReturns() {
     std::clock_t start, end;
 
     double ls = 0;
-    BOOST_LOG(rdErrorLog) << "any cast" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "any cast" << std::endl;
     start = std::clock();
     for (int i = 0; i < nreps; ++i) {
       const std::string &nv = boost::any_cast<const std::string &>(anyv);
       ls += nv.size();
     }
     end = std::clock();
-    BOOST_LOG(rdErrorLog) << "done: "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "
                           << (end - start) / (double)(CLOCKS_PER_SEC) << " "
                           << ls << std::endl;
 
     ls = 0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "copy" << std::endl;
     start = std::clock();
     for (int i = 0; i < nreps; ++i) {
       std::string nv = d.fromany<std::string>(anyv);
       ls += nv.size();
     }
     end = std::clock();
-    BOOST_LOG(rdErrorLog) << "done: "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "
                           << (end - start) / (double)(CLOCKS_PER_SEC) << " "
                           << ls << std::endl;
 
     ls = 0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ref" << std::endl;
     start = std::clock();
     for (int i = 0; i < nreps; ++i) {
       const std::string &nv = d.fromany<const std::string &>(anyv);
       ls += nv.size();
     }
     end = std::clock();
-    BOOST_LOG(rdErrorLog) << "done: "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "
                           << (end - start) / (double)(CLOCKS_PER_SEC) << " "
                           << ls << std::endl;
 
     ls = 0;
-    BOOST_LOG(rdErrorLog) << "dict" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "dict" << std::endl;
     start = std::clock();
     for (int i = 0; i < nreps; ++i) {
       const std::string &nv = d.getVal<const std::string &>("foo");
       ls += nv.size();
     }
     end = std::clock();
-    BOOST_LOG(rdErrorLog) << "done: "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "
                           << (end - start) / (double)(CLOCKS_PER_SEC) << " "
                           << ls << std::endl;
 
     ls = 0;
-    BOOST_LOG(rdErrorLog) << "ref with hasVal" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ref with hasVal" << std::endl;
     start = std::clock();
     std::string k = "foo";
     for (int i = 0; i < nreps; ++i) {
@@ -220,7 +220,7 @@ void testConstReturns() {
       }
     }
     end = std::clock();
-    BOOST_LOG(rdErrorLog) << "done: "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "done: "
                           << (end - start) / (double)(CLOCKS_PER_SEC) << " "
                           << ls << std::endl;
 
@@ -229,7 +229,7 @@ void testConstReturns() {
 
 #endif
 
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\tdone" << std::endl;
 }
 
 int main() {
@@ -238,7 +238,7 @@ int main() {
   Dict d;
   INT_VECT fooV;
   fooV.resize(3);
-  BOOST_LOG(rdInfoLog) << "dict test" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "dict test" << std::endl;
   CHECK_INVARIANT(!d.hasVal("foo"), "bad init");
   int x = 1;
   d.setVal("foo", x);

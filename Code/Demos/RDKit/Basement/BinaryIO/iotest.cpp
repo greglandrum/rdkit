@@ -34,7 +34,7 @@ namespace io = boost::iostreams;
 
 void test1() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing basic reading from compressed streams"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basic reading from compressed streams"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -51,15 +51,15 @@ void test1() {
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(6));
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 #else
-  BOOST_LOG(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
 #endif
 }
 
 void test2() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing writing to, then reading from compressed streams"
       << std::endl;
 
@@ -90,15 +90,15 @@ void test2() {
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 #else
-  BOOST_LOG(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
 #endif
 }
 
 void test3() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing writing pickles to a file then reading them back"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -195,15 +195,15 @@ void test3() {
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 #else
-  BOOST_LOG(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
 #endif
 }
 
 void test4() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing pickles to a single compressed file "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing writing pickles to a single compressed file "
                           "then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdz";
@@ -297,15 +297,15 @@ void test4() {
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 #else
-  BOOST_LOG(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
 #endif
 }
 
 void test5() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing compressed pickles to a single file "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing writing compressed pickles to a single file "
                           "then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/tmp.rdz";
@@ -490,9 +490,9 @@ void test5() {
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 #else
-  BOOST_LOG(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Compressed IO disabled; test skipped" << std::endl;
 #endif
 }
 

@@ -31,8 +31,8 @@
 using namespace RDKit;
 #if 1
 void testUFFTyper1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test UFF atom labels." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test UFF atom labels." << std::endl;
 
   ROMol *mol;
   std::string key;
@@ -132,12 +132,12 @@ void testUFFTyper1() {
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(4));
   TEST_ASSERT(key == "Cs");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFTyper2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test UFF atom typer." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test UFF atom typer." << std::endl;
 
   ROMol *mol, *mol2;
   std::string key;
@@ -197,12 +197,12 @@ void testUFFTyper2() {
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(3));
   TEST_ASSERT(key == "C_2");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFBuilder1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing UFF builder tools." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing UFF builder tools." << std::endl;
 
   ROMol *mol, *mol2;
   std::string key;
@@ -318,12 +318,12 @@ void testUFFBuilder1() {
   delete mol;
   delete field;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFBuilder2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing UFF builder+minimization." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing UFF builder+minimization." << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -506,12 +506,12 @@ void testUFFBuilder2() {
     delete mol2;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFBatch() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Testing bulk UFF (regression to check that things run)."
       << std::endl;
 
@@ -531,7 +531,7 @@ void testUFFBatch() {
     MolOps::sanitizeMol(*(RWMol *)mol);
     std::string origMolBlock = MolToMolBlock(*mol);
 
-    BOOST_LOG(rdErrorLog) << "Mol:" << count << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "Mol:" << count << std::endl;
     try {
       field = UFF::constructForceField(*mol);
     } catch (...) {
@@ -541,7 +541,7 @@ void testUFFBatch() {
       field->initialize();
       int failed = field->minimize(500);
       if (failed) {
-        BOOST_LOG(rdErrorLog) << " not converged (code=" << failed << ")"
+        BOOST_LOG_TRIVIAL(rdErrorLog) << " not converged (code=" << failed << ")"
                               << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
@@ -552,12 +552,12 @@ void testUFFBatch() {
     mol = suppl.next();
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFBuilderSpecialCases() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing UFF special cases." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing UFF special cases." << std::endl;
 
   RWMol *mol;
   std::string key;
@@ -611,12 +611,12 @@ void testUFFBuilderSpecialCases() {
   delete mol;
   delete field;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue239() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing Issue239." << std::endl;
 
   RWMol *mol;
   int needMore;
@@ -642,7 +642,7 @@ void testIssue239() {
   delete mol;
   delete field;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #endif
 
@@ -651,8 +651,8 @@ void testIssue242() {
 // FIX: Changes to the forcefield (connected to Issue 408) have
 // made it so that this particular problem no longer manifests
 // in this molecule/embedding. A new test case is needed.
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing Issue242." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing Issue242." << std::endl;
 
   RWMol *mol,*mol2;
   int needMore;
@@ -673,8 +673,8 @@ void testIssue242() {
   mb1 = MolToMolBlock(*mol);
   mb2 = MolToMolBlock(*mol2);
 
-  //BOOST_LOG(rdInfoLog) << "\nMol1\n" << mb1 << std::endl;
-  //BOOST_LOG(rdInfoLog) << "\nMol2\n" << mb2 << std::endl;
+  //BOOST_LOG_TRIVIAL(rdInfoLog) << "\nMol1\n" << mb1 << std::endl;
+  //BOOST_LOG_TRIVIAL(rdInfoLog) << "\nMol2\n" << mb2 << std::endl;
 
   
   field=UFF::constructForceField(*mol);
@@ -685,8 +685,8 @@ void testIssue242() {
   field2->initialize();
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   //TEST_ASSERT(feq(e2,e1,0.1));
 
   needMore = field->minimize(600,1e-4);
@@ -695,8 +695,8 @@ void testIssue242() {
   TEST_ASSERT(!needMore)
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   TEST_ASSERT(feq(e2,e1,1.0));
   
   needMore = field->minimize(600,1e-4);
@@ -705,8 +705,8 @@ void testIssue242() {
   TEST_ASSERT(!needMore)
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "rE1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "rE2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "rE1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "rE2: " << e2 << std::endl;
   TEST_ASSERT(feq(e2,e1,1.0));
   
   delete mol;
@@ -735,16 +735,16 @@ void testIssue242() {
   field2->initialize();
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   //TEST_ASSERT(feq(e2,e1,0.1));
 
   needMore = field->minimize(200,1e-4);
   needMore = field2->minimize(200,1e-4);
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   TEST_ASSERT(feq(e2,e1,0.1));
 
   delete mol;
@@ -753,13 +753,13 @@ void testIssue242() {
   delete field2;
   
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 #endif
 }
 
 void testSFIssue1653802() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing SFIssue1653802." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing SFIssue1653802." << std::endl;
 
   RWMol *mol;
   int needMore;
@@ -798,12 +798,12 @@ void testSFIssue1653802() {
 
   delete mol;
   delete field;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testSFIssue2378119() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -859,12 +859,12 @@ void testSFIssue2378119() {
     delete mol;
     delete field;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMissingParams() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing handling missing parameters."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing handling missing parameters."
                         << std::endl;
 
   {
@@ -898,11 +898,11 @@ void testMissingParams() {
     delete field;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 void testSFIssue3009337() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing SFIssue3009337." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing SFIssue3009337." << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -940,11 +940,11 @@ void testSFIssue3009337() {
     delete mol;
     delete field;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 void testGitHubIssue62() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing GitHubIssue62." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing GitHubIssue62." << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -969,16 +969,16 @@ void testGitHubIssue62() {
       TEST_ASSERT(!needMore);
       sdfWriter->write(*mol);
       double e = field->calcEnergy();
-      BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog) << molName << " " << e << std::endl;
       TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
     }
     sdfWriter->close();
-    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
   }
 }
 void testUFFParamGetters() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test UFF force-field parameter getters."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test UFF force-field parameter getters."
                         << std::endl;
   {
     ROMol *mol = SmilesToMol("c1ccccc1CCNN");
@@ -1028,7 +1028,7 @@ void runblock_uff(const std::vector<ROMol *> &mols,
       ROMol *mol = mols[i];
       ForceFields::ForceField *field = 0;
       if (!(rep % 100)) {
-        BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       try {
         field = UFF::constructForceField(*mol);
@@ -1048,8 +1048,8 @@ void runblock_uff(const std::vector<ROMol *> &mols,
 }
 #include <boost/thread.hpp>
 void testUFFMultiThread() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test UFF multithreading" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test UFF multithreading" << std::endl;
 
   // ForceFields::ForceField *field;
 
@@ -1098,12 +1098,12 @@ void testUFFMultiThread() {
   tg.join_all();
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testUFFMultiThread2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test UFF multithreading2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test UFF multithreading2" << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -1136,13 +1136,13 @@ void testUFFMultiThread2() {
   }
   delete m;
   delete om;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #endif
 
 void testGitHubIssue613() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Github Issue 613: UFF Atom type not "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Github Issue 613: UFF Atom type not "
                            "properly assigned to lanthanides." << std::endl;
   {
     ROMol *mol =
@@ -1163,7 +1163,7 @@ void testGitHubIssue613() {
     TEST_ASSERT(ap->r1 == types[0]->r1);
     TEST_ASSERT(ap->theta0 == types[0]->theta0);
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

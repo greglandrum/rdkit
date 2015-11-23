@@ -25,4 +25,3 @@ if (NOT RDK_INSTALL_INTREE)
         PATTERN ".svn" EXCLUDE)
 endif (NOT RDK_INSTALL_INTREE)
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
-

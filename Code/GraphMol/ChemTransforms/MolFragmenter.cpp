@@ -61,13 +61,13 @@ void constructFragmenterAtomTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 2) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "line " << line << " is too short"
                               << std::endl;
       continue;
     }
     unsigned int idx = boost::lexical_cast<unsigned int>(tokens[0]);
     if (defs.find(idx) != defs.end()) {
-      BOOST_LOG(rdWarningLog)
+      BOOST_LOG_TRIVIAL(rdWarningLog)
           << "definition #" << idx
           << " encountered more than once. Using the first occurance."
           << std::endl;
@@ -76,7 +76,7 @@ void constructFragmenterAtomTypes(
     if (validate || environs) {
       ROMol *p = SmartsToMol(tokens[1]);
       if (!p) {
-        BOOST_LOG(rdWarningLog) << "cannot convert SMARTS " << tokens[1]
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "cannot convert SMARTS " << tokens[1]
                                 << " to molecule at line " << line << std::endl;
         continue;
       }
@@ -150,19 +150,19 @@ void constructFragmenterBondTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 3) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "line " << line << " is too short"
                               << std::endl;
       continue;
     }
     unsigned int idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
     if (atomTypes.find(idx1) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx1 << " not recognized."
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "atom type #" << idx1 << " not recognized."
                               << std::endl;
       continue;
     }
     unsigned int idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
     if (atomTypes.find(idx2) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx2 << " not recognized."
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "atom type #" << idx2 << " not recognized."
                               << std::endl;
       continue;
     }
@@ -172,7 +172,7 @@ void constructFragmenterBondTypes(
     ROMol *p = SmartsToMol(smarts);
     if (validate) {
       if (!p) {
-        BOOST_LOG(rdWarningLog) << "cannot convert SMARTS " << smarts
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "cannot convert SMARTS " << smarts
                                 << " to molecule at line " << line << std::endl;
         continue;
       }
@@ -451,7 +451,7 @@ ROMol *fragmentOnBonds(const ROMol &mol,
   // over them backwards
   BOOST_REVERSE_FOREACH(const FragmenterBondType &fbt, bondPatterns) {
     if (fbt.query->getNumAtoms() != 2 || fbt.query->getNumBonds() != 1) {
-      BOOST_LOG(rdErrorLog)
+      BOOST_LOG_TRIVIAL(rdErrorLog)
           << "fragmentation queries must have 2 atoms and 1 bond" << std::endl;
       continue;
     }
@@ -466,7 +466,7 @@ ROMol *fragmentOnBonds(const ROMol &mol,
       // std::cerr<<"          "<<bond->getIdx()<<std::endl;
       TEST_ASSERT(bond);
       if (bondsUsed[bond->getIdx()]) {
-        // BOOST_LOG(rdWarningLog)<<"bond #"<<bond->getIdx()<<" matched multiple
+        // BOOST_LOG_TRIVIAL(rdWarningLog)<<"bond #"<<bond->getIdx()<<" matched multiple
         // times in decomposition. Later matches ignored."<<std::endl;
         continue;
       }

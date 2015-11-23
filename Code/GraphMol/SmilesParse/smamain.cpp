@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
       std::cout << "In SMARTS: " << sma << std::endl;
       mol = SmartsToMol(sma, debugParse);
       if (!mol) {
-        BOOST_LOG(rdErrorLog) << "FAILED PARSE: " << sma << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "FAILED PARSE: " << sma << std::endl;
       }
     }
   }

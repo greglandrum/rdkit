@@ -19,7 +19,7 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "testing basic tpl parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basic tpl parsing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/cmpd2.tpl";
@@ -61,11 +61,11 @@ void test1() {
   TEST_ASSERT(feq(conf.getAtomPos(0).z, -0.04))
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "testing tpl writing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing tpl writing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/cmpd1.tpl";
@@ -119,7 +119,7 @@ void test2() {
 
   delete m;
   delete m2;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

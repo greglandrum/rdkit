@@ -555,7 +555,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
   // copy over coordinates
   if (mol1.getNumConformers() && mol2.getNumConformers()) {
     if (mol1.getNumConformers() != mol2.getNumConformers()) {
-      BOOST_LOG(rdWarningLog)
+      BOOST_LOG_TRIVIAL(rdWarningLog)
           << "combineMols: molecules have unequal numbers of conformers"
           << std::endl;
     }
@@ -568,7 +568,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
           conf1->setAtomPos(i + nAtoms1, conf2->getAtomPos(i) + offset);
         }
       } catch (ConformerException &ce) {
-        BOOST_LOG(rdWarningLog) << "combineMols: conformer id "
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "combineMols: conformer id "
                                 << conf1->getId() << " not found in mol2";
       }
     }
@@ -674,7 +674,7 @@ void parseQueryDefFile(std::istream *inStream,
       m = 0;
     }
     if (!m) {
-      BOOST_LOG(rdWarningLog) << "cannot convert SMARTS " << qval
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "cannot convert SMARTS " << qval
                               << " to molecule at line " << line << std::endl;
       continue;
     }

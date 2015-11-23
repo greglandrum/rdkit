@@ -29,15 +29,15 @@ using namespace RDKit;
 using namespace std;
 
 void testMol1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "CIP codes from a mol file (1)" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "CIP codes from a mol file (1)" << std::endl;
   std::string rdbase = getenv("RDBASE");
   RWMol *m;
   std::string fName, smi;
   std::string cip;
 
   // start with SMILES:
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> smiles 1 <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> smiles 1 <<<<<<<<<<<<<< "
                        << std::endl;
   smi = "O[C@@H](N)I";
   m = SmilesToMol(smi);
@@ -60,7 +60,7 @@ void testMol1() {
   MolOps::removeStereochemistry(*m);
   TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
 
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
                        << std::endl;
   delete m;
   fName =
@@ -112,12 +112,12 @@ void testMol1() {
   MolOps::removeStereochemistry(*m);
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 };
 
 void testRoundTrip() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "CIP codes from a mol->smiles conversion (1)"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "CIP codes from a mol->smiles conversion (1)"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   RWMol *m;
@@ -156,7 +156,7 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
 #if 1
   smi = MolToSmiles(*m, true);
-  BOOST_LOG(rdInfoLog) << "smiout: " << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "smiout: " << smi << std::endl;
   TEST_ASSERT(smi == "N[C@H](O)I");
   delete m;
   m = SmilesToMol(smi);
@@ -170,7 +170,7 @@ void testRoundTrip() {
   TEST_ASSERT(smi == smi2);
 #endif
 
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
                        << std::endl;
   delete m;
   fName =
@@ -268,19 +268,19 @@ void testRoundTrip() {
   TEST_ASSERT(smi == smi2);
 #endif
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 };
 
 void testMol2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "CIP codes from a mol file (2)" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "CIP codes from a mol file (2)" << std::endl;
   std::string rdbase = getenv("RDBASE");
   RWMol *m;
   std::string fName, smi;
   std::string cip;
 
   // start with SMILES:
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> smiles 1 <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> smiles 1 <<<<<<<<<<<<<< "
                        << std::endl;
   smi = "[C@]1(SC[C@@]([H])(F)[C@]1(Br)O)([I])[H]";
   m = SmilesToMol(smi);
@@ -299,7 +299,7 @@ void testMol2() {
 
   // same molecule, H combined with the first atom (reproduces
   // exact situation in upcoming mol file)
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> smiles 2 <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> smiles 2 <<<<<<<<<<<<<< "
                        << std::endl;
   delete m;
   smi = "[C@@H]1(SC[C@@]([H])(F)[C@]1(Br)O)([I])";
@@ -318,7 +318,7 @@ void testMol2() {
   TEST_ASSERT(cip == "R");
 
   delete m;
-  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
                        << std::endl;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue142b.mol";
   m = MolFileToMol(fName);
@@ -335,15 +335,15 @@ void testMol2() {
   m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 };
 
 void testSmiles1() {
   ROMol *mol;
   std::string smi, cip;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "CIP codes from SMILES" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "CIP codes from SMILES" << std::endl;
 
   smi = "F[C@](Cl)(Br)I";
   mol = SmilesToMol(smi);
@@ -597,15 +597,15 @@ void testSmiles1() {
   TEST_ASSERT(cip == "R");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testChiralityCleanup() {
   ROMol *mol, *mol2;
   std::string smi, cip;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "chirality cleanup" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "chirality cleanup" << std::endl;
 
   smi = "F[C@H+](Cl)(Br)I";
   mol = SmilesToMol(smi, false, false);
@@ -631,18 +631,18 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRingStereochemistry() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "test ring stereochemistry " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "test ring stereochemistry " << std::endl;
   // NOTE: this test is for correctness, not canonicality
   {
     std::string smi = "B[C@H]1CC[C@H](C)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
     TEST_ASSERT(smi1 == "B[C@H]1CC[C@H](C)CC1");
 
     delete m;
@@ -650,7 +650,7 @@ void testRingStereochemistry() {
     smi="B[C@@H]1CC[C@@H](C)CC1";
     m = SmilesToMol(smi);
     std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi2==smi);
     delete m;
 #endif
@@ -661,14 +661,14 @@ void testRingStereochemistry() {
     RWMol *m = SmilesToMol(smi);
     std::string smi1 = MolToSmiles(*m, true);
     smi = "B[C@H]1CC[C@H](C)CC1";
-    BOOST_LOG(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
     TEST_ASSERT(smi1 == smi);
     delete m;
 #if 0
     smi="C1[C@H](B)CC[C@@H](C)C1";
     m = SmilesToMol(smi);
     std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi2==smi1);
     delete m;
 #endif
@@ -678,14 +678,14 @@ void testRingStereochemistry() {
     std::string smi = "C[C@H]1CC[C@H](F)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
     TEST_ASSERT(smi1 == "C[C@H]1CC[C@H](F)CC1");
     delete m;
 #if 0
     smi="C[C@@H]1CC[C@@H](F)CC1";
     m = SmilesToMol(smi);
     std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi2==smi1);
     delete m;
 #endif
@@ -700,7 +700,7 @@ void testRingStereochemistry() {
     smi="F[C@@H]1CC[C@@H](C)CC1";
     m = SmilesToMol(smi);
     std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi2==smi1);
     delete m;
 #endif
@@ -714,7 +714,7 @@ void testRingStereochemistry() {
     smi = "FC1CCC(C)(C)CC1";
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
     TEST_ASSERT(smi2 == smi1);
     delete m;
   }
@@ -727,7 +727,7 @@ void testRingStereochemistry() {
     smi = "C1CC2CCC1CC2";
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
     TEST_ASSERT(smi2 == smi1);
     delete m;
   }
@@ -740,7 +740,7 @@ void testRingStereochemistry() {
     smi = "CC12CCC(C)(CC1)CC2";
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
     TEST_ASSERT(smi2 == smi1);
     delete m;
   }
@@ -754,7 +754,7 @@ void testRingStereochemistry() {
     smi = "CC12CCC(C)(NC1)OC2";
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
     TEST_ASSERT(smi2 != smi1);
     delete m;
   }
@@ -765,7 +765,7 @@ void testRingStereochemistry() {
     std::string smi = "C[C@H]1CC[C@H](C)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1==smi);
     delete m;
   }
@@ -776,19 +776,19 @@ void testRingStereochemistry() {
     m->debugMol(std::cerr);
     std::string smi1=MolToSmiles(*m,true);
     smi = "C[C@H]1CC[C@H](C)CC1";
-    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     m->debugMol(std::cerr);
     TEST_ASSERT(smi1==smi);
     delete m;
   }
 #endif
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testChiralityFrom3D() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "chirality perception from 3D coordinates: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "chirality perception from 3D coordinates: "
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -873,12 +873,12 @@ void testChiralityFrom3D() {
   TEST_ASSERT(cip == "R");
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIterativeChirality() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "iterative chirality (sf.net issue 1931470): "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "iterative chirality (sf.net issue 1931470): "
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -911,7 +911,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -942,7 +942,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -972,7 +972,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 #endif
 
@@ -1003,7 +1003,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 #endif
     delete m;
@@ -1039,7 +1039,7 @@ void testIterativeChirality() {
     std::cerr<<"m post -----"<<std::endl;
     m->debugMol(std::cerr);
     std::cerr<<"-----"<<std::endl;
-    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
     TEST_ASSERT(smi1==smi2);
 #endif
     delete m;
@@ -1072,7 +1072,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1099,7 +1099,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1123,7 +1123,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1150,7 +1150,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1177,7 +1177,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1208,7 +1208,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1239,7 +1239,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1268,7 +1268,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1293,7 +1293,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1317,7 +1317,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1341,7 +1341,7 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -1365,18 +1365,18 @@ void testIterativeChirality() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBondDirRemoval() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing that the removal of bond directions is correct: "
       << std::endl;
 
@@ -1419,24 +1419,24 @@ void testBondDirRemoval() {
                 m->getBondBetweenAtoms(1, 4)->getBondDir());
 
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue2705543() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 2705543: " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 2705543: " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -1594,12 +1594,12 @@ void testIssue2705543() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue2762917() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 2762917: chirality swap on addHs()"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 2762917: chirality swap on addHs()"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -1731,12 +1731,12 @@ void testIssue2762917() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3009911() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3009911: bad atom priorities" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3009911: bad atom priorities" << std::endl;
 
   {
     RWMol *m;
@@ -1796,12 +1796,12 @@ void testIssue3009911() {
     delete m;
     delete[] ranks;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3139534() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings"
                        << std::endl;
 
   // the smiles generation part of this is in SmilesParse/test.cpp
@@ -1892,12 +1892,12 @@ void testIssue3139534() {
     TEST_ASSERT(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testFindChiralAtoms() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test findChiralAtoms." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test findChiralAtoms." << std::endl;
 
   {
     // by default the chirality possible flag is not assigned:
@@ -1931,12 +1931,12 @@ void testFindChiralAtoms() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3453172() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Issue 3453172: stereochemistry at three-coordinate S and Se"
       << std::endl;
 
@@ -2016,12 +2016,12 @@ void testIssue3453172() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub87() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github issue 87: removal of bond wedging"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github issue 87: removal of bond wedging"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2056,12 +2056,12 @@ void testGithub87() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub90() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github issue 90: isotopes and chirality"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github issue 90: isotopes and chirality"
                        << std::endl;
 
   {
@@ -2119,12 +2119,12 @@ void testGithub90() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub553() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing github issue 553: Chirality not affected by atom-map index"
       << std::endl;
 
@@ -2176,7 +2176,7 @@ void testGithub553() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 int main() {

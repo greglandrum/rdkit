@@ -567,7 +567,7 @@ bool isQueryH(const Atom *atom) {
     // std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<"
     // "<<hasOr<<std::endl;
     if (hasHQuery && hasOr) {
-      BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "WARNING: merging explicit H queries involved "
                                  "in ORs is not supported. This query will not "
                                  "be merged" << std::endl;
       return false;

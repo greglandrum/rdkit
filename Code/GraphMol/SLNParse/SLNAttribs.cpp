@@ -168,11 +168,11 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
       }
     } else if (attribName == "r") {
       if (attribVal != "") {
-        BOOST_LOG(rdWarningLog) << "Query value '" << attribVal
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Query value '" << attribVal
                                 << "' ignored for r query\n";
       }
       if (!doingQuery) {
-        BOOST_LOG(rdWarningLog) << "Query property '" << attribName
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Query property '" << attribName
                                 << "' ignored on non-query atom\n";
       } else {
         query = makeAtomInRingQuery();
@@ -194,11 +194,11 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
 
       if (attribVal[0] == 'i' || attribVal[0] == 'n') {
         if (attribVal.size() > 1 && attribVal[1] == '*') {
-          BOOST_LOG(rdWarningLog) << "Chiral modifier * ignored, chiral spec "
+          BOOST_LOG_TRIVIAL(rdWarningLog) << "Chiral modifier * ignored, chiral spec "
                                   << attribVal[0] << " will be used\n";
         }
         if (attribVal.size() > 1 && attribVal[1] == 'm') {
-          BOOST_LOG(rdWarningLog) << "Chiral modifier m ignored, chiral spec "
+          BOOST_LOG_TRIVIAL(rdWarningLog) << "Chiral modifier m ignored, chiral spec "
                                   << attribVal[0] << " will be used\n";
         }
 #if 0
@@ -210,7 +210,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
           } else if(attribVal=="sm"){
 #endif
       } else {
-        BOOST_LOG(rdWarningLog) << "Unsupported stereochemistry specifier '"
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Unsupported stereochemistry specifier '"
                                 << attribVal << "' ignored.\n";
       }
     } else {
@@ -258,7 +258,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
     // atomQuery:
     if (query) {
       if (!doingQuery) {
-        BOOST_LOG(rdWarningLog) << "Query property '" << attribName
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Query property '" << attribName
                                 << "' ignored on non-query atom\n";
         delete query;
       } else {
@@ -419,11 +419,11 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
       }
     } else if (attribName == "r") {
       if (attribVal != "") {
-        BOOST_LOG(rdWarningLog) << "Query value '" << attribVal
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Query value '" << attribVal
                                 << "' ignored for r query\n";
       }
       if (!doingQuery) {
-        BOOST_LOG(rdWarningLog) << "Query property '" << attribName
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Query property '" << attribName
                                 << "' ignored on non-query bond\n";
       } else {
         QueryBond::QUERYBOND_QUERY *query = makeBondIsInRingQuery();

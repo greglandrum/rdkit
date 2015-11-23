@@ -23,7 +23,7 @@ using namespace RDKit;
 
 void ReportParseError(const char *message, bool throwIt) {
   if (!throwIt)
-    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
   else
     throw SmilesParseException(message);
 }

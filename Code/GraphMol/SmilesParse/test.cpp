@@ -24,8 +24,8 @@ typedef ROMol Mol;
 void testPass() {
   int i = 0;
   ROMol *mol, *mol2;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing molecules which should parse." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing molecules which should parse." << std::endl;
   string smis[] = {
 #if 1
     "C1CC2C1CC2",
@@ -107,14 +107,14 @@ void testPass() {
   };
   while (smis[i] != "EOS") {
     string smi = smis[i];
-    // BOOST_LOG(rdInfoLog)<< "***: " << smi << std::endl;
+    // BOOST_LOG_TRIVIAL(rdInfoLog)<< "***: " << smi << std::endl;
     mol = SmilesToMol(smi);
     CHECK_INVARIANT(mol, smi);
     if (mol) {
       unsigned int nAts = mol->getNumAtoms();
       CHECK_INVARIANT(nAts != 0, smi.c_str());
       smi = MolToSmiles(*mol);
-      // BOOST_LOG(rdInfoLog)<< "  > " << smi << std::endl;
+      // BOOST_LOG_TRIVIAL(rdInfoLog)<< "  > " << smi << std::endl;
       mol2 = SmilesToMol(smi);
       CHECK_INVARIANT(mol2->getNumAtoms() == nAts, smi.c_str())
       delete mol;
@@ -122,15 +122,15 @@ void testPass() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFail() {
   int i = 0;
   Mol *mol;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing molecules which should fail to parse/sanitize." << std::endl;
 
   // alternate good and bad smiles here to ensure that the parser can resume
@@ -168,7 +168,7 @@ void testFail() {
     }
     i++;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testDetails() {
@@ -176,8 +176,8 @@ void testDetails() {
   Atom *a;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing details" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing details" << std::endl;
   // implicit/explicit H handling
   smi = "OC([OH])C[O-]";
   mol = SmilesToMol(smi);
@@ -200,15 +200,15 @@ void testDetails() {
   CHECK_INVARIANT(a->getFormalCharge() == -1, "");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testProblems() {
   Mol *mol;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing smiles that were previously problems"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing smiles that were previously problems"
                        << std::endl;
 
   // ring closure handling with branches/fragments
@@ -245,15 +245,15 @@ void testProblems() {
   CHECK_INVARIANT(rings[1].size() == 3, "");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBasicCanon() {
   Mol *mol;
   std::string smi, refSmi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing basic SMILES canonicalization" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing basic SMILES canonicalization" << std::endl;
 #if 1
   smi = "C1OCCCC1";
   mol = SmilesToMol(smi);
@@ -331,7 +331,7 @@ void testBasicCanon() {
   TEST_ASSERT(smi == "");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testLeak() {
@@ -339,27 +339,27 @@ void testLeak() {
   Mol *mol;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing a leak" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing a leak" << std::endl;
 
   smi = "C1CC1";
   for (i = 0; i < 1000000; i++) {
     mol = SmilesToMol(smi, 0, 1);
     if (!(i % 1000)) {
-      BOOST_LOG(rdInfoLog) << i << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << i << std::endl;
     }
 
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testStereochem() {
   Mol *mol;
   std::string smi, refSmi, cip;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of stereochemical smiles"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of stereochemical smiles"
                        << std::endl;
 
   smi = "F[C@](Cl)(Br)I";
@@ -836,15 +836,15 @@ void testStereochem() {
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue127() {
   Mol *mol, *mol2;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 127 (chiral smiles with fused rings)"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 127 (chiral smiles with fused rings)"
                        << std::endl;
 
   smi = "Cl[C@]12[Si]C(C2)O1";
@@ -872,15 +872,15 @@ void testIssue127() {
   TEST_ASSERT(refSmi == tempStr);
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue143() {
   Mol *mol;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 143 (removing chiral tags for non-chiral centers)"
       << std::endl;
 
@@ -898,15 +898,15 @@ void testIssue143() {
   TEST_ASSERT(refSmi == "CCC(C)(C)C=O");
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue151() {
   Mol *mol, *mol2;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 151 (Chiral centers in rings with "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 151 (Chiral centers in rings with "
                           "hydrogen on them not handled correctly)"
                        << std::endl;
 
@@ -997,7 +997,7 @@ void testIssue151() {
   delete mol;
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue153() {
@@ -1005,8 +1005,8 @@ void testIssue153() {
   Mol *mol, *mol2;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 153 (Incorrect order of ring-closure bonds from SMILES)"
       << std::endl;
 
@@ -1054,7 +1054,7 @@ void testIssue153() {
   delete mol;
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue157() {
@@ -1062,8 +1062,8 @@ void testIssue157() {
   Mol *mol, *mol2;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 157 (Symmetric molecules with "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 157 (Symmetric molecules with "
                           "multiple chiral centers badly canonicalized)"
                        << std::endl;
 
@@ -1104,7 +1104,7 @@ void testIssue157() {
   delete mol;
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "-**-**---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-**-**---------------------------------------"
                        << std::endl;
   smi = "[H][C@@]12CC(CO1)CN2";
   mol = SmilesToMol(smi);
@@ -1113,12 +1113,12 @@ void testIssue157() {
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, smi);
   TEST_ASSERT(smi == "S");
   refSmi = MolToSmiles(*mol, true);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2, true);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
   delete mol;
   delete mol2;
@@ -1137,21 +1137,21 @@ void testIssue157() {
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2, true);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
   delete mol;
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue159() {
   Mol *mol;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 159 (cis/trans wrong in some branched systems)"
       << std::endl;
 
@@ -1320,15 +1320,15 @@ void testIssue159() {
   TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
   TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREOE);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue175() {
   Mol *mol;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 175 (cis/trans wrong on ring closures)"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 175 (cis/trans wrong on ring closures)"
                        << std::endl;
 
   smi = "Cl\\C=C1.F/1";
@@ -1347,15 +1347,15 @@ void testIssue175() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue176() {
   Mol *mol;
   std::string smi, refSmi, tempStr;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 176 (problems with 'mol BOND ring_number')"
       << std::endl;
 
@@ -1384,15 +1384,15 @@ void testIssue176() {
 
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue180() {
   Mol *mol;
   std::string smi, refSmi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 180: Z/E problems" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 180: Z/E problems" << std::endl;
 
   smi = "Cl/C(=N\\O)/C(=N\\O)Br";
   mol = SmilesToMol(smi);
@@ -1410,15 +1410,15 @@ void testIssue180() {
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue184() {
   Mol *mol;
   std::string smi, refSmi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 184: Cis/Trans incorrect on ring-closure bonds"
       << std::endl;
 
@@ -1445,15 +1445,15 @@ void testIssue184() {
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue185() {
   Mol *mol;
   std::string smi, refSmi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Issue 185: Cis/Trans incorrect on writing branches"
       << std::endl;
 
@@ -1464,7 +1464,7 @@ void testIssue185() {
   TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   refSmi = MolToSmiles(*mol, 1, 0, 0);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
   TEST_ASSERT(refSmi == "C(\\C)=N\\O");
   delete mol;
   // make sure we can round-trip:
@@ -1483,7 +1483,7 @@ void testIssue185() {
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol, 1);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
@@ -1505,7 +1505,7 @@ void testIssue185() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   refSmi = MolToSmiles(*mol, true, false, 6);
-  BOOST_LOG(rdInfoLog) << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << refSmi << std::endl;
   TEST_ASSERT(refSmi == "N/P=C/C(C)=N/O");
   delete mol;
   mol = SmilesToMol(refSmi);
@@ -1517,7 +1517,7 @@ void testIssue185() {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue191() {
@@ -1525,8 +1525,8 @@ void testIssue191() {
   std::string smi, refSmi;
   int numE = 0;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 191: Bad bond directions in a branch"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 191: Bad bond directions in a branch"
                        << std::endl;
 
   smi = "C2=NNC(N=C2)=N\\N=C\\c1ccccc1";
@@ -1555,7 +1555,7 @@ void testIssue191() {
   // std::cout << "ref: " << refSmi << " -> " << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue256() {
@@ -1563,8 +1563,8 @@ void testIssue256() {
   Bond *bond;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure"
                        << std::endl;
 
   smi = "C1CC[C+]1=1CCC1";
@@ -1589,15 +1589,15 @@ void testIssue256() {
   TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue266() {
   RWMol *mol;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 266: kekulized SMILES output"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 266: kekulized SMILES output"
                        << std::endl;
 
   smi = "c1ccccc1";
@@ -1622,12 +1622,12 @@ void testIssue266() {
   TEST_ASSERT(smi == "C1=CC=C(C2=CC=CC=C2)C=C1");
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testRootedAt() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
 
   {
     RWMol *mol;
@@ -1653,12 +1653,12 @@ void testRootedAt() {
     TEST_ASSERT(smi == "");
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIsotopes() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing isotope handling" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing isotope handling" << std::endl;
 
   {
     std::string smi = "C[13C](C)(C)C";
@@ -1736,15 +1736,15 @@ void testIsotopes() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1670149() {
   RWMol *mol;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1670149" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing SF.net bug 1670149" << std::endl;
 
   smi = "C1[NH2+]CCC1";
   mol = SmilesToMol(smi);
@@ -1759,15 +1759,15 @@ void testBug1670149() {
   smi = MolToSmiles(*mol, false, false, -1);
   TEST_ASSERT(smi == "C1CC[NH2+]C1");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1719046() {
   RWMol *mol;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing SF.net bug 1719046: explicit Hs in canonical smiles"
       << std::endl;
 
@@ -1836,12 +1836,12 @@ void testBug1719046() {
   TEST_ASSERT(smi == "c1cc[pH]c1");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1842174() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing SF.net bug 1842174: bad bond dirs in branches" << std::endl;
   RWMol *mol;
   std::string smi;
@@ -1850,11 +1850,11 @@ void testBug1842174() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "F/C=N/Cl");
 
   smi = MolToSmiles(*mol, true, false, 1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "C(\\F)=N/Cl");
 
   delete mol;
@@ -1862,11 +1862,11 @@ void testBug1842174() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "F/C=C/C=C(/Cl)Br");
 
   smi = MolToSmiles(*mol, true, false, 0);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "C(/C=C/F)=C(\\Cl)Br");
   delete mol;
 
@@ -1874,7 +1874,7 @@ void testBug1842174() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "O=NC1=NOC(=N\\O)/C1=N\\O");
 
   // ----------------------
@@ -1885,7 +1885,7 @@ void testBug1842174() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "O/N=C1\\COC\\C1=N\\O");
 
   // this time the algorithm is forced to set
@@ -1895,19 +1895,19 @@ void testBug1842174() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   TEST_ASSERT(smi == "O/N=C1\\COC\\[N+]1=N\\O");
   // ^^^^^^^^^^^^^^^^^^^^^^
   // end of the pair
   // ----------------------
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1844617() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing SF.net bug 1844617: oscillating chirality in canonical smiles"
       << std::endl;
   RWMol *mol;
@@ -1925,12 +1925,12 @@ void testBug1844617() {
   TEST_ASSERT(label=="S");
   
   smi = MolToSmiles(*mol,true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi2 = MolToSmiles(*mol,true);
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi==smi2);
   
   delete mol;
@@ -1963,8 +1963,8 @@ void testBug1844617() {
   TEST_ASSERT(mol);
   // mol->debugMol(std::cout);
   smi2 = MolToSmiles(*mol, true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
 #endif
 
@@ -1997,8 +1997,8 @@ void testBug1844617() {
   TEST_ASSERT(mol);
   // mol->debugMol(std::cout);
   smi2 = MolToSmiles(*mol, true, false, 0);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
 #endif
 
@@ -2029,17 +2029,17 @@ void testBug1844617() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi2 = MolToSmiles(*mol, true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
 #endif
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1844959() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing SF.net bug 1844959: bad handling of Hs in chiral smiles"
       << std::endl;
   RWMol *mol;
@@ -2132,7 +2132,7 @@ void testBug1844959() {
   //  the next examples are a set:
   //  (this is the part that was originally failing):
   // vvvvvvvvvvvvvvvvvvvvvv
-  BOOST_LOG(rdInfoLog) << "--------------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "--------------------------------------------"
                        << std::endl;
   smi = "C[C@]12CNOC2.[H]1";
   mol = SmilesToMol(smi);
@@ -2143,7 +2143,7 @@ void testBug1844959() {
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, label);
   TEST_ASSERT(label == "S");
   smi = MolToSmiles(*mol, true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << std::endl;
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -2216,12 +2216,12 @@ void testBug1844959() {
   // ----------------------
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug1942220() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing sf.net bug 1942220" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing sf.net bug 1942220" << std::endl;
 
   RWMol *m;
   std::string smi;
@@ -2262,12 +2262,12 @@ void testBug1942220() {
   TEST_ASSERT(smi == "O=[SH](=O)O");
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testRingStereochemReporting() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing error reporting with ring stereochem"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing error reporting with ring stereochem"
                        << std::endl;
 
   RWMol *m;
@@ -2285,11 +2285,11 @@ void testRingStereochemReporting() {
   TEST_ASSERT((!m->hasProp(common_properties::_ringStereoWarning)));
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug3127883() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "3127883 (kekulization failing) " << std::endl;
   {
     ROMol *m;
@@ -2309,12 +2309,12 @@ void testBug3127883() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testBug3139534() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings"
                        << std::endl;
 
   // the parsing part of this is in ../testChirality.cpp, here we look at
@@ -2328,7 +2328,7 @@ void testBug3139534() {
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
 
     smiles = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1=C\\COCCCCC/1");
     delete m;
   }
@@ -2354,7 +2354,7 @@ void testBug3139534() {
     TEST_ASSERT(smiles == "C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1=C/CCCCCC/C=C/1");
     delete m;
   }
@@ -2366,7 +2366,7 @@ void testBug3139534() {
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1=C\\CCCCCC/C=C/1");
     delete m;
   }
@@ -2379,7 +2379,7 @@ void testBug3139534() {
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1=C/CCCOC/C=C/1");
 
     delete m;
@@ -2402,11 +2402,11 @@ void testBug3139534() {
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m, true, false, 7, false);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m, true, false, 0, false);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "C1CCCCN/C=C/1");
 
     delete m;
@@ -2422,7 +2422,7 @@ void testBug3139534() {
     TEST_ASSERT(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "smiles: " << smiles << std::endl;
     TEST_ASSERT(smiles == "CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
 
     delete m;
@@ -2548,12 +2548,12 @@ void testBug3139534() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testAtomMaps() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "test adding atom-map information" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "test adding atom-map information" << std::endl;
 
   {
     RWMol *m;
@@ -2570,12 +2570,12 @@ void testAtomMaps() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug3145697() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Issue 3145697 repeated ring labels in disconnected structures"
       << std::endl;
 
@@ -2629,12 +2629,12 @@ void testBug3145697() {
     TEST_ASSERT(!m);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug3152751() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Issue 3152751 cannot roundtrip charged aromatic Se and Te"
       << std::endl;
 
@@ -2694,12 +2694,12 @@ void testBug3152751() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testReplacementPatterns() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing use of replacement patterns in input"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing use of replacement patterns in input"
                        << std::endl;
 
   {
@@ -2725,12 +2725,12 @@ void testReplacementPatterns() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAllBondsExplicit() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing forcing explicit bonds in the output SMILES"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing forcing explicit bonds in the output SMILES"
                        << std::endl;
 
   {
@@ -2782,12 +2782,12 @@ void testAllBondsExplicit() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBug3525799() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
 
   {
     RWMol *m;
@@ -2815,12 +2815,12 @@ void testBug3525799() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug3526810() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Issue 3526810: canonical smiles failure in symmetric heterocycles"
       << std::endl;
 
@@ -2878,12 +2878,12 @@ void testBug3526810() {
     TEST_ASSERT(csmiles1 == csmiles2);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug3526815() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Issue 3526815: canonical smiles failure in many symmetric fragments"
       << std::endl;
 
@@ -2915,12 +2915,12 @@ void testBug3526815() {
     TEST_ASSERT(csmiles1 == csmiles2);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testFragmentSmiles() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Fragment Smiles" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Fragment Smiles" << std::endl;
   {
     RWMol *m;
     std::string smiles = "OCCCC";
@@ -3203,12 +3203,12 @@ void testFragmentSmiles() {
     TEST_ASSERT(csmiles == "O.C");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug3528556() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3528556: canonical smiles failure in cycle"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3528556: canonical smiles failure in cycle"
                        << std::endl;
 
   {
@@ -3226,12 +3226,12 @@ void testBug3528556() {
     TEST_ASSERT(csmiles1 == csmiles2);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug253() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "do not repeat ring closure digits on the same atom"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "do not repeat ring closure digits on the same atom"
                        << std::endl;
 
   {
@@ -3244,12 +3244,12 @@ void testBug253() {
     TEST_ASSERT(csmiles1 == "C1CCC2(CC1)CCCCC2CCC1CCCC1");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBug257() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 257: unrecognized bonds are in SMILES as ?s"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 257: unrecognized bonds are in SMILES as ?s"
                        << std::endl;
 
   {
@@ -3266,12 +3266,12 @@ void testBug257() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::UNSPECIFIED);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub12() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 12: non-canonical fragment smiles"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 12: non-canonical fragment smiles"
                        << std::endl;
   {
     RWMol *m;
@@ -3288,12 +3288,12 @@ void testGithub12() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRingStereochem() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of ring stereochemistry"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of ring stereochemistry"
                        << std::endl;
 
   {
@@ -3367,12 +3367,12 @@ void testRingStereochem() {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub45() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 45: stereochemistry information "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 45: stereochemistry information "
                           "influencing non-stereo SMILES" << std::endl;
   {
     RWMol *m;
@@ -3411,12 +3411,12 @@ void testGithub45() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub206() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 206: Problems round-tripping P"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 206: Problems round-tripping P"
                        << std::endl;
   {
     RWMol *m;
@@ -3445,11 +3445,11 @@ void testGithub206() {
     TEST_ASSERT(csmiles == "O=P");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 void testGithub210() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
                           "when calling assignStereochemistry()" << std::endl;
   {
     RWMol *m;
@@ -3461,11 +3461,11 @@ void testGithub210() {
         m->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 void testGithub298() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing Github 298: cannot generate smiles for ChEBI_50252"
       << std::endl;
   {
@@ -3490,12 +3490,12 @@ void testGithub298() {
     TEST_ASSERT(m->getNumBonds() == 210);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub378() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 378: SMILES parser doing the wrong "
                           "thing for odd dot-disconnected construct"
                        << std::endl;
   {
@@ -3525,12 +3525,12 @@ void testGithub378() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub389() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 389: Add option to SmilesWriter to "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 389: Add option to SmilesWriter to "
                           "allow writing of all explicit hydrogens"
                        << std::endl;
   {
@@ -3547,12 +3547,12 @@ void testGithub389() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testEmptyStrings() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of empty SMILES/SMARTS strings"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of empty SMILES/SMARTS strings"
                        << std::endl;
   {
     RWMol *m;
@@ -3576,11 +3576,11 @@ void testEmptyStrings() {
     TEST_ASSERT(csmiles == "");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSmilesWriteForModifiedMolecules() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing smiles writing/canonicalization for modified molecules."
       << std::endl;
   {
@@ -3597,7 +3597,7 @@ void testSmilesWriteForModifiedMolecules() {
 }
 
 void testGithub532() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 532: _smilesAtomOutputOrder "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 532: _smilesAtomOutputOrder "
                           "incorrect for dot disconnected molecules"
                        << std::endl;
   {
@@ -3636,7 +3636,7 @@ void testGithub532() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

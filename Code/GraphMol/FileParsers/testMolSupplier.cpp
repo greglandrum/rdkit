@@ -288,7 +288,7 @@ void testSmilesSupFromText() {
   int nAts;
 
   // this was a delightful boundary condition:
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "------------------------------------------------------" << std::endl;
   text =
       "CC\n"
@@ -297,7 +297,7 @@ void testSmilesSupFromText() {
       "CCCCOC";
   {
     nSup2.setData(text, " ", 0, -1, false, true);
-    //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+    //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
     mol = nSup2.next();
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts == 2);
@@ -364,7 +364,7 @@ void testSmilesSupFromText() {
 #if 1
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[3];
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   CHECK_INVARIANT(nSup2.length() == 4, "");
   mol->getProp(common_properties::_Name, mname);
   TEST_ASSERT(mname == "mol-4");
@@ -394,7 +394,7 @@ void testSmilesSupFromText() {
       "mol-4 CCCC 16.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[3];
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 4);
   mol->getProp(common_properties::_Name, mname);
   TEST_ASSERT(mname == "mol-4");
@@ -411,7 +411,7 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
@@ -427,7 +427,7 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0";
   nSup2.setData(text, " ", 1, 0, true, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
@@ -449,7 +449,7 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0";
   nSup2.setData(text, " ", 1, 0, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
@@ -463,14 +463,14 @@ void testSmilesSupFromText() {
       "CC\n"
       "CCCC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   TEST_ASSERT(nSup2.length() == 3);
   mol = nSup2[2];
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 4);
 
   // this was a delightful boundary condition:
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "------------------------------------------------------" << std::endl;
   text =
       "CC\n"
@@ -478,7 +478,7 @@ void testSmilesSupFromText() {
       "CCOC\n"
       "CCCCOC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   nSup2.next();
   mol = nSup2[3];
   TEST_ASSERT(nSup2.length() == 4);
@@ -490,7 +490,7 @@ void testSmilesSupFromText() {
   }
   TEST_ASSERT(failed);
 
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "------------------------------------------------------" << std::endl;
   // this was a delightful boundary condition:
   text =
@@ -499,7 +499,7 @@ void testSmilesSupFromText() {
       "CCOC\n"
       "CCCCOC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+  //  BOOST_LOG_TRIVIAL(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
   failed = false;
   try {
     mol = nSup2[4];
@@ -507,10 +507,10 @@ void testSmilesSupFromText() {
     failed = true;
   }
   TEST_ASSERT(failed);
-  BOOST_LOG(rdErrorLog) << ">>> This may result in an infinite loop.  It "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << ">>> This may result in an infinite loop.  It "
                            "should finish almost immediately:" << std::endl;
   TEST_ASSERT(nSup2.length() == 4);
-  BOOST_LOG(rdErrorLog) << "<<< done." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "<<< done." << std::endl;
 
   nSup2.reset();
   unsigned int nDone = 0;
@@ -579,9 +579,9 @@ void testSmilesWriter() {
   STR_VECT names;
   STR_VECT props;
   ROMol *mol = nSup->next();
-  // BOOST_LOG(rdErrorLog) << "WRITING" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdErrorLog) << "WRITING" << std::endl;
   while (mol) {
-    // BOOST_LOG(rdErrorLog) << "MOL: " << MolToSmiles(*mol) << std::endl;
+    // BOOST_LOG_TRIVIAL(rdErrorLog) << "MOL: " << MolToSmiles(*mol) << std::endl;
     std::string mname, pval;
     mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
@@ -653,13 +653,13 @@ void testSDWriter() {
     ROMol *mol = reader.next();
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << mname << "\n";
     // CHECK_INVARIANT(mname == names[i], "");
 
     delete mol;
     i++;
   }
-  BOOST_LOG(rdInfoLog) << i << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << i << "\n";
   /*
   // now read in a file with aromatic information on the bonds
   std::string infile = rdbase +
@@ -670,7 +670,7 @@ void testSDWriter() {
     ROMol *mol = nreader.next();
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << mname << "\n";
     //CHECK_INVARIANT(mname == names[i], "");
     i++;
 
@@ -811,8 +811,8 @@ void testCisTrans() {
     ROMol *mol = reader->next();
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << " ";
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, 1) << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << mname << " ";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*mol, 1) << "\n";
     delete mol;
   }
   delete reader;
@@ -850,9 +850,9 @@ void testStereoRound() {
     // nmol->debugMol(std::cout);
 
     std::string nsmi = MolToSmiles(*nmol, 1);
-    // BOOST_LOG(rdErrorLog) << mname << "\n";
+    // BOOST_LOG_TRIVIAL(rdErrorLog) << mname << "\n";
     if (nameSmi[mname] != nsmi) {
-      BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << nsmi
+      BOOST_LOG_TRIVIAL(rdInfoLog) << mname << " " << nameSmi[mname] << " " << nsmi
                            << "\n";
     }
     RDDepict::compute2DCoords(*mol);
@@ -862,7 +862,7 @@ void testStereoRound() {
     delete nmol;
 
     if (count % 50 == 0) {
-      BOOST_LOG(rdInfoLog) << count << " " << mname << "\n";
+      BOOST_LOG_TRIVIAL(rdInfoLog) << count << " " << mname << "\n";
     }
   }
   delete smiSup;
@@ -885,7 +885,7 @@ void testStereoRound() {
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
     if (nameSmi[mname] != smiles) {
-      BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << smiles
+      BOOST_LOG_TRIVIAL(rdInfoLog) << mname << " " << nameSmi[mname] << " " << smiles
                            << "\n";
     }
     count++;
@@ -2191,175 +2191,175 @@ int main() {
   RDLog::InitLogs();
 
 #if 1
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\n-----------------------------------------\n";
   testMolSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testMolSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testMolSup()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testRandMolSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testRandMolSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testRandMolSup()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSmilesSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSmilesSup()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSmilesSupFromText();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesSupFromText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSmilesSupFromText()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSmilesWriter();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesWriter()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSmilesWriter()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDWriter();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDWriter()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDWriter()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierEnding();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierEnding()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierEnding()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSuppliersEmptyFile();
-  BOOST_LOG(rdErrorLog) << "Finished: testSuppliersEmptyFile()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSuppliersEmptyFile()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testCisTrans();
-  BOOST_LOG(rdErrorLog) << "Finished: testCisTrans()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testCisTrans()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testStereoRound();
-  BOOST_LOG(rdErrorLog) << "Finished: testStereoRound()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testStereoRound()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testIssue226();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue226()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testIssue226()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testTDTSupplier1();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testTDTSupplier1()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testTDTSupplier2();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testTDTSupplier2()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testTDTSupplier3();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier3()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testTDTSupplier3()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierFromText();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierFromText()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierStrLax1();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierStrLax1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierStrLax1()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierStrLax2();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierStrLax2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierStrLax2()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierFromTextStrLax1();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax1()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDSupplierFromTextStrLax2();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax2()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testIssue265();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue265()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testIssue265()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSDErrorHandling();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDErrorHandling()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSDErrorHandling()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testIssue381();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue381()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testIssue381()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSetStreamIndices();
-  BOOST_LOG(rdErrorLog) << "Finished: testSetStreamIndices()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSetStreamIndices()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testMixIterAndRandom();
-  BOOST_LOG(rdErrorLog) << "Finished: testMixIterAndRandom()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testMixIterAndRandom()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testRemoveHs();
-  BOOST_LOG(rdErrorLog) << "Finished: testRemoveHs()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testRemoveHs()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testGetItemText();
-  BOOST_LOG(rdErrorLog) << "Finished: testGetItemText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testGetItemText()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testForwardSDSupplier();
-  BOOST_LOG(rdErrorLog) << "Finished: testForwardSDSupplier()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testForwardSDSupplier()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testMissingCRSDSupplier();
-  BOOST_LOG(rdErrorLog) << "Finished: testMissingCRSDSupplier()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testMissingCRSDSupplier()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testIssue3482695();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue3482695()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testIssue3482695()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 #endif
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testIssue3525673();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue3525673()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testIssue3525673()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testBlankLinesInProps();
-  BOOST_LOG(rdErrorLog) << "Finished: testBlankLinesInProps()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testBlankLinesInProps()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testSkipLines();
-  BOOST_LOG(rdErrorLog) << "Finished: testSkipLines()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testSkipLines()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testGitHub23();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub23()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testGitHub23()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
   testGitHub88();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Finished: testGitHub88()\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;
 }

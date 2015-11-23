@@ -30,7 +30,7 @@ using namespace std;
 using namespace RDKit;
 template <typename T>
 inline void TXTMSG(const char *__a__, T __b__) {
-  BOOST_LOG(rdInfoLog) << (__a__) << " " << (__b__) << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << (__a__) << " " << (__b__) << std::endl;
 }
 
 bool feq(double v1, double v2, double tol = 1e-4) {
@@ -217,7 +217,7 @@ void test1DiscreteVect() {
   try {
     vect1.setVal(28, 2);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   // all these tests should fail if unsigned int changes from being
@@ -234,7 +234,7 @@ void test1DiscreteVect() {
   try {
     vect2.setVal(28, 10);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect4(DiscreteValueVect::FOURBITVALUE, 30);
@@ -249,7 +249,7 @@ void test1DiscreteVect() {
   try {
     vect4.setVal(28, 16);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect8(DiscreteValueVect::EIGHTBITVALUE, 32);
@@ -264,7 +264,7 @@ void test1DiscreteVect() {
   try {
     vect8.setVal(28, 257);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect16(DiscreteValueVect::SIXTEENBITVALUE, 300);
@@ -281,7 +281,7 @@ void test1DiscreteVect() {
   try {
     vect16.setVal(28, 65536);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 }
 
@@ -1325,7 +1325,7 @@ int main() {
   try {
     throw IndexErrorException(3);
   } catch (IndexErrorException) {
-    BOOST_LOG(rdInfoLog) << "pass" << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "pass" << endl;
   }
 
   stringstream ss(ios_base::binary | ios_base::out | ios_base::in);
@@ -1340,75 +1340,75 @@ int main() {
   TXTMSG("v3", v3);
   TXTMSG("v4", v4);
 
-  BOOST_LOG(rdInfoLog) << " SPARSE -----------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " SPARSE -----------------------------------"
                        << std::endl;
   SparseBitVect sparseFoo(10);
   Test(sparseFoo);
   TaniTest(sparseFoo);
   ProbeTest(sparseFoo);
-  BOOST_LOG(rdInfoLog) << " Explicit ----------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Explicit ----------------------------------"
                        << std::endl;
   ExplicitBitVect explicitFoo(10);
   Test(explicitFoo);
   TaniTest(explicitFoo);
-  BOOST_LOG(rdInfoLog) << " Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Done" << std::endl;
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test DiscreteValue Vectors 1 ----------------------------" << endl;
   test1DiscreteVect();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test DiscreteValue Vectors 2 ------------------------------" << endl;
   test2DiscreteVectDists();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test DiscreteValue Vectors 3 ---------------------------" << endl;
   test3DiscreteVectPickles();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test DiscreteValue Operations -----------------------------" << endl;
   test4DiscreteVectOps1();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test DiscreteValue Operations 2 -------------------------- " << endl;
   test5DiscreteVectOps2();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test SparseIntVect  ------------------------------------"
       << std::endl;
   test6SparseIntVect();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test SparseIntVect Serialization  --------------------------"
       << std::endl;
   test7SparseIntVectPickles();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test BitVect Serialization  -------------------------------"
       << std::endl;
   test8BitVectPickles();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test BitVect to FPS  -------------------------------" << std::endl;
   test9BitVectFPS();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test BitVect to binary string  -------------------------------"
       << std::endl;
   test10BitVectBinaryText();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test Similarity Measures BitVect -------------------------------"
       << std::endl;
   test11SimilaritiesBV();
 
-  BOOST_LOG(rdInfoLog) << " Test Similarity Measures SparseBitVect "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Test Similarity Measures SparseBitVect "
                           "-------------------------------" << std::endl;
   test12SimilaritiesSparseBV();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << " Test BitVect with all ones -------------------------------"
       << std::endl;
   test13BitVectAllOnes();
 
-  BOOST_LOG(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Test Explicit BitVects: Concatenation Operation  "
                           "-------------------------------" << std::endl;
   test18BitVectConcatenation();
 

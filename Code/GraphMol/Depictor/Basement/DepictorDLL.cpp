@@ -50,7 +50,7 @@ int SmilesToMolFileDLL(std::string smi, std::string fName,
   const char *root = getenv("COMBICHEM_ROOT");
   const char *release = getenv("COMBICHEM_RELEASE");
   if (!root || !release) {
-    BOOST_LOG(rdErrorLog) << "ERROR: COMBICHEM_ROOT and COMBICHEM_RELEASE must "
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: COMBICHEM_ROOT and COMBICHEM_RELEASE must "
                              "be set to use depictor\n";
     return 0;
   }
@@ -62,14 +62,14 @@ int SmilesToMolFileDLL(std::string smi, std::string fName,
   HINSTANCE hDLL;
   hDLL = LoadLibrary(fullName.c_str());
   if (!hDLL) {
-    BOOST_LOG(rdErrorLog) << "ERROR: could not load depict32.dll\n"
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "ERROR: could not load depict32.dll\n"
                           << std::endl;
     return 0;
   }
   func1 = (Depictor_TwoArgFunc)GetProcAddress(hDLL, "SMILESSTRINGTOMOLFILE");
   if (!func1) {
     FreeLibrary(hDLL);
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: could not find SmilesToMolFile function in DLL\n"
         << std::endl;
     return 0;

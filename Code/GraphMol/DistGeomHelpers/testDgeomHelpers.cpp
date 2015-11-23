@@ -59,7 +59,7 @@ void test1() {
                                           1e-2);
     CHECK_INVARIANT(cid >= 0, "");
     ROMol *m2 = sdsup.next();
-    // BOOST_LOG(rdInfoLog) << ">>> " << smi << std::endl;
+    // BOOST_LOG_TRIVIAL(rdInfoLog) << ">>> " << smi << std::endl;
     // writer.write(*m);
     // writer.flush();
 
@@ -70,11 +70,11 @@ void test1() {
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
 #if 0
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdInfoLog) << "---" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "---" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------" << std::endl;
 #endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);
@@ -85,11 +85,11 @@ void test1() {
           double d1 = (pt1j - pt1i).length();
           double d2 = (pt2j - pt2i).length();
           if (m->getBondBetweenAtoms(i, j)) {
-            // BOOST_LOG(rdInfoLog) << ">1> " <<i<<","<<j<<":"<< d1 << " " << d2
+            // BOOST_LOG_TRIVIAL(rdInfoLog) << ">1> " <<i<<","<<j<<":"<< d1 << " " << d2
             // << std::endl;
             TEST_ASSERT(fabs(d1 - d2) / d1 < 0.06);
           } else {
-            // BOOST_LOG(rdInfoLog) << ">2> " <<i<<","<<j<<":"<< d1 << " " << d2
+            // BOOST_LOG_TRIVIAL(rdInfoLog) << ">2> " <<i<<","<<j<<":"<< d1 << " " << d2
             // << " "<<fabs(d1-d2)/d1<<std::endl;
             TEST_ASSERT(fabs(d1 - d2) / d1 < 0.12);
           }
@@ -496,7 +496,7 @@ void testTemp() {
     std::string mname;
     cnt++;
     m->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdDebugLog) << cnt << "," << mname << "," << mean << "," << stdDev
+    BOOST_LOG_TRIVIAL(rdDebugLog) << cnt << "," << mname << "," << mean << "," << stdDev
                           << "\n";
     delete m;
   }
@@ -557,7 +557,7 @@ void testMultipleConfs() {
     ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, *ci);
     ff->initialize();
     energy = ff->calcEnergy();
-    // BOOST_LOG(rdInfoLog) << energy << std::endl;
+    // BOOST_LOG_TRIVIAL(rdInfoLog) << energy << std::endl;
     TEST_ASSERT(energy > 100.0);
     TEST_ASSERT(energy < 300.0);
     delete ff;
@@ -579,7 +579,7 @@ void testMultipleConfsExpTors() {
     ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, *ci);
     ff->initialize();
     energy = ff->calcEnergy();
-    // BOOST_LOG(rdInfoLog) << energy << std::endl;
+    // BOOST_LOG_TRIVIAL(rdInfoLog) << energy << std::endl;
     TEST_ASSERT(energy > 50.0);
     TEST_ASSERT(energy < 300.0);
     delete ff;
@@ -902,11 +902,11 @@ void testRandomCoords() {
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
 #if 0
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdInfoLog) << "---" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "---" << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------" << std::endl;
 #endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);
@@ -984,7 +984,7 @@ void testConstrainedEmbedding() {
     alignMap.push_back(std::make_pair(3, 3));
     alignMap.push_back(std::make_pair(4, 4));
     double ssd = MolAlign::alignMol(*test, *ref, -1, -1, &alignMap);
-    BOOST_LOG(rdInfoLog) << "ssd: " << ssd << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "ssd: " << ssd << std::endl;
     TEST_ASSERT(ssd < 0.1);
 #endif
     delete test;
@@ -1010,7 +1010,7 @@ void testConstrainedEmbedding() {
     alignMap.push_back(std::make_pair(7, 3));
     alignMap.push_back(std::make_pair(8, 4));
     double ssd = MolAlign::alignMol(*test, *ref, -1, -1, &alignMap);
-    BOOST_LOG(rdInfoLog) << "ssd: " << ssd << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "ssd: " << ssd << std::endl;
     TEST_ASSERT(ssd < 0.1);
     delete test;
   }
@@ -1317,7 +1317,7 @@ void testMultiThread() {
 
   for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #else
 void testMultiThread() {}
@@ -1506,152 +1506,152 @@ void testGithub568() {
 int main() {
   RDLog::InitLogs();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing DistGeomHelpers\n";
 
 #if 1
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test2 \n\n";
   test2();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test3 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test3 \n\n";
   test3();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test4 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test4 \n\n";
   test4();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test5 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test5 \n\n";
   test5();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test6 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test6 \n\n";
   test6();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test15Dists \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test15Dists \n\n";
   test15Dists();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test Issue 215 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test Issue 215 \n\n";
   testIssue215();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testMultipleConfs \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testMultipleConfs \n\n";
   testMultipleConfs();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testMultipleConfsExpTors \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testMultipleConfsExpTors \n\n";
   testMultipleConfsExpTors();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue227 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue227 \n\n";
   testIssue227();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue236 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue236 \n\n";
   testIssue236();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testOrdering \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testOrdering \n\n";
   testOrdering();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue244 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue244 \n\n";
   testIssue244();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue251 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue251 \n\n";
   testIssue251();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue276 \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue276 \n";
   testIssue276();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue284 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue284 \n\n";
   testIssue284();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue285 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue285 \n\n";
   testIssue285();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testIssue355 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testIssue355 \n\n";
   testIssue355();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testRandomCoords \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t testRandomCoords \n\n";
   testRandomCoords();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 1989539 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 1989539 \n\n";
   testIssue1989539();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
   testIssue2091864();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test constrained embedding \n\n";
   testConstrainedEmbedding();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
   testIssue2091974();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2835784 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 2835784 \n\n";
   testIssue2835784();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3019283 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 3019283 \n\n";
   testIssue3019283();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
   testIssue3238580();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
   testIssue3483968();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test github issue 55 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test github issue 55 \n\n";
   testGithub55();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test1 \n\n";
   test1();
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test multi-threading \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test multi-threading \n\n";
   testMultiThread();
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "\t test github issue 256: handling of zero-atom molecules\n\n";
   testGithub256();
 
 #ifdef RDK_TEST_MULTITHREADED
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
   testMultiThreadMultiConf();
 #endif
 #endif
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test github issue 563: Incorrect ring "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test github issue 563: Incorrect ring "
                           "stereochemistry after embedding\n\n";
   testGithub563();
 
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test github issue 568: Incorrect stereochemistry "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\t test github issue 568: Incorrect stereochemistry "
                           "after embedding\n\n";
   testGithub568();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
 
   return (0);

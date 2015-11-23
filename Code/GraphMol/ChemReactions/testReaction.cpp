@@ -55,8 +55,8 @@ void test1Basics() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing ChemicalReaction infrastructure"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing ChemicalReaction infrastructure"
                        << std::endl;
 
   smi = "[C:1](=[O:2])O";
@@ -119,7 +119,7 @@ void test1Basics() {
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size() == 4);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test2SimpleReactions() {
@@ -129,8 +129,8 @@ void test2SimpleReactions() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing simple reactions" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing simple reactions" << std::endl;
 
   smi = "[C:1](=[O:2])O";
   mol = SmartsToMol(smi);
@@ -227,7 +227,7 @@ void test2SimpleReactions() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[2][0]));
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[3][0]));
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test3RingFormation() {
@@ -237,8 +237,8 @@ void test3RingFormation() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing ring formation reactions" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing ring formation reactions" << std::endl;
 
   smi = "[C:1]=[C:2]";
   mol = SmartsToMol(smi);
@@ -340,7 +340,7 @@ void test3RingFormation() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[2][0]));
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[3][0]));
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test4MultipleProducts() {
@@ -350,8 +350,8 @@ void test4MultipleProducts() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reactions forming multiple products"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reactions forming multiple products"
                        << std::endl;
 
   // yes, I know this is bogus... it's a test!
@@ -423,7 +423,7 @@ void test4MultipleProducts() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == "O=C1CNC(=O)CN1");
   TEST_ASSERT(MolToSmiles(*prods[0][1]) == "COOC");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test5Salts() {
@@ -433,8 +433,8 @@ void test5Salts() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing salt handling" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing salt handling" << std::endl;
 
   smi = "[C:1](=[O:2])O";
   mol = SmartsToMol(smi);
@@ -471,7 +471,7 @@ void test5Salts() {
   TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
   TEST_ASSERT(prods[0][0]->getNumBonds() == 3);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test6DaylightParser() {
@@ -481,8 +481,8 @@ void test6DaylightParser() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Daylight parser" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Daylight parser" << std::endl;
 
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:4]";
   rxn = RxnSmartsToChemicalReaction(smi);
@@ -563,7 +563,7 @@ void test6DaylightParser() {
   } catch (ChemicalReactionParserException &) {
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test7MDLParser() {
@@ -573,8 +573,8 @@ void test7MDLParser() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MDL parser" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MDL parser" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -725,7 +725,7 @@ void test7MDLParser() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[3][0]));
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test8Validation() {
@@ -734,8 +734,8 @@ void test8Validation() {
 
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Reaction Validation." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Reaction Validation." << std::endl;
 
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:4]";
   rxn = RxnSmartsToChemicalReaction(smi);
@@ -776,7 +776,7 @@ void test8Validation() {
   TEST_ASSERT(nError == 0);
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test9ProductQueries() {
@@ -786,8 +786,8 @@ void test9ProductQueries() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of query atoms in the products"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of query atoms in the products"
                        << std::endl;
 
   smi = "[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[*:3]";
@@ -869,12 +869,12 @@ void test9ProductQueries() {
 
   delete rxn;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test10ChiralityDaylight() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Chirality handling" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Chirality handling" << std::endl;
 
   {  // default behavior, make no changes w.r.t. stereochem
     std::string smi =
@@ -908,7 +908,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@@](Cl)(Br)I");
 
     reacts.clear();
@@ -921,7 +921,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "FC(Cl)(Br)I");
 
     delete rxn;
@@ -959,7 +959,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@@](Cl)(Br)I");
 
     reacts.clear();
@@ -972,7 +972,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "FC(Cl)(Br)I");
 
     delete rxn;
@@ -1009,7 +1009,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@](Cl)(Br)I");
 
     reacts.clear();
@@ -1022,7 +1022,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "FC(Cl)(Br)I");
 
     delete rxn;
@@ -1048,7 +1048,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@@](Cl)(Br)I");
 
     reacts.clear();
@@ -1061,7 +1061,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@@](Cl)(Br)I");
 
     reacts.clear();
@@ -1074,7 +1074,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@@](Cl)(Br)I");
 
     delete rxn;
@@ -1111,7 +1111,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@](Cl)(Br)I");
 
     reacts.clear();
@@ -1124,7 +1124,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@](Cl)(Br)I");
 
     delete rxn;
@@ -1161,7 +1161,7 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "FC(Cl)(Br)I");
 
     reacts.clear();
@@ -1174,13 +1174,13 @@ void test10ChiralityDaylight() {
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 5);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 4);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "FC(Cl)(Br)I");
 
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test11ChiralityRxn() {
@@ -1190,8 +1190,8 @@ void test11ChiralityRxn() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Chirality handling (rxn)" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Chirality handling (rxn)" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -1263,7 +1263,7 @@ void test11ChiralityRxn() {
   TEST_ASSERT(MolToSmiles(*prods[0][1], true) == "[Br-]");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test12DoubleBondStereochem() {
@@ -1273,8 +1273,8 @@ void test12DoubleBondStereochem() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi, stereo;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of double bond stereochemistry"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of double bond stereochemistry"
                        << std::endl;
 
   smi = "[C:1](=[O:2])-[O;H0]>>[C:1](=[O:2])[X]";
@@ -1297,7 +1297,7 @@ void test12DoubleBondStereochem() {
   TEST_ASSERT(prods[0][0]->getNumAtoms() == 6);
   TEST_ASSERT(prods[0][0]->getNumBonds() == 5);
   prods[0][0]->updatePropertyCache();
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
   MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(prods[0][0]->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
@@ -1331,14 +1331,14 @@ void test12DoubleBondStereochem() {
   TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
   TEST_ASSERT(prods[0][0]->getNumBonds() == 3);
   prods[0][0]->updatePropertyCache();
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
   MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   TEST_ASSERT(prods[0][0]->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
 
   reacts.clear();
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test13Issue1748846() {
@@ -1348,8 +1348,8 @@ void test13Issue1748846() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi, stereo;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net Issue 1748846: bad bond orders in reaction products"
       << std::endl;
 
@@ -1373,10 +1373,10 @@ void test13Issue1748846() {
   rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size() > 0);
-  BOOST_LOG(rdInfoLog) << prods[0].size() << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << prods[0].size() << std::endl;
   TEST_ASSERT(prods[0].size() == 1);
   TEST_ASSERT(prods[0][0]->getNumAtoms() == 9);
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
   TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 1)->getBondType() ==
               Bond::AROMATIC);
   TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(1, 2)->getBondType() ==
@@ -1411,7 +1411,7 @@ void test13Issue1748846() {
   TEST_ASSERT(smi == "COCc1ccccc1");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test14Issue1804420() {
@@ -1421,8 +1421,8 @@ void test14Issue1804420() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi, stereo;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1804420: bad handling of query "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing sf.net Issue 1804420: bad handling of query "
                           "atoms in products." << std::endl;
 
   // NOTE that this bug was actually in the smarts parser, so this is really
@@ -1456,7 +1456,7 @@ void test14Issue1804420() {
   TEST_ASSERT(smi == "CCC[At]");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test15Issue1882749() {
@@ -1467,8 +1467,8 @@ void test15Issue1882749() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net Issue 1882749: property handling in products."
       << std::endl;
 
@@ -1631,15 +1631,15 @@ void test15Issue1882749() {
   TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "[3*]OC");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test16Exceptions() {
   ChemicalReaction *rxn;
   std::string rxnB;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing parser exception handling" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing parser exception handling" << std::endl;
 
   rxnB =
       "$RXN\n"
@@ -1684,7 +1684,7 @@ void test16Exceptions() {
     rxn = (ChemicalReaction *)0x0;
   }
   TEST_ASSERT(!rxn);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test17Issue1920627() {
@@ -1695,8 +1695,8 @@ void test17Issue1920627() {
   ROMOL_SPTR prod;
   std::string smi, cip;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net Issue 1920627: chirality flip in reactions."
       << std::endl;
 
@@ -1879,7 +1879,7 @@ void test17Issue1920627() {
   TEST_ASSERT(cip == "R");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test18PropertyTransfer() {
@@ -1891,8 +1891,8 @@ void test18PropertyTransfer() {
   std::string smi, cip;
   unsigned int nWarn, nError;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing property transfer in reactions."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing property transfer in reactions."
                        << std::endl;
 
   // ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ -----
@@ -2087,7 +2087,7 @@ void test18PropertyTransfer() {
   TEST_ASSERT(smi == "Oc1ccc[nH]1");
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test19Issue2050085() {
@@ -2098,8 +2098,8 @@ void test19Issue2050085() {
   ROMOL_SPTR prod;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net Issue 2050085: recap failing on chiral molecules."
       << std::endl;
 
@@ -2129,7 +2129,7 @@ void test19Issue2050085() {
   TEST_ASSERT(prod->getNumAtoms() == 4);
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test20BondQueriesInProduct() {
@@ -2140,8 +2140,8 @@ void test20BondQueriesInProduct() {
   ROMOL_SPTR prod;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing bond queries in the product." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing bond queries in the product." << std::endl;
 
   smi = "[O:1]~[C:2]>>[O:1]~[C:2]";
   rxn = RxnSmartsToChemicalReaction(smi);
@@ -2219,12 +2219,12 @@ void test20BondQueriesInProduct() {
   TEST_ASSERT(prod->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
   delete rxn;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test21Issue2540021() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net Issue 2540021: bad handling of atoms with explicit Hs."
       << std::endl;
 
@@ -2291,12 +2291,12 @@ void test21Issue2540021() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test22DotsToRemoveBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing using dots in the products to remove bonds."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing using dots in the products to remove bonds."
                        << std::endl;
 
   {
@@ -2338,12 +2338,12 @@ void test22DotsToRemoveBonds() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test23Pickling() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing pickling and depickling reactions."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing pickling and depickling reactions."
                        << std::endl;
 
   {
@@ -2460,12 +2460,12 @@ void test23Pickling() {
     TEST_ASSERT(MolToSmiles(*prods[0][0]) == "O=C1CNC(=O)CN1");
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test24AtomFlags() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing preservation of atom flags from rxn files."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing preservation of atom flags from rxn files."
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2497,12 +2497,12 @@ void test24AtomFlags() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test25Conformers() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing transfer of conformer data from reactants->products."
       << std::endl;
 
@@ -2662,7 +2662,7 @@ void test25Conformers() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test26V3000MDLParser() {
@@ -2672,8 +2672,8 @@ void test26V3000MDLParser() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing v3000 MDL parser" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing v3000 MDL parser" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -2823,12 +2823,12 @@ void test26V3000MDLParser() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == MolToSmiles(*prods[3][0]));
 
   delete rxn;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test27SmartsWriter() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reaction SMARTS writer." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reaction SMARTS writer." << std::endl;
 
   unsigned int nWarn, nError;
 
@@ -2858,12 +2858,12 @@ void test27SmartsWriter() {
     TEST_ASSERT(nError == 0);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test28RxnDepictor() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reaction depictor." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reaction depictor." << std::endl;
 
   unsigned int nWarn, nError;
 
@@ -2973,12 +2973,12 @@ void test28RxnDepictor() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test29RxnWriter() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing RXN file writer." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing RXN file writer." << std::endl;
 
   unsigned int nWarn, nError;
 
@@ -3013,12 +3013,12 @@ void test29RxnWriter() {
     TEST_ASSERT(nWarn == 0);
     TEST_ASSERT(nError == 0);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test30ReactProdQueries() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reactant and product queries." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reactant and product queries." << std::endl;
 
   {
     ROMol *mol;
@@ -3105,12 +3105,12 @@ void test30ReactProdQueries() {
 
     delete (rxn);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test31Issue3140490() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 3140490." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 3140490." << std::endl;
 
   {
     unsigned int nWarn, nError;
@@ -3141,12 +3141,12 @@ void test31Issue3140490() {
         common_properties::molAtomMapNumber));
     delete (rxn);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test32Replacements() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing string replacement in parsing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing string replacement in parsing." << std::endl;
 
   {
     std::map<std::string, std::string> repls;
@@ -3176,12 +3176,12 @@ void test32Replacements() {
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
     delete (rxn);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test33ReactingAtoms1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing getReactingAtoms() 1." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing getReactingAtoms() 1." << std::endl;
 
   {  // basics
     std::string smi;
@@ -3443,12 +3443,12 @@ void test33ReactingAtoms1() {
     TEST_ASSERT(ratoms.size() == 1);
     TEST_ASSERT(ratoms[0].size() == 2);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test34ReactingAtoms2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing getReactingAtoms() 2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing getReactingAtoms() 2" << std::endl;
 
   {
     std::string rdbase = getenv("RDBASE");
@@ -3477,12 +3477,12 @@ void test34ReactingAtoms2() {
     TEST_ASSERT(ratoms[1].size() == 3);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test35ParensInReactants1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing grouping parens in reactants1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing grouping parens in reactants1" << std::endl;
 
   {
     std::string smi = "[C:1].[C:2]>>[C:1][C:2]";
@@ -3576,12 +3576,12 @@ void test35ParensInReactants1() {
     TEST_ASSERT(!rxn);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test36ParensInReactants2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing grouping parens in reactants2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing grouping parens in reactants2" << std::endl;
 
   {
     std::string smi = "([C:1].[O:2])>>[C:1][O:2]";
@@ -3606,12 +3606,12 @@ void test36ParensInReactants2() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test37ProtectOption() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing use of _protected property on atoms."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing use of _protected property on atoms."
                        << std::endl;
 
   {
@@ -3645,12 +3645,12 @@ void test37ProtectOption() {
 
     delete (rxn);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test38AddRecursiveQueriesToReaction() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing use of adding recursive queries to a reaction." << std::endl;
 
   {
@@ -3778,12 +3778,12 @@ void test38AddRecursiveQueriesToReaction() {
     TEST_ASSERT(labels[1][0].second == "foo");
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test39InnocentChiralityLoss() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing loss of chirality on innocent atoms."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing loss of chirality on innocent atoms."
                        << std::endl;
 
   {
@@ -3920,12 +3920,12 @@ void test39InnocentChiralityLoss() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test40AgentsInSmarts() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of agents in reaction smarts"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of agents in reaction smarts"
                        << std::endl;
   // This was github #222
   {
@@ -3937,12 +3937,12 @@ void test40AgentsInSmarts() {
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test41Github233() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing github 233: chirality not preserved in nonmapped atoms"
       << std::endl;
   {
@@ -3971,7 +3971,7 @@ void test41Github233() {
     smi = MolToSmiles(*prods[0][0], true);
     TEST_ASSERT(smi == "O[C@H](Br)CC(F)Cl");
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test42ReactionSmiles() {
@@ -3981,8 +3981,8 @@ void test42ReactionSmiles() {
   std::vector<MOL_SPTR_VECT> prods;
   std::string smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Daylight parser" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Daylight parser" << std::endl;
 
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:4]";
   rxn = RxnSmartsToChemicalReaction(smi, 0, true);
@@ -4063,12 +4063,12 @@ void test42ReactionSmiles() {
   } catch (ChemicalReactionParserException &) {
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test43Github243() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing github 243: dummy labels copied into products" << std::endl;
   {
     std::string rdbase = getenv("RDBASE");
@@ -4104,12 +4104,12 @@ void test43Github243() {
     delete (rxn);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test44Github290() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github 290: seg fault while parsing rxn"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github 290: seg fault while parsing rxn"
                        << std::endl;
   {
     ChemicalReaction *rxn = new ChemicalReaction();
@@ -4128,12 +4128,12 @@ void test44Github290() {
     TEST_ASSERT(failed);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test45SmilesWriter() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reaction SMILES writer." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reaction SMILES writer." << std::endl;
   unsigned int nWarn, nError;
 
   {
@@ -4239,12 +4239,12 @@ void test45SmilesWriter() {
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test46Agents() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing handling of reaction agents." << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing handling of reaction agents." << std::endl;
   unsigned int nWarn, nError;
 
   {
@@ -4411,12 +4411,12 @@ void test46Agents() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test47TestReactionMoleculeConversion() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing the conversion of a molecule with Rxn role "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing the conversion of a molecule with Rxn role "
                           "to a reaction and vice versa." << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/ChemReactions/testData/";
@@ -4577,12 +4577,12 @@ void test47TestReactionMoleculeConversion() {
     delete rxn;
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test48ParensInProducts1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing grouping parens in products1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing grouping parens in products1" << std::endl;
 
   {
     std::string smi = "[C:1][C:2]>>[C:1].[C:2]";
@@ -4676,12 +4676,12 @@ void test48ParensInProducts1() {
     TEST_ASSERT(!rxn);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test49ParensInProducts2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing grouping parens in products2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing grouping parens in products2" << std::endl;
 
   {
     std::string smi = "[C:1][O:2]>>([C:1].[O:2])";
@@ -4733,12 +4733,12 @@ void test49ParensInProducts2() {
 
     delete rxn;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test50RNXFileParserWithEmptyAgentColumn() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing RNX file parser with empty agent column"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing RNX file parser with empty agent column"
                        << std::endl;
 
   {
@@ -4756,12 +4756,12 @@ void test50RNXFileParserWithEmptyAgentColumn() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test51RNXSmilesFromPatentData() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing RNX from patent data" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing RNX from patent data" << std::endl;
   unsigned int nWarn, nError;
   {
     // product atom-mapping numbers found multiple times, validation should fail
@@ -4813,12 +4813,12 @@ void test51RNXSmilesFromPatentData() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test52RedundantProductMappingNumbersAndRunReactants() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing products redundant atom mapping numbers in run_reactants"
       << std::endl;
   unsigned int nWarn, nError;
@@ -4906,12 +4906,12 @@ void test52RedundantProductMappingNumbersAndRunReactants() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test53ReactionSubstructureMatching() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing reaction substructure matching w/o agents"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing reaction substructure matching w/o agents"
                        << std::endl;
   {
     std::string smi = "c1ccccc1>>c1ccncc1";
@@ -5008,12 +5008,12 @@ void test53ReactionSubstructureMatching() {
     delete query_rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test54RedundantProductMappingNumbersAndRSChirality() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing products with redundant atom mapping numbers and chirality"
       << std::endl;
   unsigned int nWarn, nError;
@@ -5288,12 +5288,12 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test55RedundantProductMappingNumbersAndEZStereochemistry() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing products with redundant atom mapping numbers and chirality"
       << std::endl;
   unsigned int nWarn, nError;
@@ -5434,12 +5434,12 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
 
     delete rxn;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test56TestOldPickleVersion() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing old pickle file with new agent version"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing old pickle file with new agent version"
                        << std::endl;
   unsigned int nWarn, nError;
   {
@@ -5460,12 +5460,12 @@ void test56TestOldPickleVersion() {
 
     delete rxn;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test57IntroductionOfNewChiralCenters() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing introduction of new atoms with chirality"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing introduction of new atoms with chirality"
                        << std::endl;
 
   {  // a reaction that induces new atoms with stereochem
@@ -5488,7 +5488,7 @@ void test57IntroductionOfNewChiralCenters() {
     std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "F[C@](Cl)(I)N[C@H](Cl)Br");
 
     delete rxn;
@@ -5504,7 +5504,7 @@ void test57IntroductionOfNewChiralCenters() {
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
-    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
     rxn->initReactantMatchers();
 
     MOL_SPTR_VECT reacts;
@@ -5517,7 +5517,7 @@ void test57IntroductionOfNewChiralCenters() {
     std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
@@ -5539,7 +5539,7 @@ void test57IntroductionOfNewChiralCenters() {
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
-    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
     rxn->initReactantMatchers();
     updateProductsStereochem(rxn);
 
@@ -5553,20 +5553,20 @@ void test57IntroductionOfNewChiralCenters() {
     std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test58MolFileValueRoundTrip() {
   ChemicalReaction *rxn;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing round trip molFileValue" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing round trip molFileValue" << std::endl;
 
   const char *rxnB =
       "$RXN\n"
@@ -5639,12 +5639,12 @@ void test58MolFileValueRoundTrip() {
   delete rxn;
   delete rxn2;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test59ReactionCanonicalization() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing canonicatization of reactions" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing canonicatization of reactions" << std::endl;
 
   {  // with mapping numbers
     std::string smi =
@@ -5699,9 +5699,9 @@ void test59ReactionCanonicalization() {
 int main() {
   RDLog::InitLogs();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Chemical Reactions \n";
 
 #if 1
   test1Basics();
@@ -5770,7 +5770,7 @@ int main() {
 
   test59ReactionCanonicalization();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   return (0);
 }

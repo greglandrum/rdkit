@@ -77,7 +77,7 @@ std::string _combineChildSmarts(std::string cs1, std::string cs2,
 
 template <typename T>
 void describeQuery(const T *query, std::string leader = "\t") {
-  // BOOST_LOG(rdInfoLog) << leader << query->getDescription() << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << leader << query->getDescription() << std::endl;
   typename T::CHILD_VECT_CI iter;
   for (iter = query->beginChildren(); iter != query->endChildren(); ++iter) {
     describeQuery(iter->get(), leader + "\t");
@@ -215,7 +215,7 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "$(*=,:,#*)";
     needParen = true;
   } else {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG_TRIVIAL(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip
         << ". Ignoring it." << std::endl;
     res << "*";
@@ -609,10 +609,10 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   std::string res;
   bool needParen = false;
 
-  // BOOST_LOG(rdInfoLog)<<"Atom: " <<qatom->getIdx()<<std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog)<<"Atom: " <<qatom->getIdx()<<std::endl;
   if (!qatom->hasQuery()) {
     res = getNonQueryAtomSmarts(qatom);
-    // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
+    // BOOST_LOG_TRIVIAL(rdInfoLog)<<"\tno query:" <<res;
     return res;
   }
   QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
@@ -662,12 +662,12 @@ std::string GetBondSmarts(const QueryBond *bond) {
   PRECONDITION(bond, "bad bond");
   std::string res = "";
 
-  // BOOST_LOG(rdInfoLog)<<"bond: " <<bond->getIdx()<<std::endl;;
+  // BOOST_LOG_TRIVIAL(rdInfoLog)<<"bond: " <<bond->getIdx()<<std::endl;;
   // it is possible that we are regular single bond and we don't need to write
   // anything
   if (!bond->hasQuery()) {
     res = getNonQueryBondSmarts(bond);
-    // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
+    // BOOST_LOG_TRIVIAL(rdInfoLog)<<"\tno query:" <<res;
     return res;
   }
   // describeQuery(bond->getQuery());

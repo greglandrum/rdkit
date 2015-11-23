@@ -59,7 +59,7 @@ ChemicalReaction::ChemicalReaction(const std::string &pickle) {
 void ChemicalReaction::initReactantMatchers() {
   unsigned int nWarnings, nErrors;
   if (!this->validate(nWarnings, nErrors)) {
-    BOOST_LOG(rdErrorLog) << "initialization failed\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "initialization failed\n";
     this->df_needsInit = true;
   } else {
     this->df_needsInit = false;
@@ -74,7 +74,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
 
   if (!this->getNumReactantTemplates()) {
     if (!silent) {
-      BOOST_LOG(rdErrorLog) << "reaction has no reactants\n";
+      BOOST_LOG_TRIVIAL(rdErrorLog) << "reaction has no reactants\n";
     }
     numErrors++;
     res = false;
@@ -82,7 +82,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
 
   if (!this->getNumProductTemplates()) {
     if (!silent) {
-      BOOST_LOG(rdErrorLog) << "reaction has no products\n";
+      BOOST_LOG_TRIVIAL(rdErrorLog) << "reaction has no products\n";
     }
     numErrors++;
     res = false;
@@ -103,7 +103,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
         if (std::find(mapNumbersSeen.begin(), mapNumbersSeen.end(), mapNum) !=
             mapNumbersSeen.end()) {
           if (!silent) {
-            BOOST_LOG(rdErrorLog) << "reactant atom-mapping number " << mapNum
+            BOOST_LOG_TRIVIAL(rdErrorLog) << "reactant atom-mapping number " << mapNum
                                   << " found multiple times.\n";
           }
           numErrors++;
@@ -116,7 +116,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
     }
     if (!thisMolMapped) {
       if (!silent) {
-        BOOST_LOG(rdWarningLog) << "reactant " << molIdx
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "reactant " << molIdx
                                 << " has no mapped atoms.\n";
       }
       numWarnings++;
@@ -153,7 +153,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
                       mapNum) != productNumbersSeen.end();
         if (seenAlready) {
           if (!silent) {
-            BOOST_LOG(rdWarningLog) << "product atom-mapping number " << mapNum
+            BOOST_LOG_TRIVIAL(rdWarningLog) << "product atom-mapping number " << mapNum
                                     << " found multiple times.\n";
           }
           numWarnings++;
@@ -175,7 +175,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
         if (ivIt == mapNumbersSeen.end()) {
           if (!seenAlready) {
             if (!silent) {
-              BOOST_LOG(rdWarningLog) << "product atom-mapping number "
+              BOOST_LOG_TRIVIAL(rdWarningLog) << "product atom-mapping number "
                                       << mapNum << " not found in reactants.\n";
             }
             numWarnings++;
@@ -211,7 +211,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           if (query->getDescription() == "AtomFormalCharge") {
             if ((*atomIt)->hasProp(common_properties::_QueryFormalCharge)) {
               if (!silent) {
-                BOOST_LOG(rdWarningLog)
+                BOOST_LOG_TRIVIAL(rdWarningLog)
                     << "atom " << (*atomIt)->getIdx() << " in product "
                     << molIdx << " has multiple charge specifications.\n";
               }
@@ -223,7 +223,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           } else if (query->getDescription() == "AtomHCount") {
             if ((*atomIt)->hasProp(common_properties::_QueryHCount)) {
               if (!silent) {
-                BOOST_LOG(rdWarningLog)
+                BOOST_LOG_TRIVIAL(rdWarningLog)
                     << "atom " << (*atomIt)->getIdx() << " in product "
                     << molIdx << " has multiple H count specifications.\n";
               }
@@ -235,7 +235,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           } else if (query->getDescription() == "AtomMass") {
             if ((*atomIt)->hasProp(common_properties::_QueryMass)) {
               if (!silent) {
-                BOOST_LOG(rdWarningLog)
+                BOOST_LOG_TRIVIAL(rdWarningLog)
                     << "atom " << (*atomIt)->getIdx() << " in product "
                     << molIdx << " has multiple mass specifications.\n";
               }
@@ -248,7 +248,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           } else if (query->getDescription() == "AtomIsotope") {
             if ((*atomIt)->hasProp(common_properties::_QueryIsotope)) {
               if (!silent) {
-                BOOST_LOG(rdWarningLog)
+                BOOST_LOG_TRIVIAL(rdWarningLog)
                     << "atom " << (*atomIt)->getIdx() << " in product "
                     << molIdx << " has multiple isotope specifications.\n";
               }
@@ -263,7 +263,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
     }
     if (!thisMolMapped) {
       if (!silent) {
-        BOOST_LOG(rdWarningLog) << "product " << molIdx
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "product " << molIdx
                                 << " has no mapped atoms.\n";
       }
       numWarnings++;
@@ -281,7 +281,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
         ostr << *ivIt << " ";
       }
       ostr << "\n";
-      BOOST_LOG(rdWarningLog) << ostr.str();
+      BOOST_LOG_TRIVIAL(rdWarningLog) << ostr.str();
     }
     numWarnings++;
   }

@@ -36,8 +36,8 @@ using namespace RDKit;
 using namespace RDKit::Descriptors;
 
 void test1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Crippen parameter acquisition."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Crippen parameter acquisition."
                         << std::endl;
 
   const CrippenParamCollection *params = CrippenParamCollection::getParams();
@@ -48,12 +48,12 @@ void test1() {
   TEST_ASSERT(p.label == "C1");
   TEST_ASSERT(p.smarts == "[CH4]");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Crippen calculation." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Crippen calculation." << std::endl;
 
   ROMol *mol;
   double logp, mr;
@@ -126,12 +126,12 @@ void test2() {
   TEST_ASSERT(feq(mr, 21.9718));
   delete mol;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue262() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Issue262: problems with Crippen calculation from pickles."
       << std::endl;
 
@@ -164,12 +164,12 @@ void testIssue262() {
   delete mol2;
   delete mol3;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test AMW calculation." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test AMW calculation." << std::endl;
 
   ROMol *mol, *mol2;
   double amw;
@@ -201,12 +201,12 @@ void test3() {
   amw = calcAMW(*mol);
   TEST_ASSERT(feq(amw, 17.0, .1));
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test3a() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Exact MW calculation." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Exact MW calculation." << std::endl;
 
   ROMol *mol, *mol2;
   double mw;
@@ -265,12 +265,12 @@ void test3a() {
   TEST_ASSERT(feq(mw, 35.9683 + 1.0078, .001));
   delete mol;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testLabute() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Labute ASA descriptors." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Labute ASA descriptors." << std::endl;
   ROMol *mol;
   double asa;
 
@@ -293,12 +293,12 @@ void testLabute() {
   TEST_ASSERT(feq(asa, 73.0198, .0001));
 
   delete mol;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testTPSA() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test TPSA descriptors." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test TPSA descriptors." << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.tpsa.csv";
@@ -337,12 +337,12 @@ void testTPSA() {
     delete mol2;
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testLipinski1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Lipinski parameters." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Lipinski parameters." << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
@@ -427,12 +427,12 @@ void testLipinski1() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testVSADescriptors() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test VSA descriptors." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test VSA descriptors." << std::endl;
 
   {
     ROMol *mol;
@@ -574,12 +574,12 @@ void testVSADescriptors() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMolFormula() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test molecular formula calculation."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test molecular formula calculation."
                         << std::endl;
 
   ROMol *mol, *mol2;
@@ -701,12 +701,12 @@ void testMolFormula() {
   TEST_ASSERT(formula == "C2[13C]2H10[2H]BO2");
   delete mol;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue3415534() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Issue 3415534." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Issue 3415534." << std::endl;
 
   {
     ROMol *mol = SmilesToMol("CN");
@@ -750,12 +750,12 @@ void testIssue3415534() {
     TEST_ASSERT(nHBD == 0);
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue3433771() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Issue3433771: Bad definition for Crippen atom type O11."
       << std::endl;
 
@@ -773,7 +773,7 @@ void testIssue3433771() {
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 1.806, .001));
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -808,8 +808,8 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 #include <boost/thread.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 void testMultiThread() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test multithreading" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
@@ -839,14 +839,14 @@ void testMultiThread() {
 
   for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #else
 void testMultiThread() {}
 #endif
 void testCrippenContribs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Crippen atom type calculations."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Crippen atom type calculations."
                         << std::endl;
 
   {
@@ -873,12 +873,12 @@ void testCrippenContribs() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue252() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Issue252: Bad definitions for Crippen atom types."
       << std::endl;
 
@@ -1062,12 +1062,12 @@ void testIssue252() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testChiVs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of ChiVs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of ChiVs." << std::endl;
 
   {
     std::string sdata[] = {"CCCCCC",     "CCC(C)CC", "CC(C)CCC", "CC(C)C(C)C",
@@ -1165,12 +1165,12 @@ void testChiVs() {
     }
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testChiNs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of ChiNs." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of ChiNs." << std::endl;
 
   {
     std::string sdata[] = {"CCCCCC",     "CCC(C)CC", "CC(C)CCC", "CC(C)C(C)C",
@@ -1268,12 +1268,12 @@ void testChiNs() {
     }
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testHallKierAlpha() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of HallKierAlpha."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of HallKierAlpha."
                         << std::endl;
 
   {
@@ -1296,12 +1296,12 @@ void testHallKierAlpha() {
       delete mol;
     }
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testKappa1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa1." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of Kappa1." << std::endl;
 
   {
     std::string sdata[] = {"C12CC2C3CC13", "C1CCC12CC2", "C1CCCCC1", "CCCCCC",
@@ -1319,12 +1319,12 @@ void testKappa1() {
       delete mol;
     }
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testKappa2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa2." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of Kappa2." << std::endl;
 
   {
     std::string sdata[] = {
@@ -1349,11 +1349,11 @@ void testKappa2() {
       delete mol;
     }
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 void testKappa3() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa3." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test calculation of Kappa3." << std::endl;
 
   {
     std::string sdata[] = {
@@ -1373,12 +1373,12 @@ void testKappa3() {
       delete mol;
     }
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testRingDescriptors() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test ring descriptors" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test ring descriptors" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Code/GraphMol/Descriptors/test_data/aid466.trunc.sdf";
@@ -1413,12 +1413,12 @@ void testRingDescriptors() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMiscCountDescriptors() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test other count descriptors." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test other count descriptors." << std::endl;
 
   {
     ROMol *mol;
@@ -1445,12 +1445,12 @@ void testMiscCountDescriptors() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMQNs() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test MQN" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test MQN" << std::endl;
 
   {
     unsigned int tgt[42] = {98, 0,  4,  0, 0,  1,  0,  3,  9, 5, 4, 124, 29, 3,
@@ -1494,12 +1494,12 @@ void testMQNs() {
     TEST_ASSERT(v[11] == 0);
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue56() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
 
   {
     ROMol *mol;
@@ -1542,12 +1542,12 @@ void testGitHubIssue56() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue92() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Github92: Bad Crippen atom type for pyrrole H." << std::endl;
 
   {
@@ -1562,12 +1562,12 @@ void testGitHubIssue92() {
     TEST_ASSERT(feq(logp[5], 0.2142, .001));
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue463() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test Github362: order dependence  in Kier-Hall descriptors."
       << std::endl;
 
@@ -1653,12 +1653,12 @@ void testGitHubIssue463() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testSpiroAndBridgeheads() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Test calculation of spiro and bridgehead counts." << std::endl;
 
   {
@@ -1726,7 +1726,7 @@ void testSpiroAndBridgeheads() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

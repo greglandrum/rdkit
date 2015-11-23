@@ -21,7 +21,7 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "testing basics" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basics" << std::endl;
   {
     std::string smi = "c1ccccc1CCO";
     ROMol *m1 = SmilesToMol(smi);
@@ -125,11 +125,11 @@ void test1() {
     delete m1;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "testing basics2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basics2" << std::endl;
   {
     std::string smi1 = "c1ccccc1CCO";
     std::string smi2 = "C1=CC=CCC1CCO";
@@ -167,7 +167,7 @@ void test2() {
     delete m2;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

@@ -22,8 +22,8 @@
 using namespace RDKit;
 
 void testGitHubIssue485() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 485: Gasteiger charge "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub issue 485: Gasteiger charge "
                            "calculation fails with hexavalent sulfur"
                         << std::endl;
 
@@ -47,7 +47,7 @@ void testGitHubIssue485() {
 
     delete mol;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

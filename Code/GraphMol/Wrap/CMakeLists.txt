@@ -1,27 +1,27 @@
-rdkit_python_extension(rdchem 
+rdkit_python_extension(rdchem
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
                        Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
                        ResonanceMolSupplier.cpp
-                       DEST Chem 
-                       LINK_LIBRARIES 
+                       DEST Chem
+                       LINK_LIBRARIES
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdmolops
-                       rdmolops.cpp MolOps.cpp 
-                       DEST Chem 
-                       LINK_LIBRARIES 
+                       rdmolops.cpp MolOps.cpp
+                       DEST Chem
+                       LINK_LIBRARIES
                        MolDraw2D Depictor FileParsers SubstructMatch Fingerprints ChemTransforms
                        Catalogs Subgraphs SmilesParse GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 rdkit_python_extension(rdqueries
                        rdqueries.cpp Queries.cpp
-                       DEST Chem 
-                       LINK_LIBRARIES 
+                       DEST Chem
+                       LINK_LIBRARIES
                        GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
 find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
-set(rdmolfiles_sources rdmolfiles.cpp 
+set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
@@ -38,7 +38,7 @@ endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 rdkit_python_extension(rdmolfiles
                        ${rdmolfiles_sources}
-                       DEST Chem 
+                       DEST Chem
                        LINK_LIBRARIES SmilesParse FileParsers GraphMol
                                       RDGeometryLib RDGeneral RDBoost)
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)

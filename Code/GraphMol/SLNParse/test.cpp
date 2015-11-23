@@ -46,8 +46,8 @@ void test1() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test1 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test1 " << std::endl;
 
   sln = "CH4";
   mol = RDKit::SLNToMol(sln);
@@ -142,15 +142,15 @@ void test1() {
   TEST_ASSERT(mol->getNumAtoms() == 7);
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test2() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test2: bond orders " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test2: bond orders " << std::endl;
 
   sln = "CH3CH3";
   mol = RDKit::SLNToMol(sln);
@@ -222,7 +222,7 @@ void test2() {
               RDKit::Bond::AROMATIC);
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test3() {
@@ -230,8 +230,8 @@ void test3() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test3: atom properties " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test3: atom properties " << std::endl;
 
   sln = "C[-]H3";
   mol = RDKit::SLNToMol(sln);
@@ -335,15 +335,15 @@ void test3() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test4() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test4: hydrogen handling " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test4: hydrogen handling " << std::endl;
 
   sln = "CH4";
   mol = RDKit::SLNToMol(sln);
@@ -363,7 +363,7 @@ void test4() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test5() {
@@ -372,8 +372,8 @@ void test5() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test5: basic queries " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test5: basic queries " << std::endl;
 
 #if 1
   sln = "C[charge=+1]";
@@ -583,7 +583,7 @@ void test5() {
   delete patt;
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test6() {
@@ -592,8 +592,8 @@ void test6() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test6: ring queries " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test6: ring queries " << std::endl;
 
   sln = "C[rbc=2]";
   patt = RDKit::SLNQueryToMol(sln);
@@ -735,7 +735,7 @@ void test6() {
   TEST_ASSERT(!RDKit::SubstructMatch(*mol, *patt, mV));
 
   delete patt;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test7() {
@@ -744,8 +744,8 @@ void test7() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test7: qualified queries " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test7: qualified queries " << std::endl;
 
   sln = "C[charge=+1]";
   patt = RDKit::SLNQueryToMol(sln);
@@ -892,7 +892,7 @@ void test7() {
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 4);
 
   delete patt;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test8() {
@@ -901,8 +901,8 @@ void test8() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test8: more complex atom properties " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test8: more complex atom properties " << std::endl;
 
   sln = "Any";
   patt = RDKit::SLNQueryToMol(sln);
@@ -1055,7 +1055,7 @@ void test8() {
 
   delete patt;
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test9() {
@@ -1064,8 +1064,8 @@ void test9() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test9: recursive SLNs " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test9: recursive SLNs " << std::endl;
 
   sln = "Any[is=Cl,Br,I]";
   patt = RDKit::SLNQueryToMol(sln);
@@ -1172,7 +1172,7 @@ void test9() {
 
   delete patt;
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test10() {
@@ -1181,8 +1181,8 @@ void test10() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test10: nested recursive SLNs " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test10: nested recursive SLNs " << std::endl;
 
   // do recursions in the 'is':
   sln = "Any[is=C[is=Any=O],O]";
@@ -1251,7 +1251,7 @@ void test10() {
 
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test11() {
@@ -1260,8 +1260,8 @@ void test11() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test11: chiral SLNs " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test11: chiral SLNs " << std::endl;
 
   sln = "CH(Cl)(F)Br";
   mol = RDKit::SLNToMol(sln);
@@ -1337,7 +1337,7 @@ void test11() {
   // TEST_ASSERT(smi=="F[C@H](Cl)Br");
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test12() {
@@ -1345,8 +1345,8 @@ void test12() {
   std::vector<RDKit::MatchVectType> mV;
   std::string sln, smi;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test12: bond queries and properties " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test12: bond queries and properties " << std::endl;
 
   sln = "Any-Any";
   patt = RDKit::SLNQueryToMol(sln);
@@ -1460,15 +1460,15 @@ void test12() {
 
   delete mol;
   delete patt;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test13() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test13: ring closure details " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test13: ring closure details " << std::endl;
 
   sln = "C[1]H2CH2CH2CH2CH2CH2@1";
   mol = RDKit::SLNToMol(sln);
@@ -1606,15 +1606,15 @@ void test13() {
               RDKit::Bond::SINGLE);
 
   delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test14() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test14: error catching " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test14: error catching " << std::endl;
 
   sln = "CH2(C@1H2)CH2(CH2CH2C[1]H2)";
   mol = RDKit::SLNToMol(sln);
@@ -1624,15 +1624,15 @@ void test14() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test15() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test15: CTAB properties " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test15: CTAB properties " << std::endl;
 
   {
     sln = "CH4<blah>";
@@ -1710,15 +1710,15 @@ void test15() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test16() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test16: simple macro atoms " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test16: simple macro atoms " << std::endl;
 
   {
     sln = "CH3ZCH3{Z:O}";
@@ -1738,12 +1738,12 @@ void test16() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue278() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Test issue278: handling of 'not' and 'is' queries on Any"
       << std::endl;
 
@@ -1779,11 +1779,11 @@ void testIssue278() {
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 void testIssue277() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test issue277: parse error with & " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test issue277: parse error with & " << std::endl;
 
   {
     std::string sln = "Any[NOT=C,IS=O]";
@@ -1910,15 +1910,15 @@ void testIssue277() {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test17() {
   RDKit::RWMol *mol;
   std::string sln;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test1 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test1 " << std::endl;
 
   // test whitespace at end
   sln = "CH4 \t";

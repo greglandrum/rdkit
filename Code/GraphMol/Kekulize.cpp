@@ -108,7 +108,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
           std::ostringstream errout;
           errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
           std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
           throw MolSanitizeException(msg);
         }
         ++beg;
@@ -462,7 +462,7 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     std::ostringstream errout;
     errout << "Can't kekulize mol " << std::endl;
     std::string msg = errout.str();
-    BOOST_LOG(rdErrorLog) << msg << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
     throw MolSanitizeException(msg);
   }
 }
@@ -555,7 +555,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
           std::ostringstream errout;
           errout << "non-ring atom " << (*ai)->getIdx() << " marked aromatic";
           std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
           throw MolSanitizeException(msg);
         }
         (*ai)->setIsAromatic(false);
@@ -582,7 +582,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
       errout << "Kekulization somehow screwed up valence on " << (*ai)->getIdx()
              << ": " << val << "!=" << valences[i] << std::endl;
       std::string msg = errout.str();
-      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog) << msg << std::endl;
       throw MolSanitizeException(msg);
     }
     i++;

@@ -21,8 +21,8 @@ using namespace RDKit::MolHash;
 namespace RDKit {
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test1 DEFAULT ARGUMENTS"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test1 DEFAULT ARGUMENTS"
                        << std::endl;
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
   const char* smi[] = {
@@ -105,12 +105,12 @@ void test1() {
     //            res0 == res3;
     //            TEST_ASSERT(passed);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test2 CHIRALITY == ATOM"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test2 CHIRALITY == ATOM"
                        << std::endl;
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
   const char* smi[] = {
@@ -143,12 +143,12 @@ void test2() {
     for (size_t j = 0; j < HashNonChiral.size(); j++)
       if (i != j && HashNonChiral[i] != HashNonChiral[j]) passed = false;
   TEST_ASSERT(passed);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test21() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test21 CHIRALITY == BOND"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test21 CHIRALITY == BOND"
                        << std::endl;
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
   const char* smi[] = {
@@ -176,12 +176,12 @@ void test21() {
     for (size_t j = 0; j < HashNonChiral.size(); j++)
       if (i != j && HashNonChiral[i] != HashNonChiral[j]) passed = false;
   TEST_ASSERT(passed);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test3 CHIRALITY DIFF" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test3 CHIRALITY DIFF" << std::endl;
   const char* smi[] = {
       // different chiral hash
       "C[C@H](F)Cl", "C[C@@H](F)Cl", "CC(F)Cl", "[13CH3]C(F)Cl",
@@ -211,12 +211,12 @@ void test3() {
     for (size_t j = 0; j < HashChiral.size(); j++)
       if (i != j && HashChiral[i] == HashChiral[j]) passed = false;
   TEST_ASSERT(passed);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test3a() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test3a CHIRALITY EQUAL" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test3a CHIRALITY EQUAL" << std::endl;
   {
     const char* smi[] = {
         "C[C@H](F)Cl", "C[C@@H](Cl)F",
@@ -303,12 +303,12 @@ void test3a() {
     TEST_ASSERT(hash1 != hash2);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test4() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test4 STRING" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test4 STRING" << std::endl;
   const char* smi[] = {
       // different chiral hash and equal non-chiral hash
       "C[C@H](F)Cl", "C[C@@H](F)Cl", "CC(F)Cl", "[13CH3]C(F)Cl",
@@ -322,12 +322,12 @@ void test4() {
               << std::endl;
   }
   TEST_ASSERT(true);  // there is no any exseption
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test5() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MolHash test5 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing MolHash test5 " << std::endl;
   const char* smi[] = {// different chiral hash and equal non-chiral hash
                        // groups of 3
                        "C[CH](F)Cl", "C[C@H](F)Cl", "C[C@@H](F)Cl",
@@ -358,31 +358,31 @@ void test5() {
     //   TEST_ASSERT(hash1!=hash2);
     // }
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void doUnitTest() {
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test1();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test2();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test21();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test3();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test3a();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test4();
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   test5();
 }

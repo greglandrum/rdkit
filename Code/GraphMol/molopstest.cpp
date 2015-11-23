@@ -140,7 +140,7 @@ void test3() {
     TEST_ASSERT(!m->getRingInfo()->isBondInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numBondRings(i) == 1);
   }
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C1CCC1";
@@ -159,7 +159,7 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(0, 4));
   TEST_ASSERT(m->getRingInfo()->numBondRings(0) == 1);
 
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C1CCCCCC1";
@@ -177,7 +177,7 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(0, 7));
   TEST_ASSERT(m->getRingInfo()->numBondRings(0) == 1);
 
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C1C(CCC)CC(C(C)CCC(CC))CCC1";
@@ -191,7 +191,7 @@ void test3() {
       m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "CC1CCC1";
@@ -206,7 +206,7 @@ void test3() {
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
   TEST_ASSERT(
       m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "CC1C(C2)CCC2C1";
@@ -222,7 +222,7 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(1) == 1);
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(2, 5));
   TEST_ASSERT(m->getRingInfo()->numAtomRings(2) == 2);
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
@@ -233,25 +233,25 @@ void test3() {
   m = SmilesToMol(smi, 0, 0);
   int bfs = MolOps::findSSSR(*m);
   TEST_ASSERT(bfs == 5);
-  BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "BFSR: " << bfs << "\n";
   VECT_INT_VECT bfrs;
   bfrs.resize(0);
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   TEST_ASSERT(bfs == 6);
-  BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "BFSR: " << bfs << "\n";
   // VECT_INT_VECT_I ri;
   // for (ri == bfrs.begin(); ri != bfrs.end(); ri++) {
   for (unsigned int ri = 0; ri < bfrs.size(); ri++) {
     INT_VECT_I mi;
     INT_VECT bring = bfrs[ri];
-    BOOST_LOG(rdInfoLog) << "( ";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "( ";
     // for (mi = (*ri).begin(); mi != (*ri).end(); mi++) {
     for (mi = bring.begin(); mi != bring.end(); mi++) {
-      BOOST_LOG(rdInfoLog) << " " << (*mi);
+      BOOST_LOG_TRIVIAL(rdInfoLog) << " " << (*mi);
     }
-    BOOST_LOG(rdInfoLog) << ")\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << ")\n";
   }
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
 
   delete m;
 
@@ -262,11 +262,11 @@ void test3() {
   TEST_ASSERT(count == 2);
   TEST_ASSERT(sssr[0].size() == 4);
   TEST_ASSERT(sssr[1].size() == 5);
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C12=C3C=CC=C1C=CC2=CC=C3";
-  BOOST_LOG(rdInfoLog) << "\n" << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\n" << smi << "\n";
   m = SmilesToMol(smi, 0, 0);
   TEST_ASSERT(m);
   count = MolOps::findSSSR(*m, sssr);
@@ -274,7 +274,7 @@ void test3() {
   TEST_ASSERT(sssr[0].size() == 6);
   TEST_ASSERT(sssr[1].size() == 5);
   TEST_ASSERT(sssr[2].size() == 6);
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   smi = "C1(O)C(O)C(O)C1O";
@@ -291,7 +291,7 @@ void test3() {
       TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 0);
     }
   }
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << "\n";
   delete m;
 
   // this molecule is from issue 134
@@ -400,7 +400,7 @@ void test5() {
   smi = "C1C4C5C3C(=O)C2C5C1C2C34";
   m = SmilesToMol(smi, 0, 0);
   count = MolOps::findSSSR(*m, sssr);
-  BOOST_LOG(rdInfoLog) << "Count: " << count << "\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Count: " << count << "\n";
   CHECK_INVARIANT(count == 5, "");
 
   smi = "C1C(C2)CCC2C1";
@@ -502,7 +502,7 @@ void test7() {
 }
 
 void test8() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Hydrogen Ops"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Hydrogen Ops"
                        << std::endl;
   ROMol *m, *m2, *m3;
   INT_VECT tree;
@@ -512,7 +512,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 3, "");
 
-  // BOOST_LOG(rdInfoLog) << "1" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "1" << std::endl;
   m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
 
@@ -522,31 +522,31 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 4, "");
 
-  // BOOST_LOG(rdInfoLog) << "2" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "2" << std::endl;
   delete m2;
   m2 = MolOps::addHs(*m, true);
   CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
 
-  // BOOST_LOG(rdInfoLog) << "3" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "3" << std::endl;
   m3 = MolOps::addHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 8, "");
 
-  // BOOST_LOG(rdInfoLog) << "4" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "4" << std::endl;
   delete m2;
   m2 = MolOps::addHs(*m, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
   delete m3;
   // remove all
-  // BOOST_LOG(rdInfoLog) << "5" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "5" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
   delete m3;
   // remove only implicit
-  // BOOST_LOG(rdInfoLog) << "6" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "6" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
 
-  // BOOST_LOG(rdInfoLog) << "7" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "7" << std::endl;
   // remove all after removing only implicit
   MolOps::removeHs(static_cast<RWMol &>(*m3), false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
@@ -560,24 +560,24 @@ void test8() {
   delete m2;
   m2 = MolOps::addHs(*m, true);
   CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
-  // BOOST_LOG(rdInfoLog) << "8" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "8" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
   delete m3;
-  // BOOST_LOG(rdInfoLog) << "9" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "9" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
 
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "10" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "10" << std::endl;
   m2 = MolOps::addHs(*m, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
   delete m3;
-  // BOOST_LOG(rdInfoLog) << "11" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "11" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
   delete m3;
-  // BOOST_LOG(rdInfoLog) << "12" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "12" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
 
@@ -590,7 +590,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 24, "");
   delete m3;
-  // BOOST_LOG(rdInfoLog) << "13" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "13" << std::endl;
   m3 = MolOps::removeHs(*m, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 24, "");
 
@@ -601,7 +601,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "14" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "14" << std::endl;
   m2 = MolOps::removeHs(*m, 0, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 1, "");
   delete m;
@@ -616,7 +616,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 2, "");
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "15" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "15" << std::endl;
   m2 = MolOps::removeHs(*m, 0, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 2, "");
 
@@ -632,7 +632,7 @@ void test8() {
   TEST_ASSERT(sma == "C");
 
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "16" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "16" << std::endl;
   m2 = MolOps::addHs(*m);
   TEST_ASSERT(m2->getNumAtoms() == 8);
   sma = SmartsWrite::GetAtomSmarts(
@@ -640,12 +640,12 @@ void test8() {
   TEST_ASSERT(sma == "C");
 
   delete m;
-  // BOOST_LOG(rdInfoLog) << "17" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "17" << std::endl;
   m = MolOps::mergeQueryHs(*m2);
   TEST_ASSERT(m->getNumAtoms() == 2);
   sma = SmartsWrite::GetAtomSmarts(
       static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
-  // BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "sma: " << sma<<std::endl;
   // this was sf.net issue 3415204:
   TEST_ASSERT(sma == "[C&!H0&!H1&!H2]");
 
@@ -656,11 +656,11 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "18" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "18" << std::endl;
   m2 = MolOps::addHs(*m, false, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 10, "");
   delete m;
-  // BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "19" << std::endl;
   m = MolOps::removeHs(*m2);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
@@ -672,7 +672,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "19" << std::endl;
   m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
@@ -683,7 +683,7 @@ void test8() {
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 6, "");
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "19" << std::endl;
   m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 6, "");
@@ -710,7 +710,7 @@ void test8() {
   TEST_ASSERT(m2->getNumAtoms() == 2);
   sma = SmartsWrite::GetAtomSmarts(
       static_cast<const QueryAtom *>(m2->getAtomWithIdx(1)));
-  // BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "sma: " << sma<<std::endl;
   TEST_ASSERT(sma == "[#8&!H0]");
   delete m;
   delete m2;
@@ -723,16 +723,16 @@ void test8() {
   TEST_ASSERT(m2->getNumAtoms() == 2);
   sma = SmartsWrite::GetAtomSmarts(
       static_cast<const QueryAtom *>(m2->getAtomWithIdx(1)));
-  // BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "sma: " << sma<<std::endl;
   TEST_ASSERT(sma == "[#7&!H0&!H1]");
   delete m;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test9() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Distance Matrix Operations"
       << std::endl;
   ROMol *m;
@@ -790,11 +790,11 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test10() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Atom Ranking"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Atom Ranking"
                        << std::endl;
   ROMol *m;
   std::string smi = "FC(Cl)(Br)C";
@@ -833,11 +833,11 @@ void test10() {
     m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank, cip);
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test11() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing CIP chirality"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing CIP chirality"
                        << std::endl;
   ROMol *m;
   std::string cip;
@@ -986,9 +986,9 @@ void test11() {
   delete m;
   smi = "CC[C@H](C=C)C";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1000,9 +1000,9 @@ void test11() {
   delete m;
   smi = "OC[C@H](C=C)C";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1014,9 +1014,9 @@ void test11() {
   delete m;
   smi = "CC[C@H](C=C)O";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1028,9 +1028,9 @@ void test11() {
   delete m;
   smi = "OC[C@H](C=C)O";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1042,9 +1042,9 @@ void test11() {
   delete m;
   smi = "C[C@H]1C[C@H](C=C1)N";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1060,9 +1060,9 @@ void test11() {
   delete m;
   smi = "OC[C@H]1C[C@@H](N2C=NC3=C2N=C(N)N=C3NC4CC4)C=C1";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1077,9 +1077,9 @@ void test11() {
   delete m;
   smi = "N[C@H]1O[C@@H](SC1)CO";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1094,9 +1094,9 @@ void test11() {
   delete m;
   smi = "C1(N([C@H]2O[C@H](CO)SC2)C=CC(N)=N1)=O";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1111,9 +1111,9 @@ void test11() {
   // this is Issue 152:
   smi = "C1[C@H](N)C[C@H](C)C=1";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1130,9 +1130,9 @@ void test11() {
   // these are related to Issue 397:
   smi = "C(=O)[C@@H](C)N";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1144,9 +1144,9 @@ void test11() {
 
   smi = "C(=O)[C@@H](CO)N";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1158,9 +1158,9 @@ void test11() {
 
   smi = "C(O)[C@@H](C)N";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1178,9 +1178,9 @@ void test11() {
   // (see the note in Chirality.cpp:buildCIPInvariants())
   smi = "[H][C@@](O)(C=C)C(C)CC";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1192,9 +1192,9 @@ void test11() {
 
   smi = "[H][C@@](O)(C=C)C(C)CO";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1206,9 +1206,9 @@ void test11() {
 
   smi = "[H][C@@]12C[C@@](NC1)(OC2)[H]";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1223,9 +1223,9 @@ void test11() {
 
   smi = "[H][C@@]12C[C@@](C=C1)(CC2)[H]";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1240,9 +1240,9 @@ void test11() {
 
   smi = "[H][C@@]12O[C@@](CC1)(C3C2C(NC3=O)=O)[H]";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1257,9 +1257,9 @@ void test11() {
 
   smi = "[H][C@@]12O[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
 #ifdef VERBOSE_CANON
-  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------"
+  BOOST_LOG_TRIVIAL(rdDebugLog) << " ----------------- ------------- ----------------"
                         << std::endl;
-  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
   delete m;
   m = SmilesToMol(smi);
@@ -1274,11 +1274,11 @@ void test11() {
 
   // -----------------------------------------------
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void test12() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing double bond stereochemistry"
       << std::endl;
   ROMol *m;
@@ -1392,14 +1392,14 @@ void test12() {
   delete m;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue183() {
   // ----------------------
   // test "unsetting" of redundant bond directions:
 
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 183\n"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 183\n"
                        << std::endl;
   RWMol *m, *m2;
   std::string smi;
@@ -1414,11 +1414,11 @@ void testIssue183() {
 
   m2->debugMol(std::cerr);
   refSmi = MolToSmiles(*m2, 1);
-  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "ref: " << refSmi << std::endl;
   m = SmilesToMol(refSmi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m, 1);
-  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "smi: " << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
 
   int nEs = 0, nZs = 0, nDbl = 0;
@@ -1432,18 +1432,18 @@ void testIssue183() {
         nZs++;
     }
   }
-  // BOOST_LOG(rdInfoLog) << ">> " << nDbl << " " << nEs << " " << nZs <<
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << ">> " << nDbl << " " << nEs << " " << nZs <<
   // std::endl;
   TEST_ASSERT(nDbl == 3);
   TEST_ASSERT(nEs == 2);
   TEST_ASSERT(nZs == 1);
   delete m;
   delete m2;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue188() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Issue 188: bad CIP rankings"
       << std::endl;
   ROMol *m;
@@ -1482,11 +1482,11 @@ void testIssue188() {
   TEST_ASSERT(cip3 > cip1);
   TEST_ASSERT(cip2 > cip3);
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue189() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 189: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 189: "
                           "BondDirs not getting properly cleared." << std::endl;
   ROMol *m;
   std::string smi, refSmi;
@@ -1537,11 +1537,11 @@ void testIssue189() {
   TEST_ASSERT(smi == refSmi);
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue190() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 190: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 190: "
                           "BondDirs incorrectly cleared." << std::endl;
   ROMol *m;
   std::string smi, refSmi;
@@ -1659,11 +1659,11 @@ void testIssue190() {
   TEST_ASSERT(smi == refSmi);
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testShortestPath() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing shortest path "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing shortest path "
                           "code. This should finish very quickly." << std::endl;
   {
     std::string smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
@@ -1708,11 +1708,11 @@ void testShortestPath() {
     CHECK_INVARIANT(path.size() == 0, "");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue210() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 210"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 210"
                        << std::endl;
   ROMol *m, *m2;
 
@@ -1726,13 +1726,13 @@ void testIssue210() {
   TEST_ASSERT(m2->getNumAtoms() == 9);
   TEST_ASSERT(m2->getRingInfo()->isInitialized());
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
   delete m;
   delete m2;
 }
 
 void testIssue211() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 211"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 211"
                        << std::endl;
   ROMol *m;
 
@@ -1744,11 +1744,11 @@ void testIssue211() {
   const Atom *at = m->getAtomWithIdx(0);
   TEST_ASSERT(at->getHybridization() == Atom::SP3);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue212() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Issue 212"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Issue 212"
                        << std::endl;
   ROMol *m, *m2;
   std::string smi, mb;
@@ -1770,11 +1770,11 @@ void testIssue212() {
 
   delete m;
   delete m2;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAddHsCoords() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing AddHs with coordinates"
       << std::endl;
   ROMol *m, *m2;
@@ -1914,11 +1914,11 @@ void testAddHsCoords() {
   delete m;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSanitOps() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Sanitization special cases"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Sanitization special cases"
                        << std::endl;
   ROMol *m;
   std::string smi, pathName;
@@ -1981,11 +1981,11 @@ void testSanitOps() {
   TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::TRIPLE);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAddConformers() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Add Confomers"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Add Confomers"
                        << std::endl;
 
   std::string smi = "CC";
@@ -2014,7 +2014,7 @@ void testAddConformers() {
   // std::cout << m2->getNumAtoms() << " " << m2->getNumConformers() << "\n";
   delete m;
   delete m2;
-  BOOST_LOG(rdInfoLog) << "Finished \n ";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished \n ";
 }
 
 void testIssue252() {
@@ -2047,7 +2047,7 @@ void testIssue252() {
 }
 
 void testIssue276() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Issue 276" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Issue 276" << std::endl;
   std::string smi = "CP1(C)=CC=CN=C1C";
   ROMol *mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -2056,11 +2056,11 @@ void testIssue276() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getHybridization() > Atom::SP2);
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "Finished \n ";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished \n ";
 }
 
 void testHsAndAromaticity() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Additional Aromaticity Cases" << std::endl;
   std::string smi;
   ROMol *mol;
@@ -2086,11 +2086,11 @@ void testHsAndAromaticity() {
 
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "Finished \n ";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished \n ";
 }
 
 void testSFIssue1694023() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "1694023 (bad chiral smiles after removing Hs) "
                        << std::endl;
   ROMol *m;
@@ -2181,11 +2181,11 @@ void testSFIssue1694023() {
               Atom::CHI_TETRAHEDRAL_CCW);
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1719053() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "1719053 (Ring stereochemistry incorrectly removed) "
                        << std::endl;
   ROMol *m;
@@ -2241,11 +2241,11 @@ void testSFIssue1719053() {
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1811276() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "1811276 (kekulization failing) " << std::endl;
   ROMol *m;
 
@@ -2283,11 +2283,11 @@ void testSFIssue1811276() {
   TEST_ASSERT(smi == "[O-][n+]1ccccc1");
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1836576() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "1836576 (sanitization crash) " << std::endl;
   RWMol *m;
 
@@ -2330,11 +2330,11 @@ void testSFIssue1836576() {
 
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testChiralityAndRemoveHs() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing impact of removeHs on chirality"
       << std::endl;
   ROMol *m, *m2;
@@ -2505,11 +2505,11 @@ void testChiralityAndRemoveHs() {
   TEST_ASSERT(code == "R");
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1894348() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing SFIssue1894348 "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing SFIssue1894348 "
                           "(impact of removeHs on bond stereo atoms"
                        << std::endl;
   RWMol *m, *m2;
@@ -2546,11 +2546,11 @@ void testSFIssue1894348() {
   delete m;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAromaticityEdges() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing some aromaticity edge cases "
       << std::endl;
   RWMol *m;
@@ -2661,11 +2661,11 @@ void testAromaticityEdges() {
   TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getIsAromatic());
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1942657() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing sf.net issue 1942657 " << std::endl;
   RWMol *m;
 
@@ -2703,11 +2703,11 @@ void testSFIssue1942657() {
   }
   TEST_ASSERT(!m);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFIssue1968608() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing sf.net issue 198608 " << std::endl;
   RWMol *m;
 
@@ -2720,11 +2720,11 @@ void testSFIssue1968608() {
   TEST_ASSERT(m->getRingInfo()->minBondRingSize(0) == 3);
   TEST_ASSERT(m->getRingInfo()->minBondRingSize(3) == 0);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testHybridization() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing hybridization assignment "
       << std::endl;
 
@@ -2913,11 +2913,11 @@ void testHybridization() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2196817() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2196817: handling of aromatic dummies" << std::endl;
 
   {
@@ -3032,11 +3032,11 @@ void testSFNetIssue2196817() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2208994() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2208994 : kekulization error" << std::endl;
 
   {
@@ -3069,11 +3069,11 @@ void testSFNetIssue2208994() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2313979() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2313979: aromaticity assignment hangs " << std::endl;
   {
     std::string pathName = getenv("RDBASE");
@@ -3085,21 +3085,21 @@ void testSFNetIssue2313979() {
       TEST_ASSERT(m);
       std::string nm;
       m->getProp(common_properties::_Name, nm);
-      BOOST_LOG(rdInfoLog) << "   Doing molecule: " << nm << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "   Doing molecule: " << nm << std::endl;
 
-      BOOST_LOG(rdInfoLog) << "     This should finish in a few seconds.  >>>"
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "     This should finish in a few seconds.  >>>"
                            << std::endl;
       MolOps::sanitizeMol(*(RWMol *)m);
       delete m;
-      BOOST_LOG(rdInfoLog) << "   <<< Done." << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "   <<< Done." << std::endl;
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2316677() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2316677 : canonicalization error" << std::endl;
   {
     std::string pathName = getenv("RDBASE");
@@ -3112,11 +3112,11 @@ void testSFNetIssue2316677() {
                 "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSanitizeNonringAromatics() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2830244: make sure that non-ring aromatic atoms "
                           "generate errors:" << std::endl;
   {
@@ -3148,11 +3148,11 @@ void testSanitizeNonringAromatics() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2951221() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2951221 : hydrogens added with bad coordinates"
                        << std::endl;
   {
@@ -3208,11 +3208,11 @@ void testSFNetIssue2951221() {
     TEST_ASSERT(cip == "R");
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue2952255() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2952255 : bad assignment of radicals to early "
                           "elements" << std::endl;
   {
@@ -3348,28 +3348,28 @@ void testSFNetIssue2952255() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue3185548() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "3185548 : problems with SSSR code" << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    BOOST_LOG(rdInfoLog) << "  Starting file read 1" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "  Starting file read 1" << std::endl;
     RWMol *m = MolFileToMol(pathName + "Issue3185548.mol");
-    BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "  finished" << std::endl;
     TEST_ASSERT(m);
   }
 
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    BOOST_LOG(rdInfoLog) << "  Starting file read 2" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "  Starting file read 2" << std::endl;
     RWMol *m = MolFileToMol(pathName + "Issue3185548.2.mol");
-    BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "  finished" << std::endl;
     TEST_ASSERT(m);
 
     m->getRingInfo()->reset();
@@ -3381,12 +3381,12 @@ void testSFNetIssue3185548() {
     TEST_ASSERT(nsssr = 56);
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue3349243() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 3349243" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 3349243" << std::endl;
   {
     std::string smi = "c1cccc[n+]1";
     RWMol *m = SmilesToMol(smi);
@@ -3397,12 +3397,12 @@ void testSFNetIssue3349243() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFastFindRings() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fast find rings" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fast find rings" << std::endl;
   {
     std::string smi = "CCC";
     RWMol *m = SmilesToMol(smi, 0, 0);
@@ -3465,12 +3465,12 @@ void testFastFindRings() {
     TEST_ASSERT(m->getRingInfo()->numRings() == 2);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSFNetIssue3487473() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 3487473" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 3487473" << std::endl;
   {
     std::string smi = "C*C";
     RWMol *m = SmilesToMol(smi);
@@ -3489,12 +3489,12 @@ void testSFNetIssue3487473() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSFNetIssue3480481() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 3480481" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 3480481" << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3507,7 +3507,7 @@ void testSFNetIssue3480481() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void aamatchtest(std::string smi1, std::string smi2, bool shouldMatch, int idx1,
@@ -3524,8 +3524,8 @@ void aamatchtest(std::string smi1, std::string smi2, bool shouldMatch, int idx1,
 }
 
 void testAtomAtomMatch() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Atom-Atom matching behavior" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Atom-Atom matching behavior" << std::endl;
   /* Here's what we're testing:
 
      | Molecule | Query   | Match |
@@ -3584,12 +3584,12 @@ void testAtomAtomMatch() {
   aamatchtest("C*", "[1*]", true, 1, 0);
   aamatchtest("C[2*]", "[1*]", false, 1, 0);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSFNetIssue3525076() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 3525076" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 3525076" << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3606,12 +3606,12 @@ void testSFNetIssue3525076() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testBasicCanon() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing canonicalization basics" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing canonicalization basics" << std::endl;
 // these are all cases that were problematic at one time or another during
 // the canonicalization rewrite.
 #if 1
@@ -4061,11 +4061,11 @@ void testBasicCanon() {
     TEST_ASSERT(csmi == smi);
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSFNetIssue3549146() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "3549146: problems after mergeQueryHs" << std::endl;
 
   {
@@ -4115,11 +4115,11 @@ void testSFNetIssue3549146() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue249() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 249: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue 249: "
                           "finding rings consumes all memory" << std::endl;
 
   {
@@ -4211,11 +4211,11 @@ void testSFNetIssue249() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue256() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing sf.net issue 256: bad atom counts"
       << std::endl;
 
@@ -4239,11 +4239,11 @@ void testSFNetIssue256() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue266() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 266: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue 266: "
                           "ring finding error" << std::endl;
 
   {
@@ -4261,11 +4261,11 @@ void testSFNetIssue266() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSFNetIssue272() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 272: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue 272: "
                           "removing two-coordinate Hs" << std::endl;
 
   {
@@ -4283,11 +4283,11 @@ void testSFNetIssue272() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGitHubIssue8() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 8 "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Github issue 8 "
                           "(impact of removeAtom on bond stereo atoms)"
                        << std::endl;
   {
@@ -4330,11 +4330,11 @@ void testGitHubIssue8() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGitHubIssue42() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 42 "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Github issue 42 "
                           "(impact of removeAtom on atom stereochem)"
                        << std::endl;
   {
@@ -4350,11 +4350,11 @@ void testGitHubIssue42() {
     std::cerr << "smiles: " << smi << std::endl;
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGitHubIssue65() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 65 "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Github issue 65 "
                           "(kekulization of boron-containing aromatic rings)"
                        << std::endl;
   {
@@ -4368,11 +4368,11 @@ void testGitHubIssue65() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGitHubIssue72() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 72 "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Github issue 72 "
                           "(problems with bad benzothiazolium structure)"
                        << std::endl;
   {
@@ -4410,7 +4410,7 @@ void testGitHubIssue72() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 namespace {
@@ -4464,7 +4464,7 @@ void _renumberTest(const ROMol *m) {
 }
 
 void testRenumberAtoms() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing renumbering atoms"
                        << std::endl;
   {
     std::string smiles = "CC1CCCC(C)C1C";
@@ -4498,10 +4498,10 @@ void testRenumberAtoms() {
     _renumberTest(m);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 void testGithubIssue141() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 141: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 141: "
                           "Kekulization of molecule with aromatic N leaves the "
                           "explicit H there." << std::endl;
   {
@@ -4516,12 +4516,12 @@ void testGithubIssue141() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testZBO() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing ZBO basics" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing ZBO basics" << std::endl;
   {
     RWMol *m = new RWMol();
 
@@ -4565,11 +4565,11 @@ void testZBO() {
     TEST_ASSERT(m->getBondWithIdx(4)->getIsAromatic());
     TEST_ASSERT(m->getBondWithIdx(5)->getIsAromatic());
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMolAssignment() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing operator= on molecules"
       << std::endl;
   {
@@ -4591,11 +4591,11 @@ void testMolAssignment() {
     delete m3;
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue190() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 190: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 190: "
                           "Don't merge Hs onto dummy atoms." << std::endl;
   {
     std::string smiles = "*[H]";
@@ -4604,14 +4604,14 @@ void testGithubIssue190() {
     TEST_ASSERT(m->getNumAtoms() == 2);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 namespace {
 int getAtNum(const ROMol &, const Atom *at) { return at->getAtomicNum(); }
 }
 void testMolFragsWithQuery() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing getMolFragsWithQuery()."
       << std::endl;
   {
@@ -4673,11 +4673,11 @@ void testMolFragsWithQuery() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue418() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 418: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 418: "
                           "removeHs not updating H count." << std::endl;
   {
     RWMol *m2 = new RWMol();
@@ -4712,11 +4712,11 @@ void testGithubIssue418() {
     }
     TEST_ASSERT(ok);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue432() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 432: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 432: "
                           "problems caused by aromatic Ns with radical "
                           "electrons." << std::endl;
   {
@@ -4759,11 +4759,11 @@ void testGithubIssue432() {
     TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue443() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 443: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 443: "
                           "kekulization problems caused by any bonds."
                        << std::endl;
   {
@@ -4802,11 +4802,11 @@ void testGithubIssue443() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue447() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 447: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 447: "
                           "Radicals are not correctly assigned when reading "
                           "from SMILES." << std::endl;
   {
@@ -4867,11 +4867,11 @@ void testGithubIssue447() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGetMolFrags() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing generation of new "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing generation of new "
                           "molecules from molecule fragments" << std::endl;
   {
     std::string smiles = "c1ccccc1.O.CCC(=O)O";
@@ -4948,11 +4948,11 @@ void testGetMolFrags() {
                 m->getConformer(0).getAtomPos(24).z);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue510() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 510: "
                           "Hexafluorophosphate cannot be handled" << std::endl;
   {
     std::string smiles = "F[P-](F)(F)(F)(F)F";
@@ -4963,11 +4963,11 @@ void testGithubIssue510() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue526() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 526: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 526: "
                           "Bad ring finding in a complex fused ring"
                        << std::endl;
   {
@@ -4987,11 +4987,11 @@ void testGithubIssue526() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithubIssue539() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 539: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 539: "
                           "Lack of conjugation in allyl cations, "
                           "lack of aromaticity perception/ability to kekulize "
                           "aromatic carbocations such as cyclopropenyl and "
@@ -5092,11 +5092,11 @@ void testGithubIssue539() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAdjustQueryProperties() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing adjustQueryProperties()"
       << std::endl;
   {  // basics from SMILES
@@ -5296,7 +5296,7 @@ void testAdjustQueryProperties() {
     delete aqm;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {

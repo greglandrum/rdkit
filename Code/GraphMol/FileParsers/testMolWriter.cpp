@@ -689,7 +689,7 @@ void testMolFileChiralFlag() {
 }
 
 void testMolFileTotalValence() {
-  BOOST_LOG(rdInfoLog) << "testing handling of mol file valence flags"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of mol file valence flags"
                        << std::endl;
 
   {
@@ -742,11 +742,11 @@ void testMolFileTotalValence() {
     delete m1;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileWithRxn() {
-  BOOST_LOG(rdInfoLog) << "testing handling of mol files with reactions"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of mol files with reactions"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -799,11 +799,11 @@ void testMolFileWithRxn() {
                     ->getProp<int>(common_properties::molRxnComponent) == 3);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSDWriterOptions() {
-  BOOST_LOG(rdInfoLog) << "testing SDWriter options" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing SDWriter options" << std::endl;
   {
     std::stringstream ss;
     SDWriter writer(&ss, false);
@@ -928,11 +928,11 @@ void testSDWriterOptions() {
     TEST_ASSERT(txt.find("  1  2  4") != std::string::npos);
     TEST_ASSERT(txt.find("  1  2  2") > txt.find("  1  2  4"));
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testZBO() {
-  BOOST_LOG(rdInfoLog) << "testing handling of ZBO specs" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of ZBO specs" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -996,11 +996,11 @@ void testZBO() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testV3000WriterDetails() {
-  BOOST_LOG(rdInfoLog) << "testing details of v3000 writing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing details of v3000 writing" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -1052,11 +1052,11 @@ void testV3000WriterDetails() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub187() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 187: A not written to mol block"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 187: A not written to mol block"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -1112,11 +1112,11 @@ void testGithub187() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub186() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 186: chiral S not written to ctab" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -1144,7 +1144,7 @@ void testGithub186() {
 }
 
 void testGithub189() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 189: Problems round-tripping Al2Cl6 via CTAB"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1183,7 +1183,7 @@ void testGithub189() {
 }
 
 void testGithub266() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 266: Bond query information written to CTAB"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1290,7 +1290,7 @@ void testGithub266() {
 }
 
 void testGithub268() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 268: Bond topology information written to CTAB"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1326,7 +1326,7 @@ void testGithub268() {
 }
 
 void testGithub357() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 357: Hydrogens in mol blocks "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 357: Hydrogens in mol blocks "
                           "have a valence value set" << std::endl;
   {
     ROMol *m1 = SmilesToMol("O");
@@ -1342,7 +1342,7 @@ void testGithub357() {
 }
 
 void testNeedsUpdatePropertyCacheSDWriter() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing test needsUpdatePropertyCache functionality in SDwriter"
       << std::endl;
   {
@@ -1358,7 +1358,7 @@ void testNeedsUpdatePropertyCacheSDWriter() {
 }
 
 void testGithub488() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 488: SmilesWriter not creating "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 488: SmilesWriter not creating "
                           "automatic name values for molecules read from CTABs"
                        << std::endl;
   {
@@ -1384,7 +1384,7 @@ void testGithub488() {
 }
 
 void testGithub611() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 611: If wedged bonds are "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 611: If wedged bonds are "
                           "already present, write them to mol blocks"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1406,139 +1406,139 @@ void testGithub611() {
 int main() {
   RDLog::InitLogs();
 #if 1
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSmilesWriter()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSmilesWriter()\n";
   testSmilesWriter();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSmilesWriter2()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSmilesWriter2()\n";
   testSmilesWriter2();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSmilesWriterNoNames()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSmilesWriterNoNames()\n";
   testSmilesWriterNoNames();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSmilesWriterClose()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSmilesWriterClose()\n";
   testSmilesWriterNoNames();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSDWriter()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSDWriter()\n";
   testSDWriter();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testTDTWriter()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testTDTWriter()\n";
   testTDTWriter();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSmilesWriterStrm()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSmilesWriterStrm()\n";
   testSmilesWriterStrm();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSDWriterStrm()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSDWriterStrm()\n";
   testSDWriterStrm();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testTDTWriterStrm()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testTDTWriterStrm()\n";
   testTDTWriterStrm();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testSDMemoryCorruption()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testSDMemoryCorruption()\n";
   testSDMemoryCorruption();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testIssue265()\n";
   testIssue265();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testMolFileChiralFlag()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testMolFileChiralFlag()\n";
   testMolFileChiralFlag();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testMolFileTotalValence();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testMolFileWithRxn();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testZBO();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
   testSDWriterOptions();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testV3000WriterDetails();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub187();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub186();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub189();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub266();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub268();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub357();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testNeedsUpdatePropertyCacheSDWriter();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
 #endif
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Running testIssue3525000()\n";
   testIssue3525000();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub488();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n";
   testGithub611();
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------------\n\n";
 }

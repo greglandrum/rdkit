@@ -73,7 +73,7 @@ TDTWriter::~TDTWriter() {
 
 void TDTWriter::setProps(const STR_VECT &propNames) {
   if (d_molid > 0) {
-    BOOST_LOG(rdWarningLog) << "WARNING: Setting property list after a few "
+    BOOST_LOG_TRIVIAL(rdWarningLog) << "WARNING: Setting property list after a few "
                                "molecules have been written\n";
   }
 

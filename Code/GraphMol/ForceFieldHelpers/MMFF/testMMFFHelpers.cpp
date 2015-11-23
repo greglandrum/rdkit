@@ -31,8 +31,8 @@
 
 using namespace RDKit;
 void testMMFFTyper1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test MMFF atom types." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test MMFF atom types." << std::endl;
 
   {
     boost::uint8_t type;
@@ -141,12 +141,12 @@ void testMMFFTyper1() {
     delete mol;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMMFFBuilder1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing MMFF builder tools." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing MMFF builder tools." << std::endl;
 
   ROMol *mol, *mol2;
 
@@ -274,12 +274,12 @@ void testMMFFBuilder1() {
   delete field;
   delete mmffMolProperties;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMMFFBuilder2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing MMFF builder+minimization."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing MMFF builder+minimization."
                         << std::endl;
 
   RWMol *mol;
@@ -354,12 +354,12 @@ void testMMFFBuilder2() {
   delete mol;
   delete field;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMMFFBatch() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Testing bulk MMFF (regression to check that things run)."
       << std::endl;
 
@@ -377,7 +377,7 @@ void testMMFFBatch() {
     ++count;
     std::string origMolBlock = MolToMolBlock(*mol);
 
-    BOOST_LOG(rdErrorLog) << "Mol:" << count << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "Mol:" << count << std::endl;
     try {
       field = MMFF::constructForceField(*mol);
     } catch (...) {
@@ -387,7 +387,7 @@ void testMMFFBatch() {
       field->initialize();
       int failed = field->minimize(500);
       if (failed) {
-        BOOST_LOG(rdErrorLog) << " not converged (code = " << failed << ")"
+        BOOST_LOG_TRIVIAL(rdErrorLog) << " not converged (code = " << failed << ")"
                               << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
@@ -398,12 +398,12 @@ void testMMFFBatch() {
     mol = suppl.next();
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue239() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing Issue239." << std::endl;
 
   RWMol *mol;
   int needMore;
@@ -429,15 +429,15 @@ void testIssue239() {
   delete mol;
   delete field;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue242() {
   // FIX: Changes to the forcefield (connected to Issue 408) have
   // made it so that this particular problem no longer manifests
   // in this molecule/embedding. A new test case is needed.
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing Issue242." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing Issue242." << std::endl;
 
   RWMol *mol, *mol2;
   int needMore;
@@ -470,16 +470,16 @@ void testIssue242() {
   field2->initialize();
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   // TEST_ASSERT(feq(e2,e1,0.1));
 
   needMore = field->minimize(200, 1.0e-4);
   needMore = field2->minimize(200, 1.0e-4);
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E1: " << e1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "E2: " << e2 << std::endl;
   TEST_ASSERT(feq(e2, e1, 0.1));
 
   delete mol;
@@ -487,12 +487,12 @@ void testIssue242() {
   delete field;
   delete field2;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGithub308() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Testing github 308: crash during MMFF parameterization ."
       << std::endl;
   ROMol *mol = SmilesToMol("FF");
@@ -510,8 +510,8 @@ void testGithub308() {
 }
 
 void testSFIssue1653802() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing SFIssue1653802." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing SFIssue1653802." << std::endl;
 
   RWMol *mol;
   int needMore;
@@ -549,12 +549,12 @@ void testSFIssue1653802() {
   delete mol;
   delete field;
   delete mmffMolProperties;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testSFIssue2378119() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
@@ -610,12 +610,12 @@ void testSFIssue2378119() {
     delete mol;
     delete field;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGithub162() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing github 162: Incorrect SMILES after "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Testing github 162: Incorrect SMILES after "
                            "MMFF parameterization ." << std::endl;
   {
     ROMol *mol = SmilesToMol("C1=CNC=C1");
@@ -630,12 +630,12 @@ void testGithub162() {
     delete mol;
     delete mmffMolProperties;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMMFFParamGetters() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test MMFF force-field parameter getters."
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test MMFF force-field parameter getters."
                         << std::endl;
   {
     ROMol *mol = SmilesToMol("c1ccccc1CCNN");
@@ -729,7 +729,7 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
       ROMol *mol = mols[i];
       ForceFields::ForceField *field = 0;
       if (!(rep % 100)) {
-        BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       try {
         field = MMFF::constructForceField(*mol);
@@ -749,8 +749,8 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
 }
 #include <boost/thread.hpp>
 void testMMFFMultiThread() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test MMFF multithreading" << std::endl;
 
   // ForceFields::ForceField *field;
 
@@ -799,12 +799,12 @@ void testMMFFMultiThread() {
   tg.join_all();
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMMFFMultiThread2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test MMFF multithreading2" << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
@@ -837,14 +837,14 @@ void testMMFFMultiThread2() {
   }
   delete m;
   delete om;
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 #endif
 
 void testGithub224() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "    Testing github 224: crash during MMFF parameterization ."
       << std::endl;
   {
@@ -869,7 +869,7 @@ void testGithub224() {
     delete mol;
     delete mmffMolProperties;
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

@@ -146,8 +146,8 @@ std::string createCanonicalFromSmiles(std::string smiles) {
 // UNIT Test Set:
 //=========================================================================
 void test1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "MMPA test1()\n" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "MMPA test1()\n" << std::endl;
 
   // DEBUG PRINT.      MolToSmiles() fails with new RDKit version
 
@@ -332,12 +332,12 @@ void test1() {
     if (test_failed) n_failed++;
     TEST_ASSERT(!test_failed);
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "MMPA test2()\n" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "MMPA test2()\n" << std::endl;
 
   const char* smi[] = {
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
@@ -464,7 +464,7 @@ void test2() {
     }
   }
   std::cout << " -----------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tDone" << std::endl;
 }
 
 //====================================================================================================
@@ -554,8 +554,8 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
 }
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "MMPA test3()\n" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "MMPA test3()\n" << std::endl;
 
   {  // test2:
     const char* smi = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717";
@@ -628,7 +628,7 @@ void test3() {
     };
     doTest(smi, fs, sizeof(fs) / sizeof(fs[0]));
   }
-  BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tDone" << std::endl;
 }
 
 void testCase_1() {
@@ -641,9 +641,9 @@ void testCase_1() {
 }
 /*
 void test4() {
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" <<
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" <<
 std::endl;
-    BOOST_LOG(rdInfoLog) << "MMPA test4()\n" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "MMPA test4()\n" << std::endl;
 
     {
         const char* smi = "Cc1ccccc1NC(=O)[C:9](C)[NH+]1CCCC1 CASE-4-1";
@@ -658,16 +658,16 @@ std::endl;
         };
         doTest(smi, fs, sizeof(fs)/sizeof(fs[0]));
     }
-    BOOST_LOG(rdInfoLog) << "\tDone" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\tDone" << std::endl;
 }
 */
 //====================================================================================================
 //====================================================================================================
 
 int main(int argc, const char* argv[]) {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
-  BOOST_LOG(rdInfoLog) << "MMPA Unit Test \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "MMPA Unit Test \n";
 
 // use maximum CPU resoures to increase time measuring accuracy and stability in
 // multi process environment
@@ -694,14 +694,14 @@ int main(int argc, const char* argv[]) {
       double sec = double(t1-T0) / 1000000.;
       printf("TOTAL Time elapsed %.4lf seconds\n", sec);
   */
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   if (0 != n_failed) {
     std::cout << n_failed << " TEST CASES FAILED \n";
     TEST_ASSERT(0 != n_failed);
   } else
     std::cout << " --- ALL TEST CASES PASSED --- \n";
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   return 0;
 }

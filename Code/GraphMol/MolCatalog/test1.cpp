@@ -24,7 +24,7 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << ">>------------- Test 1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << ">>------------- Test 1" << std::endl;
 
   // MolCatalogParams are currently unused, so testing is easy:
   MolCatalogParams *mparams = new MolCatalogParams();
@@ -106,7 +106,7 @@ void test1() {
   TEST_ASSERT(mcat->getEntryWithBitId(1)->getMol()->getNumAtoms() == 1);
   TEST_ASSERT(mcat->getEntryWithBitId(2)->getMol()->getNumAtoms() == 3);
 
-  BOOST_LOG(rdInfoLog) << "<<-------------- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "<<-------------- Done" << std::endl;
 }
 
 int main() {

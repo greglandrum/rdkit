@@ -27,8 +27,8 @@ void testDeleteSubstruct() {
   ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0, *matcher2 = 0, *matcher3 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing deleteSubstruct" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing deleteSubstruct" << std::endl;
 
   // a lot of the seemingly repetitive stuff is here for Issue96
   smi = "CCC(=O).C=O";
@@ -91,7 +91,7 @@ void testDeleteSubstruct() {
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceSubstructs() {
@@ -99,8 +99,8 @@ void testReplaceSubstructs() {
   std::string smi, sma;
   std::vector<ROMOL_SPTR> vect;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing replaceSubstruct" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing replaceSubstruct" << std::endl;
 
   smi = "CCCC";
   mol1 = SmilesToMol(smi);
@@ -173,12 +173,12 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect[0]->getNumAtoms() == 3);
   TEST_ASSERT(vect[0]->getNumBonds() == 3);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceSubstructs2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "More testing of replaceSubstruct" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "More testing of replaceSubstruct" << std::endl;
 
   {
     std::string smi = "CCC(=O)O";
@@ -213,15 +213,15 @@ void testReplaceSubstructs2() {
     delete matcher1;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceSidechains() {
   ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing replaceSidechains" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing replaceSidechains" << std::endl;
 
   smi = "ClC1CC(F)C1";
   mol1 = SmilesToMol(smi);
@@ -276,15 +276,15 @@ void testReplaceSidechains() {
   delete mol2;
   delete matcher1;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceCore() {
   ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing replaceCore" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing replaceCore" << std::endl;
 
   smi = "ClC1CC(F)C1";
   mol1 = SmilesToMol(smi);
@@ -552,12 +552,12 @@ void testReplaceCore() {
   delete mol2;
   delete matcher1;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceCoreLabels() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
 
   {
     std::string sma = "n1cocc1";
@@ -636,15 +636,15 @@ void testReplaceCoreLabels() {
     delete matcher;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceCoreCrash() {
   ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing a former crash in replaceCore" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing a former crash in replaceCore" << std::endl;
 
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ChemTransforms/testData/oldcrash.mol";
@@ -661,15 +661,15 @@ void testReplaceCoreCrash() {
   smi = MolToSmiles(*mol2, true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]CC.[2*]CC" || smi == "[2*]CC.[1*]CC");
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceCorePositions() {
   ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing that atom positions are correctly copied by replaceCore"
       << std::endl;
 
@@ -709,12 +709,12 @@ void testReplaceCorePositions() {
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMurckoDecomp() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing murcko decomposition" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing murcko decomposition" << std::endl;
 
   const char *testMolecules[][2] = {
       {"C1CC1CCC1CC(C)C1", "C1CC1CCC1CCC1"},
@@ -770,12 +770,12 @@ void testMurckoDecomp() {
     }
     delete nMol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testReplaceCoreRequireDummies() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing replaceCore requiring dummy atoms"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing replaceCore requiring dummy atoms"
                        << std::endl;
 
   {
@@ -815,15 +815,15 @@ void testReplaceCoreRequireDummies() {
     delete matcher;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue3453144() {
   ROMol *mol1 = 0, *matcher1 = 0, *replacement = 0;
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing that atom positions are correctly copied by replaceSubstructs"
       << std::endl;
 
@@ -862,14 +862,14 @@ void testIssue3453144() {
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue3537675() {
   std::string smi, sma;
 
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing handling of substituted non-carbon aromatic atoms"
       << std::endl;
 
@@ -892,12 +892,12 @@ void testIssue3537675() {
     delete nMol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testCombineMols() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing combination of molecules" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing combination of molecules" << std::endl;
 
   {
     std::string smi1 = "C1CCC1";
@@ -945,12 +945,12 @@ void testCombineMols() {
                     mol3->getConformer().getAtomPos(3).z));
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAddRecursiveQueries() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing adding recursive queries to a molecule"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing adding recursive queries to a molecule"
                        << std::endl;
 
   {
@@ -1073,12 +1073,12 @@ void testAddRecursiveQueries() {
     delete mol1;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testParseQueryDefFile() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing parsing query definition file" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing parsing query definition file" << std::endl;
 
   {
     std::string pathName = getenv("RDBASE");
@@ -1116,12 +1116,12 @@ void testParseQueryDefFile() {
     TEST_ASSERT(qdefs.find("acidchloride")!=qdefs.end());
     TEST_ASSERT(qdefs.find("AcidChloride")==qdefs.end());
   }*/
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue275() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing sf.net issue 275: Murcko decomposition with chiral atoms"
       << std::endl;
 
@@ -1147,12 +1147,12 @@ void testIssue275() {
     delete nMol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFragmentOnBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBonds" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fragmentOnBonds" << std::endl;
 
   {
     std::string smi = "OCCCN";
@@ -1255,12 +1255,12 @@ void testFragmentOnBonds() {
     delete nmol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFragmentOnBRICSBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
 
   {
     std::string smi = "c1ccccc1OC";
@@ -1408,12 +1408,12 @@ void testFragmentOnBRICSBonds() {
     delete nmol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void benchFragmentOnBRICSBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Regress/Data/mols.1000.sdf";
@@ -1425,12 +1425,12 @@ void benchFragmentOnBRICSBonds() {
       delete nmol;
     }
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testFragmentOnSomeBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing fragmentOnSomeBonds" << std::endl;
 
   {
     std::string smi = "OCCCCN";
@@ -1487,12 +1487,12 @@ void testFragmentOnSomeBonds() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithubIssue429() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github issue 429: fragmentOnSomeBonds() "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github issue 429: fragmentOnSomeBonds() "
                           "should update implicit H count on aromatic "
                           "heteroatoms when addDummies is False" << std::endl;
 
@@ -1523,11 +1523,11 @@ void testGithubIssue429() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 void testGithubIssue430() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github issue 430: fragmentOnSomeBonds() "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github issue 430: fragmentOnSomeBonds() "
                           "crashes if bond list is empty" << std::endl;
 
   {
@@ -1556,15 +1556,15 @@ void testGithubIssue430() {
     delete mol;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 int main() {
   RDLog::InitLogs();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Chemical Transforms \n";
 
 #if 1
   testDeleteSubstruct();
@@ -1595,7 +1595,7 @@ int main() {
   testGithubIssue429();
   testGithubIssue430();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   return (0);
 }

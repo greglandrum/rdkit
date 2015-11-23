@@ -47,7 +47,7 @@ void test2() {
 }
 
 void testQueryCopying() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing behavior of copied queries"
       << std::endl;
 
@@ -64,11 +64,11 @@ void testQueryCopying() {
     delete m2;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testConformerCopying() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing copying conformers"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing copying conformers"
                        << std::endl;
 
   {
@@ -108,7 +108,7 @@ void testConformerCopying() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 // -------------------------------------------------------------------

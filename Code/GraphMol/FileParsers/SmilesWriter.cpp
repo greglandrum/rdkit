@@ -72,9 +72,9 @@ void SmilesWriter::init(const std::string &delimiter,
 
 void SmilesWriter::setProps(const STR_VECT &propNames) {
   if (d_molid > 0) {
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: Atleast one molecule has already been written\n";
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "ERROR: Cannot set properties now - ignoring setProps\n";
     return;
   }

@@ -52,7 +52,7 @@ void BuildSimpleMolecule() {
   // Get the canonical SMILES, include stereochemistry:
   std::string smiles;
   smiles = MolToSmiles(*(static_cast<ROMol *>(mol)), true);
-  BOOST_LOG(rdInfoLog) << " sample 1 SMILES: " << smiles << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " sample 1 SMILES: " << smiles << std::endl;
 }
 
 void WorkWithRingInfo() {
@@ -197,7 +197,7 @@ void DepictDemo() {
 
   // generate a mol block (could also go to a file):
   std::string molBlock = MolToMolBlock(*mol);
-  BOOST_LOG(rdInfoLog) << molBlock;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << molBlock;
 
   delete mol;
 }
@@ -250,7 +250,7 @@ void CleanupMolecule() {
   // Get the canonical SMILES, include stereochemistry:
   std::string smiles;
   smiles = MolToSmiles(*(static_cast<ROMol *>(mol)), true);
-  BOOST_LOG(rdInfoLog) << " fixed SMILES: " << smiles << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " fixed SMILES: " << smiles << std::endl;
 }
 
 void ReactionDemo() {
@@ -278,11 +278,11 @@ void ReactionDemo() {
 
   // for each of the possible applications of the reaction to the reactants:
   for (unsigned int i = 0; i < prods.size(); ++i) {
-    BOOST_LOG(rdInfoLog) << " product set: " << i << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " product set: " << i << std::endl;
     // for each product of that application:
     for (unsigned int j = 0; j < prods[i].size(); ++j) {
       std::string psmiles = MolToSmiles(*prods[i][j], true);
-      BOOST_LOG(rdInfoLog) << "   product : " << j << " " << psmiles
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "   product : " << j << " " << psmiles
                            << std::endl;
     }
   }

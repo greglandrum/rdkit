@@ -21,7 +21,7 @@ using namespace RDKit;
 
 #ifdef WIN32_DLLBUILD
 void test1() {
-  BOOST_LOG(rdInfoLog) << "------- Test1: round-trip via Mol file" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------- Test1: round-trip via Mol file" << std::endl;
   std::string smi = "CC(=O)O";
   std::string fName = "out.mol";
   SmilesToMolFileDLL(smi, fName);
@@ -34,12 +34,12 @@ void test1() {
   delete mol1;
   delete mol2;
 
-  BOOST_LOG(rdInfoLog) << "------- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------- Done" << std::endl;
 }
 #endif
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "------- Test2: adding 2D coords" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------- Test2: adding 2D coords" << std::endl;
   std::string smi = "CC(=O)O";
   ROMol *mol = (ROMol *)SmilesToMol(smi);
   std::string refSmi = MolToSmiles(*mol);
@@ -54,7 +54,7 @@ void test2() {
   success = Add2DCoordsToMol(*mol);
   TEST_ASSERT(success);
   delete mol;
-  BOOST_LOG(rdInfoLog) << "------- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------- Done" << std::endl;
 }
 
 void main() {

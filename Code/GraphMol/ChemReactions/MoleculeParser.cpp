@@ -78,7 +78,7 @@ ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
        iter != fragments.end(); ++iter, countFragments++) {
     int role = getRXNRoleOfMolecule(*iter->get());
     if (!testForSameRXNRoleOfAllMoleculeAtoms(*iter->get(), role)) {
-      BOOST_LOG(rdWarningLog)
+      BOOST_LOG_TRIVIAL(rdWarningLog)
           << ">> Atoms within one molecule have different RXN roles.\n";
       continue;
     }
@@ -93,7 +93,7 @@ ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
         rxn->addAgentTemplate(*iter);
         break;
       default:
-        BOOST_LOG(rdWarningLog) << ">> Fragment " << countFragments
+        BOOST_LOG_TRIVIAL(rdWarningLog) << ">> Fragment " << countFragments
                                 << " not included in the reaction, atoms do "
                                    "not have a correct RXN role.\n";
     }

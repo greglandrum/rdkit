@@ -45,8 +45,8 @@
 using namespace RDKit;
 
 void testStructuralFingerprintsReaction() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Reaction StructuralFingerprint"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Reaction StructuralFingerprint"
                         << std::endl;
   {
     std::string reaction, reactionq;
@@ -563,8 +563,8 @@ void testStructuralFingerprintsReaction() {
 }
 
 void testDifferenceFingerprintsReaction() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test Reaction DifferenceFingerprint"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test Reaction DifferenceFingerprint"
                         << std::endl;
   {
     std::string reaction1, reaction2;
@@ -699,14 +699,14 @@ void testDifferenceFingerprintsReaction() {
 int main() {
   RDLog::InitLogs();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing Chemical Reaction Fingerprints \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Chemical Reaction Fingerprints \n";
 
   testStructuralFingerprintsReaction();
   testDifferenceFingerprintsReaction();
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   return (0);
 }

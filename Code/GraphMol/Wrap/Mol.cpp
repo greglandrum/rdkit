@@ -199,7 +199,7 @@ BondIterSeq *MolGetBonds(ROMol *mol) {
 
 int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   if (onlyHeavy > -1) {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG_TRIVIAL(rdWarningLog)
         << "WARNING: the onlyHeavy argument to mol.GetNumAtoms() has been "
            "deprecated. Please use the onlyExplicit argument instead or "
            "mol.GetNumHeavyAtoms() if you want the heavy atom count."

@@ -707,7 +707,7 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
+    BOOST_LOG_TRIVIAL(rdWarningLog) << "Depickling from a version number ("
                             << majorVersion << "." << minorVersion << ")"
                             << "that is higher than our version ("
                             << versionMajor << "." << versionMinor

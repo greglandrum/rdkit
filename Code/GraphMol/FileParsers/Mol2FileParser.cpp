@@ -203,7 +203,7 @@ void guessFormalCharges(RWMol *res) {
       if (noAromBonds == 3 && tATT == "N.ar") {
         std::string nm;
         res->getProp(common_properties::_Name, nm);
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << nm << ": warning - aromatic N with 3 aromatic bonds - "
                      "skipping charge guess for this atom" << std::endl;
         continue;
@@ -307,7 +307,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       // phosphates,
       // FIX: do it also for phsopahtes and sulphates ...
       if (at->getDegree() != 1) {
-        BOOST_LOG(rdWarningLog) << "Warning - O.co2 with degree >1."
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "Warning - O.co2 with degree >1."
                                 << std::endl;
         return false;
       }
@@ -341,7 +341,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       } else {
         std::string nm;
         res->getProp(common_properties::_Name, nm);
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << nm << ": warning - O.co2 with non C.2 or S.o2 neighbor."
             << std::endl;
         return false;
@@ -375,7 +375,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       if (noNNeighbors < 2 || noNNeighbors > 3) {
         std::string nm;
         res->getProp(common_properties::_Name, nm);
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << nm << ": Error - C.Cat with bad number of N neighbors."
             << std::endl;
         return false;
@@ -403,7 +403,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
             if (isFixed[*nbrIdxIt]) {
               std::string nm;
               res->getProp(common_properties::_Name, nm);
-              BOOST_LOG(rdWarningLog)
+              BOOST_LOG_TRIVIAL(rdWarningLog)
                   << nm << ": warning - charged amidine and isFixed atom."
                   << std::endl;
             }
@@ -687,7 +687,7 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
     // this happens only if some weird thing is in the file or if we encounter a
     // "nc" - not connected ...
     // but why would anyone specify a bond which is not connected?
-    BOOST_LOG(rdWarningLog) << "Warning - unsupported bond type: " << tBType
+    BOOST_LOG_TRIVIAL(rdWarningLog) << "Warning - unsupported bond type: " << tBType
                             << " ignored!" << std::endl;
     return NULL;
   }
@@ -734,7 +734,7 @@ void ParseMol2AtomBlock(std::istream *inStream, RWMol *res, unsigned int nAtoms,
   if (!hasHAtoms) {
     std::string nm;
     res->getProp(common_properties::_Name, nm);
-    BOOST_LOG(rdWarningLog) << nm << ": Warning - no explicit hydrogens in "
+    BOOST_LOG_TRIVIAL(rdWarningLog) << nm << ": Warning - no explicit hydrogens in "
                                      "mol2 file but needed for formal charge "
                                      "estimation." << std::endl;
   }
@@ -966,10 +966,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       DetectBondStereoChemistry(*res, &conf);
 
     } catch (MolSanitizeException &se) {
-      BOOST_LOG(rdWarningLog) << "sanitise ";
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "sanitise ";
       std::string molName;
       res->getProp(common_properties::_Name, molName);
-      BOOST_LOG(rdWarningLog) << molName << ": ";
+      BOOST_LOG_TRIVIAL(rdWarningLog) << molName << ": ";
       delete res;
       throw se;
     }

@@ -30,8 +30,8 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "AtomType parser testing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "AtomType parser testing." << std::endl;
 
   std::string inLine;
   std::map<std::string, std::string> atomTypeDefs;
@@ -115,12 +115,12 @@ void test1() {
   }
   CHECK_INVARIANT(ok, "expected parse failure did not happen");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "FeatureDefinition parser testing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "FeatureDefinition parser testing." << std::endl;
 
   std::string inText, inLine;
   std::istringstream ss;
@@ -212,12 +212,12 @@ void test2() {
   }
   CHECK_INVARIANT(ok, "expected parse failure did not happen");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test pulling feat defs from a string." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Test pulling feat defs from a string." << std::endl;
 
   // std::string pathName=getenv("RDBASE");
   // pathName +=
@@ -239,12 +239,12 @@ void test3() {
   TEST_ASSERT(featureDefs.size() == 1);
   TEST_ASSERT((*featureDefs.begin())->getSmarts() == "[$([!$([H0]);N,O])]");
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test4() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "FeatureDef functionality testing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "FeatureDef functionality testing." << std::endl;
 
   ROMol *testMol;
   MatchVectType mv;
@@ -293,12 +293,12 @@ void test4() {
   TEST_ASSERT(mv[0].second == 1 || mv[0].second == 3);
   delete testMol;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test5() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "FeatureFactory testing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "FeatureFactory testing." << std::endl;
 
   ROMol *testMol;
   MatchVectType mv;
@@ -328,20 +328,20 @@ void test5() {
   TEST_ASSERT(testMol);
   featDef = *factory->beginFeatureDefs();
   TEST_ASSERT(SubstructMatch(*testMol, *featDef->getPattern(), mv));
-  BOOST_LOG(rdErrorLog) << "1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "1" << std::endl;
   TEST_ASSERT(mv.size() == 1);
   TEST_ASSERT(mv[0].first == 0);
   TEST_ASSERT(mv[0].second == 3);
   featDef = *(++factory->beginFeatureDefs());
   TEST_ASSERT(SubstructMatch(*testMol, *featDef->getPattern(), mv));
-  BOOST_LOG(rdErrorLog) << "2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "2" << std::endl;
   TEST_ASSERT(mv.size() == 1);
   TEST_ASSERT(mv[0].first == 0);
   TEST_ASSERT(mv[0].second == 1 || mv[0].second == 3);
 
   // Test using the factory to find features:
   featSPtrs = factory->getFeaturesForMol(*testMol);
-  BOOST_LOG(rdErrorLog) << "3" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "3" << std::endl;
   TEST_ASSERT(featSPtrs.size() == 3);
   featSPtr = *featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily() == "HBondDonor");
@@ -355,7 +355,7 @@ void test5() {
 
   // Test limiting stuff with includeOnly
   featSPtrs = factory->getFeaturesForMol(*testMol, "HBondAcceptor");
-  BOOST_LOG(rdErrorLog) << "4" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "4" << std::endl;
   TEST_ASSERT(featSPtrs.size() == 2);
   featSPtr = *featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily() == "HBondAcceptor");
@@ -365,25 +365,25 @@ void test5() {
   TEST_ASSERT(featSPtr->getType() == "HAcceptor1");
 
   featSPtrs = factory->getFeaturesForMol(*testMol, "HBondDonor");
-  BOOST_LOG(rdErrorLog) << "5" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "5" << std::endl;
   TEST_ASSERT(featSPtrs.size() == 1);
   featSPtr = *featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily() == "HBondDonor");
   TEST_ASSERT(featSPtr->getType() == "HDonor1");
 
   featSPtrs = factory->getFeaturesForMol(*testMol, "NotPresent");
-  BOOST_LOG(rdErrorLog) << "6" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "6" << std::endl;
   TEST_ASSERT(featSPtrs.size() == 0);
 
   delete testMol;
   delete factory;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test6() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Feature Location testing." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Feature Location testing." << std::endl;
 
   ROMol *testMol;
   Conformer *conf;
@@ -436,12 +436,12 @@ void test6() {
 
   delete factory;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void test7() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test building a FeatureFactory from a file"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Test building a FeatureFactory from a file"
                         << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -473,12 +473,12 @@ void test7() {
 
   delete (factory);
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue224() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Issue 224." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Issue 224." << std::endl;
 
   std::string inText, inLine;
   std::istringstream ss;
@@ -579,12 +579,12 @@ void testIssue224() {
   TEST_ASSERT(feq(*featDef->beginWeights(), 1.0));
   delete featDef;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue225() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Issue 225." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Issue 225." << std::endl;
 
   MatchVectType mv;
   std::string inText;
@@ -619,12 +619,12 @@ void testIssue225() {
   TEST_ASSERT(featDef->getPattern()->getNumAtoms() == 1);
   TEST_ASSERT(featDef->getNumWeights() == 1);
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue346() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test Issue346" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Test Issue346" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -655,12 +655,12 @@ void testIssue346() {
 
   delete (factory);
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue347() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test Issue347" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Test Issue347" << std::endl;
 
   ROMol *testMol;
   MolChemicalFeatureFactory *factory;
@@ -742,12 +742,12 @@ void testIssue347() {
 
   delete (factory);
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testIssue348() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Issue 348." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Issue 348." << std::endl;
 
   MatchVectType mv;
   std::string inText;
@@ -780,8 +780,8 @@ void testIssue348() {
 }
 
 void testNestedAtomTypes() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Nested AtomType definitions." << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Nested AtomType definitions." << std::endl;
 
   MatchVectType mv;
   std::string inText;
@@ -806,10 +806,10 @@ void testNestedAtomTypes() {
 }
 
 void testGithub252() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing Github Issue #252: crash when calling "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing Github Issue #252: crash when calling "
                            "getPos() with no conformer." << std::endl;
-  BOOST_LOG(rdErrorLog) << "     expect a precondition failure message below"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "     expect a precondition failure message below"
                         << std::endl;
 
   ROMol *testMol;
@@ -842,7 +842,7 @@ void testGithub252() {
     ok = true;
   }
   TEST_ASSERT(ok);
-  BOOST_LOG(rdErrorLog) << "   Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "   Done" << std::endl;
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

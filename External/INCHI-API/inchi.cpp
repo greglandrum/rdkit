@@ -1268,7 +1268,7 @@ namespace RDKit {
           // set radical
           if (inchiAtom->radical) {
             if (inchiAtom->radical != 3 && inchiAtom->radical != 2) {
-              BOOST_LOG(rdWarningLog)
+              BOOST_LOG_TRIVIAL(rdWarningLog)
                 << "expect radical to be either 2 or 3 while getting "
                 << inchiAtom->radical <<". Ignore radical."
                 << std::endl;
@@ -1292,7 +1292,7 @@ namespace RDKit {
           unsigned int aid = m->addAtom(atom, false, true);
           indexToAtomIndexMapping.push_back(aid);
 #ifdef DEBUG
-          BOOST_LOG(rdWarningLog) << "adding " << aid << ":" << atom->getAtomicNum() << ":" << (int) inchiAtom->num_iso_H[0]<< std::endl ;
+          BOOST_LOG_TRIVIAL(rdWarningLog) << "adding " << aid << ":" << atom->getAtomicNum() << ":" << (int) inchiAtom->num_iso_H[0]<< std::endl ;
 #endif
         }
 
@@ -1315,7 +1315,7 @@ namespace RDKit {
               bond = new Bond(
                               (Bond::BondType) inchiAtom->bond_type[b]);
             else {
-              BOOST_LOG(rdWarningLog)
+              BOOST_LOG_TRIVIAL(rdWarningLog)
                 << "receive ALTERN bond type which should be avoided. "
                 << "This is treated as aromatic." << std::endl;
               bond = new Bond(Bond::AROMATIC);
@@ -1345,7 +1345,7 @@ namespace RDKit {
             // add bond
             m->addBond(bond, true);
 #ifdef DEBUG
-            BOOST_LOG(rdWarningLog) << "adding " << (int) bond->getBeginAtomIdx()
+            BOOST_LOG_TRIVIAL(rdWarningLog) << "adding " << (int) bond->getBeginAtomIdx()
                                     << "("
                                     << m->getAtomWithIdx(bond->getBeginAtomIdx())->getAtomicNum()
                                     << ")"
@@ -1412,7 +1412,7 @@ namespace RDKit {
                 Bond* bond = m->getBondBetweenAtoms(left, right);
                 if(!bond) {
                   // Likely to be allene stereochemistry, which we don't handle.
-                  BOOST_LOG(rdWarningLog)<<"Extended double-bond stereochemistry (e.g. C=C=C=C) ignored"<<std::endl;
+                  BOOST_LOG_TRIVIAL(rdWarningLog)<<"Extended double-bond stereochemistry (e.g. C=C=C=C) ignored"<<std::endl;
                   continue;
                 }
                 // also find neighboring atoms. Note we cannot use what InChI returned
@@ -1567,12 +1567,12 @@ namespace RDKit {
                 break;
               }
             case INCHI_StereoType_Allene:
-              BOOST_LOG(rdWarningLog) 
+              BOOST_LOG_TRIVIAL(rdWarningLog) 
                 << "Allene-style stereochemistry is not supported yet and will be ignored." 
                 << std::endl;
               break;
             default:
-              BOOST_LOG(rdWarningLog) 
+              BOOST_LOG_TRIVIAL(rdWarningLog) 
                 << "Unrecognized stereo0D type ("
                 << (int) stereo0DPtr->type
                 << ") is ignored!"
@@ -1581,7 +1581,7 @@ namespace RDKit {
           } // end for loop over all stereo0D entries
           // set the bond directions
           if (! assignBondDirs(*m, zBondPairs, eBondPairs)) {
-            BOOST_LOG(rdWarningLog) << "Cannot assign bond directions!"
+            BOOST_LOG_TRIVIAL(rdWarningLog) << "Cannot assign bond directions!"
                                     << std::endl;;
           }
         } // end if (if stereo0D presents)
@@ -1812,7 +1812,7 @@ namespace RDKit {
               stereo0D.parity = INCHI_PARITY_ODD;
               pushIt=true;
             } else {
-              BOOST_LOG(rdWarningLog) << "unrecognized chirality tag ("
+              BOOST_LOG_TRIVIAL(rdWarningLog) << "unrecognized chirality tag ("
                 << chiralTag << ") on atom " << i << " is ignored."
                 << std::endl;
             }
@@ -1854,7 +1854,7 @@ namespace RDKit {
           //  stereo0D.parity = INCHI_PARITY_UNKNOWN;
           //  stereo0DEntries.push_back(stereo0D);
           //} else {
-          //  BOOST_LOG(rdWarningLog) << "unrecognized parity on atom "
+          //  BOOST_LOG_TRIVIAL(rdWarningLog) << "unrecognized parity on atom "
           //    << molParity << " is ignored." << std::endl;
           //}
         }
@@ -1880,7 +1880,7 @@ namespace RDKit {
       // bond type
       Bond::BondType bondType = bond->getBondType();
       if (bondType > Bond::TRIPLE) {
-        BOOST_LOG(rdWarningLog) << "bond type above 3 (" << bondType
+        BOOST_LOG_TRIVIAL(rdWarningLog) << "bond type above 3 (" << bondType
           << ") is treated as unspecified!" << std::endl;
         bondType = Bond::UNSPECIFIED;
       }
@@ -2034,7 +2034,7 @@ namespace RDKit {
       error = "Invalid standard InChI string";
       break;
     }
-    BOOST_LOG(rdErrorLog) << error << " in generating InChI Key" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << error << " in generating InChI Key" << std::endl;
     return std::string();
   }
 }

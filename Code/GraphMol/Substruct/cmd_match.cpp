@@ -29,7 +29,7 @@ using namespace RDKit;
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   if (argc < 3) {
-    BOOST_LOG(rdErrorLog) << "USAGE: test1 molSmiles querySmiles" << std::endl;
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "USAGE: test1 molSmiles querySmiles" << std::endl;
     exit(-1);
   }
 
@@ -41,33 +41,33 @@ int main(int argc, char *argv[]) {
 #if 1
   MatchVectType matchV;
   if (SubstructMatch(mol, query, matchV)) {
-    BOOST_LOG(rdInfoLog) << "Got a match: " << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Got a match: " << std::endl;
     MatchVectType::iterator i;
     for (i = matchV.begin(); i != matchV.end(); i++) {
-      BOOST_LOG(rdInfoLog) << "\t" << i->first << " -> " << i->second
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << i->first << " -> " << i->second
                            << std::endl;
     }
 
   } else {
-    BOOST_LOG(rdInfoLog) << "No match" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "No match" << std::endl;
   }
 #else
   std::vector<MatchVectType> matches;
   int n = SubstructMatch(mol, query, matches);
   if (n) {
-    BOOST_LOG(rdInfoLog) << "Got " << n << " matches:" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Got " << n << " matches:" << std::endl;
     std::vector<MatchVectType>::iterator i;
     for (i = matches.begin(); i != matches.end(); i++) {
       MatchVectType::iterator j;
       for (j = i->begin(); j != i->end(); j++) {
-        BOOST_LOG(rdInfoLog) << "\t" << j->first << " -> " << j->second
+        BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << j->first << " -> " << j->second
                              << std::endl;
       }
-      BOOST_LOG(rdInfoLog) << std::endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << std::endl;
     }
 
   } else {
-    BOOST_LOG(rdInfoLog) << "No match" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "No match" << std::endl;
   }
 
 #endif

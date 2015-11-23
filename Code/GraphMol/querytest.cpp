@@ -21,7 +21,7 @@ using namespace std;
 typedef class RWMol Mol;
 
 void test1() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test1" << std::endl;
   Mol qM;
   Mol m;
 
@@ -85,11 +85,11 @@ void test1() {
   CHECK_INVARIANT(!qM.getBondWithIdx(1)->Match(m.getBondWithIdx(0)), "");
   CHECK_INVARIANT(qM.getBondWithIdx(1)->Match(m.getBondWithIdx(1)), "");
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test2" << std::endl;
   Mol qM;
   Mol m;
 
@@ -120,11 +120,11 @@ void test2() {
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)), "");
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(2)), "");
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test3" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test3" << std::endl;
   Mol m;
 
   Atom *a = new Atom(6);
@@ -238,11 +238,11 @@ void test3() {
   CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(5, 6)), "");
   CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(6, 5)), "");
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void test4() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test4" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test4" << std::endl;
   Mol m;
 
   Atom *a = new Atom(6);
@@ -271,11 +271,11 @@ void test4() {
   CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
   delete aeq;
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void test5() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test5" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test5" << std::endl;
   Mol m;
 
   Atom *a = new Atom(6);
@@ -312,12 +312,12 @@ void test5() {
   valenceProd = queryAtomAllBondProduct(m.getAtomWithIdx(6));
   TEST_ASSERT(valenceProd == 81);
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testQueryQueryMatches() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing query--query matches" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing query--query matches" << std::endl;
 
   // =====================================
   // ATOMS
@@ -495,11 +495,11 @@ void testQueryQueryMatches() {
     TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testIssue2892580() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test issue 2892580"
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test issue 2892580"
                         << std::endl;
   Mol m;
 
@@ -515,11 +515,11 @@ void testIssue2892580() {
   TEST_ASSERT(massVal == static_cast<int>(RDKit::round(
                              13.003 * massIntegerConversionFactor)));
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testGithub153() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test github issue 53: query "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test github issue 53: query "
                            "molecules not matching [R]" << std::endl;
   RWMol *m = SmartsToMol("[C]1-[C]-[C]1");
   MolOps::findSSSR(*m);
@@ -531,11 +531,11 @@ void testGithub153() {
   TEST_ASSERT(mvv.size() == 3);
   TEST_ASSERT(mvv[0].size() == 1);
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testQualifiedQueries() {
-  BOOST_LOG(rdErrorLog)
+  BOOST_LOG_TRIVIAL(rdErrorLog)
       << "---------------------- Test queries using qualifiers instead of =="
       << std::endl;
   RWMol *m = SmilesToMol("CNO");
@@ -570,11 +570,11 @@ void testQualifiedQueries() {
   }
 
   delete m;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testGithub165() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test Github issue 165: "
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------- Test Github issue 165: "
                            "radicals not used in atom-atom matching"
                         << std::endl;
 
@@ -593,7 +593,7 @@ void testGithub165() {
   TEST_ASSERT(!a1.Match(&a2));
   TEST_ASSERT(!a2.Match(&a1));
 
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Done!" << std::endl;
 }
 
 void testHasPropMatch() {

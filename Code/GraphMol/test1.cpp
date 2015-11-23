@@ -118,7 +118,7 @@ void testBookmarks(ROMol m) {
 }
 
 void testMolProps() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Mol Property Caches" << std::endl;
   RWMol m2;
   STR_VECT propNames;
@@ -185,11 +185,11 @@ void testMolProps() {
   m2.getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testClearMol() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing RWMol.clear()"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing RWMol.clear()"
                        << std::endl;
   RWMol m2;
 
@@ -216,11 +216,11 @@ void testClearMol() {
   TEST_ASSERT(m2.hasProp(detail::computedPropName));  // <- github issue 176
   TEST_ASSERT(m2.getPropList().size() == 1);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAtomProps() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Atom Property Caches" << std::endl;
   RWMol m2;
   m2.addAtom(new Atom(6));
@@ -300,11 +300,11 @@ void testAtomProps() {
   a1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testBondProps() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Bond Property Caches" << std::endl;
   RWMol m2;
   m2.addAtom(new Atom(6));
@@ -355,13 +355,13 @@ void testBondProps() {
   b1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 // this is here because there was at one time a problem with crashes when doing
 // this stuff
 void testPropLeak() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-----------------------\n Testing Atom and Bond Property Caches"
       << std::endl;
   RWMol m2;
@@ -418,11 +418,11 @@ void testPropLeak() {
   b2->getProp("prop2", tmp);
   CHECK_INVARIANT(tmp == 4, "");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMisc() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Misc Properties"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing Misc Properties"
                        << std::endl;
   RWMol m2;
   m2.addAtom(new Atom(6));
@@ -500,11 +500,11 @@ void testMisc() {
     atBegin++;
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testDegree() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing degree operations"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing degree operations"
                        << std::endl;
   RWMol *m;
 
@@ -548,14 +548,14 @@ void testDegree() {
   TEST_ASSERT(m->getAtomWithIdx(2)->getTotalNumHs() == 1);
   TEST_ASSERT(m->getAtomWithIdx(2)->getTotalDegree() == 4);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue1993296() {
   RWMol *m = new RWMol();
   bool ok;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 1993296" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 1993296" << std::endl;
 
   m->addAtom(new Atom(6));
   m->addAtom(new Atom(6));
@@ -609,12 +609,12 @@ void testIssue1993296() {
   TEST_ASSERT(ok);
   delete newB;
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue2381580() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 2381580" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 2381580" << std::endl;
 
   {
     RWMol *m = new RWMol();
@@ -738,12 +738,12 @@ void testIssue2381580() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue2840217() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 2840217" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Issue 2840217" << std::endl;
 
   {
     RWMol *m = new RWMol();
@@ -765,7 +765,7 @@ void testIssue2840217() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test1() {
@@ -810,7 +810,7 @@ void test1() {
     m.updatePropertyCache();
     boost::logging::disable_logs("rdApp.info");
     while (ai1 != ai2) {
-      BOOST_LOG(rdInfoLog) << *m.getAtomWithIdx(*ai1) << endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << *m.getAtomWithIdx(*ai1) << endl;
       ai1++;
     }
 
@@ -819,22 +819,22 @@ void test1() {
     m.setBondBookmark(bsp, 47);
     m.finishPartialBond(3, 47, Bond::SINGLE);
     m.clearBondBookmark(47);
-    BOOST_LOG(rdInfoLog) << "partial bond added:" << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "partial bond added:" << endl;
     unsigned int i;
     m.updatePropertyCache();
     for (i = 0; i < m.getNumAtoms(); i++) {
       Atom *a = m.getAtomWithIdx(i);
-      BOOST_LOG(rdInfoLog) << "\t" << *a << endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << *a << endl;
     }
 
     int newAtNum = m.addAtom(new Atom(6));
     m.addBond(0, newAtNum, Bond::SINGLE);
 
-    BOOST_LOG(rdInfoLog) << "Again:" << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Again:" << endl;
     m.updatePropertyCache();
     for (i = 0; i < m.getNumAtoms(); i++) {
       Atom *a = m.getAtomWithIdx(i);
-      BOOST_LOG(rdInfoLog) << "\t" << *a << endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << *a << endl;
     }
 
     RWMol m2;
@@ -849,18 +849,18 @@ void test1() {
 
     m.insertMol(m2);
     m.updatePropertyCache();
-    BOOST_LOG(rdInfoLog) << "post-insert:" << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "post-insert:" << endl;
     for (i = 0; i < m.getNumAtoms(); i++) {
       Atom *a = m.getAtomWithIdx(i);
-      BOOST_LOG(rdInfoLog) << "\t" << *a << endl;
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "\t" << *a << endl;
     }
 
-    BOOST_LOG(rdInfoLog) << " ------------------- " << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " ------------------- " << endl;
     Atom *newA = new Atom(12);
     int newIdx = m.addAtom(newA);
     m.addBond(newIdx - 1, newIdx, Bond::AROMATIC);
     // m.debugMol(cout);
-    BOOST_LOG(rdInfoLog) << " trying a replace " << endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " trying a replace " << endl;
     Atom *repA = new Atom(22);
     m.replaceAtom(newIdx, repA);
   }
@@ -927,8 +927,8 @@ void test1() {
 }
 
 void testPeriodicTable() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing properties from periodic table" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing properties from periodic table" << std::endl;
 
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(6) == 4);
   TEST_ASSERT(PeriodicTable::getTable()->getNouterElecs(6) == 4);
@@ -953,12 +953,12 @@ void testPeriodicTable() {
   }
   TEST_ASSERT(anum == -1);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAddAtomWithConf() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing issue 264: adding atoms to molecules that "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing issue 264: adding atoms to molecules that "
                           "already have conformers" << std::endl;
   {
     RWMol m;
@@ -993,12 +993,12 @@ void testAddAtomWithConf() {
     TEST_ASSERT(m.getNumConformers() == 0);
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue267() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing issue 267: default valence of *"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing issue 267: default valence of *"
                        << std::endl;
   {
     RWMol m;
@@ -1018,12 +1018,12 @@ void testIssue267() {
     }
     m.updatePropertyCache();
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testIssue284() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing issue 284: removeBond not updating indices"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing issue 284: removeBond not updating indices"
                        << std::endl;
   {
     RWMol m;
@@ -1040,12 +1040,12 @@ void testIssue284() {
     TEST_ASSERT(!m.getBondBetweenAtoms(0, 1));
     TEST_ASSERT(m.getBondBetweenAtoms(1, 2)->getIdx() == 0);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testAtomResidues() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing residue information handling on atoms"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing residue information handling on atoms"
                        << std::endl;
   {
     RWMol *m = new RWMol();
@@ -1088,12 +1088,12 @@ void testAtomResidues() {
     TEST_ASSERT(!(m2->getAtomWithIdx(2)->getMonomerInfo()));
     TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testNeedsUpdatePropertyCache() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing function needsUpdatePropertyCache"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing function needsUpdatePropertyCache"
                        << std::endl;
   {
     RWMol m;
@@ -1128,7 +1128,7 @@ void testNeedsUpdatePropertyCache() {
     m.getAtomWithIdx(0)->setNoImplicit(true);
     TEST_ASSERT(!m.getAtomWithIdx(0)->needsUpdatePropertyCache());
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 namespace {
@@ -1172,8 +1172,8 @@ const char *m_als_mol =
     "M  END\n";
 
 void testAtomListLineRoundTrip() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Test AtomListLine RoundTrip" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test AtomListLine RoundTrip" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/GraphMol/test_data/m_als_round_trip.mol";
   const bool sanitize = false;
@@ -1202,12 +1202,12 @@ void testAtomListLineRoundTrip() {
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m2->getAtomWithIdx(3))->Match(o));
   delete m;
   delete m2;
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithub608() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Test github 608: stereo bonds wrong after insertMol"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Test github 608: stereo bonds wrong after insertMol"
                        << std::endl;
 
   {
@@ -1252,7 +1252,7 @@ void testGithub608() {
     delete m;
     delete f;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 // -------------------------------------------------------------------

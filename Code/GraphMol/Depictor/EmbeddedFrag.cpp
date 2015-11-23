@@ -528,7 +528,7 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
       rAtmLoc = d_eatoms[ringAtm].loc;
     } else {
       // FIX: this is a work-around arising from issue 3135833
-      BOOST_LOG(rdWarningLog) << "Warning: stereochemistry around double bond "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "Warning: stereochemistry around double bond "
                                  "may be incorrect in depiction." << std::endl;
       return;
     }

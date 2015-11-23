@@ -11,7 +11,7 @@
 #ifndef _RDLOG_H_29JUNE2005_
 #define _RDLOG_H_29JUNE2005_
 
-#ifdef RDK_USE_BOOST_LOG
+#ifdef RDK_USE_BOOST_LOG_TRIVIAL
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 namespace blt = boost::log::trivial;
@@ -51,7 +51,7 @@ void disable_logs(const std::string &arg);
 namespace RDLog {
 std::ostream &toStream(std::ostream &);
 }
-#define BOOST_LOG(__arg__)                                         \
+#define BOOST_LOG_TRIVIAL(__arg__)                                         \
   if ((!__arg__) || (!__arg__->dp_dest) || !(__arg__->df_enabled)) \
     ;                                                              \
   else                                                             \
@@ -65,7 +65,7 @@ extern boost::logging::rdLogger *rdWarningLog;
 extern boost::logging::rdLogger *rdStatusLog;
 
 #else
-#define BOOST_LOG_NO_LIB
+#define BOOST_LOG_TRIVIAL_NO_LIB
 #include <boost/log/log.hpp>
 BOOST_DECLARE_LOG(rdAppLog)
 BOOST_DECLARE_LOG(rdDebugLog)

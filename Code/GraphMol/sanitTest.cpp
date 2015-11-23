@@ -26,13 +26,13 @@
 using namespace RDKit;
 
 int testArom(RWMol m) {
-  // BOOST_LOG(rdErrorLog) << "********************************************\n";
-  // BOOST_LOG(rdErrorLog) << "Testing aromaticity :\n";
+  // BOOST_LOG_TRIVIAL(rdErrorLog) << "********************************************\n";
+  // BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing aromaticity :\n";
 
   int res = MolOps::setAromaticity(m);
 
-  // BOOST_LOG(rdErrorLog) << "\nDone testing aromaticity \n";
-  // BOOST_LOG(rdErrorLog) << "********************************************\n";
+  // BOOST_LOG_TRIVIAL(rdErrorLog) << "\nDone testing aromaticity \n";
+  // BOOST_LOG_TRIVIAL(rdErrorLog) << "********************************************\n";
   return res;
 }
 
@@ -50,7 +50,7 @@ void getSmiles(std::string line, std::string &smi) {
   std::string name;
   name = rem.substr(0, x);
 
-  BOOST_LOG(rdInfoLog) << smi << " " << name << " ";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi << " " << name << " ";
 }
 
 int main(int argc, char *argv[]) {
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   if (argc > 1) {
     fname = argv[1];
   } else {
-    BOOST_LOG(rdErrorLog) << "Pass in the list of smiles\n";
+    BOOST_LOG_TRIVIAL(rdErrorLog) << "Pass in the list of smiles\n";
   }
 
   std::ifstream inStream(fname.c_str());
@@ -81,12 +81,12 @@ int main(int argc, char *argv[]) {
 
       int nar;
       m->getProp(common_properties::numArom, nar);
-      BOOST_LOG(rdInfoLog) << nar << "\n";
+      BOOST_LOG_TRIVIAL(rdInfoLog) << nar << "\n";
 
       // MolOps::setHybridization(*m);
       delete m;
     } catch (MolSanitizeException) {
-      BOOST_LOG(rdErrorLog) << smi << "\n";
+      BOOST_LOG_TRIVIAL(rdErrorLog) << smi << "\n";
       delete m;
     }
     inStream.getline(inLine, MAX_LINE_LEN, '\n');

@@ -82,8 +82,8 @@ std::string getSmilesOnly(
 //=========================================================================
 
 void test1Basics() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "FMCS test1Basics()" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "FMCS test1Basics()" << std::endl;
 
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -100,12 +100,12 @@ void test1Basics() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 7 && res.NumBonds == 7);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test32() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test32" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test32" << std::endl;
   std::cout << "\n test32()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -138,12 +138,12 @@ void test32() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 31 && res.NumBonds == 33);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test190() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test190" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test190" << std::endl;
   std::cout << "\n test190()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -169,12 +169,12 @@ void test190() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 19 && res.NumBonds == 21);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test45() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test45" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test45" << std::endl;
   std::cout << "\n test45()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -205,12 +205,12 @@ void test45() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 31 && res.NumBonds == 33);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test3" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test3" << std::endl;
   std::cout << "\n test3()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -235,12 +235,12 @@ void test3() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 14 && res.NumBonds == 14);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testRing1() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testRing1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testRing1" << std::endl;
   std::cout << "\ntestRing1()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -262,12 +262,12 @@ void testRing1() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 12 && res.NumBonds == 12);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test504() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test504" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test504" << std::endl;
   std::cout << "\ntest504()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -311,12 +311,12 @@ void test504() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 34 && res.NumBonds == 36);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test18() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test18" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test18" << std::endl;
   std::cout << "\ntest18()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -350,12 +350,12 @@ void test18() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 21 && res.NumBonds == 21);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testThreshold() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testThreshold" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testThreshold" << std::endl;
   std::cout << "\ntestThreshold()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -374,12 +374,12 @@ void testThreshold() {
   printTime();
   p.Threshold = 1.0;  // restore default value
   TEST_ASSERT(res.NumAtoms == 3 && res.NumBonds == 2);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test330() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test330" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS test330" << std::endl;
   std::cout << "\ntest330()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -422,12 +422,12 @@ void test330() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 42 && res.NumBonds == 41);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testTarget_no_10188_30149() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testTarget_no_10188_30149" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testTarget_no_10188_30149" << std::endl;
   std::cout << "\ntestTarget_no_10188_30149()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -452,12 +452,12 @@ void testTarget_no_10188_30149() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 15 && res.NumBonds == 14);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testTarget_no_10188_49064() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testTarget_no_10188_49064" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testTarget_no_10188_49064" << std::endl;
   std::cout << "\ntestTarget_no_10188_49064()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -491,12 +491,12 @@ void testTarget_no_10188_49064() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 15 && res.NumBonds == 14);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSegFault() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testSegFault" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testSegFault" << std::endl;
   std::cout << "\ntestSegFault()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -524,12 +524,12 @@ void testSegFault() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 6 && res.NumBonds == 6);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAtomCompareIsotopes() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testAtomCompareIsotopes" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testAtomCompareIsotopes" << std::endl;
   std::cout << "\ntestAtomCompareIsotopes()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -545,12 +545,12 @@ void testAtomCompareIsotopes() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 3 && res.NumBonds == 2);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAtomCompareAnyAtom() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtom" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtom" << std::endl;
   std::cout << "\ntestAtomCompareAnyAtom()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -568,12 +568,12 @@ void testAtomCompareAnyAtom() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 7 && res.NumBonds == 7);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testAtomCompareAnyAtomBond() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtomBond"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtomBond"
                        << std::endl;
   std::cout << "\ntestAtomCompareAnyAtom()\n";
   std::vector<ROMOL_SPTR> mols;
@@ -593,12 +593,12 @@ void testAtomCompareAnyAtomBond() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 7 && res.NumBonds == 7);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSimple() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testSimple" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testSimple" << std::endl;
   std::cout << "\ntestSimple()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -644,12 +644,12 @@ void testSimple() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 15 && res.NumBonds == 14);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testSimpleFast() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testSimpleFast" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testSimpleFast" << std::endl;
   std::cout << "\ntestSimpleFast()\n";
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -672,12 +672,12 @@ void testSimpleFast() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 24 && res.NumBonds == 26);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void compareChirality(const char* target, const char* query,
                       bool useChirality) {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
   std::cout << "test target = " << target << " query = " << query
             << " useChirality = " << useChirality << std::endl;
   ROMOL_SPTR target_ptr(SmilesToMol(target));
@@ -705,7 +705,7 @@ void compareChirality(const char* target, const char* query,
                   query_ptr->getNumBonds() == mcs_res.NumBonds;
   TEST_ASSERT(sub_res == mcs_resb);
   if (sub_res != mcs_resb) {  // || vect.size() != mcs_res.NumAtoms) {
-    BOOST_LOG(rdInfoLog) << "mcs_resb=" << mcs_resb
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "mcs_resb=" << mcs_resb
                          << "\t*** TEST FAILED ***\n";  // exit(1);
   }
 }
@@ -716,9 +716,9 @@ void testSubMcsChirality(const char* target, const char* query) {
 }
 
 void testChirality() {
-  BOOST_LOG(rdInfoLog) << "\n-------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\n-------------------------------------"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testChirality" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testChirality" << std::endl;
 
   testSubMcsChirality("O[C@H](F)CCl", "C(F)C");  // MCS = CCF
   testSubMcsChirality("CC[C@H](F)Cl", "CCC");    // MCS = CCC
@@ -770,8 +770,8 @@ void testChirality() {
 }
 
 void testJSONParameters() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS testJSONParameters" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing FMCS testJSONParameters" << std::endl;
   MCSParameters pj;
 
   parseMCSParametersJSON(NULL, &pj);
@@ -804,13 +804,13 @@ void testJSONParameters() {
               pj.BondCompareParameters.RingMatchesRingOnly == true &&
               pj.BondCompareParameters.CompleteRingsOnly == true &&
               0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithubIssue481() {
-  BOOST_LOG(rdInfoLog) << "\n-------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\n-------------------------------------"
                        << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "Testing github #481 : order dependence in FMCS with chirality"
       << std::endl;
 
@@ -823,14 +823,14 @@ void testGithubIssue481() {
     mols.push_back(ptr1);
     mols.push_back(ptr2);
 
-    BOOST_LOG(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
 
     {
       MCSParameters p;
       p.AtomCompareParameters.MatchChiralTag = false;
       p.BondCompareParameters.MatchStereo = false;
       MCSResult mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 4);
@@ -839,14 +839,14 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = true;
       p.BondCompareParameters.MatchStereo = true;
       mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 2);
       TEST_ASSERT(mcs_res.NumBonds == 1);
     }
 
-    BOOST_LOG(rdInfoLog) << "------ REVERSE mols -------- \n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "------ REVERSE mols -------- \n";
 
     mols.clear();
     mols.push_back(ptr2);
@@ -856,7 +856,7 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = false;
       p.BondCompareParameters.MatchStereo = false;
       MCSResult mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 4);
@@ -865,7 +865,7 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = true;
       p.BondCompareParameters.MatchStereo = true;
       mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 2);
@@ -882,14 +882,14 @@ void testGithubIssue481() {
     mols.push_back(ptr1);
     mols.push_back(ptr2);
 
-    BOOST_LOG(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "**** mols:" << s1 << "   " << s2 << "\n";
 
     {
       MCSParameters p;
       p.AtomCompareParameters.MatchChiralTag = false;
       p.BondCompareParameters.MatchStereo = false;
       MCSResult mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 4);
@@ -898,7 +898,7 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = true;
       p.BondCompareParameters.MatchStereo = true;
       mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       std::vector<std::pair<int, int> > vect;
@@ -910,7 +910,7 @@ void testGithubIssue481() {
       }
     }
 
-    BOOST_LOG(rdInfoLog) << "------ REVERSE mols -------- \n";
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "------ REVERSE mols -------- \n";
 
     mols.clear();
     mols.push_back(ptr2);
@@ -920,7 +920,7 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = false;
       p.BondCompareParameters.MatchStereo = false;
       MCSResult mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       TEST_ASSERT(mcs_res.NumAtoms == 4);
@@ -929,7 +929,7 @@ void testGithubIssue481() {
       p.AtomCompareParameters.MatchChiralTag = true;
       p.BondCompareParameters.MatchStereo = true;
       mcs_res = findMCS(mols, &p);
-      BOOST_LOG(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << mcs_res.SmartsString << " "
                            << mcs_res.NumAtoms << " atoms, " << mcs_res.NumBonds
                            << " bonds\n";
       std::vector<std::pair<int, int> > vect;
@@ -941,12 +941,12 @@ void testGithubIssue481() {
       }
     }
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testInitialSeed() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "FMCS testInitialSeed()" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "FMCS testInitialSeed()" << std::endl;
 
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -965,12 +965,12 @@ void testInitialSeed() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 7 && res.NumBonds == 7);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testInitialSeed2() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "FMCS testInitialSeed2()" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "FMCS testInitialSeed2()" << std::endl;
 
   std::vector<ROMOL_SPTR> mols;
   const char* smi[] = {
@@ -978,7 +978,7 @@ void testInitialSeed2() {
       "COc1c(N2CCNC(C)C2)c(F)cc2c(=O)c(C(=O)O)cn(C3CC3)c12",
   };
   const char* initial_smarts = "CCNCCNcccccccnC1CC1";
-  BOOST_LOG(rdInfoLog) << "initial_smarts: " << initial_smarts << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "initial_smarts: " << initial_smarts << std::endl;
 
   for (size_t i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
     std::string id;
@@ -986,7 +986,7 @@ void testInitialSeed2() {
     std::auto_ptr<ROMol> seed(SmartsToMol(initial_smarts));
     MatchVectType match;
     bool matched = SubstructMatch(*mols.back(), *seed, match);
-    BOOST_LOG(rdInfoLog) << (matched ? "RDKit MATCHED " : "RDKit DISmatched ")
+    BOOST_LOG_TRIVIAL(rdInfoLog) << (matched ? "RDKit MATCHED " : "RDKit DISmatched ")
                          << smi[i] << std::endl;
   }
   MCSParameters p;
@@ -1004,22 +1004,22 @@ void testInitialSeed2() {
       "[#6]1-[#6]-[#7]-[#6](-[#6]-[#7]-1-[#6]1:[#6](:[#6]:[#6]2:[#6](:[#6](:[#"
       "6]:[#7](-[#6]3-[#6]-[#6]-3):[#6]:2:[#6]:1)-[#6](=[#8])-[#8])=[#8])-[#9])"
       "-[#6]";  // 25 atoms, 28 bonds
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "\n\nFound MCS as the only initial seed (25 atoms, 28 bonds): \n"
       << p.InitialSeed << std::endl;
   t0 = nanoClock();
   res = findMCS(mols, &p);
-  BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms
                        << " atoms, " << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms != 0);
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testGithub631() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github issue 631: FindMCS "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing github issue 631: FindMCS "
                           "matchChiralTag=True does not match self"
                        << std::endl;
   std::vector<ROMOL_SPTR> mols;
@@ -1045,7 +1045,7 @@ void testGithub631() {
         p.AtomCompareParameters.MatchChiralTag = false;
         //          p.Verbose = true;
         MCSResult res = findMCS(mols, &p);
-        BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " "
+        BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << res.SmartsString << " "
                              << res.NumAtoms << " atoms, " << res.NumBonds
                              << " bonds\n" << std::endl;
         ;
@@ -1060,7 +1060,7 @@ void testGithub631() {
         // p.BondCompareParameters.MatchStereo = useChirality;
         //        p.Verbose = true;
         MCSResult res = findMCS(mols, &p);
-        BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " "
+        BOOST_LOG_TRIVIAL(rdInfoLog) << "MCS: " << res.SmartsString << " "
                              << res.NumAtoms << " atoms, " << res.NumBonds
                              << " bonds\n" << std::endl;
         ;
@@ -1068,10 +1068,10 @@ void testGithub631() {
         TEST_ASSERT(res.NumAtoms == mols[0]->getNumAtoms());
         TEST_ASSERT(res.NumBonds == mols[0]->getNumBonds());
       }
-      BOOST_LOG(rdInfoLog) << "============================================"
+      BOOST_LOG_TRIVIAL(rdInfoLog) << "============================================"
                            << std::endl;
     }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "\tdone" << std::endl;
 }
 
 //====================================================================================================
@@ -1081,9 +1081,9 @@ int main(int argc, const char* argv[]) {
   (void)argc;
   (void)argv;
   // p.Verbose = true;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
-  BOOST_LOG(rdInfoLog) << "FMCS Unit Test \n";
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "FMCS Unit Test \n";
 
 // use maximum CPU resoures to increase time measuring accuracy and stability in
 // multi process environment
@@ -1135,7 +1135,7 @@ int main(int argc, const char* argv[]) {
   double sec = double(t1 - T0) / 1000000.;
   printf("TOTAL Time elapsed %.2lf seconds\n", sec);
 
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "*******************************************************\n";
   return 0;
 }

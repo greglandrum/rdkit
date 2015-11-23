@@ -29,7 +29,7 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "testing atom query parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing atom query parsing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -148,11 +148,11 @@ void test1() {
   delete m2;
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "testing bond query parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing bond query parsing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -324,12 +324,12 @@ void test2() {
   delete m2;
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test4() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test4 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test4 " << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
   std::string fName = rdbase + "test_data/mol1.mol";
@@ -349,12 +349,12 @@ void test4() {
   CHECK_INVARIANT(smi == "c1cc[cH-]c1", smi);
   TEST_ASSERT(m->getConformer().is3D() == false);
 
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void test5() {
   // formerly problematic molecules
-  BOOST_LOG(rdInfoLog) << " ----------> Test5 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test5 " << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
   std::string fName = rdbase + "test_data/issue123.mol";
@@ -378,7 +378,7 @@ void test5() {
 }
 
 void test6() {
-  BOOST_LOG(rdInfoLog) << "testing chirality parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing chirality parsing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
@@ -428,7 +428,7 @@ void test6() {
   TEST_ASSERT(cip == "R");
 #if 1
   smi = MolToSmiles(*m, true);
-  // BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << " smi: " << smi << std::endl;
   TEST_ASSERT(smi == "C[C@H](F)Cl");
 #endif
   delete m;
@@ -487,11 +487,11 @@ void test6() {
 #endif
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test7() {
-  BOOST_LOG(rdInfoLog) << "testing roundtrip chirality parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing roundtrip chirality parsing" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
 
@@ -562,7 +562,7 @@ void test7() {
   smi = MolToSmiles(*m, true);
   TEST_ASSERT(smi == "C[C@@H](F)Cl");
   molBlock = MolToMolBlock(*m);
-  // BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << molBlock << std::endl;
   m2 = MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignStereochemistry(*m2);
@@ -588,18 +588,18 @@ void test7() {
   m2 = SmilesToMol(smi);
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
-  BOOST_LOG(rdInfoLog) << "SMI: " << smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "SMI: " << smi << std::endl;
   molBlock = MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << molBlock << std::endl;
   m2 = MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
@@ -608,8 +608,8 @@ void test7() {
   delete m;
   fName = rdbase + "test_data/Issue142b.mol";
   m = MolFileToMol(fName);
-  // BOOST_LOG(rdInfoLog) << m->getNumAtoms() << "\n";
-  // BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-" <<
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << m->getNumAtoms() << "\n";
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-" <<
   // std::endl;
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 9);
@@ -628,20 +628,20 @@ void test7() {
   m2 = SmilesToMol(smi);
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
-  // BOOST_LOG(rdInfoLog) << "SMI: "<< smi << std::endl;
-  BOOST_LOG(rdInfoLog) << m->getNumAtoms() << " "
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << "SMI: "<< smi << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << m->getNumAtoms() << " "
                        << m->getConformer().getNumAtoms() << "\n";
   molBlock = MolToMolBlock(*m);
-  // BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << molBlock << std::endl;
   m2 = MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
@@ -657,29 +657,29 @@ void test7() {
   m2 = SmilesToMol(smi);
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
 
   molBlock = MolToMolBlock(*m);
-  // BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  // BOOST_LOG_TRIVIAL(rdInfoLog) << molBlock << std::endl;
   m2 = MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
 #endif
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test8() {
-  BOOST_LOG(rdInfoLog) << "testing reading without sanitization" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing reading without sanitization" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
 
@@ -704,11 +704,11 @@ void test8() {
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 9);
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue145() {
-  BOOST_LOG(rdInfoLog) << "testing Issue145:\n Mol parsing: molecule yields "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Issue145:\n Mol parsing: molecule yields "
                           "non-canonical smiles from mol block" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
@@ -725,7 +725,7 @@ void testIssue145() {
   m2 = SmilesToMol(smi);
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m2;
@@ -735,17 +735,17 @@ void testIssue145() {
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2, true);
   if (smi != smi2) {
-    BOOST_LOG(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "\n " << smi << "\n !=\n " << smi2 << std::endl;
   }
   TEST_ASSERT(smi == smi2);
   delete m;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue148() {
-  BOOST_LOG(rdInfoLog) << "testing Issue148:\n Mol files containing mis-drawn "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Issue148:\n Mol files containing mis-drawn "
                           "nitro groups not properly parsed" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
@@ -760,11 +760,11 @@ void testIssue148() {
   TEST_ASSERT(m->getNumAtoms() == 9);
   TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue180() {
-  BOOST_LOG(rdInfoLog) << "testing Issue180: bad Z/E assignments" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Issue180: bad Z/E assignments" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
 
@@ -785,11 +785,11 @@ void testIssue180() {
   TEST_ASSERT(bond->getStereo() == Bond::STEREOE);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue264() {
-  BOOST_LOG(rdInfoLog) << "testing Issue264: bad stereochemistry from mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Issue264: bad stereochemistry from mol files"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
@@ -812,18 +812,18 @@ void testIssue264() {
 
   smi1 = MolToSmiles(*m1, true);
   smi2 = MolToSmiles(*m2, true);
-  BOOST_LOG(rdInfoLog) << smi1 << std::endl;
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi1 << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi1 != smi2);
 
   delete m1;
   delete m2;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue399() {
-  BOOST_LOG(rdInfoLog) << "testing Issue399: bond wedging cleanup" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Issue399: bond wedging cleanup" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -852,11 +852,11 @@ void testIssue399() {
 
   delete m1;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileChgLines() {
-  BOOST_LOG(rdInfoLog) << "testing handling of charge lines" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of charge lines" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -892,11 +892,11 @@ void testMolFileChgLines() {
     TEST_ASSERT(m1->getAtomWithIdx(13)->getFormalCharge() == -1);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testDblBondStereochem() {
-  BOOST_LOG(rdInfoLog) << "testing basic double bond stereochemistry"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basic double bond stereochemistry"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -930,7 +930,7 @@ void testDblBondStereochem() {
   }
 
   // the next group for sf.net issue 3009836
-  BOOST_LOG(rdInfoLog) << "  sub-test for issue 3099836" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "  sub-test for issue 3099836" << std::endl;
   {
     RWMol *m1;
     std::string fName = rdbase + "Issue3009836.1.mol";
@@ -962,13 +962,13 @@ void testDblBondStereochem() {
     delete m1;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSymmetricDblBondStereochem() {
   // this was sf.net issue 1718794:
   // http://sourceforge.net/tracker/index.php?func=detail&aid=1718794&group_id=160139&atid=814650)
-  BOOST_LOG(rdInfoLog) << "testing double bonds with symmetric substituents"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing double bonds with symmetric substituents"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -1021,13 +1021,13 @@ void testSymmetricDblBondStereochem() {
 
   delete m1;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRingDblBondStereochem() {
   // this was sf.net issue 1725068:
   // http://sourceforge.net/tracker/index.php?func=detail&aid=1725068&group_id=160139&atid=814650
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing double bonds in rings with stereochem specifications"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -1063,11 +1063,11 @@ void testRingDblBondStereochem() {
   TEST_ASSERT(smi.find("\\", 0) == std::string::npos);
   delete m1;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileRGroups() {
-  BOOST_LOG(rdInfoLog) << "testing mol file R-group parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol file R-group parsing" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -1180,11 +1180,11 @@ void testMolFileRGroups() {
   TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(), 503));
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileDegreeQueries() {
-  BOOST_LOG(rdInfoLog) << "testing mol file degree queries" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol file degree queries" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -1309,11 +1309,11 @@ void testMolFileDegreeQueries() {
   }
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileRBCQueries() {
-  BOOST_LOG(rdInfoLog) << "testing mol file ring-bond count queries"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol file ring-bond count queries"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -1479,11 +1479,11 @@ void testMolFileRBCQueries() {
   delete m2;
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileUnsaturationQueries() {
-  BOOST_LOG(rdInfoLog) << "testing mol file unsaturation queries" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol file unsaturation queries" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -1527,11 +1527,11 @@ void testMolFileUnsaturationQueries() {
   delete m2;
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileQueryToSmarts() {
-  BOOST_LOG(rdInfoLog) << "testing mol file queries -> SMARTS " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing mol file queries -> SMARTS " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -1587,11 +1587,11 @@ void testMolFileQueryToSmarts() {
   TEST_ASSERT(sma == "[#6;$(*=,:,#*)]~[#8]")
 
   delete m;
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMissingFiles() {
-  BOOST_LOG(rdInfoLog) << "testing handling of missing files" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of missing files" << std::endl;
 
   std::string fName;
   bool ok;
@@ -1614,11 +1614,11 @@ void testMissingFiles() {
   }
   TEST_ASSERT(ok);
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue1965035() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing issue Issue1965035: problems with WedgeMolBonds "
       << std::endl;
 
@@ -1639,11 +1639,11 @@ void testIssue1965035() {
   WedgeMolBonds(*m, &m->getConformer());
   TEST_ASSERT(m->getBondWithIdx(4)->getBondDir() == Bond::BEGINDASH);
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testRadicals() {
-  BOOST_LOG(rdInfoLog) << "testing handling of radicals " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of radicals " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -1664,11 +1664,11 @@ void testRadicals() {
   TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 1);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBadBondOrders() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing handling of bogus bond orders (issue 2337369)" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -1690,11 +1690,11 @@ void testBadBondOrders() {
               "BondNull");
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testAtomParity() {
-  BOOST_LOG(rdInfoLog) << "testing handling of atom stereo parity flags"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of atom stereo parity flags"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
@@ -1873,12 +1873,12 @@ void testAtomParity() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue2692246() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " Testing issue 2692246 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Testing issue 2692246 " << std::endl;
   std::string smiles(120, 'C');
   smiles += "[CH3+]";
   RWMol *m = SmilesToMol(smiles);
@@ -1891,12 +1891,12 @@ void testIssue2692246() {
   TEST_ASSERT(m->getAtomWithIdx(120)->getFormalCharge() == 1);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << " done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " done" << std::endl;
 }
 
 void testKekulizationSkip() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " Testing mol blocks without kekulization "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Testing mol blocks without kekulization "
                        << std::endl;
   std::string smiles("c1ccccc1");
   RWMol *m = SmilesToMol(smiles);
@@ -1912,11 +1912,11 @@ void testKekulizationSkip() {
   TEST_ASSERT(molBlock.find("3  4  4") == std::string::npos);
 
   delete m;
-  BOOST_LOG(rdInfoLog) << " done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " done" << std::endl;
 }
 
 void testMolFileAtomValues() {
-  BOOST_LOG(rdInfoLog) << "testing atom values in mol files" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing atom values in mol files" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
 
@@ -1958,11 +1958,11 @@ void testMolFileAtomValues() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileAtomQueries() {
-  BOOST_LOG(rdInfoLog) << "testing handling of A, Q, and * in mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of A, Q, and * in mol files"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2056,11 +2056,11 @@ void testMolFileAtomQueries() {
     delete m2;
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testListsAndValues() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing handling of mol files with atom lists and values"
       << std::endl;
 
@@ -2083,11 +2083,11 @@ void testListsAndValues() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test1V3K() {
-  BOOST_LOG(rdInfoLog) << "testing basic handling of v3000 mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basic handling of v3000 mol files"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2166,11 +2166,11 @@ void test1V3K() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test2V3K() {
-  BOOST_LOG(rdInfoLog) << "testing more queries from v3000 mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing more queries from v3000 mol files"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2336,10 +2336,10 @@ void test2V3K() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 void test3V3K() {
-  BOOST_LOG(rdInfoLog) << "testing basic writing of v3000 mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing basic writing of v3000 mol files"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2578,11 +2578,11 @@ void test3V3K() {
     TEST_ASSERT(sma == "[#6]-[#6](-[#6])=[!#7&!#8]");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue2963522() {
-  BOOST_LOG(rdInfoLog) << " Testing issue 2963522 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Testing issue 2963522 " << std::endl;
   {
     std::string smiles = "CC=CC";
     RWMol *m = SmilesToMol(smiles);
@@ -2728,11 +2728,11 @@ void testIssue2963522() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << " done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " done" << std::endl;
 }
 
 void testIssue3073163() {
-  BOOST_LOG(rdInfoLog) << " Testing issue 3073163 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Testing issue 3073163 " << std::endl;
   {
     std::string smiles = "C[2H]";
     RWMol *m = SmilesToMol(smiles);
@@ -2757,11 +2757,11 @@ void testIssue3073163() {
     delete p;
   }
 
-  BOOST_LOG(rdInfoLog) << " done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " done" << std::endl;
 }
 
 void testIssue3154208() {
-  BOOST_LOG(rdInfoLog) << " Testing Issue3154208 (a large mol failure)"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Testing Issue3154208 (a large mol failure)"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
@@ -2786,11 +2786,11 @@ void testIssue3154208() {
     TEST_ASSERT(SubstructMatch(*m2, *m, mv));
 
 #if 1
-    BOOST_LOG(rdInfoLog) << "Large molecule canonical smiles test" << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "Large molecule canonical smiles test" << std::endl;
     std::string csmiles = MolToSmiles(*m);
     for (unsigned int i = 0; i < 50; ++i) {
       if (!(i % 10)) {
-        BOOST_LOG(rdInfoLog) << "Iteration: " << i + 1 << " of 50" << std::endl;
+        BOOST_LOG_TRIVIAL(rdInfoLog) << "Iteration: " << i + 1 << " of 50" << std::endl;
       }
       std::string nsmiles = MolToSmiles(*m, false, false, 2 * i, false);
       RWMol *nm = SmilesToMol(nsmiles);
@@ -2808,12 +2808,12 @@ void testIssue3154208() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << " done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " done" << std::endl;
 }
 
 void testIssue3228150() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3228150: round-trip stereochemistry failure"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3228150: round-trip stereochemistry failure"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2829,11 +2829,11 @@ void testIssue3228150() {
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
     std::string smi1 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << std::endl;
     m->clearComputedProps();
     m->updatePropertyCache();
     std::string smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
@@ -2856,7 +2856,7 @@ void testIssue3228150() {
     TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
 
     std::string smi1 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi1 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi1 << std::endl;
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
@@ -2869,16 +2869,16 @@ void testIssue3228150() {
 
     std::string smi2 = MolToSmiles(*m, true);
     smi2 = MolToSmiles(*m, true);
-    BOOST_LOG(rdInfoLog) << " : " << smi2 << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << " : " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3313540() {
-  BOOST_LOG(rdInfoLog) << "testing writing mol file R-groups (issue 3313540)"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing writing mol file R-groups (issue 3313540)"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -2916,12 +2916,12 @@ void testIssue3313540() {
     delete m;
     delete m2;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3359739() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3359739 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3359739 " << std::endl;
 
   std::string smi = "[C]C";
   RWMol *m = SmilesToMol(smi);
@@ -2938,12 +2938,12 @@ void testIssue3359739() {
   TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3374639() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3374639 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3374639 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -2980,12 +2980,12 @@ void testIssue3374639() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testThreeCoordinateChirality() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test three-coordinate chirality "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test three-coordinate chirality "
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -3060,12 +3060,12 @@ void testThreeCoordinateChirality() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3375647() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3375647 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3375647 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3091,12 +3091,12 @@ void testIssue3375647() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3375684() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3375684 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3375684 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3120,12 +3120,12 @@ void testIssue3375684() {
     TEST_ASSERT(m->getBondBetweenAtoms(3, 9)->getStereo() == Bond::STEREOE);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testChiralPhosphorous() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test handling of chiral phosphorous "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test handling of chiral phosphorous "
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -3175,12 +3175,12 @@ void testChiralPhosphorous() {
     TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3392107() {
   // basic writing test
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3392107 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3392107 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3221,11 +3221,11 @@ void testIssue3392107() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3432136() {
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3432136 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3432136 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3252,11 +3252,11 @@ void testIssue3432136() {
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3477283() {
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3477283 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3477283 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3265,11 +3265,11 @@ void testIssue3477283() {
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3484552() {
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3484552 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3484552 " << std::endl;
 
   {
     std::string smi = "C[13CH3]";
@@ -3285,11 +3285,11 @@ void testIssue3484552() {
 
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3514824() {
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3514824 " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " ----------> Test issue 3514824 " << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3314,12 +3314,12 @@ void testIssue3514824() {
     TEST_ASSERT(m->getRingInfo()->isInitialized());
     TEST_ASSERT(m->getRingInfo()->numRings() == 8);
   }
-  BOOST_LOG(rdInfoLog) << " Finished <---------- " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << " Finished <---------- " << std::endl;
 }
 
 void testIssue3525799() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   {
@@ -3334,12 +3334,12 @@ void testIssue3525799() {
                 ")c([5*])c3c2=O)c1[10*]");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue3557675() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Bad issue 3557676: handling of D and T in CTABs"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Bad issue 3557676: handling of D and T in CTABs"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -3362,12 +3362,12 @@ void testIssue3557675() {
     TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope() == 3);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSkipLines() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing skip lines in CTABs" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing skip lines in CTABs" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -3377,12 +3377,12 @@ void testSkipLines() {
   TEST_ASSERT(m->getNumAtoms() == 1);
   delete m;
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testIssue269() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Bad issue 269: handling of bad atom symbols in CTABs"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Bad issue 269: handling of bad atom symbols in CTABs"
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
@@ -3396,11 +3396,11 @@ void testIssue269() {
     }
     TEST_ASSERT(!m);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileChiralFlag() {
-  BOOST_LOG(rdInfoLog) << "testing handling of chiral flags" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of chiral flags" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -3418,11 +3418,11 @@ void testMolFileChiralFlag() {
     delete m1;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileTotalValence() {
-  BOOST_LOG(rdInfoLog) << "testing handling of mol file valence flags"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of mol file valence flags"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -3491,11 +3491,11 @@ void testMolFileTotalValence() {
     delete m1;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub88() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 88: M  END not being read from V3K ctabs"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -3513,11 +3513,11 @@ void testGithub88() {
     TEST_ASSERT(ok);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub82() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 82: stereochemistry only "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 82: stereochemistry only "
                           "perceived if sanitization is done" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -3548,11 +3548,11 @@ void testGithub82() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileWithHs() {
-  BOOST_LOG(rdInfoLog) << "testing impact of Hs in mol files on stereochemistry"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing impact of Hs in mol files on stereochemistry"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -3577,11 +3577,11 @@ void testMolFileWithHs() {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testMolFileWithRxn() {
-  BOOST_LOG(rdInfoLog) << "testing reading reactions in mol files" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing reading reactions in mol files" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -3610,11 +3610,11 @@ void testMolFileWithRxn() {
                     ->getProp<int>(common_properties::molRxnComponent) == 3);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testPDBFile() {
-  BOOST_LOG(rdInfoLog) << "testing reading pdb files" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing reading pdb files" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -3783,11 +3783,11 @@ void testPDBFile() {
                     ->getResidueName() == "LIA");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub166() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing Github 166: skipping sanitization on reading pdb files"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -3801,11 +3801,11 @@ void testGithub166() {
     TEST_ASSERT(m->getNumAtoms() == 327);
     TEST_ASSERT(m->getNumBonds() == 337);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testZBO() {
-  BOOST_LOG(rdInfoLog) << "testing ZBO parsing" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing ZBO parsing" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -3873,11 +3873,11 @@ void testZBO() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
     TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub164() {
-  BOOST_LOG(rdInfoLog) << "testing Github 164: problems with Xe from mol files"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Github 164: problems with Xe from mol files"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -3890,14 +3890,14 @@ void testGithub164() {
     TEST_ASSERT(m->getNumBonds() == 2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 2);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 namespace RDKit {
 bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q);
 }
 void testGithub194() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 194: bad bond types from pdb"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 194: bad bond types from pdb"
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -3936,11 +3936,11 @@ void testGithub194() {
     TEST_ASSERT(m->getBondBetweenAtoms(2, 3));
     TEST_ASSERT(m->getBondBetweenAtoms(2, 3)->getBondType() == Bond::DOUBLE);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub196() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "testing github issue 196: left justitified bond topology"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -3953,11 +3953,11 @@ void testGithub196() {
     TEST_ASSERT(m->getNumAtoms() == 19);
     TEST_ASSERT(m->getNumBonds() == 20);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub191() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 191: "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing github issue 191: "
                           "wavy bonds to Hs should affect attached double bond "
                           "stereochemistry." << std::endl;
   {
@@ -3982,12 +3982,12 @@ void testGithub191() {
     TEST_ASSERT(smi == "CC=CC");
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithub210() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 210: flag possible stereocenters "
                           "when calling assignStereochemistry()" << std::endl;
   {
     std::string pathName = getenv("RDBASE");
@@ -3999,7 +3999,7 @@ void testGithub210() {
         m->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 namespace {
@@ -4011,7 +4011,7 @@ std::string getResidue(const ROMol &, const Atom *at) {
 }
 }
 void testPDBResidues() {
-  BOOST_LOG(rdInfoLog) << "testing splitting on PDB residues" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing splitting on PDB residues" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
@@ -4080,12 +4080,12 @@ void testPDBResidues() {
     TEST_ASSERT(res.find(std::string("8NH")) == res.end());
     TEST_ASSERT(res.find(std::string("ALA")) != res.end());
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub337() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 337: No double bond stereo "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 337: No double bond stereo "
                           "perception from CTABs when sanitization is turned "
                           "off" << std::endl;
   {
@@ -4098,12 +4098,12 @@ void testGithub337() {
     TEST_ASSERT(molBlock.find("  1  2  2  0") != std::string::npos);
     delete m;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithub360() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github 360: Computed props on non-sanitized "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Testing Github 360: Computed props on non-sanitized "
                           "molecule interfering with substructure matching"
                        << std::endl;
   {
@@ -4120,7 +4120,7 @@ void testGithub360() {
     delete dbm;
     delete tmpl;
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

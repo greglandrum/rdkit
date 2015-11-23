@@ -579,7 +579,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   std::vector<ROMOL_SPTR> molFrags =
       MolOps::getMolFrags(mol, true, &fragMapping);
   if (molFrags.size() > 1 && coordMap) {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG_TRIVIAL(rdWarningLog)
         << "Constrained conformer generation (via the coordMap argument) does "
            "not work with molecules that have multiple fragments." << std::endl;
     coordMap = 0;
@@ -650,7 +650,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
           }
         } else {
-          BOOST_LOG(rdWarningLog)
+          BOOST_LOG_TRIVIAL(rdWarningLog)
               << "Could not triangle bounds smooth molecule." << std::endl;
           return;
         }

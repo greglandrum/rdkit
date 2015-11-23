@@ -68,7 +68,7 @@ void LogMessage(std::string spec, std::string msg) {
   }
 
   if (dest) {
-    BOOST_LOG(dest) << msg;
+    BOOST_LOG_TRIVIAL(dest) << msg;
   }
 #endif
 }

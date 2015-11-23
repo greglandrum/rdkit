@@ -23,7 +23,7 @@
 using namespace RDKit;
 
 void test1(){
-  BOOST_LOG(rdInfoLog) << "testing canonical smiles generation" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing canonical smiles generation" << std::endl;
 
   {
     ROMol *m = static_cast<ROMol *>(SmilesToMol("c1ccccc1"));
@@ -55,10 +55,10 @@ void test1(){
     TEST_ASSERT(smi=="c1ccncc1");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 void test2(){
-  BOOST_LOG(rdInfoLog) << "testing coordinate generation" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing coordinate generation" << std::endl;
 
 #if 1
   {
@@ -75,18 +75,18 @@ void test2(){
     TEST_ASSERT(molb!="");
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void test3(){
-  BOOST_LOG(rdInfoLog) << "testing fingerprint generation" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing fingerprint generation" << std::endl;
 
   {
     ROMol *m = static_cast<ROMol *>(SmilesToMol("c1ccccn1"));
     TEST_ASSERT(m);
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x00006FFF);
-    BOOST_LOG(rdInfoLog) << "c1ccccn1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1ccccn1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==18);
     delete m;
   }
@@ -95,7 +95,7 @@ void test3(){
     TEST_ASSERT(m);
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1ccccn1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1ccccn1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==6);
     delete m;
   }
@@ -104,7 +104,7 @@ void test3(){
     TEST_ASSERT(m);
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1nnccc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1nnccc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==28);
     delete m;
   }
@@ -113,20 +113,20 @@ void test3(){
     TEST_ASSERT(m);
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1ncncc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1ncncc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==25);
     delete m;
   }
   {
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP("c1cccnc1",true,bv,512,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==18);
   }
   {
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP("c1ccccc1",true,bv,512,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1ccccc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1ccccc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==6);
   }
 
@@ -135,29 +135,29 @@ void test3(){
     TEST_ASSERT(m);
     ExplicitBitVect bv(1024);
     AvalonTools::getAvalonFP(*m,bv,1024,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==19);
     delete m;
   }
   {
     ExplicitBitVect bv(2048);
     AvalonTools::getAvalonFP("c1cocc1",true,bv,2048,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "c1cocc1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "c1cocc1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==53);
   }
   {
     ExplicitBitVect bv(2048);
     AvalonTools::getAvalonFP("C1=COC=C1",true,bv,2048,false,true,0x006FFF);
-    BOOST_LOG(rdInfoLog) << "C1=COC=C1 " << bv.getNumOnBits() << std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) << "C1=COC=C1 " << bv.getNumOnBits() << std::endl;
     TEST_ASSERT(bv.getNumOnBits()==53);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 
 void testRDK151(){
-  BOOST_LOG(rdInfoLog) << "testing Jira issue RDK-151:  pyAvalonTools not generating chiral smiles from molecules" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing Jira issue RDK-151:  pyAvalonTools not generating chiral smiles from molecules" << std::endl;
 
   {
     std::string tSmi="C[C@H](F)Cl";
@@ -171,11 +171,11 @@ void testRDK151(){
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSmilesFailures(){
-  BOOST_LOG(rdInfoLog) << "testing handling of bad smiles strings" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling of bad smiles strings" << std::endl;
 
   {
     std::string tSmi="C1C";
@@ -183,11 +183,11 @@ void testSmilesFailures(){
     CHECK_INVARIANT(smi=="",smi);
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testSubstructFps(){
-  BOOST_LOG(rdInfoLog) << "testing substructure fingerprints " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing substructure fingerprints " << std::endl;
   {
     ExplicitBitVect bv1(512),bv2(512);
     AvalonTools::getAvalonFP("c1ccccc1",true,bv1,512,true,true,AvalonTools::avalonSSSBits);
@@ -204,11 +204,11 @@ void testSubstructFps(){
     AvalonTools::getAvalonFP("c1ccccc1OC",true,bv2,512);
     TEST_ASSERT((bv1&bv2)==bv1);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testStruChk(){
-  BOOST_LOG(rdInfoLog) << "testing structure checking " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing structure checking " << std::endl;
   {
     int errs = 0;
     RDKit::ROMOL_SPTR m = AvalonTools::checkMol(errs, "c1ccccc1",true);
@@ -226,11 +226,11 @@ void testStruChk(){
     TEST_ASSERT(errs==1);
     TEST_ASSERT(res=="");
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testBadMolfile() {
-  BOOST_LOG(rdInfoLog) << "testing handling bad molecules " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing handling bad molecules " << std::endl;
   // some tests around dealing with bad mol blocks
   {
     std::string molb="SNAP007157A\n\
@@ -252,7 +252,7 @@ void testBadMolfile() {
 }
 
 void testSmilesSegFault() {
-  BOOST_LOG(rdInfoLog) << "testing a canonical smiles case that led to seg faults " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing a canonical smiles case that led to seg faults " << std::endl;
   // some tests around dealing with bad mol blocks
   {
     std::string inSmi(1024,'C');
@@ -264,11 +264,11 @@ void testSmilesSegFault() {
     std::string smi=AvalonTools::getCanonSmiles(inSmi,true);
     TEST_ASSERT(smi==inSmi);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 void testGithub336() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 336: bad canonical smiles for conjugated double bonds" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing github issue 336: bad canonical smiles for conjugated double bonds" << std::endl;
   // some tests around dealing with bad mol blocks
   {
     std::string pathName=getenv("RDBASE");
@@ -333,12 +333,12 @@ void testGithub336() {
     delete m;
   }  
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 
 void testCountFps(){
-  BOOST_LOG(rdInfoLog) << "testing substructure fingerprints " << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "testing substructure fingerprints " << std::endl;
   {
     SparseIntVect<boost::uint32_t> cv1(5000),cv2(5000);
     AvalonTools::getAvalonCountFP("c1ccccc1",true,cv1,5000);
@@ -372,7 +372,7 @@ void testCountFps(){
     delete m1;
     delete m2;
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "done" << std::endl;
 }
 
 

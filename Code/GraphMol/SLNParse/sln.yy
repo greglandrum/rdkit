@@ -4,19 +4,19 @@
   //
   //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
   //  All rights reserved.
-  // 
+  //
   // Redistribution and use in source and binary forms, with or without
   // modification, are permitted provided that the following conditions are
-  // met: 
+  // met:
   //
-  //     * Redistributions of source code must retain the above copyright 
+  //     * Redistributions of source code must retain the above copyright
   //       notice, this list of conditions and the following disclaimer.
   //     * Redistributions in binary form must reproduce the above
-  //       copyright notice, this list of conditions and the following 
-  //       disclaimer in the documentation and/or other materials provided 
+  //       copyright notice, this list of conditions and the following
+  //       disclaimer in the documentation and/or other materials provided
   //       with the distribution.
-  //     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-  //       nor the names of its contributors may be used to endorse or promote 
+  //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+  //       nor the names of its contributors may be used to endorse or promote
   //       products derived from this software without specific prior
   //       written permission.
   //
@@ -58,7 +58,7 @@ yysln_error( const char *input,
              std::vector<RDKit::RWMol *> *ms,bool doQ,
 	     void *scanner,const char * msg )
 {
-  BOOST_LOG(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
  namespace SLNParse = RDKit::SLNParse;
@@ -179,7 +179,7 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
-  
+
   $$=SLNParse::startMol(*molList,newAtom,doQueries);
 }
 | atom {
@@ -227,7 +227,7 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
-  
+
   SLNParse::addAtomToMol(*molList,$$,newAtom,$2,doQueries);
   $$=$1;
 }
@@ -253,7 +253,7 @@ primmol: H_TOKEN {
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
-  
+
   $$=$1;
 }
 | primmol OPEN_PAREN_TOKEN primmol CLOSE_PAREN_TOKEN H_TOKEN {
@@ -265,7 +265,7 @@ primmol: H_TOKEN {
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
-  
+
   $$=$1;
 }
 | primmol OPEN_PAREN_TOKEN bond primmol CLOSE_PAREN_TOKEN H_TOKEN {
@@ -279,7 +279,7 @@ primmol: H_TOKEN {
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
-  
+
   $$=$1;
 }
 | primmol OPEN_PAREN_TOKEN AT_TOKEN number CLOSE_PAREN_TOKEN H_TOKEN {
@@ -291,7 +291,7 @@ primmol: H_TOKEN {
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
-  
+
   $$=$1;
 }
 | primmol OPEN_PAREN_TOKEN bond AT_TOKEN number CLOSE_PAREN_TOKEN H_TOKEN {
@@ -303,12 +303,12 @@ primmol: H_TOKEN {
     newAtom = new RDKit::QueryAtom(1);
   }
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
-  
+
   $$=$1;
 }
 ;
 
-atom: hatom 
+atom: hatom
 | primatom
 | primatom H_TOKEN {
   $1->setNumExplicitHs(1);
@@ -357,7 +357,7 @@ hatom: H_ASTERIX_TOKEN {
 }
 
 
-primatom: ATOM_TOKEN 
+primatom: ATOM_TOKEN
 | primatom ASTERIX_TOKEN{
   $$->setProp(RDKit::common_properties::_starred,1,true);
 }
@@ -387,14 +387,14 @@ bond: primbond
 }
 
 /* tildes can't be mixed with regular bonds in expressions: */
-| TILDE_TOKEN { 
+| TILDE_TOKEN {
   RDKit::Bond *bond=new RDKit::QueryBond();
-  bond->setQuery(RDKit::makeBondNullQuery());   
+  bond->setQuery(RDKit::makeBondNullQuery());
   $$ = bond;
 }
 | TILDE_TOKEN OPEN_BRACKET_TOKEN attriblist CLOSE_BRACKET_TOKEN {
   RDKit::Bond *bond=new RDKit::QueryBond();
-  bond->setQuery(RDKit::makeBondNullQuery());   
+  bond->setQuery(RDKit::makeBondNullQuery());
   SLNParse::parseBondAttribs(bond,*$3,doQueries);
   delete $3;
   $$ = bond;
@@ -574,7 +574,7 @@ recursivequery: RECURSE_TOKEN cmpd {
    $$->op = "=";
    $$->second = "";
    $$->structQuery=static_cast<void *>(orq);
-} 
+}
 | recursivequery COMMA_TOKEN cmpd {
    int sz = molList->size();
    RDKit::ROMol *mol=(*molList)[$3];
@@ -633,5 +633,3 @@ number:  DIGIT_TOKEN
 | number DIGIT_TOKEN { $$ = $1*10 + $2; }
 ;
 %%
-
-

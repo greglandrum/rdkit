@@ -150,9 +150,9 @@ namespace AvalonTools {
       }
       if(!res){
         if(isSmiles){
-          BOOST_LOG(rdErrorLog)<<"ERROR could not build molecule from smiles: "<<data<<std::endl;
+          BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR could not build molecule from smiles: "<<data<<std::endl;
         } else {
-          BOOST_LOG(rdErrorLog)<<"ERROR could not build molecule from molblock: \n"<<data<<std::endl;
+          BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR could not build molecule from molblock: \n"<<data<<std::endl;
         }
       }
       return res;
@@ -192,7 +192,7 @@ namespace AvalonTools {
                    bool resetVect,
                    unsigned int bitFlags){
     if(nBits%8) {
-      BOOST_LOG(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
     }
     unsigned int nBytes = nBits/8;
     struct reaccs_molecule_t *mp=molToReaccs(mol);
@@ -205,7 +205,7 @@ namespace AvalonTools {
                    bool resetVect,
                    unsigned int bitFlags){
     if(nBits%8) {
-      BOOST_LOG(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
     }
     unsigned int nBytes = nBits/8;
     struct reaccs_molecule_t *mp=molToReaccs(mol);
@@ -275,7 +275,7 @@ namespace AvalonTools {
       res=canSmiles;
       MyFree(canSmiles);
     } else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no smiles generated for molecule."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR: no smiles generated for molecule."<<std::endl;
     }
     return res;
   }
@@ -289,7 +289,7 @@ namespace AvalonTools {
       reaccsToCounts(mp,res,bitFlags,isQuery,nBits);
       FreeMolecule(mp);
     } else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
     }
   }
   void getAvalonFP(const std::string &data,bool isSmiles,ExplicitBitVect &res,
@@ -298,7 +298,7 @@ namespace AvalonTools {
                    bool resetVect,
                    unsigned int bitFlags){
     if(nBits%8) {
-      BOOST_LOG(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
     }
     unsigned int nBytes = nBits/8;
     struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
@@ -306,7 +306,7 @@ namespace AvalonTools {
       reaccsToFingerprint(mp,res,bitFlags,isQuery,resetVect,nBytes);
       FreeMolecule(mp);
     } else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
     }
   }
   void getAvalonFP(const std::string &data,bool isSmiles,std::vector<boost::uint32_t> &res,
@@ -315,7 +315,7 @@ namespace AvalonTools {
                    bool resetVect,
                    unsigned int bitFlags){
     if(nBits%8) {
-      BOOST_LOG(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdWarningLog)<<"Warning: number of bits ("<<nBits<<") is not evenly divisible by 8. Rounding to the nearest byte."<<std::endl;
     }
     unsigned int nBytes = nBits/8;
     struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
@@ -323,7 +323,7 @@ namespace AvalonTools {
       reaccsToFingerprint(mp,res,bitFlags,isQuery,resetVect,nBytes);
       FreeMolecule(mp);
     } else {
-      BOOST_LOG(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
+      BOOST_LOG_TRIVIAL(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
     }
   }
 

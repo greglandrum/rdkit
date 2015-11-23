@@ -80,9 +80,9 @@ void writeBond(const ROMol &mol, unsigned int bondId,
       bondLabel = "3.0";
       break;
     default:
-      BOOST_LOG(rdWarningLog) << "TPL files only support single, double, "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "TPL files only support single, double, "
                                  "aromatic, and triple bonds." << std::endl;
-      BOOST_LOG(rdWarningLog) << "Bond of with type " << bond->getBondType()
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "Bond of with type " << bond->getBondType()
                               << " written as single in output." << std::endl;
       bondLabel = "1.0";
   }
@@ -104,7 +104,7 @@ void writeBond(const ROMol &mol, unsigned int bondId,
 std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
                          bool writeFirstConfTwice) {
   if (!mol.getNumConformers()) {
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG_TRIVIAL(rdErrorLog)
         << "Cannot write molecules with no conformers to TPL files\n";
     return "";
   }
@@ -113,7 +113,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   res << "BioCAD format, all rights reserved" << std::endl;
   res << "Output from RDKit" << std::endl;
   if (!mol.hasProp(common_properties::_Name)) {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG_TRIVIAL(rdWarningLog)
         << "Molecule has no name; arbitrary name assigned.\n";
     tempStr = "Unnamed molecule";
   } else {

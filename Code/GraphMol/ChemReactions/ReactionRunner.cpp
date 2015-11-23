@@ -344,7 +344,7 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
       // inversion
       if (reactantChirality != Atom::CHI_TETRAHEDRAL_CW &&
           reactantChirality != Atom::CHI_TETRAHEDRAL_CCW) {
-        BOOST_LOG(rdWarningLog)
+        BOOST_LOG_TRIVIAL(rdWarningLog)
             << "unsupported chiral type on reactant atom ignored\n";
       } else {
         productAtom->setChiralTag(reactantChirality);
@@ -363,7 +363,7 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
       // set stereo, so leave it the way it was in the product template
       break;
     default:
-      BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "unrecognized chiral inversion/retention flag "
                                  "on product atom ignored\n";
   }
 }
@@ -675,7 +675,7 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
        pr != mapping->reactProdAtomMap.end(); ++pr) {
     std::vector<unsigned> prodIdxs = pr->second;
     if (prodIdxs.size() > 1) {
-      BOOST_LOG(rdWarningLog) << "reactant atom match more than one product "
+      BOOST_LOG_TRIVIAL(rdWarningLog) << "reactant atom match more than one product "
                                  "atom, coordinates need to be revised\n";
     }
     // is this reliable when multiple product atom mapping occurs????

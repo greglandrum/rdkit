@@ -632,8 +632,8 @@ void runblock(const std::vector<ROMol *> &mols, const ROMol *query,
 };
 }
 void testMultiThread() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test multithreading" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
@@ -707,15 +707,15 @@ void testMultiThread() {
 
   for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #else
 void testMultiThread() {}
 #endif
 
 void testChiralMatch() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test chiral matching" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test chiral matching" << std::endl;
 
   {
     std::string qSmi = "Cl[C@](C)(F)Br";
@@ -888,12 +888,12 @@ void testChiralMatch() {
     TEST_ASSERT(!matched);
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testCisTransMatch() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test cis/trans matching" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test cis/trans matching" << std::endl;
 
   {
     std::string qSmi = "CC=CC";
@@ -986,12 +986,12 @@ void testCisTransMatch() {
     TEST_ASSERT(!matched);
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue15() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 15" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub issue 15" << std::endl;
 
   {
     std::string qSmi = "[R2]~[R1]~[R2]";
@@ -1012,12 +1012,12 @@ void testGitHubIssue15() {
     TEST_ASSERT(!matched);
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testGitHubIssue409() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 409" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "    Test GitHub issue 409" << std::endl;
   {
     std::string smi = "FC(F)(F)CC(F)(F)F";
     ROMol *mol = SmilesToMol(smi);
@@ -1030,7 +1030,7 @@ void testGitHubIssue409() {
         SubstructMatch(*mol, *mol, matches, false, true, false, false, 16);
     TEST_ASSERT(matches.size() == 16);
   }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

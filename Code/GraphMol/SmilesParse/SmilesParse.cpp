@@ -161,7 +161,7 @@ RWMol *toMol(const std::string &inp,
     if (func == smarts_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG_TRIVIAL(rdErrorLog) << nm << " Parse Error: " << e.message()
                           << " for input: '" << origInp << "'" << std::endl;
     res = 0;
   }

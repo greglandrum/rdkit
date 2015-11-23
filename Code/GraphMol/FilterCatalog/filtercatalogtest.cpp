@@ -72,7 +72,7 @@ bool check(MatchVectType v, MatchVectType match) {
 }
 
 void testFilterCatalog() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------\n Testing sf.net issue "
                           "2313979: aromaticity assignment hangs " << std::endl;
   {
     std::string pathName = getenv("RDBASE");
@@ -190,7 +190,7 @@ void testFilterCatalog() {
       count++;
     }  // end while
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testFilterCatalogEntry() {

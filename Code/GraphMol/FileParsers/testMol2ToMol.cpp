@@ -44,11 +44,11 @@
 using namespace RDKit;
 
 void testGeneral(std::string rdbase) {
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- testing general mol2 file parsing --"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- testing general mol2 file parsing --"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
 
   {
@@ -243,22 +243,22 @@ void testGeneral(std::string rdbase) {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Sulfonate.mol2";
     RWMol *m = Mol2FileToMol(fName);
     TEST_ASSERT(m);
-    BOOST_LOG(rdInfoLog) <<MolToSmiles(*m)<<std::endl;
+    BOOST_LOG_TRIVIAL(rdInfoLog) <<MolToSmiles(*m)<<std::endl;
     delete m;
   }
 #endif
 
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- DONE general mol2 file parsing --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- DONE general mol2 file parsing --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
 void testAromaticChargedFail(std::string rdbase) {
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- testing subst arom groups in mol2 --"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- testing subst arom groups in mol2 --"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
 
   // this one checks on substituted aromatic groups that need to be charged,
@@ -276,17 +276,17 @@ void testAromaticChargedFail(std::string rdbase) {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- DONE subst arom groups in mol2 --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- DONE subst arom groups in mol2 --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
 void testIssue3399798(std::string rdbase) {
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- testing issue 3399798             --"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- testing issue 3399798             --"
                        << std::endl;
-  BOOST_LOG(rdInfoLog) << "---------------------------------------"
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---------------------------------------"
                        << std::endl;
 
   {
@@ -311,16 +311,16 @@ void testIssue3399798(std::string rdbase) {
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
 // Test the following GitHub issue: https://github.com/rdkit/rdkit/issues/114
 void testIssue114(std::string rdbase) {
-  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- testing GitHub issue #114     --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- testing GitHub issue #114     --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------" << std::endl;
 
   std::string fName =
       rdbase + "/Code/GraphMol/FileParsers/test_data/EZ_mol2_issue114.mol2";
@@ -329,17 +329,17 @@ void testIssue114(std::string rdbase) {
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   delete mol;
 
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
 void testGithub438(std::string rdbase) {
-  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog)
       << "-- testing GitHub issue #438: problems with metals in mol2 files  --"
       << std::endl;
-  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-----------------------------------" << std::endl;
 
   {
     std::string fName =
@@ -357,9 +357,9 @@ void testGithub438(std::string rdbase) {
     TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
     delete mol;
   }
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
-  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
 // FIX still missing chirality by 3D structure

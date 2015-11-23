@@ -196,23 +196,23 @@ void test4SymmMatrix() {
 int main() {
   RDLog::InitLogs();
 
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "Testing RDNumerics: vectors and matrices Code\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "Testing RDNumerics: vectors and matrices Code\n";
 
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test1Vector\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\t test1Vector\n";
   test1Vector();
 
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test2Matrix\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\t test2Matrix\n";
   test2Matrix();
 
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test3SquareMatrix\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\t test3SquareMatrix\n";
   test3SquareMatrix();
 
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test4SymmMatrix\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "---------------------------------------\n";
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "\t test4SymmMatrix\n";
   test4SymmMatrix();
   return 0;
 }

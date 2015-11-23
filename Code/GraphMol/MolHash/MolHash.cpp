@@ -102,7 +102,7 @@ void fillAtomBondCodes(
                 v = 2;
               }
               if (ringStereoAtoms.size() > 1) {
-                BOOST_LOG(rdWarningLog)
+                BOOST_LOG_TRIVIAL(rdWarningLog)
                     << "Warning: atom with more than 1 ring-stereo atoms found."
                     << std::endl;
               }

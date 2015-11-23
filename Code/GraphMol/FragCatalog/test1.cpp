@@ -119,9 +119,9 @@ void test1() {
   TEST_ASSERT(nents == 21);
   FragFPGenerator fpGen;
 
-  BOOST_LOG(rdInfoLog) << "----- Test 1" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "----- Test 1" << std::endl;
   testMols(mols, fpGen, fcat);
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 
   //----------------------------------------------------------
   //  SERIALIZATION TESTS
@@ -150,21 +150,21 @@ void test1() {
   FragCatalog fcat2;
   fcat2.initFromString(fcat.Serialize());
   TEST_ASSERT(fcat2.getNumEntries() == fcat.getNumEntries());
-  BOOST_LOG(rdInfoLog) << "----- Test 2" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "----- Test 2" << std::endl;
   testMols(mols, fpGen, fcat2);
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 
   // and the pickle ctor:
   FragCatalog *fcat3 = new FragCatalog(fcat.Serialize());
   TEST_ASSERT(fcat3->getNumEntries() == fcat.getNumEntries());
-  BOOST_LOG(rdInfoLog) << "----- Test 3" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "----- Test 3" << std::endl;
   testMols(mols, fpGen, *fcat3);
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 
   //----------------------------------------------------------
   // test issue 115
   //----------------------------------------------------------
-  BOOST_LOG(rdInfoLog) << "----- Test Issue 115" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "----- Test Issue 115" << std::endl;
   delete fparams;
   fparams = new FragCatParams(3, 3, fgrpFile, 1.0e-8);
   TEST_ASSERT(fparams->getNumFuncGroups() == 15);
@@ -184,12 +184,12 @@ void test1() {
   for (unsigned int i = 0; i < fcat3->getFPLength(); i++) {
     TEST_ASSERT(fcat3->getEntryWithBitId(i)->getOrder() == 3);
   }
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 
   //----------------------------------------------------------
   // test issue 117
   //----------------------------------------------------------
-  BOOST_LOG(rdInfoLog) << "----- Test Issue 117" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "----- Test Issue 117" << std::endl;
   delete fparams;
   fparams = new FragCatParams(1, 2, fgrpFile, 1.0e-8);
   delete fcat3;
@@ -201,13 +201,13 @@ void test1() {
   // std::cout << fcat3->getEntryWithBitId(0)->getDescription() << std::endl;
   TEST_ASSERT(fcat3->getEntryWithBitId(0)->getDescription() ==
               "C(<-O>)<-N>C<-O>");
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 
   delete tmpMol;
 }
 
 void testIssue294() {
-  BOOST_LOG(rdInfoLog) << "---- Test Issue294\n  Watch memory usage."
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Test Issue294\n  Watch memory usage."
                        << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FragCatalog/test_data/mols.smi";
@@ -243,7 +243,7 @@ void testIssue294() {
       delete fp;
     }
   }
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdInfoLog) << "---- Done" << std::endl;
 }
 
 int main() {

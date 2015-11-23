@@ -525,7 +525,7 @@ void runblock_o3a_mmff(ROMol *refMol, const std::vector<ROMol *> &mols,
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       if (!(rep % 10)) {
-        BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       ROMol prbMol(*mols[i]);
       MMFF::MMFFMolProperties prbMP(prbMol);
@@ -554,7 +554,7 @@ void runblock_o3a_crippen(ROMol *refMol, const std::vector<ROMol *> &mols,
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       if (!(rep % 10)) {
-        BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
+        BOOST_LOG_TRIVIAL(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       ROMol prbMol(*mols[i]);
       unsigned int prbNAtoms = prbMol.getNumAtoms();
@@ -625,7 +625,7 @@ void testMMFFO3AMultiThread() {
   tg.join_all();
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testCrippenO3AMultiThread() {
@@ -688,7 +688,7 @@ void testCrippenO3AMultiThread() {
   tg.join_all();
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 #endif
 
@@ -759,7 +759,7 @@ void testGetO3AForProbeConfs() {
   delete refMol;
   delete prbMol;
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 void testO3AMultiThreadBug() {
@@ -820,7 +820,7 @@ void testO3AMultiThreadBug() {
   delete refMol;
   for (unsigned int j = 0; j < mols.size(); ++j) delete mols[j];
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG_TRIVIAL(rdErrorLog) << "  done" << std::endl;
 }
 
 int main() {
