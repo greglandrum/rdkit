@@ -235,6 +235,22 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
+ROMol *MolFromJSON(python::object imolBlock, bool sanitize, bool removeHs,
+                   bool strictParsing) {
+  std::string cString=pyObjectToString(imolBlock);
+  RWMol *newM = 0;
+  try {
+    newM =
+        JSONToMol(cString, sanitize, removeHs, strictParsing);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+
+  
 std::string MolFragmentToSmilesHelper(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, python::object bondSymbols,
@@ -1001,6 +1017,52 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("MolToHELM", RDKit::MolToHELM, (python::arg("mol")),
               docString.c_str());
 
+  docString =
+      "Construct a molecule from a chemical JSON string.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - json: string containing the JSON\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
+      correctness of the content.\n\
+      Defaults to true.\n\
+\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";
+  python::def("MolFromJSON", RDKit::MolFromJSON,
+              (python::arg("json"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true, python::arg("strictParsing") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Returns a chemical JSON string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+                as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToJSON", RDKit::MolToJSON, (python::arg("mol"), 
+                                              python::arg("confId") = -1,
+                                              python::arg("kekulize") = true),              
+              docString.c_str());
+
+  
   docString =
       "Returns the canonical atom ranking for each atom of a molecule fragment.\n\
   If breakTies is False, this returns the symmetry class for each atom.  The symmetry\n\
