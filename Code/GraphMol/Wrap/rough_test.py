@@ -3261,6 +3261,20 @@ CAS<~>
       self.assertEqual(len(matches), 2)
       self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
 
+  def testJSON(self):
+    """ basic JSON round-tripping """
+    smis = ("c1ccccc1","C1CC1[NH3+]","c1ccc[nH]1","CC[CH2]")
+    for smi in smis:
+      mol = Chem.MolFromSmiles(smi)
+      self.assertTrue(mol is not None)
+      csmi = Chem.MolToSmiles(mol,isomericSmiles=True)
+      json = Chem.MolToJSON(mol)
+      nmol = Chem.MolFromJSON(json)
+      csmi2 = Chem.MolToSmiles(nmol,isomericSmiles=True)
+      self.assertEqual(csmi,csmi2)
+      
+
+      
 if __name__ == '__main__':
   unittest.main()
 
