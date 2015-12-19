@@ -285,6 +285,12 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
+namespace {
+bool isLargerSP2Atom(const Atom *atom) {
+  return atom->getAtomicNum() > 13 && atom->getHybridization() == Atom::SP2 &&
+         atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx());
+}
+}
 void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
                         double angle, const ComputedData &accumData,
                         DistGeom::BoundsMatPtr mmat, const ROMol &mol) {
@@ -292,8 +298,20 @@ void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
   unsigned int bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
   double dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
                                     accumData.bondLengths[bid2], angle);
-  double du = dl + DIST13_TOL;
-  dl -= DIST13_TOL;
+  double distTol = DIST13_TOL;
+  // Now increase the tolerance if we're outside of the first row of the
+  // periodic table.
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
+    distTol *= 2;
+  }
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
+    distTol *= 2;
+  }
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
+    distTol *= 2;
+  }
+  double du = dl + distTol;
+  dl -= distTol;
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
@@ -304,7 +322,8 @@ void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
   // heteroatoms
   // like s1cncc1. This led to GitHub55, which was fixed elsewhere.
 
-  if ((aHyb == Atom::SP2) || (ringSize == 3) || (ringSize == 4)) {
+  if ((aHyb == Atom::SP2 && ringSize <= 8) || (ringSize == 3) ||
+      (ringSize == 4)) {
     angle = M_PI * (1 - 2.0 / ringSize);
   } else if (aHyb == Atom::SP3) {
     if (ringSize == 5) {
@@ -583,8 +602,27 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   path14.bid2 = bid2;
   path14.bid3 = bid3;
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
+  bool preferCis = false;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
       (stype != Bond::STEREOE)) {
+    // the ring check here was a big part of github #697
+    if (mol.getRingInfo()->numBondRings(bid2) > 1) {
+      if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
+          mol.getRingInfo()->numBondRings(bid3) == 1) {
+        BOOST_FOREACH (const INT_VECT &br, mol.getRingInfo()->bondRings()) {
+          if (std::find(br.begin(), br.end(), bid1) != br.end()) {
+            if (std::find(br.begin(), br.end(), bid3) != br.end()) {
+              preferCis = true;
+            }
+            break;
+          }
+        }
+      }
+    } else {
+      preferCis = true;
+    }
+  }
+  if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
     path14.type = Path14Configuration::CIS;
@@ -602,7 +640,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     path14.type = Path14Configuration::OTHER;
   }
 
-  // std::cerr<<"7: "<<aid1<<"-"<<aid4<<std::endl;
+  // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
 }
@@ -688,7 +726,8 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     }
     path14.type = Path14Configuration::OTHER;
   }
-  // std::cerr<<"1: "<<aid1<<"-"<<aid4<<": "<<dl<<" -> "<<du<<std::endl;
+  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
+  //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
 }
@@ -889,12 +928,12 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
 #if 0
         if ( (_checkNhChChNh(atm1, atm2, atm3, atm4)) ||
              ((bnd1->getBondType() == Bond::DOUBLE) && (bnd3->getBondType() == Bond::DOUBLE) ) ) {
-          // this is either 
+          // this is either
           //  1. [!#1]~$ch!@$ch~[!#1] situation where ch = [CH2,NX3H1,OX2] or
           //  2. *=*-*=* situation
           // Both case cases we use 180 deg for torsion
           du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du; 
+          dl = du;
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;

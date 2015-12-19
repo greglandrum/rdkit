@@ -306,7 +306,7 @@ void test2() {
   z = dmat->getVal(0,3);
   //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
   //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10 ));
-  
+
   delete mol;
   delete dmat;
 
@@ -323,7 +323,7 @@ void test2() {
   TEST_ASSERT( (bm->getUpperBound(0,3) - bm->getLowerBound(0,3)) < .13);
   //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
   //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10));
-  
+
   delete mol;
   delete dmat;
 #endif
@@ -1503,6 +1503,82 @@ void testGithub568() {
   }
 }
 
+void testGithub696() {
+  {
+    std::string smi = "COc1ccc2CCCCCCCCCCc3ccc(OC)c(c3)-c1c2";
+    ROMol *m = SmilesToMol(smi);
+    // m->debugMol(std::cerr);
+    DistGeom::BoundsMatPtr bm;
+
+    bm.reset(new DistGeom::BoundsMatrix(m->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm, false, false);
+
+    TEST_ASSERT(bm->getUpperBound(2, 19) > bm->getLowerBound(2, 19));
+    TEST_ASSERT(bm->getLowerBound(2, 19) > 2.0);
+    TEST_ASSERT(bm->getUpperBound(2, 19) > 2.5);
+
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+
+    delete m;
+  }
+}
+
+void testGithub697() {
+  {
+    // a group of chembl molecules (and things derived from them), all of which
+    // contain a c1cscn1 heterocycle
+    std::string smis[] = {
+        "C1SC2=NC1CCCCCC2", "C1CCCc2nc(CC1)cs2", "C1Cc2coc(n2)-c2coc(C1)n2",
+        "C1Cc2coc(n2)-c2csc(C1)n2", "C1CCc2nc(cs2)-c2nc(C1)co2",
+        "C1Cc2nc(co2)-c2nc(cs2)-c2nc1co2",
+        "C1Cc2nc(co2)-c2nc(co2)-c2nc(cs2)-c2nc(co2)-c2nc1co2",
+        "C1CNCc2coc(n2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc(CNCCN1)n2",
+        "C=C1NC(=O)C(C(C)C)NC(=O)C(C(C)CC)NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-"
+        "c2csc(n2)-c2coc(n2)-c2coc1n2",
+        "CCC(C)C1NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc("
+        "n2)"
+        "CNC(=O)C(C(C)C)NC1=O",
+        "CCC(C)C1NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc("
+        "n2)"
+        "C(COC(C)=O)NC(=O)C(C(C)C)NC1=O",
+        "CCC(C)C1NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc("
+        "n2)"
+        "C(COC(=O)COCCOCCOC)NC(=O)C(C(C)C)NC1=O",
+        "C=C1NC(=O)C(C(C)C)NC(=O)C(C(C)CC)NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-"
+        "c2csc(n2)-c2coc(n2)-c2nc1oc2C",
+        "C=C1NC(=O)C(C(C)C)NC(=O)C(C(C)CC)NC(=O)c2nc(oc2-c2ccccc2)-c2nc(oc2C)-"
+        "c2csc(n2)-c2coc(n2)-c2nc1oc2C",
+        "CCC(C)C1NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc("
+        "n2)"
+        "C(COC(=O)COCCOC)NC(=O)C(C(C)C)NC1=O",
+        "C=C1NC(=O)C(C(C)C)NC(=O)C(C(C)CC)NC(=O)c2nc(oc2-c2ccccc2)-c2nc(oc2C)-"
+        "c2csc(n2)-c2coc(n2)-c2coc1n2",
+        "CCC(C)C1NC(=O)c2nc(oc2-c2ccccc2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc("
+        "n2)"
+        "C(COC(=O)C(N)CCCNC(=N)N)NC(=O)C(C(C)C)NC1=O",
+        "EOS"};
+
+    for (unsigned int idx = 0; smis[idx] != "EOS"; ++idx) {
+      ROMol *m = SmilesToMol(smis[idx]);
+      TEST_ASSERT(m);
+      DistGeom::BoundsMatPtr bm;
+
+      bm.reset(new DistGeom::BoundsMatrix(m->getNumAtoms()));
+      DGeomHelpers::initBoundsMat(bm);
+      DGeomHelpers::setTopolBounds(*m, bm, false, false);
+      bool ok = DistGeom::triangleSmoothBounds(bm);
+      if (!ok) {
+        m->debugMol(std::cerr);
+        std::cerr << " FAILED: " << smis[idx] << std::endl;
+      }
+      TEST_ASSERT(ok);
+      delete m;
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1639,7 +1715,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test multi-threaded multi-conf embedding \n\n";
   testMultiThreadMultiConf();
 #endif
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test github issue 563: Incorrect ring "
@@ -1650,6 +1725,16 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 568: Incorrect stereochemistry "
                           "after embedding\n\n";
   testGithub568();
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github issue 696: Bad 1-4 bounds matrix "
+                          "elements in highly constrained system\n";
+  testGithub696();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "\t More ChEMBL molecules failing bounds smoothing.\n";
+  testGithub697();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

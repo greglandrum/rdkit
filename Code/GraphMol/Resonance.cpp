@@ -19,8 +19,8 @@ class CEVect2 {
  public:
   CEVect2(CEMap &ceMap);
   ConjElectrons *getCE(unsigned int depth, unsigned int width);
-  unsigned int ceCount() { return d_ceVect.size(); }
-  unsigned int depth() { return d_degVect.size(); }
+  unsigned int ceCount() { return rdcast<unsigned int>(d_ceVect.size()); }
+  unsigned int depth() { return rdcast<unsigned int>(d_degVect.size()); }
   void resize(unsigned int size);
   void idxToDepthWidth(unsigned int idx, unsigned int &d, unsigned int &w);
   unsigned int ceCountAtDepth(unsigned int depth);
@@ -177,7 +177,7 @@ class AtomElectrons {
   const Atom *d_atom;
   ConjElectrons *d_parent;
   AtomElectrons &operator=(const AtomElectrons &);
-  boost::uint8_t canAddBondWithOrder(unsigned int bi, unsigned int bo);
+  boost::uint8_t canAddBondWithOrder(unsigned int bo);
   void allConjBondsDefinitiveBut(unsigned int bi);
 };
 
@@ -294,7 +294,7 @@ boost::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
   allConjBondsDefinitiveBut(bi);
   boost::uint8_t res = 0;
   for (unsigned int i = 0; i < 3; ++i) {
-    res |= (canAddBondWithOrder(bi, i + 1) << (i * 2));
+    res |= (canAddBondWithOrder(i + 1) << (i * 2));
   }
   return res;
 }
@@ -325,8 +325,7 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
 // returns a 2-bit value, where the least significant bit is true
 // if the atom can add a bond with order bo, and the most significant
 // bit is true if the atom needs be charged
-boost::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bi,
-                                                  unsigned int bo) {
+boost::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
   boost::uint8_t canAdd = !isDefinitive();
   if (canAdd) canAdd = (d_tv <= (5 - bo));
   // if canAdd is true, loop over neighboring conjugated bonds
@@ -527,8 +526,8 @@ bool ConjElectrons::storeFP(CEMap &ceMap, unsigned int flags) {
   boost::uint8_t byte;
   ConjFP fp;
   unsigned int fpSize = 0;
-  if (flags & FP_ATOMS) fpSize += d_conjAtomMap.size();
-  if (flags & FP_BONDS) fpSize += ((d_conjBondMap.size() - 1) / 4 + 1);
+  if (flags & FP_ATOMS) fpSize += rdcast<unsigned int>(d_conjAtomMap.size());
+  if (flags & FP_BONDS) fpSize += rdcast<unsigned int>((d_conjBondMap.size() - 1) / 4 + 1);
   fp.reserve(fpSize);
   if (flags & FP_ATOMS) {
     // for each atom, we push a byte to the FP vector whose
@@ -737,7 +736,7 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
     // we compute the number of permutations (numComb) and a
     // binary code (v) which indicates which of the atom indices in
     // aiVec will be octet-unsatisfied for each permutation
-    ResonanceUtils::getNumCombStartV(numCand, aiVec.size(), numComb, v);
+    ResonanceUtils::getNumCombStartV(numCand, rdcast<unsigned int>(aiVec.size()), numComb, v);
     // if there are multiple permutations, make a copy of the original
     // ConjElectrons object, since the latter will be modified
     ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : NULL);
@@ -809,8 +808,9 @@ void ConjElectrons::computeDistFormalCharges() {
     for (ConjAtomMap::const_iterator it2 = it1; it2 != d_conjAtomMap.end();
          ++it2) {
       if ((it1 == it2) || !it2->second->fc()) continue;
-      unsigned int dist = MolOps::getShortestPath(d_parent->mol(), it1->first,
-                                                  it2->first).size();
+      unsigned int dist = rdcast<unsigned int>(
+          MolOps::getShortestPath(d_parent->mol(), it1->first,
+                                                   it2->first).size());
       if ((it1->second->fc() * it2->second->fc()) > 0)
         d_ceMetrics.d_fcSameSignDist += dist;
       else
