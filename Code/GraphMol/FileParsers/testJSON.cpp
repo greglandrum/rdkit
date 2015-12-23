@@ -17,6 +17,8 @@
 #include <RDGeneral/BadFileException.h>
 
 #include <string>
+#include <iostream>
+#include <fstream>
 
 using namespace RDKit;
 
@@ -406,6 +408,45 @@ void testRoundTripSmiles() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testChiralBasics() {
+  BOOST_LOG(rdInfoLog) << "testing basic chirality" << std::endl;
+
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/basic_chiral1a.json";
+    std::ifstream ifs(fName.c_str());
+    // std::string json;
+    // std::getline(ifs, json);
+    // std::cerr << " !!!! " << json << std::endl;
+
+    RWMol *mol = JSONDataStreamToMol(ifs);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!mol->hasProp("_Name"));
+
+    std::string smi = MolToSmiles(*mol, true);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CC[C@H](F)Cl");
+    delete mol;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/basic_chiral1b.json";
+    std::ifstream ifs(fName.c_str());
+
+    RWMol *mol = JSONDataStreamToMol(ifs);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!mol->hasProp("_Name"));
+
+    std::string smi = MolToSmiles(*mol, true);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CC[C@H](F)Cl");
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -416,6 +457,7 @@ int main(int argc, char *argv[]) {
   testReadBasics();
   testWriteBasics();
   testRoundTripSmiles();
+  testChiralBasics();
 
   return 0;
 }

@@ -71,22 +71,28 @@ namespace {
 int getIntDefaultValue(const char *key, const rj::Value &from,
                        const rj::Value &defaults) {
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
-  if (miter != from.MemberEnd()) {
+  if (miter == from.MemberEnd()) miter = defaults.FindMember(key);
+  if (miter != defaults.MemberEnd()) {
     if (!miter->value.IsInt())
-      throw FileParseException(std::string("Bad format: ") + std::string(key) +
+      throw FileParseException(std::string("Bad format: default value of ") +
+                               std::string(key) +
                                std::string(" is not an int"));
     return miter->value.GetInt();
-  } else {
-    rj::Value::ConstMemberIterator miter = defaults.FindMember(key);
-    if (miter != defaults.MemberEnd()) {
-      if (!miter->value.IsInt())
-        throw FileParseException(std::string("Bad format: default value of ") +
-                                 std::string(key) +
-                                 std::string(" is not an int"));
-      return miter->value.GetInt();
-    }
   }
   return 0;
+}
+bool getBoolDefaultValue(const char *key, const rj::Value &from,
+                         const rj::Value &defaults) {
+  rj::Value::ConstMemberIterator miter = from.FindMember(key);
+  if (miter == from.MemberEnd()) miter = defaults.FindMember(key);
+  if (miter != defaults.MemberEnd()) {
+    if (!miter->value.IsBool())
+      throw FileParseException(std::string("Bad format: default value of ") +
+                               std::string(key) +
+                               std::string(" is not a bool"));
+    return miter->value.GetBool();
+  }
+  return false;
 }
 }  // end of anonymous namespace
 
@@ -117,9 +123,7 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
   } catch (FileParseException &e) {
     // catch our exceptions and throw them back after cleanup
     delete res;
-    delete conf;
     res = NULL;
-    conf = NULL;
     throw e;
   }
 
@@ -147,8 +151,6 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
     if (!atoms.IsArray())
       throw FileParseException("Bad Format: atoms not in a json array");
     nAtoms = atoms.Size();
-    conf = new Conformer(nAtoms);
-    if (dimension == 3) conf->set3D(true);
     for (size_t i = 0; i < nAtoms; ++i) {
       const rj::Value &av = atoms[i];
       unsigned int num = getIntDefaultValue("element", av, atomDefaults);
@@ -161,6 +163,10 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
           getIntDefaultValue("formalcharge", av, atomDefaults));
 
       if (av.HasMember("coords")) {
+        if (conf == NULL) {
+          conf = new Conformer(nAtoms);
+          if (dimension == 3) conf->set3D(true);
+        }
         const rj::Value &cv = av["coords"];
         if (!cv.IsArray())
           throw FileParseException("Bad Format: coords not in a json array");
@@ -176,8 +182,10 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
       // add the atom
       res->addAtom(atom, true, true);
     }
-    res->addConformer(conf);
-    conf = NULL;
+    if (conf) {
+      res->addConformer(conf);
+      conf = NULL;
+    }
   }
 
   // -----------
@@ -329,13 +337,12 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
     // cleanUp(), then detect the stereochemistry.
     // (this was Issue 148)
     //
-    const Conformer &conf = res->getConformer();
+    const Conformer *conf = NULL;
+    if (res->getNumConformers()) conf = &(res->getConformer());
     if (chiralityPossible) {
       MolOps::cleanUp(*res);
-      DetectAtomStereoChemistry(*res, &conf);
     }
     if (sanitize) {
-      std::cerr << "\n\nSANITIZE!\n\n";
       try {
         if (removeHs) {
           MolOps::removeHs(*res, false, false);
@@ -350,7 +357,7 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
 
         // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry
         // here after sanitization because we need the ring information:
-        DetectBondStereoChemistry(*res, &conf);
+        // DetectBondStereoChemistry(*res, conf);
       } catch (...) {
         delete res;
         res = NULL;
@@ -360,7 +367,7 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
     } else {
       // we still need to do something about double bond stereochemistry
       // (was github issue 337)
-      DetectBondStereoChemistry(*res, &conf);
+      // DetectBondStereoChemistry(*res, conf);
     }
   }
   return res;
