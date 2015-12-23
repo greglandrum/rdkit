@@ -1033,7 +1033,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolFromJSON", RDKit::MolFromJSON,
               (python::arg("json"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true,
+               python::arg("removeHs") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =
@@ -1049,12 +1049,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a string\n\
 \n";
-  python::def("MolToJSON", RDKit::MolToJSON, (python::arg("mol"), 
-                                              python::arg("confId") = -1,
-                                              python::arg("kekulize") = true),              
+  python::def("MolToJSON", RDKit::MolToJSON,
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("kekulize") = true),
               docString.c_str());
 
-  
   docString =
       "Returns the canonical atom ranking for each atom of a molecule fragment.\n\
   If breakTies is False, this returns the symmetry class for each atom.  The symmetry\n\

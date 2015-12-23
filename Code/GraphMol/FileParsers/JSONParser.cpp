@@ -155,7 +155,7 @@ void setAtomStereochem(Atom *atom) {
 
 RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs) {
   // TODO:
-  //  - stereochemistry
+  //  - bond stereochemistry
   //
   std::string tempStr;
   bool fileComplete = false;
