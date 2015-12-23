@@ -35,15 +35,13 @@ std::string strip(const std::string &orig);
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param line     - current line number (used for error reporting)
- *   \param strictParsing - if not set, the parser is more lax about correctness
- *                          of the contents.
  *
  */
 RWMol *JSONDataStreamToMol(std::istream *inStream, bool sanitize = true,
-                           bool removeHs = true, bool strictParsing = true);
+                           bool removeHs = true);
 // \overload
 RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize = true,
-                           bool removeHs = true, bool strictParsing = true);
+                           bool removeHs = true);
 // \brief construct a molecule from JSON text
 /*!
  *   \param json     - string containing the chemical json
@@ -52,11 +50,9 @@ RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize = true,
  *                     is present in the JSON
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
- *   \param strictParsing - if set, the parser is more lax about correctness
- *                          of the contents.
  */
 RWMol *JSONToMol(const std::string &json, bool sanitize = true,
-                 bool removeHs = true, bool strictParsing = true);
+                 bool removeHs = true);
 
 // \brief generates an JSON string for a molecule
 /*!

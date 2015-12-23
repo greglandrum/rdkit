@@ -33,8 +33,8 @@
 namespace rj = rapidjson;
 
 namespace RDKit {
-
 namespace JSONParserUtils {
+const std::string jsonChiralityPropName = "_jsonChirality";
 
 // from the rapidjson documentation
 class IStreamWrapper {
@@ -70,11 +70,15 @@ class IStreamWrapper {
 namespace {
 int getIntDefaultValue(const char *key, const rj::Value &from,
                        const rj::Value &defaults) {
+  rj::Value::ConstMemberIterator endp = from.MemberEnd();
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
-  if (miter == from.MemberEnd()) miter = defaults.FindMember(key);
-  if (miter != defaults.MemberEnd()) {
+  if (miter == endp) {
+    miter = defaults.FindMember(key);
+    endp = defaults.MemberEnd();
+  }
+  if (miter != endp) {
     if (!miter->value.IsInt())
-      throw FileParseException(std::string("Bad format: default value of ") +
+      throw FileParseException(std::string("Bad format: value of ") +
                                std::string(key) +
                                std::string(" is not an int"));
     return miter->value.GetInt();
@@ -83,21 +87,73 @@ int getIntDefaultValue(const char *key, const rj::Value &from,
 }
 bool getBoolDefaultValue(const char *key, const rj::Value &from,
                          const rj::Value &defaults) {
+  rj::Value::ConstMemberIterator endp = from.MemberEnd();
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
-  if (miter == from.MemberEnd()) miter = defaults.FindMember(key);
-  if (miter != defaults.MemberEnd()) {
+  if (miter == endp) {
+    miter = defaults.FindMember(key);
+    endp = defaults.MemberEnd();
+  }
+  if (miter != endp) {
     if (!miter->value.IsBool())
-      throw FileParseException(std::string("Bad format: default value of ") +
+      throw FileParseException(std::string("Bad format: value of ") +
                                std::string(key) +
                                std::string(" is not a bool"));
     return miter->value.GetBool();
   }
   return false;
 }
+std::string getStringDefaultValue(const char *key, const rj::Value &from,
+                                  const rj::Value &defaults) {
+  rj::Value::ConstMemberIterator endp = from.MemberEnd();
+  rj::Value::ConstMemberIterator miter = from.FindMember(key);
+  if (miter == endp) {
+    miter = defaults.FindMember(key);
+    endp = defaults.MemberEnd();
+  }
+  if (miter != endp) {
+    if (!miter->value.IsString())
+      throw FileParseException(std::string("Bad format: value of ") +
+                               std::string(key) +
+                               std::string(" is not a string"));
+    return miter->value.GetString();
+  }
+  return "";
+}
 }  // end of anonymous namespace
 
-RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
-                         bool strictParsing) {
+void setAtomStereochem(Atom *atom) {
+  PRECONDITION(atom, "no atom");
+  std::string propVal;
+  PRECONDITION(atom->getPropIfPresent(jsonChiralityPropName, propVal),
+               "no chirality set");
+  if (propVal == "" || propVal == "Undefined") return;
+
+  const ROMol &mol = atom->getOwningMol();
+
+  if (propVal == "Left") {
+    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+  } else if (propVal == "Right") {
+    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  } else {
+    BOOST_LOG(rdWarningLog) << "unrecognized stereo label: " << propVal
+                            << std::endl;
+  }
+
+  // the json stereochem is done by atom order, we use bond order, so we need to
+  // figure out the number of swaps to convert
+  INT_LIST aorder;
+  unsigned int aidx = atom->getIdx();
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    if (i == aidx) continue;
+    const Bond *b = mol.getBondBetweenAtoms(aidx, i);
+    if (!b) continue;
+    aorder.push_back(b->getIdx());
+  }
+  int nSwaps = atom->getPerturbationOrder(aorder);
+  if (nSwaps % 2) atom->invertChirality();
+}
+
+RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs) {
   // TODO:
   //  - stereochemistry
   //
@@ -170,13 +226,18 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
         const rj::Value &cv = av["coords"];
         if (!cv.IsArray())
           throw FileParseException("Bad Format: coords not in a json array");
-        if (cv.Size() < dimension)
+        if (static_cast<int>(cv.Size()) < dimension)
           throw FileParseException("Bad Format: coords array too short");
         RDGeom::Point3D p(0, 0, 0);
         p.x = cv[0].GetDouble();
         p.y = cv[1].GetDouble();
         if (dimension > 2) p.z = cv[2].GetDouble();
         conf->setAtomPos(i, p);
+      }
+      if (getBoolDefaultValue("chiral", av, atomDefaults)) {
+        std::string jsonChirality =
+            getStringDefaultValue("stereo", av, atomDefaults);
+        atom->setProp(jsonChiralityPropName, jsonChirality);
       }
 
       // add the atom
@@ -307,10 +368,11 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
 
   if (!res) return res;
 
-  // calculate explicit valence on each atom:
+  // some finalization on each atom:
   for (RWMol::AtomIterator atomIt = res->beginAtoms();
        atomIt != res->endAtoms(); ++atomIt) {
     (*atomIt)->calcExplicitValence(false);
+    if ((*atomIt)->hasProp(jsonChiralityPropName)) setAtomStereochem(*atomIt);
   }
 
   // postprocess mol file flags
@@ -319,24 +381,6 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
     // we didn't find a representations section for the RDKit,
     // do some additional cleanup
 
-    // update the chirality and stereo-chemistry
-    //
-    // NOTE: we detect the stereochemistry before sanitizing/removing
-    // hydrogens because the removal of H atoms may actually remove
-    // the wedged bond from the molecule.  This wipes out the only
-    // sign that chirality ever existed and makes us sad... so first
-    // perceive chirality, then remove the Hs and sanitize.
-    //
-    // One exception to this (of course, there's always an exception):
-    // DetectAtomStereoChemistry() needs to check the number of
-    // implicit hydrogens on atoms to detect if things can be
-    // chiral. However, if we ask for the number of implicit Hs before
-    // we've called MolOps::cleanUp() on the molecule, we'll get
-    // exceptions for common "weird" cases like a nitro group
-    // mis-represented as -N(=O)=O.  *SO*... we need to call
-    // cleanUp(), then detect the stereochemistry.
-    // (this was Issue 148)
-    //
     const Conformer *conf = NULL;
     if (res->getNumConformers()) conf = &(res->getConformer());
     if (chiralityPossible) {
@@ -380,8 +424,8 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs,
 //  Read a molecule from a stream
 //
 //------------------------------------------------
-RWMol *JSONDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                           bool strictParsing) {
+RWMol *JSONDataStreamToMol(std::istream *inStream, bool sanitize,
+                           bool removeHs) {
   PRECONDITION(inStream, "no stream");
 
   rj::Document jsondoc;
@@ -393,21 +437,19 @@ RWMol *JSONDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
                           << std::endl;
     throw FileParseException(msg);
   }
-  return JSONParserUtils::JSONDocumentToMol(jsondoc, sanitize, removeHs,
-                                            strictParsing);
+  return JSONParserUtils::JSONDocumentToMol(jsondoc, sanitize, removeHs);
 };
 
-RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                           bool strictParsing) {
-  return JSONDataStreamToMol(&inStream, sanitize, removeHs, strictParsing);
+RWMol *JSONDataStreamToMol(std::istream &inStream, bool sanitize,
+                           bool removeHs) {
+  return JSONDataStreamToMol(&inStream, sanitize, removeHs);
 };
 //------------------------------------------------
 //
 //  Read a molecule from a string
 //
 //------------------------------------------------
-RWMol *JSONToMol(const std::string &json, bool sanitize, bool removeHs,
-                 bool strictParsing) {
+RWMol *JSONToMol(const std::string &json, bool sanitize, bool removeHs) {
   rj::Document jsondoc;
   if (jsondoc.Parse(json.c_str()).HasParseError()) {
     std::string msg = rj::GetParseError_En(jsondoc.GetParseError());
@@ -416,7 +458,6 @@ RWMol *JSONToMol(const std::string &json, bool sanitize, bool removeHs,
                           << std::endl;
     throw FileParseException(msg);
   }
-  return JSONParserUtils::JSONDocumentToMol(jsondoc, sanitize, removeHs,
-                                            strictParsing);
+  return JSONParserUtils::JSONDocumentToMol(jsondoc, sanitize, removeHs);
 }
 }

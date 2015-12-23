@@ -424,6 +424,7 @@ void testChiralBasics() {
     TEST_ASSERT(mol);
     TEST_ASSERT(!mol->hasProp("_Name"));
 
+    mol->debugMol(std::cerr);
     std::string smi = MolToSmiles(*mol, true);
     std::cerr << smi << std::endl;
     TEST_ASSERT(smi == "CC[C@H](F)Cl");

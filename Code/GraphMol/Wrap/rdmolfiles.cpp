@@ -235,13 +235,11 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromJSON(python::object imolBlock, bool sanitize, bool removeHs,
-                   bool strictParsing) {
-  std::string cString=pyObjectToString(imolBlock);
+ROMol *MolFromJSON(python::object imolBlock, bool sanitize, bool removeHs) {
+  std::string cString = pyObjectToString(imolBlock);
   RWMol *newM = 0;
   try {
-    newM =
-        JSONToMol(cString, sanitize, removeHs, strictParsing);
+    newM = JSONToMol(cString, sanitize, removeHs);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
@@ -249,8 +247,6 @@ ROMol *MolFromJSON(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-
-  
 std::string MolFragmentToSmilesHelper(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, python::object bondSymbols,
@@ -1030,10 +1026,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
-    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
-      correctness of the content.\n\
-      Defaults to true.\n\
-\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1041,7 +1033,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolFromJSON", RDKit::MolFromJSON,
               (python::arg("json"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true, python::arg("strictParsing") = true),
+               python::arg("removeHs") = true,
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =
