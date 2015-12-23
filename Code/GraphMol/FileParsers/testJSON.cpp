@@ -424,7 +424,6 @@ void testChiralBasics() {
     TEST_ASSERT(mol);
     TEST_ASSERT(!mol->hasProp("_Name"));
 
-    mol->debugMol(std::cerr);
     std::string smi = MolToSmiles(*mol, true);
     std::cerr << smi << std::endl;
     TEST_ASSERT(smi == "CC[C@H](F)Cl");
@@ -443,6 +442,21 @@ void testChiralBasics() {
     std::string smi = MolToSmiles(*mol, true);
     std::cerr << smi << std::endl;
     TEST_ASSERT(smi == "CC[C@H](F)Cl");
+    delete mol;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/basic_chiral1c.json";
+    std::ifstream ifs(fName.c_str());
+
+    RWMol *mol = JSONDataStreamToMol(ifs);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!mol->hasProp("_Name"));
+
+    std::string smi = MolToSmiles(*mol, true);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CC[C@@H](F)Cl");
     delete mol;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
