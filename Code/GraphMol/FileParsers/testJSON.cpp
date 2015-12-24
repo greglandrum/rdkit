@@ -416,16 +416,19 @@ void testChiralBasics() {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/basic_chiral1a.json";
     std::ifstream ifs(fName.c_str());
-    // std::string json;
-    // std::getline(ifs, json);
-    // std::cerr << " !!!! " << json << std::endl;
 
     RWMol *mol = JSONDataStreamToMol(ifs);
     TEST_ASSERT(mol);
     TEST_ASSERT(!mol->hasProp("_Name"));
 
     std::string smi = MolToSmiles(*mol, true);
-    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CC[C@H](F)Cl");
+
+    std::string json = MolToJSON(*mol);
+    delete mol;
+    mol = JSONToMol(json);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol, true);
     TEST_ASSERT(smi == "CC[C@H](F)Cl");
     delete mol;
   }
@@ -440,7 +443,13 @@ void testChiralBasics() {
     TEST_ASSERT(!mol->hasProp("_Name"));
 
     std::string smi = MolToSmiles(*mol, true);
-    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CC[C@H](F)Cl");
+
+    std::string json = MolToJSON(*mol);
+    delete mol;
+    mol = JSONToMol(json);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol, true);
     TEST_ASSERT(smi == "CC[C@H](F)Cl");
     delete mol;
   }
@@ -455,8 +464,35 @@ void testChiralBasics() {
     TEST_ASSERT(!mol->hasProp("_Name"));
 
     std::string smi = MolToSmiles(*mol, true);
-    std::cerr << smi << std::endl;
     TEST_ASSERT(smi == "CC[C@@H](F)Cl");
+
+    std::string json = MolToJSON(*mol);
+    delete mol;
+    mol = JSONToMol(json);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol, true);
+    TEST_ASSERT(smi == "CC[C@@H](F)Cl");
+    delete mol;
+  }
+  {  // a ring stereochemistry example
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/basic_chiral2a.json";
+    std::ifstream ifs(fName.c_str());
+
+    RWMol *mol = JSONDataStreamToMol(ifs);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!mol->hasProp("_Name"));
+
+    std::string smi = MolToSmiles(*mol, true);
+    TEST_ASSERT(smi == "F[C@H]1CC[C@H](Cl)CC1");
+
+    std::string json = MolToJSON(*mol);
+    delete mol;
+    mol = JSONToMol(json);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol, true);
+    TEST_ASSERT(smi == "F[C@H]1CC[C@H](Cl)CC1");
     delete mol;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

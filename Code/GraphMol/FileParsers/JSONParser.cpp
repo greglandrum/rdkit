@@ -234,11 +234,9 @@ RWMol *JSONDocumentToMol(rj::Document &jsondoc, bool sanitize, bool removeHs) {
         if (dimension > 2) p.z = cv[2].GetDouble();
         conf->setAtomPos(i, p);
       }
-      if (getBoolDefaultValue("chiral", av, atomDefaults)) {
-        std::string jsonChirality =
-            getStringDefaultValue("stereo", av, atomDefaults);
-        atom->setProp(jsonChiralityPropName, jsonChirality);
-      }
+      std::string jsonChirality =
+          getStringDefaultValue("stereo", av, atomDefaults);
+      atom->setProp(jsonChiralityPropName, jsonChirality);
 
       // add the atom
       res->addAtom(atom, true, true);

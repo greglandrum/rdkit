@@ -102,7 +102,33 @@ std::string MolToJSON(const ROMol& mol, int confId, bool kekulize) {
     if (val != doc["atomdefaults"]["formalcharge"])
       atomV.AddMember("formalcharge", val, allocator);
 
-    val = "Undefined";  // FIX
+    // stereo
+    val = "Undefined";
+    if ((*at)->getChiralTag() > Atom::CHI_UNSPECIFIED) {
+      // the json stereochem is done by atom order, we use bond order, so we
+      // need to
+      // figure out the number of swaps to convert
+      INT_LIST aorder;
+      unsigned int aidx = (*at)->getIdx();
+      for (unsigned int i = 0; i < trwmol.getNumAtoms(); ++i) {
+        if (i == aidx) continue;
+        const Bond* b = trwmol.getBondBetweenAtoms(aidx, i);
+        if (!b) continue;
+        aorder.push_back(b->getIdx());
+      }
+      int nSwaps = (*at)->getPerturbationOrder(aorder);
+      if (!(nSwaps % 2)) {
+        if ((*at)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)
+          val = "Right";
+        else if ((*at)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+          val = "Left";
+      } else {
+        if ((*at)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)
+          val = "Left";
+        else if ((*at)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+          val = "Right";
+      }
+    }
     if (val != doc["atomdefaults"]["stereo"])
       atomV.AddMember("stereo", val, allocator);
 
