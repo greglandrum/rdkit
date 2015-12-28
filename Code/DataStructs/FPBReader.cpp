@@ -45,6 +45,9 @@ void readChunk(std::istream &istrm, std::string &nm, boost::uint64_t &sz,
 struct FPBReader_impl {
   unsigned int len;
   unsigned int nBits;
+  // we're assuming that nothing practical has more than 65K bits set
+  std::vector<boost::uint16_t> popCounts;
+  boost::uint8_t *fpData;
 };
 
 }  // end of detail namespace
@@ -67,13 +70,24 @@ void FPBReader::init() {
     boost::uint64_t chunkSz;
     boost::uint8_t *chunk = 0;
     detail::readChunk(*dp_istrm, chunkNm, chunkSz, chunk);
+    if (chunkNm == "FEND") {
+      break;
+    } else if (chunkNm == "POPC") {
+      // popcounts
+    } else if (chunkNm == "AREN") {
+      dp_impl->fpData = chunk;
+      chunk = NULL;
+    } else if (chunkNm == "FPID") {
+    }
     delete[] chunk;
-    if (chunkNm == "FEND") break;
   }
   df_init = true;
 };
 
-void FPBReader::destroy() { delete dp_impl; };
+void FPBReader::destroy() {
+  if (dp_impl) delete[] dp_impl->fpData;
+  delete dp_impl;
+};
 
 ExplicitBitVect *FPBReader::getFP(unsigned int idx) const {
   PRECONDITION(df_init, "not initialized");
