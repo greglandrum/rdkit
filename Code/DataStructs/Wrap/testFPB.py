@@ -12,6 +12,9 @@ class TestCase(unittest.TestCase):
       self.fpbr.Init()
    def test1Basics(self) :
       self.assertEqual(len(self.fpbr),100)
+      self.assertEqual(self.fpbr.GetId(0),"ZINC00902219")
+      self.assertEqual(self.fpbr.GetId(3),"ZINC04803506")
+
       fp = self.fpbr.GetFP(0)
       self.assertEqual(fp.GetNumBits(),2048)
       self.assertEqual(fp.GetNumOnBits(),17)

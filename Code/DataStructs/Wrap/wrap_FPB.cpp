@@ -28,7 +28,7 @@ struct FPB_wrapper {
         //.def("__getitem__", &FPBReader::operator[]) careful about this leaking
         .def("GetFP", &FPBReader::getFP,
              python::return_value_policy<python::manage_new_object>())
-        .def("GetID", &FPBReader::getId)
+        .def("GetId", &FPBReader::getId)
         .def("GetTanimoto", &FPBReader::getTanimoto);
   }
 };
