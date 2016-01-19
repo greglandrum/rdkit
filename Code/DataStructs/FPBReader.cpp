@@ -21,7 +21,6 @@
 #include "FPBReader.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
-
 namespace RDKit {
 
 namespace detail {
@@ -45,6 +44,7 @@ struct FPBReader_impl {
   std::streampos idDataOffset;   // file offset from tellg
   std::streampos idChunkOffset;  // file offset from tellg
   std::istream *istrm;  // we don't own this, it's just used for the lazy reader
+  boost::mutex *p_readmutex;
 };
 
 // the caller is responsible for calling delete[] on `data`
@@ -174,10 +174,12 @@ void extractBytes(const FPBReader_impl *dp_impl, unsigned int which,
   if (!dp_impl->df_lazy) {
     fpData = const_cast<boost::uint8_t *>(dp_impl->dp_fpData) + offset;
   } else {
+    dp_impl->p_readmutex->lock();
     dp_impl->istrm->seekg(dp_impl->fpDataOffset +
                           static_cast<std::streampos>(offset));
     dp_impl->istrm->read(reinterpret_cast<char *>(fpData),
                          dp_impl->numBytesStoredPerFingerprint);
+    dp_impl->p_readmutex->unlock();
   }
 };
 
@@ -362,10 +364,12 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
       len = *reinterpret_cast<const boost::uint32_t *>(dp_impl->dp_idOffsets +
                                                        (which + 1) * 4);
     } else {
+      dp_impl->p_readmutex->lock();
       dp_impl->istrm->seekg(dp_impl->idDataOffset +
                             static_cast<std::streampos>(which * 4));
       dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 4);
       dp_impl->istrm->read(reinterpret_cast<char *>(&len), 4);
+      dp_impl->p_readmutex->unlock();
     }
   } else if (which == dp_impl->num4ByteElements) {
     // FIX: this code path is not yet tested
@@ -375,10 +379,12 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
       len = *reinterpret_cast<const boost::uint64_t *>(dp_impl->dp_idOffsets +
                                                        (which + 1) * 4);
     } else {
+      dp_impl->p_readmutex->lock();
       dp_impl->istrm->seekg(dp_impl->idDataOffset +
                             static_cast<std::streampos>(which * 4));
       dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 4);
       dp_impl->istrm->read(reinterpret_cast<char *>(&len), 8);
+      dp_impl->p_readmutex->unlock();
     }
   } else {
     // FIX: this code path is not yet tested
@@ -389,11 +395,13 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
           dp_impl->dp_idOffsets + dp_impl->num4ByteElements * 4 +
           (which + 1) * 8);
     } else {
+      dp_impl->p_readmutex->lock();
       dp_impl->istrm->seekg(dp_impl->idDataOffset +
                             static_cast<std::streampos>(
                                 dp_impl->num4ByteElements * 4 + which * 8));
       dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 8);
       dp_impl->istrm->read(reinterpret_cast<char *>(&len), 8);
+      dp_impl->p_readmutex->unlock();
     }
   }
   len -= offset;
@@ -405,9 +413,11 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
   } else {
     boost::shared_array<char> buff(new char[len + 1]);
     buff[len] = 0;
+    dp_impl->p_readmutex->lock();
     dp_impl->istrm->seekg(dp_impl->idChunkOffset +
                           static_cast<std::streampos>(offset));
     dp_impl->istrm->read(reinterpret_cast<char *>(buff.get()), len);
+    dp_impl->p_readmutex->unlock();
     res = std::string(reinterpret_cast<const char *>(buff.get()));
   }
   return res;
@@ -544,9 +554,11 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
 
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
+  d_readmutex.lock();
   dp_impl = new detail::FPBReader_impl;
   dp_impl->istrm = dp_istrm;
   dp_impl->df_lazy = df_lazyRead;
+  dp_impl->p_readmutex = &d_readmutex;
 
   char magic[detail::magicSize];
   dp_istrm->read(magic, detail::magicSize);
@@ -602,9 +614,11 @@ void FPBReader::init() {
     throw BadFileException("No FPID record found");
 
   df_init = true;
+  d_readmutex.unlock();
 };
 
 void FPBReader::destroy() {
+  d_readmutex.lock();
   if (dp_impl) {
     dp_impl->dp_arenaChunk.reset();
     dp_impl->dp_idChunk.reset();
@@ -613,6 +627,7 @@ void FPBReader::destroy() {
     dp_impl->dp_idOffsets = NULL;
   }
   delete dp_impl;
+  d_readmutex.unlock();
 };
 
 boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {

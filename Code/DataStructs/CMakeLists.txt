@@ -2,7 +2,7 @@ rdkit_library(DataStructs
               BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
               base64.cpp BitOps.cpp DiscreteDistMat.cpp
               DiscreteValueVect.cpp FPBReader.cpp
-              LINK_LIBRARIES RDGeneral)
+              LINK_LIBRARIES RDGeneral ${RDKit_THREAD_LIBS})
 
 rdkit_headers(base64.h
               BitOps.h

@@ -24,6 +24,17 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread/mutex.hpp>
+#else
+// fake a mutex class that doesn't do anything to allow us to simplify the code
+namespace boost {
+struct mutex {
+  void lock(){};
+  void unlock(){};
+};
+}
+#endif
 
 namespace RDKit {
 namespace detail {
@@ -230,6 +241,7 @@ class FPBReader {
   bool df_owner;
   bool df_init;
   bool df_lazyRead;
+  boost::mutex d_readmutex;
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be

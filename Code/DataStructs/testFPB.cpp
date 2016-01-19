@@ -571,12 +571,21 @@ void test11ThreadSafety() {}
 namespace {
 void runblock(FPBReader *fps, boost::uint8_t *bytes,
               const std::vector<std::pair<double, unsigned int> > &expected) {
-  std::vector<std::pair<double, unsigned int> > nbrs =
-      fps->getTanimotoNeighbors(bytes, 0.30);
-  TEST_ASSERT(nbrs.size() == expected.size());
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    TEST_ASSERT(nbrs[i].first == expected[i].first);
-    TEST_ASSERT(nbrs[i].second == expected[i].second);
+  // we run a bunch of queries in each block since the individuals are way too
+  // fast.
+  for (unsigned int rep = 0; rep < 1000; ++rep) {
+    if (!(rep % 20)) {
+      std::vector<std::pair<double, unsigned int> > nbrs =
+          fps->getTanimotoNeighbors(bytes, 0.30);
+      TEST_ASSERT(nbrs.size() == expected.size());
+      for (unsigned int i = 0; i < nbrs.size(); ++i) {
+        TEST_ASSERT(nbrs[i].first == expected[i].first);
+        TEST_ASSERT(nbrs[i].second == expected[i].second);
+      }
+    } else {
+      TEST_ASSERT(fps->getTanimotoNeighbors(bytes, 0.30).size() ==
+                  expected.size());
+    }
   }
 }
 }  // end of local namespace
