@@ -568,6 +568,10 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
   dp_readmutex->lock();
+  if (df_init) {
+    dp_readmutex->unlock();
+    return;
+  }
   dp_impl = new detail::FPBReader_impl;
   dp_impl->istrm = dp_istrm;
   dp_impl->df_lazy = df_lazyRead;
