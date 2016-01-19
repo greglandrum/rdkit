@@ -19,6 +19,19 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/Ranking.h>
 #include "FPBReader.h"
+
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread/mutex.hpp>
+#else
+// fake a mutex class that doesn't do anything to allow us to simplify the code
+namespace boost {
+struct mutex {
+  void lock(){};
+  void unlock(){};
+};
+}
+#endif
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 namespace RDKit {
@@ -554,11 +567,11 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
 
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
-  d_readmutex.lock();
+  dp_readmutex->lock();
   dp_impl = new detail::FPBReader_impl;
   dp_impl->istrm = dp_istrm;
   dp_impl->df_lazy = df_lazyRead;
-  dp_impl->p_readmutex = &d_readmutex;
+  dp_impl->p_readmutex = dp_readmutex;
 
   char magic[detail::magicSize];
   dp_istrm->read(magic, detail::magicSize);
@@ -614,11 +627,11 @@ void FPBReader::init() {
     throw BadFileException("No FPID record found");
 
   df_init = true;
-  d_readmutex.unlock();
+  dp_readmutex->unlock();
 };
 
 void FPBReader::destroy() {
-  d_readmutex.lock();
+  dp_readmutex->lock();
   if (dp_impl) {
     dp_impl->dp_arenaChunk.reset();
     dp_impl->dp_idChunk.reset();
@@ -627,7 +640,7 @@ void FPBReader::destroy() {
     dp_impl->dp_idOffsets = NULL;
   }
   delete dp_impl;
-  d_readmutex.unlock();
+  dp_readmutex->unlock();
 };
 
 boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {
@@ -758,5 +771,42 @@ std::vector<unsigned int> FPBReader::getContainingNeighbors(
   delete[] bv;
   return res;
 }
+
+FPBReader::FPBReader()
+    : dp_istrm(NULL),
+      dp_impl(NULL),
+      df_owner(false),
+      df_init(false),
+      df_lazyRead(false) {
+  dp_readmutex = new boost::mutex();
+}
+FPBReader::FPBReader(std::istream *inStream, bool takeOwnership, bool lazyRead)
+    : dp_istrm(inStream),
+      df_owner(takeOwnership),
+      df_init(false),
+      df_lazyRead(lazyRead) {
+  dp_readmutex = new boost::mutex();
+}
+void FPBReader::_initFromFilename(const char *fname, bool lazyRead) {
+  std::istream *tmpStream = static_cast<std::istream *>(
+      new std::ifstream(fname, std::ios_base::binary));
+  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fname;
+    throw BadFileException(errout.str());
+  }
+  dp_istrm = tmpStream;
+  df_owner = true;
+  df_init = false;
+  df_lazyRead = lazyRead;
+  dp_readmutex = new boost::mutex();
+}
+FPBReader::~FPBReader() {
+  destroy();
+  if (df_owner) delete dp_istrm;
+  dp_istrm = NULL;
+  df_init = false;
+  delete dp_readmutex;
+};
 
 }  // end of RDKit namespace

@@ -24,17 +24,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/mutex.hpp>
-#else
-// fake a mutex class that doesn't do anything to allow us to simplify the code
+
 namespace boost {
-struct mutex {
-  void lock(){};
-  void unlock(){};
-};
+class mutex;
 }
-#endif
 
 namespace RDKit {
 namespace detail {
@@ -55,12 +48,7 @@ struct FPBReader_impl;
 */
 class FPBReader {
  public:
-  FPBReader()
-      : dp_istrm(NULL),
-        dp_impl(NULL),
-        df_owner(false),
-        df_init(false),
-        df_lazyRead(false){};
+  FPBReader();
   //! ctor for reading from a named file
   /*!
   \param fname the name of the file to reads
@@ -87,17 +75,9 @@ class FPBReader {
 
   */
   FPBReader(std::istream *inStream, bool takeOwnership = true,
-            bool lazyRead = false)
-      : dp_istrm(inStream),
-        df_owner(takeOwnership),
-        df_init(false),
-        df_lazyRead(lazyRead){};
-  ~FPBReader() {
-    destroy();
-    if (df_owner) delete dp_istrm;
-    dp_istrm = NULL;
-    df_init = false;
-  };
+            bool lazyRead = false);
+
+  ~FPBReader();
 
   //! Read the data from the file and initialize internal data structures
   /*!
@@ -241,7 +221,7 @@ class FPBReader {
   bool df_owner;
   bool df_init;
   bool df_lazyRead;
-  boost::mutex d_readmutex;
+  boost::mutex *dp_readmutex;
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be
@@ -250,19 +230,7 @@ class FPBReader {
   FPBReader(const FPBReader &);
   FPBReader &operator=(const FPBReader &);
   void destroy();
-  void _initFromFilename(const char *fname, bool lazyRead) {
-    std::istream *tmpStream = static_cast<std::istream *>(
-        new std::ifstream(fname, std::ios_base::binary));
-    if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
-      std::ostringstream errout;
-      errout << "Bad input file " << fname;
-      throw BadFileException(errout.str());
-    }
-    dp_istrm = tmpStream;
-    df_owner = true;
-    df_init = false;
-    df_lazyRead = lazyRead;
-  }
+  void _initFromFilename(const char *fname, bool lazyRead);
 };
 }
 #endif
