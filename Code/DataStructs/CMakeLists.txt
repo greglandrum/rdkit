@@ -21,6 +21,6 @@ rdkit_test(testDataStructs testDatastructs.cpp
            LINK_LIBRARIES DataStructs RDGeneral)
 
 rdkit_test(testFPB testFPB.cpp 
-           LINK_LIBRARIES DataStructs RDGeneral)
+           LINK_LIBRARIES DataStructs RDGeneral ${RDKit_THREAD_LIBS})
 
 add_subdirectory(Wrap)

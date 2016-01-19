@@ -560,6 +560,55 @@ void test10FPBReaderTverskyNeighbors() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+#ifndef RDK_TEST_MULTITHREADED
+void test11ThreadSafety() {}
+#else
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/thread.hpp>
+#include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
+namespace {
+void runblock(FPBReader *fps, boost::uint8_t *bytes,
+              const std::vector<std::pair<double, unsigned int> > &expected) {
+  std::vector<std::pair<double, unsigned int> > nbrs =
+      fps->getTanimotoNeighbors(bytes, 0.30);
+  TEST_ASSERT(nbrs.size() == expected.size());
+  for (unsigned int i = 0; i < nbrs.size(); ++i) {
+    TEST_ASSERT(nbrs[i].first == expected[i].first);
+    TEST_ASSERT(nbrs[i].second == expected[i].second);
+  }
+}
+}  // end of local namespace
+void test11ThreadSafety() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing thread safety of "
+                          "the lazy FPB Readers"
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/";
+  {
+    std::string filename = pathName + "zim.head100.fpb";
+    FPBReader fps(filename, true);
+    fps.init();
+    TEST_ASSERT(fps.length() == 100);
+    {  // with a threshold
+      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      TEST_ASSERT(bytes);
+      std::vector<std::pair<double, unsigned int> > expected =
+          fps.getTanimotoNeighbors(bytes, 0.30);
+      TEST_ASSERT(expected.size() == 5);
+      boost::thread_group tg;
+      unsigned int count = 4;
+      for (unsigned int tidx = 0; tidx < count; ++tidx) {
+        tg.add_thread(new boost::thread(runblock, &fps, bytes.get(), expected));
+      }
+      tg.join_all();
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+#endif
+
 int main() {
   RDLog::InitLogs();
 
@@ -576,5 +625,6 @@ int main() {
 
   test9FPBReaderTversky();
   test10FPBReaderTverskyNeighbors();
+  test11ThreadSafety();
   return 0;
 }
