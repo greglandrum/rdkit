@@ -303,6 +303,7 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     import Image
   except ImportError:
     from PIL import Image
+  from rdkit.Chem.Draw import rdMolDraw2D
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
@@ -315,8 +316,19 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,
     highlights=None
     if highlightAtomLists and highlightAtomLists[i]:
       highlights=highlightAtomLists[i]
-    res.paste(MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
-                         **kwargs),(col*subImgSize[0],row*subImgSize[1]))
+    if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
+        img = MolToImage(mol,subImgSize,legend=legends[i],highlightAtoms=highlights,
+                             **kwargs)
+    else:
+        nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',True))
+        d2d = rdMolDraw2D.MolDraw2DCairo(subImgSize[0],subImgSize[1])
+        d2d.DrawMolecule(nmol,highlightAtoms=highlights)
+        from io import BytesIO
+        d2d.FinishDrawing()
+        sio = BytesIO(d2d.GetDrawingText())
+        img = Image.open(sio)
+
+    res.paste(img,(col*subImgSize[0],row*subImgSize[1]))
   return res
 
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
