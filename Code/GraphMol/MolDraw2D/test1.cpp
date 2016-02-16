@@ -702,6 +702,26 @@ void test8PrepareMolForDrawing() {
   std::cerr << " Done" << std::endl;
 }
 
+void test9MolLegends() {
+  std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
+  {
+    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
+    std::string nameBase = "test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m, "mol legend", NULL, NULL);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    std::ofstream outs("test9_1.svg");
+    outs << txt;
+    // TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -713,6 +733,7 @@ int main() {
   testMultiThreaded();
   test6();
   test7();
-#endif
   test8PrepareMolForDrawing();
+#endif
+  test9MolLegends();
 }
