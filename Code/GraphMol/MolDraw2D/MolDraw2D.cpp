@@ -164,7 +164,7 @@ namespace RDKit {
         }
       }
     }
-    
+
     if(drawOptions().continuousHighlight){
       // if we're doing continuous highlighting, start by drawing the highlights
       doContinuousHighlighting(mol,highlight_atoms,highlight_bonds,
@@ -239,7 +239,7 @@ namespace RDKit {
         }
       }
     }
-    
+
     for( int i = 0 , is = atom_syms_.size() ; i < is ; ++i ) {
       if( !atom_syms_[i].first.empty() ) {
         drawAtomLabel( i , highlight_atoms , highlight_atom_map );
@@ -284,7 +284,7 @@ namespace RDKit {
       }
     }
   }
-  
+
   // ****************************************************************************
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates
@@ -633,8 +633,8 @@ namespace RDKit {
         bt = static_cast<Bond::BondType>(static_cast<BOND_EQUALS_QUERY *>(bond->getQuery())->getVal());
       }
     }
-      
-             
+
+
     if(!isComplex){
       // it's a double bond and one end is 1-connected, do two lines parallel
       // to the atom-atom line.
@@ -694,7 +694,7 @@ namespace RDKit {
           drawLine( p1, p2, col1 , col2 );
           if(bt==Bond::AROMATIC) setDash(noDash);
         }
-      } 
+      }
     }
     if(highlight_bond){
       setLineWidth(orig_lw);
@@ -921,8 +921,8 @@ namespace RDKit {
     } else {
       std::vector<std::string> preText,postText;
       if( 0 != atom.getIsotope() ) {
-        preText.push_back( std::string("<sup>") + 
-                           lexical_cast<string>( atom.getIsotope() ) + 
+        preText.push_back( std::string("<sup>") +
+                           lexical_cast<string>( atom.getIsotope() ) +
                            std::string("</sup>") );
       }
 
@@ -933,7 +933,7 @@ namespace RDKit {
       }
 
       std::string h="";
-      int num_h=atom.getAtomicNum()==6 ? 0 : atom.getTotalNumHs(); // FIX: still not quite right
+      int num_h=(atom.getAtomicNum()==6 && atom.getDegree()>0) ? 0 : atom.getTotalNumHs(); // FIX: still not quite right
       if( num_h > 0 && !atom.hasQuery() ) {
         h = "H";
         if( num_h > 1 ) {
@@ -958,7 +958,7 @@ namespace RDKit {
       BOOST_FOREACH(const std::string &se,preText){
         symbol += se;
       }
-      if(atom.getAtomicNum()!=6 || preText.size() || postText.size() ){
+      if(atom.getAtomicNum()!=6 || atom.getDegree() == 0 || preText.size() || postText.size() ){
         symbol += atom.getSymbol();
       }
       BOOST_FOREACH(const std::string &se,postText){
@@ -1025,7 +1025,7 @@ namespace RDKit {
   // ****************************************************************************
   //  we draw the line at cds2, perpendicular to the line cds1-cds2
   void MolDraw2D::drawAttachmentLine( const Point2D &cds1 ,
-                                      const Point2D &cds2 ,   
+                                      const Point2D &cds2 ,
                                       const DrawColour &col,
                                       double len,
                                       unsigned int nSegments ) {

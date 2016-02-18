@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id: Chemv2Tests.java 131 2011-01-20 22:01:29Z ebakke $
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class Chemv2Tests extends GraphMolTest {
-	
+
 	/* Pickling tests skipped for the time being */
 	@Test
 	public void testBasicStuff() {
@@ -98,7 +98,7 @@ public class Chemv2Tests extends GraphMolTest {
 		String v = m.getProp("foo");
 		assertEquals("3",v);
 	}
-	
+
 	@Test(expected=KeyErrorException.class)
 	public void testDataGetSetFailure() {
 		ROMol m = RWMol.MolFromSmiles("CCOC");
@@ -153,6 +153,7 @@ public class Chemv2Tests extends GraphMolTest {
                 String svg=drawer.getDrawingText();
                 assertTrue(svg.indexOf("<svg:svg")>-1);
                 assertTrue(svg.indexOf("</svg:svg>")>-1);
+  };
 	@Test
 	public void testMolDraw2DSVGSingleAtomMol() {
 		ROMol m = RWMol.MolFromSmiles("C");
