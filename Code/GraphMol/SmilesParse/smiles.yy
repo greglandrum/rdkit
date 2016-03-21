@@ -3,7 +3,6 @@
   // $Id$
   //
   //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
-  //
   //   @@ All Rights Reserved  @@
   //
 
@@ -203,7 +202,35 @@ mol: atomd {
   tmp.push_back(-($3+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
+| mol branch {
+  RWMol * mp = (*molList)[$$];
+  std::cerr<<"grab: "<<$2<<std::endl;
+  RWMol * bp = (*molList)[$2];
+  std::cerr<<"done: "<<long(bp)<<std::endl;
 
+  Bond *bnd=NULL;
+  if(bp->hasBondBookmark(0x111111)){
+    bnd = bp->getBondWithBookmark(0x111111);
+    bp->clearBondBookmark(0x111111);
+  } else {
+    bnd = new Bond(Bond::SINGLE);
+  }
+  bnd->setBeginAtomIdx(mp->getActiveAtom()->getIdx());
+  bnd->setEndAtomIdx(mp->getNumAtoms());
+
+  for(ROMol::BOND_BOOKMARK_MAP::iterator iter=bp->getBondBookmarks()->begin();iter!=bp->getBondBookmarks()->end();++iter ){
+    ROMol::BOND_PTR_LIST &bondL=iter->second;
+    BOOST_FOREACH(Bond *bmbond,bondL){
+      bmbond->setBeginAtomIdx(bmbond->getBeginAtomIdx()+mp->getNumAtoms());
+      mp->setBondBookmark(bmbond,iter->first);
+    }
+  }
+
+  //std::cerr<<"  BOND: "<<bnd->getBeginAtomIdx()<<" "<<bnd->getEndAtomIdx()<<std::endl;
+  mp->insertMol(*bp);
+  mp->addBond(bnd,true);
+}
+/*
 | mol GROUP_OPEN_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
@@ -248,15 +275,23 @@ mol: atomd {
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
+*/
 ;
 
 branch: GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
-if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
-RWMol *mp = (*molList)[$$];
-mp->setActiveAtom(branchPoints->back());
-branchPoints->pop_back();
+$$ = $2;
 }
-
+| GROUP_OPEN_TOKEN MINUS_TOKEN mol GROUP_CLOSE_TOKEN {
+  RWMol * mp = (*molList)[$3];
+  Bond *newb = new Bond(Bond::SINGLE);
+  mp->setBondBookmark(newb,0x111111);
+  $$ = $3;
+}
+| GROUP_OPEN_TOKEN BOND_TOKEN mol GROUP_CLOSE_TOKEN {
+  RWMol * mp = (*molList)[$3];
+  mp->setBondBookmark($2,0x111111);
+  $$ = $3;
+}
 
 /* --------------------------------------------------------------- */
 atomd:	simple_atom

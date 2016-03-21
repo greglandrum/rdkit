@@ -352,7 +352,8 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
   PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph).second),
+                             bond_pin->getEndAtomIdx(), d_graph)
+                     .second),
                "bond already exists");
 
   Bond *bond_p;
