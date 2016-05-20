@@ -496,6 +496,18 @@ class ChiralAtomCompareFunctor {
     else if (ivi > ivj)
       return 1;
 
+    // atom mapping
+    int iivi = 0;
+    int iivj = 0;
+    dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                       iivi);
+    dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                       iivj);
+    if (iivi < iivj)
+      return -1;
+    else if (iivi > iivj)
+      return 1;
+
     // bond stereo is taken care of in the neighborhood comparison
     return 0;
   }

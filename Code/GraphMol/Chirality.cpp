@@ -23,6 +23,8 @@
 
 // #define VERBOSE_CANON 1
 
+#define USE_NEW_STEREOCHEMISTRY 1
+
 namespace RDKit {
 namespace Chirality {
 typedef std::pair<int, int> INT_PAIR;
