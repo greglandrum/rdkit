@@ -2368,6 +2368,25 @@ void testPerceptionOrder() {
     delete m;
   }
 
+  {  // example that came up in testing, ChEMBL molecule, modified for test
+    // std::string smi =
+    //     "CN[C@H]1[C@H](O)CO[C@H](OC2[C@H](N)CC(N)[C@@H](O[C@H]3OC(CO)[C@@H](O)["
+    //     "C@H](O)C3NO)[C@@H]2O)C1O";
+    std::string smi =
+        "CN[CH]1[CH](O)CO[CH](OC2[CH](N)CC(N)[CH](O[CH]3OC(CO)[CH](O)["
+        "CH](O)C3NO)[C@@H]2O)C1O";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(29)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip = "";
+    TEST_ASSERT(m->getAtomWithIdx(29)->getPropIfPresent(
+        common_properties::_CIPCode, cip));
+    TEST_ASSERT(cip == "S");
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -2375,7 +2394,7 @@ int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   testSmiles1();
   testMol1();
   testMol2();
@@ -2395,8 +2414,8 @@ int main() {
   testIssue2705543();
   testGithub553();
   testGithub803();
-// testBulkPerception();
 #endif
   testPerceptionOrder();
+  testBulkPerception();
   return 0;
 }
