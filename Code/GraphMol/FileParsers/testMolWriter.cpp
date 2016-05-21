@@ -560,6 +560,7 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // this matches Marvin, but disagrees with the previous implementation
     mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
@@ -589,6 +590,7 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+    // this matches Marvin, but disagrees with the previous implementation
     mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));

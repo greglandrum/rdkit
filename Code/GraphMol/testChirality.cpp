@@ -23,6 +23,10 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
+#include <RDGeneral/StreamOps.h>
+#include <boost/algorithm/string.hpp>
+#include <fstream>
+
 #include <iostream>
 
 using namespace RDKit;
@@ -2246,6 +2250,127 @@ void testGithub803() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testBulkPerception() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing bulk stereochemistry perception"
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/test_data/chembl_20_chiral.labelled.smi";
+  std::ifstream inf(fName.c_str());
+  while (!inf.eof()) {
+    std::string tempStr = RDKit::getLine(inf);
+    if (!tempStr.size() || tempStr[0] == '#') continue;
+    std::vector<std::string> tokens;
+    boost::split(tokens, tempStr, boost::is_any_of("|"),
+                 boost::token_compress_on);
+    if (tokens.size() != 2) continue;
+    std::string smistr = boost::trim_copy(tokens[0]);
+    std::string labelStr = boost::trim_copy(tokens[1]);
+
+    boost::split(tokens, smistr, boost::is_any_of(" "),
+                 boost::token_compress_on);
+    if (tokens.size() != 2) continue;
+    std::string smi = tokens[0];
+    std::string nm = tokens[1];
+    std::cerr << smi << " " << nm << std::endl;
+    RWMol *m = SmilesToMol(smi, false);
+    MolOps::sanitizeMol(*m);
+    MolOps::assignStereochemistry(*m, true, true, true);
+    boost::split(tokens, labelStr, boost::is_any_of(","),
+                 boost::token_compress_on);
+    BOOST_FOREACH (std::string &tkn, tokens) {
+      std::vector<std::string> ltokens;
+      boost::split(ltokens, tkn, boost::is_any_of(" "),
+                   boost::token_compress_on);
+      if (ltokens.size() != 2) continue;
+      unsigned int aidx = atoi(ltokens[0].c_str());
+      TEST_ASSERT(aidx < m->getNumAtoms());
+      Atom::ChiralType ctag = m->getAtomWithIdx(aidx)->getChiralTag();
+      if (ltokens[1] == "?") {
+        TEST_ASSERT(ctag == Atom::CHI_UNSPECIFIED);
+        TEST_ASSERT(m->getAtomWithIdx(aidx)->hasProp(
+            common_properties::_ChiralityPossible));
+      } else {
+        TEST_ASSERT(ctag == Atom::CHI_TETRAHEDRAL_CW ||
+                    ctag == Atom::CHI_TETRAHEDRAL_CCW);
+        std::string cip = "";
+        TEST_ASSERT(m->getAtomWithIdx(aidx)->getPropIfPresent(
+            common_properties::_CIPCode, cip));
+        std::cerr << "   compare: " << aidx << " : " << cip << " " << ltokens[1]
+                  << std::endl;
+        TEST_ASSERT(cip == ltokens[1]);
+      }
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testPerceptionOrder() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing that the various CIP terms are perceived in the proper order"
+      << std::endl;
+
+  {
+    std::string smi = "COC[C@@H](O)CO";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 7);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip = "";
+    TEST_ASSERT(m->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::_CIPCode, cip));
+    TEST_ASSERT(cip == "S");
+    delete m;
+
+    // adding the isotope shouldn't change the CIP assignment; the basic
+    // connectivity needs to be finished first
+    smi = "COC[C@@H](O)[13CH2]O";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 7);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::_CIPCode, cip));
+    TEST_ASSERT(cip == "S");
+    delete m;
+  }
+
+  {
+    std::string smi = "CO[C@H](C)[C@H](O)C(C)OC(C)O";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    std::string cip = "";
+    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+        common_properties::_CIPCode, cip));
+    TEST_ASSERT(cip == "S");
+    delete m;
+
+    // adding a chiral neighbor shouldn't change the CIP assignment; the basic
+    // connectivity needs to be finished first
+    smi = "CO[C@H](C)[C@H](O)C(C)OC(C)O";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+        common_properties::_CIPCode, cip));
+    TEST_ASSERT(cip == "S");
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2267,9 +2392,11 @@ int main() {
   testRingStereochemistry();
   testGithub87();
   testGithub90();
-#endif
   testIssue2705543();
   testGithub553();
   testGithub803();
+// testBulkPerception();
+#endif
+  testPerceptionOrder();
   return 0;
 }

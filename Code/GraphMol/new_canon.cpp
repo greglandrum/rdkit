@@ -8,7 +8,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
 #include <boost/cstdint.hpp>
@@ -287,6 +286,171 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
   free(changed);
 }
 
+void chiralRankWithFunctor(ChiralAtomCompareFunctor &ftor, int *order,
+                           const boost::dynamic_bitset<> *atomsInPlay = NULL,
+                           const boost::dynamic_bitset<> *bondsInPlay = NULL) {
+  const ROMol &mol = *ftor.dp_mol;
+  canon_atom *atoms = ftor.dp_atoms;
+  unsigned int nAts = mol.getNumAtoms();
+  int *count = (int *)malloc(nAts * sizeof(int));
+  int activeset;
+  int *next = (int *)malloc(nAts * sizeof(int));
+  int *changed = (int *)malloc(nAts * sizeof(int));
+  char *touched = (char *)malloc(nAts * sizeof(char));
+  memset(touched, 0, nAts * sizeof(char));
+  memset(changed, 1, nAts * sizeof(int));
+  CreateSinglePartition(nAts, order, count, atoms);
+#ifdef VERBOSE_CANON
+  std::cerr << "1--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+  ftor.df_useNbrs = true;
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
+#ifdef VERBOSE_CANON
+  std::cerr << "1a--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
+#ifdef VERBOSE_CANON
+  std::cerr << "2a--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+  ftor.df_useNum = false;
+  ftor.df_useIsotope = true;
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
+#ifdef VERBOSE_CANON
+  std::cerr << "2b--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+
+  ftor.df_useIsotope = false;
+  ftor.df_useStereo = true;
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
+#ifdef VERBOSE_CANON
+  std::cerr << "2c--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+
+  ftor.df_useStereo = false;
+  ftor.df_useAtomMapping = true;
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
+
+#ifdef VERBOSE_CANON
+  std::cerr << "2d--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+#if 0
+  bool ties = false;
+  for (unsigned i = 0; i < nAts; ++i) {
+    if (!count[i]) {
+      ties = true;
+    }
+  }
+  if (useChirality && ties) {
+    SpecialChiralityAtomCompareFunctor scftor(atoms, mol, atomsInPlay,
+                                              bondsInPlay);
+    ActivatePartitions(nAts, order, count, activeset, next, changed);
+    RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
+                     changed, touched);
+#ifdef VERBOSE_CANON
+    std::cerr << "2a--------" << std::endl;
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      std::cerr << order[i] + 1 << " "
+                << " index: " << atoms[order[i]].index
+                << " count: " << count[order[i]] << std::endl;
+    }
+#endif
+  }
+  ties = false;
+  unsigned symRingAtoms = 0;
+  unsigned ringAtoms = 0;
+  bool branchingRingAtom = false;
+  RingInfo *ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    ringInfo->initialize();
+  }
+  for (unsigned i = 0; i < nAts; ++i) {
+    if (ringInfo->numAtomRings(order[i])) {
+      if (count[order[i]] > 2) {
+        symRingAtoms += count[order[i]];
+      }
+      ringAtoms++;
+      if (ringInfo->numAtomRings(order[i]) > 1 && count[order[i]] > 1) {
+        branchingRingAtom = true;
+      }
+    }
+    if (!count[i]) {
+      ties = true;
+    }
+  }
+  //      std::cout << " " << ringAtoms << " "  << symRingAtoms << std::endl;
+  if (useSpecial && ties && ringAtoms > 0 &&
+      static_cast<float>(symRingAtoms) / ringAtoms > 0.5 && branchingRingAtom) {
+    SpecialSymmetryAtomCompareFunctor sftor(atoms, mol, atomsInPlay,
+                                            bondsInPlay);
+    compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
+    ActivatePartitions(nAts, order, count, activeset, next, changed);
+    RefinePartitions(mol, atoms, sftor, true, order, count, activeset, next,
+                     changed, touched);
+#ifdef VERBOSE_CANON
+    std::cerr << "2b--------" << std::endl;
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      std::cerr << order[i] + 1 << " "
+                << " index: " << atoms[order[i]].index
+                << " count: " << count[order[i]] << std::endl;
+    }
+#endif
+  }
+  if (breakTies) {
+    BreakTies(mol, atoms, ftor, true, order, count, activeset, next, changed,
+              touched);
+#ifdef VERBOSE_CANON
+    std::cerr << "3--------" << std::endl;
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      std::cerr << order[i] + 1 << " "
+                << " index: " << atoms[order[i]].index
+                << " count: " << count[order[i]] << std::endl;
+    }
+#endif
+  }
+#endif
+  free(count);
+  free(next);
+  free(touched);
+  free(changed);
+}
+
 namespace {
 bool hasRingNbr(const ROMol &mol, const Atom *at) {
   ROMol::ADJ_ITER beg, end;
@@ -449,10 +613,14 @@ void initFragmentCanonAtoms(const ROMol &mol,
 }
 
 void initChiralCanonAtoms(const ROMol &mol,
-                          std::vector<Canon::canon_atom> &atoms) {
+                          std::vector<Canon::canon_atom> &atoms,
+                          bool useChiralBonds = false) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     basicInitCanonAtom(mol, atoms[i], i);
-    getChiralBonds(mol, atoms[i].atom, atoms[i].bonds);
+    if (useChiralBonds)
+      getChiralBonds(mol, atoms[i].atom, atoms[i].bonds);
+    else
+      getBonds(mol, atoms[i].atom, atoms[i].bonds, false);
   }
 }
 
@@ -572,12 +740,12 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 }  // end of rankFragmentAtoms()
 
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
-  std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  initChiralCanonAtoms(mol, atoms);
-  ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
-
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
-  rankWithFunctor(ftor, false, order);
+
+  std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
+  initChiralCanonAtoms(mol, atoms, true);
+  ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
+  chiralRankWithFunctor(ftor, order);
 
   res.resize(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
