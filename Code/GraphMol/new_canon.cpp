@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// #define VERBOSE_CANON 1
+#define VERBOSE_CANON 1
 
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
@@ -310,7 +310,7 @@ void chiralRankWithFunctor(ChiralAtomCompareFunctor &ftor, int *order,
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
-  ftor.df_useNbrs = true;
+  // ftor.df_useNbrs = true;
   ActivatePartitions(nAts, order, count, activeset, next, changed);
 #ifdef VERBOSE_CANON
   std::cerr << "1a--------" << std::endl;
@@ -324,6 +324,18 @@ void chiralRankWithFunctor(ChiralAtomCompareFunctor &ftor, int *order,
                    changed, touched);
 #ifdef VERBOSE_CANON
   std::cerr << "2a--------" << std::endl;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    std::cerr << order[i] + 1 << " "
+              << " index: " << atoms[order[i]].index
+              << " count: " << count[order[i]] << std::endl;
+  }
+#endif
+  ftor.df_useNbrs = true;
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
+#ifdef VERBOSE_CANON
+  std::cerr << "2aa--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     std::cerr << order[i] + 1 << " "
               << " index: " << atoms[order[i]].index

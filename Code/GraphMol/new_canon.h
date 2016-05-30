@@ -462,10 +462,13 @@ class ChiralAtomCompareFunctor {
       return -1;
     else if (ivi > ivj)
       return 1;
+    std::cerr << " bc: " << i + 1 << ":" << j + 1;
     if (df_useNum) {
       // move onto atomic number
       ivi = dp_atoms[i].atom->getAtomicNum();
       ivj = dp_atoms[j].atom->getAtomicNum();
+      std::cerr << " num: " << ivi << ":" << ivj << std::endl;
+      ;
       if (ivi < ivj)
         return -1;
       else if (ivi > ivj)
@@ -476,6 +479,8 @@ class ChiralAtomCompareFunctor {
       // isotopes:
       ivi = dp_atoms[i].atom->getIsotope();
       ivj = dp_atoms[j].atom->getIsotope();
+      std::cerr << " isotope: " << ivi << ":" << ivj << std::endl;
+      ;
       if (ivi < ivj)
         return -1;
       else if (ivi > ivj)
@@ -494,6 +499,8 @@ class ChiralAtomCompareFunctor {
                                              cipCode)) {
         ivj = cipCode == "R" ? 2 : 1;
       }
+      std::cerr << " stereo: " << ivi << ":" << ivj << std::endl;
+
       if (ivi < ivj)
         return -1;
       else if (ivi > ivj)
@@ -507,11 +514,15 @@ class ChiralAtomCompareFunctor {
                                          iivi);
       dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
                                          iivj);
+      std::cerr << " map: " << iivi << ":" << iivj << std::endl;
+      ;
+
       if (iivi < iivj)
         return -1;
       else if (iivi > iivj)
         return 1;
     }
+    std::cerr << " same" << std::endl;
     // bond stereo is taken care of in the neighborhood comparison
     return 0;
   }
@@ -543,19 +554,33 @@ class ChiralAtomCompareFunctor {
     PRECONDITION(i != j, "bad call");
     int v = basecomp(i, j);
     if (v) return v;
+    std::cerr << "  operator(): " << i << ":" << j << std::endl;
 
     if (df_useNbrs) {
+      std::cerr << "    nbrs:";
       getAtomNeighborhood(dp_atoms[i].bonds);
       getAtomNeighborhood(dp_atoms[j].bonds);
 
+      for (unsigned int ii = 0;
+           ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size();
+           ++ii) {
+        std::cerr << "    " << ii << " | " << dp_atoms[i].bonds[ii].nbrIdx
+                  << ":" << dp_atoms[i].bonds[ii].nbrSymClass << " "
+                  << dp_atoms[j].bonds[ii].nbrIdx << ":"
+                  << dp_atoms[j].bonds[ii].nbrSymClass << std::endl;
+      }
+
       // we do two passes through the neighbor lists. The first just uses the
-      // atomic numbers (by passing the optional 10000 to bondholder::compare),
+      // atomic numbers (by passing the optional 10000 to
+      // bondholder::compare),
       // the second takes the already-computed index into account
       for (unsigned int ii = 0;
            ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size();
            ++ii) {
         int cmp = bondholder::compare(
             dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii], ATNUM_CLASS_OFFSET);
+        std::cerr << "    cmp(" << ii << "): " << cmp << std::endl;
+
         if (cmp) return cmp;
       }
       for (unsigned int ii = 0;
@@ -563,14 +588,23 @@ class ChiralAtomCompareFunctor {
            ++ii) {
         int cmp =
             bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
+        std::cerr << "    cmp2(" << ii << "): " << cmp << " | "
+                  << dp_atoms[i].bonds[ii].nbrIdx << ":"
+                  << dp_atoms[i].bonds[ii].nbrSymClass << " "
+                  << dp_atoms[j].bonds[ii].nbrIdx << ":"
+                  << dp_atoms[j].bonds[ii].nbrSymClass << std::endl;
+
         if (cmp) return cmp;
       }
+      std::cerr << "      sz:" << dp_atoms[i].bonds.size() << "-"
+                << dp_atoms[j].bonds.size() << std::endl;
       if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
         return -1;
       } else if (dp_atoms[i].bonds.size() > dp_atoms[j].bonds.size()) {
         return 1;
       }
     }
+    std::cerr << "    same." << std::endl;
     return 0;
   }
 };
@@ -615,7 +649,8 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     offset = atoms[partition].index;
     start = order + offset;
     // std::cerr<<"\n\n**************************************************************"<<std::endl;
-    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
+    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len:
+    // "<<len<<":";
     // for(unsigned int ii=0;ii<len;++ii){
     //   std::cerr<<" "<<order[offset+ii]+1;
     // }

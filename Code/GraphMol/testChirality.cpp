@@ -2313,7 +2313,7 @@ void testPerceptionOrder() {
   BOOST_LOG(rdInfoLog)
       << "Testing that the various CIP terms are perceived in the proper order"
       << std::endl;
-
+#if 0
   {
     std::string smi = "COC[C@@H](O)CO";
     ROMol *m = SmilesToMol(smi);
@@ -2367,14 +2367,15 @@ void testPerceptionOrder() {
     TEST_ASSERT(cip == "S");
     delete m;
   }
-
+#endif
   {  // example that came up in testing, ChEMBL molecule, modified for test
     // std::string smi =
     //     "CN[C@H]1[C@H](O)CO[C@H](OC2[C@H](N)CC(N)[C@@H](O[C@H]3OC(CO)[C@@H](O)["
     //     "C@H](O)C3NO)[C@@H]2O)C1O";
     std::string smi =
-        "CN[CH]1[CH](O)CO[CH](OC2[CH](N)CC(N)[CH](O[CH]3OC(CO)[CH](O)["
-        "CH](O)C3NO)[C@@H]2O)C1O";
+        "CN[CH]1[CH](O)CO[CH](OC2[CH](N)CC(N)[CH](O[CH]3OC(CO)[CH](O)[CH](O)"
+        "C3NO)[C@@H]2O)C1O";
+    std::cerr << "\n\n\n" << smi << std::endl;
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     MolOps::assignStereochemistry(*m, true, true);
