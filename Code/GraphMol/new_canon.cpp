@@ -8,6 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// #define VERBOSE_CANON 1
+
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
 #include <boost/cstdint.hpp>
