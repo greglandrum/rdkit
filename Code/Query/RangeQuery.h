@@ -68,7 +68,7 @@ class RangeQuery
   //! returns our tolerance
   const MatchFuncArgType getTol() const { return this->d_tol; };
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     int lCmp = queryCmp(this->d_lower, mfArg, this->d_tol);
@@ -90,7 +90,8 @@ class RangeQuery
       return !tempR;
   };
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     auto res =
         new RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setUpper(this->d_upper);
@@ -103,7 +104,7 @@ class RangeQuery
     return res;
   };
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     if (this->getNegation()) res << " ! ";

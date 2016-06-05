@@ -36,13 +36,14 @@ class SetQuery
   //! clears our \c set
   void clear() { this->d_set.clear(); }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     return (this->d_set.find(mfArg) != this->d_set.end()) ^ this->getNegation();
   };
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     auto res =
         new SetQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setDataFunc(this->d_dataFunc);
@@ -63,7 +64,7 @@ class SetQuery
   };
   unsigned int size() const { return rdcast<unsigned int>(d_set.size()); };
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription() << " val";
     if (this->getNegation())

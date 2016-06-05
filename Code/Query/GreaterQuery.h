@@ -34,7 +34,7 @@ class GreaterQuery
     this->df_negate = false;
   };
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     if (queryCmp(this->d_val, mfArg, this->d_tol) > 0) {
@@ -50,7 +50,8 @@ class GreaterQuery
     }
   };
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     auto res =
         new GreaterQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setVal(this->d_val);
@@ -61,7 +62,7 @@ class GreaterQuery
     return res;
   };
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;

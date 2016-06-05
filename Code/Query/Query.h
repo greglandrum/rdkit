@@ -45,7 +45,8 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class Query {
  public:
   typedef boost::shared_ptr<
-      Query<MatchFuncArgType, DataFuncArgType, needsConversion> > CHILD_TYPE;
+      Query<MatchFuncArgType, DataFuncArgType, needsConversion> >
+      CHILD_TYPE;
   typedef std::vector<CHILD_TYPE> CHILD_VECT;
   typedef typename CHILD_VECT::iterator CHILD_VECT_I;
   typedef typename CHILD_VECT::const_iterator CHILD_VECT_CI;
@@ -53,8 +54,8 @@ class Query {
   Query()
       : d_description(""),
         df_negate(false),
-        d_matchFunc(NULL),
-        d_dataFunc(NULL){};
+        d_matchFunc(nullptr),
+        d_dataFunc(nullptr){};
   virtual ~Query() { this->d_children.clear(); };
 
   //! sets whether or not we are negated
@@ -124,8 +125,7 @@ class Query {
    */
   virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
       const {
-    auto res =
-        new Query<MatchFuncArgType, DataFuncArgType, needsConversion>();
+    auto res = new Query<MatchFuncArgType, DataFuncArgType, needsConversion>();
     typename Query<MatchFuncArgType, DataFuncArgType,
                    needsConversion>::CHILD_VECT_CI iter;
     for (iter = this->beginChildren(); iter != this->endChildren(); ++iter) {
@@ -150,7 +150,7 @@ class Query {
   MatchFuncArgType TypeConvert(MatchFuncArgType what,
                                Int2Type<false> /*d*/) const {
     MatchFuncArgType mfArg;
-    if (this->d_dataFunc != NULL) {
+    if (this->d_dataFunc != nullptr) {
       mfArg = this->d_dataFunc(what);
     } else {
       mfArg = what;
@@ -158,7 +158,7 @@ class Query {
     return mfArg;
   }
   //! calls our \c dataFunc (which must be set) on \c what and returns the
-  //result
+  // result
   MatchFuncArgType TypeConvert(DataFuncArgType what,
                                Int2Type<true> /*d*/) const {
     PRECONDITION(this->d_dataFunc, "no data function");
