@@ -19,7 +19,7 @@ namespace RDNumeric {
 namespace Alignments {
 
 //! \brief Compute an optimal alignment (minimum sum of squared distance)
-//between
+// between
 //! two sets of points in 3D
 /*!
   \param refPoints      A vector of pointers to the reference points
@@ -39,8 +39,9 @@ namespace Alignments {
 */
 double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
                    const RDGeom::Point3DConstPtrVect &probePoints,
-                   RDGeom::Transform3D &trans, const DoubleVector *weights = 0,
-                   bool reflect = false, unsigned int maxIterations = 50);
+                   RDGeom::Transform3D &trans,
+                   const DoubleVector *weights = nullptr, bool reflect = false,
+                   unsigned int maxIterations = 50);
 }
 }
 

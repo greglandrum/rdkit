@@ -25,8 +25,7 @@ unsigned int ci_GRIDPICKLE_VERSION = 0x1;
 
 UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
   PRECONDITION(other.dp_storage, "cannot copy an unintialized grid");
-  auto data =
-      new RDKit::DiscreteValueVect(*other.dp_storage);
+  auto data = new RDKit::DiscreteValueVect(*other.dp_storage);
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
@@ -196,7 +195,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
     nLayers = maxNumLayers;
     valStep = (maxVal + 1) / nLayers;
   }
-  double bgRad = radius / d_spacing;  // base radius in grid coords
+  double bgRad = radius / d_spacing;        // base radius in grid coords
   double gStepSize = stepSize / d_spacing;  // step size in grid coords
   double gRadius =
       bgRad + nLayers * gStepSize;  // largest radius in grid coords

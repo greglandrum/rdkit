@@ -389,8 +389,7 @@ class PointND : public Point {
   };
 
   PointND(const PointND &other) : Point(other) {
-    auto nvec =
-        new RDNumeric::Vector<double>(*other.getStorage());
+    auto nvec = new RDNumeric::Vector<double>(*other.getStorage());
     dp_storage.reset(nvec);
   }
 
@@ -418,19 +417,22 @@ class PointND : public Point {
     return dp_storage.get()->getVal(i);
   }
 
-  inline double &operator[](unsigned int i) override { return (*dp_storage.get())[i]; }
+  inline double &operator[](unsigned int i) override {
+    return (*dp_storage.get())[i];
+  }
 
   inline void normalize() override { dp_storage.get()->normalize(); }
 
   inline double length() const override { return dp_storage.get()->normL2(); }
 
-  inline double lengthSq() const override { return dp_storage.get()->normL2Sq(); }
+  inline double lengthSq() const override {
+    return dp_storage.get()->normL2Sq();
+  }
 
   unsigned int dimension() const override { return dp_storage.get()->size(); }
 
   PointND &operator=(const PointND &other) {
-    auto nvec =
-        new RDNumeric::Vector<double>(*other.getStorage());
+    auto nvec = new RDNumeric::Vector<double>(*other.getStorage());
     dp_storage.reset(nvec);
     return *this;
   }

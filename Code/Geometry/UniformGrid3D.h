@@ -190,8 +190,8 @@ class UniformGrid3D : public Grid3D {
       d_numZ;        //! number of grid points along x, y, z axes
   double d_spacing;  //! grid spacing
   Point3D d_offSet;  //! the grid offset (from the origin)
-  RDKit::DiscreteValueVect *
-      dp_storage;  //! storage for values at each grid point
+  RDKit::DiscreteValueVect
+      *dp_storage;  //! storage for values at each grid point
 
   //! \brief construct from a pickle
   void initFromText(const char *pkl, const unsigned int length);

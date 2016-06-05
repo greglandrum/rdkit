@@ -31,14 +31,14 @@ class SymmMatrix {
   typedef boost::shared_array<TYPE> DATA_SPTR;
 
   explicit SymmMatrix(unsigned int N) : d_size(N), d_dataSize(N * (N + 1) / 2) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     memset(static_cast<void *>(data), 0, d_dataSize * sizeof(TYPE));
     d_data.reset(data);
   }
 
   SymmMatrix(unsigned int N, TYPE val)
       : d_size(N), d_dataSize(N * (N + 1) / 2) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     unsigned int i;
     for (i = 0; i < d_dataSize; i++) {
       data[i] = val;
@@ -53,7 +53,7 @@ class SymmMatrix {
 
   SymmMatrix(const SymmMatrix<TYPE> &other)
       : d_size(other.numRows()), d_dataSize(other.getDataSize()) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     const TYPE *otherData = other.getData();
 
     memcpy(static_cast<void *>(data), static_cast<const void *>(otherData),
@@ -181,7 +181,7 @@ class SymmMatrix {
   SymmMatrix<TYPE> &operator*=(const SymmMatrix<TYPE> &B) {
     CHECK_INVARIANT(d_size == B.numRows(),
                     "Size mismatch during multiplication");
-    TYPE *cData = new TYPE[d_dataSize];
+    auto cData = new TYPE[d_dataSize];
     const TYPE *bData = B.getData();
     TYPE *data = d_data.get();
     for (unsigned int i = 0; i < d_size; i++) {

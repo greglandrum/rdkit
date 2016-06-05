@@ -172,8 +172,10 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
                            will be stored after as many steps as indicated
                            through this parameter; defaults to 0 (no
                            snapshots stored)
-   \param snapshotVect     pointer to a std::vector<Snapshot> object that will receive
-                           the coordinates and energies every snapshotFreq steps;
+   \param snapshotVect     pointer to a std::vector<Snapshot> object that will
+   receive
+                           the coordinates and energies every snapshotFreq
+   steps;
                            defaults to NULL (no snapshots stored)
 
    \return a flag indicating success (or type of failure). Possible values are:
@@ -248,7 +250,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
         snapshotVect->push_back(s);
-        newPos = NULL;
+        newPos = nullptr;
       }
       CLEANUP();
       return 0;
@@ -272,7 +274,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
         snapshotVect->push_back(s);
-        newPos = NULL;
+        newPos = nullptr;
       }
       CLEANUP();
       return 0;
@@ -379,8 +381,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
-  return minimize(dim, pos, gradTol, numIters, funcVal, func,
-             gradFunc, 0, NULL, funcTol, maxIts);
+  return minimize(dim, pos, gradTol, numIters, funcVal, func, gradFunc, 0,
+                  nullptr, funcTol, maxIts);
 }
-
 }
