@@ -43,13 +43,13 @@ class ExplicitBitVect : public BitVect {
   ExplicitBitVect(boost::dynamic_bitset<> *bits)
       : dp_bits(bits), d_size(bits->size()), d_numOnBits(bits->count()){};
 
-  ~ExplicitBitVect();
+  ~ExplicitBitVect() override;
 
   ExplicitBitVect &operator=(const ExplicitBitVect &other);
-  bool operator[](const unsigned int which) const;
-  bool setBit(const unsigned int which);
-  bool unsetBit(const unsigned int which);
-  bool getBit(const unsigned int which) const;
+  bool operator[](const unsigned int which) const override;
+  bool setBit(const unsigned int which) override;
+  bool unsetBit(const unsigned int which) override;
+  bool getBit(const unsigned int which) const override;
 
   ExplicitBitVect operator^(const ExplicitBitVect &other) const;
   ExplicitBitVect operator&(const ExplicitBitVect &other) const;
@@ -64,14 +64,14 @@ class ExplicitBitVect : public BitVect {
   /* concatenate two ExplicitBitVects */
   ExplicitBitVect &operator+=(const ExplicitBitVect &other);
 
-  unsigned int getNumBits() const;
-  unsigned int getNumOnBits() const;
-  unsigned int getNumOffBits() const;
+  unsigned int getNumBits() const override;
+  unsigned int getNumOnBits() const override;
+  unsigned int getNumOffBits() const override;
 
-  void getOnBits(IntVect &v) const;
+  void getOnBits(IntVect &v) const override;
 
-  void clearBits() { dp_bits->reset(); };
-  std::string toString() const;
+  void clearBits() override { dp_bits->reset(); };
+  std::string toString() const override;
 
   boost::dynamic_bitset<> *dp_bits;  //!< our raw storage
 
@@ -85,7 +85,7 @@ class ExplicitBitVect : public BitVect {
  private:
   unsigned int d_size;
   unsigned int d_numOnBits;
-  void _initForSize(const unsigned int size);
+  void _initForSize(const unsigned int size) override;
 };
 
 #endif

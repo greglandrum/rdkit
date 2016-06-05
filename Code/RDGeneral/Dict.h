@@ -36,7 +36,7 @@ class Dict {
     RDValue val;
 
     Pair() : key(), val() {}
-    Pair(const std::string &s, const RDValue &v) : key(s), val(v) {}
+    Pair(std::string s, RDValue v) : key(std::move(s)), val(std::move(v)) {}
   };
 
   typedef std::vector<Pair> DataType;

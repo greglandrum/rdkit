@@ -23,11 +23,11 @@ class BadFileException : public std::runtime_error {
   explicit BadFileException(const char *msg)
       : std::runtime_error("BadFileException"), _msg(msg){};
   //! construct with an error message
-  explicit BadFileException(const std::string &msg)
-      : std::runtime_error("BadFileException"), _msg(msg){};
+  explicit BadFileException(std::string msg)
+      : std::runtime_error("BadFileException"), _msg(std::move(msg)){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~BadFileException() throw(){};
+  ~BadFileException() throw() override{};
 
  private:
   std::string _msg;

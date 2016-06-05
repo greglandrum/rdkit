@@ -20,7 +20,7 @@ class IndexErrorException : public std::runtime_error {
   IndexErrorException(int i)
       : std::runtime_error("IndexErrorException"), _idx(i){};
   int index() const { return _idx; };
-  ~IndexErrorException() throw(){};
+  ~IndexErrorException() throw() override{};
 
  private:
   int _idx;
@@ -31,12 +31,12 @@ class IndexErrorException : public std::runtime_error {
 //!
 class ValueErrorException : public std::runtime_error {
  public:
-  ValueErrorException(const std::string &i)
-      : std::runtime_error("ValueErrorException"), _value(i){};
+  ValueErrorException(std::string i)
+      : std::runtime_error("ValueErrorException"), _value(std::move(i)){};
   ValueErrorException(const char *msg)
       : std::runtime_error("ValueErrorException"), _value(msg){};
   std::string message() const { return _value; };
-  ~ValueErrorException() throw(){};
+  ~ValueErrorException() throw() override{};
 
  private:
   std::string _value;
@@ -48,9 +48,9 @@ class ValueErrorException : public std::runtime_error {
 class KeyErrorException : public std::runtime_error {
  public:
   KeyErrorException(std::string key)
-      : std::runtime_error("KeyErrorException"), _key(key){};
+      : std::runtime_error("KeyErrorException"), _key(std::move(key)){};
   std::string key() const { return _key; };
-  ~KeyErrorException() throw(){};
+  ~KeyErrorException() throw() override{};
 
  private:
   std::string _key;
