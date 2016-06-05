@@ -174,7 +174,7 @@ class MMFFAromCollection {
         The current instantiation (if there is one) will be deleted.
   */
   static MMFFAromCollection *getMMFFArom(
-      const boost::uint8_t *aromatic_types = NULL);
+      const boost::uint8_t *aromatic_types = nullptr);
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFArom object, NULL on failure.
@@ -227,7 +227,7 @@ class MMFFDefCollection {
 #else
     return ((atomType && (atomType <= d_params.size()))
                 ? &d_params[atomType - 1]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -279,7 +279,7 @@ class MMFFPropCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -328,7 +328,7 @@ class MMFFPBCICollection {
 #else
     return ((atomType && (atomType <= d_params.size()))
                 ? &d_params[atomType - 1]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -371,7 +371,7 @@ class MMFFChgCollection {
       const unsigned int bondType, const unsigned int iAtomType,
       const unsigned int jAtomType) {
     int sign = -1;
-    const MMFFChg *mmffChgParams = NULL;
+    const MMFFChg *mmffChgParams = nullptr;
     unsigned int canIAtomType = iAtomType;
     unsigned int canJAtomType = jAtomType;
     if (iAtomType > jAtomType) {
@@ -461,7 +461,7 @@ class MMFFBondCollection {
   const MMFFBond *operator()(const unsigned int bondType,
                              const unsigned int atomType,
                              const unsigned int nbrAtomType) {
-    const MMFFBond *mmffBondParams = NULL;
+    const MMFFBond *mmffBondParams = nullptr;
     unsigned int canAtomType = atomType;
     unsigned int canNbrAtomType = nbrAtomType;
     if (atomType > nbrAtomType) {
@@ -553,7 +553,7 @@ class MMFFBndkCollection {
     \return a pointer to the MMFFBndk object, NULL on failure.
   */
   const MMFFBond *operator()(const int atomicNum, const int nbrAtomicNum) {
-    const MMFFBond *mmffBndkParams = NULL;
+    const MMFFBond *mmffBndkParams = nullptr;
     unsigned int canAtomicNum = atomicNum;
     unsigned int canNbrAtomicNum = nbrAtomicNum;
     if (atomicNum > nbrAtomicNum) {
@@ -633,7 +633,7 @@ class MMFFHerschbachLaurieCollection {
     \return a pointer to the MMFFHerschbachLaurie object, NULL on failure.
   */
   const MMFFHerschbachLaurie *operator()(const int iRow, const int jRow) {
-    const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = NULL;
+    const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = nullptr;
     unsigned int canIRow = iRow;
     unsigned int canJRow = jRow;
     if (iRow > jRow) {
@@ -725,7 +725,7 @@ class MMFFCovRadPauEleCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -771,7 +771,7 @@ class MMFFAngleCollection {
                               const unsigned int jAtomType,
                               const unsigned int kAtomType) {
     MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
-    const MMFFAngle *mmffAngleParams = NULL;
+    const MMFFAngle *mmffAngleParams = nullptr;
     unsigned int iter = 0;
 
 // For bending of the i-j-k angle, a five-stage process based
@@ -904,7 +904,7 @@ class MMFFStbnCollection {
       const unsigned int stretchBendType, const unsigned int bondType1,
       const unsigned int bondType2, const unsigned int iAtomType,
       const unsigned int jAtomType, const unsigned int kAtomType) {
-    const MMFFStbn *mmffStbnParams = NULL;
+    const MMFFStbn *mmffStbnParams = nullptr;
     bool swap = false;
     unsigned int canIAtomType = iAtomType;
     unsigned int canKAtomType = kAtomType;
@@ -1030,7 +1030,7 @@ class MMFFDfsbCollection {
     std::map<const unsigned int,
              std::map<const unsigned int, MMFFStbn> >::const_iterator res2;
     std::map<const unsigned int, MMFFStbn>::const_iterator res3;
-    const MMFFStbn *mmffDfsbParams = NULL;
+    const MMFFStbn *mmffDfsbParams = nullptr;
     bool swap = false;
     unsigned int canPeriodicTableRow1 = periodicTableRow1;
     unsigned int canPeriodicTableRow3 = periodicTableRow3;
@@ -1093,7 +1093,7 @@ class MMFFOopCollection {
                             const unsigned int kAtomType,
                             const unsigned int lAtomType) {
     MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
-    const MMFFOop *mmffOopParams = NULL;
+    const MMFFOop *mmffOopParams = nullptr;
     unsigned int iter = 0;
     std::vector<unsigned int> canIKLAtomType(3);
 // For out-of-plane bending ijk; I , where j is the central
@@ -1222,7 +1222,7 @@ class MMFFTorCollection {
       const unsigned int iAtomType, const unsigned int jAtomType,
       const unsigned int kAtomType, const unsigned int lAtomType) {
     MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
-    const MMFFTor *mmffTorParams = NULL;
+    const MMFFTor *mmffTorParams = nullptr;
     unsigned int iter = 0;
     unsigned int iWildCard = 0;
     unsigned int lWildCard = 0;
@@ -1423,7 +1423,7 @@ class MMFFVdWCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 

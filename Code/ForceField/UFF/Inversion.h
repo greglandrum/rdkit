@@ -39,10 +39,10 @@ class InversionContrib : public ForceFieldContrib {
                    unsigned int idx3, unsigned int idx4, int at2AtomicNum,
                    bool isCBoundToO);
 
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
-  virtual InversionContrib *copy() const {
+  void getGrad(double *pos, double *grad) const override;
+  InversionContrib *copy() const override {
     return new InversionContrib(*this);
   };
 

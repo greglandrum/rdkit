@@ -51,7 +51,7 @@ class GreaterQuery
   };
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    GreaterQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new GreaterQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setVal(this->d_val);
     res->setTol(this->d_tol);

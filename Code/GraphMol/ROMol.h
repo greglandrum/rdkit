@@ -189,7 +189,7 @@ class ROMol : public RDProps {
          the specified conformer from \c other.
   */
   ROMol(const ROMol &other, bool quickCopy = false, int confId = -1) : RDProps() {
-    dp_ringInfo = 0;
+    dp_ringInfo = nullptr;
     initFromOther(other, quickCopy, confId);
   };
   //! construct a molecule from a pickle string

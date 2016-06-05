@@ -124,7 +124,7 @@ class Query {
    */
   virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
       const {
-    Query<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new Query<MatchFuncArgType, DataFuncArgType, needsConversion>();
     typename Query<MatchFuncArgType, DataFuncArgType,
                    needsConversion>::CHILD_VECT_CI iter;

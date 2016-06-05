@@ -82,18 +82,18 @@ class ForwardSDMolSupplier : public MolSupplier {
                                 bool removeHs = true,
                                 bool strictParsing = false);
 
-  virtual ~ForwardSDMolSupplier() {
+  ~ForwardSDMolSupplier() override {
     if (df_owner && dp_inStream) {
       delete dp_inStream;
       df_owner = false;
-      dp_inStream = NULL;
+      dp_inStream = nullptr;
     }
   };
 
-  virtual void init();
-  virtual void reset();
-  virtual ROMol *next();
-  virtual bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
 
  protected:
   virtual void checkForEnd();
@@ -137,11 +137,11 @@ class SDMolSupplier : public ForwardSDMolSupplier {
                          bool sanitize = true, bool removeHs = true,
                          bool strictParsing = true);
 
-  ~SDMolSupplier(){};
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  ~SDMolSupplier() override{};
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -170,7 +170,7 @@ class SDMolSupplier : public ForwardSDMolSupplier {
   void setStreamIndices(const std::vector<std::streampos> &locs);
 
  private:
-  void checkForEnd();
+  void checkForEnd() override;
   void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
   int d_len;   // total number of mol blocks in the file (initialized to -1)
   int d_last;  // the molecule we are ready to read
@@ -221,14 +221,14 @@ class SmilesMolSupplier : public MolSupplier {
                              int smilesColumn = 0, int nameColumn = 1,
                              bool titleLine = true, bool sanitize = true);
 
-  ~SmilesMolSupplier();
+  ~SmilesMolSupplier() override;
   void setData(const std::string &text, const std::string &delimiter = " ",
                int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
                bool sanitize = true);
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -293,13 +293,13 @@ class TDTMolSupplier : public MolSupplier {
                           const std::string &nameRecord = "", int confId2D = -1,
                           int confId3D = 0, bool sanitize = true);
   TDTMolSupplier();
-  ~TDTMolSupplier();
+  ~TDTMolSupplier() override;
   void setData(const std::string &text, const std::string &nameRecord = "",
                int confId2D = -1, int confId3D = 0, bool sanitize = true);
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -335,14 +335,14 @@ class PDBMolSupplier : public MolSupplier {
   explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true, unsigned int flavor = 0);
 
-  virtual ~PDBMolSupplier() {
+  ~PDBMolSupplier() override {
     if (df_owner && dp_inStream) delete dp_inStream;
   };
 
-  virtual void init();
-  virtual void reset();
-  virtual ROMol *next();
-  virtual bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
 
  protected:
   bool df_sanitize, df_removeHs;

@@ -51,7 +51,7 @@ class LessEqualQuery
   };
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    LessEqualQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new LessEqualQuery<MatchFuncArgType, DataFuncArgType,
                            needsConversion>();
     res->setNegation(this->getNegation());

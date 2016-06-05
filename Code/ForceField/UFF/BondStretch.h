@@ -33,11 +33,11 @@ class BondStretchContrib : public ForceFieldContrib {
                      double bondOrder, const AtomicParams *end1Params,
                      const AtomicParams *end2Params);
 
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual BondStretchContrib *copy() const {
+  BondStretchContrib *copy() const override {
     return new BondStretchContrib(*this);
   };
 

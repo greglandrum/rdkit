@@ -138,7 +138,7 @@ class ParamCollection {
     if (res != d_params.end()) {
       return &((*res).second);
     }
-    return 0;
+    return nullptr;
   }
 
  private:

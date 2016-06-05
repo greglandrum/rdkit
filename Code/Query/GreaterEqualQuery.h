@@ -50,7 +50,7 @@ class GreaterEqualQuery
     }
   };
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    GreaterEqualQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new GreaterEqualQuery<MatchFuncArgType, DataFuncArgType,
                               needsConversion>();
     res->setVal(this->d_val);

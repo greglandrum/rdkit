@@ -44,9 +44,9 @@ class StretchBendContrib : public ForceFieldContrib {
                      const MMFFBond *mmffBondParams1,
                      const MMFFBond *mmffBondParams2);
 
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual StretchBendContrib *copy() const {
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  StretchBendContrib *copy() const override {
     return new StretchBendContrib(*this);
   };
 

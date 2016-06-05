@@ -64,17 +64,17 @@ class SmilesWriter : public MolWriter {
                bool takeOwnership = false, bool isomericSmiles = false,
                bool kekuleSmiles = false);
 
-  ~SmilesWriter();
+  ~SmilesWriter() override;
 
   //! \brief set a vector of property names that are need to be
   //! written out for each molecule
-  void setProps(const STR_VECT &propNames);
+  void setProps(const STR_VECT &propNames) override;
 
   //! \brief write a new molecule to the file
-  void write(const ROMol &mol, int confId = defaultConfId);
+  void write(const ROMol &mol, int confId = defaultConfId) override;
 
   //! \brief flush the ostream
-  void flush() {
+  void flush() override {
     PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
@@ -88,10 +88,10 @@ class SmilesWriter : public MolWriter {
   };
 
   //! \brief close our stream (the writer cannot be used again)
-  void close() {
+  void close() override {
     flush();
     std::ostream *tmp_ostream = dp_ostream;
-    dp_ostream = NULL;
+    dp_ostream = nullptr;
     if (df_owner) {
       df_owner = false;
       delete tmp_ostream;
@@ -99,7 +99,7 @@ class SmilesWriter : public MolWriter {
   };
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const override { return d_molid; };
 
  private:
   // local initialization
@@ -137,22 +137,22 @@ class SDWriter : public MolWriter {
   SDWriter(const std::string &fileName);
   SDWriter(std::ostream *outStream, bool takeOwnership = false);
 
-  ~SDWriter();
+  ~SDWriter() override;
 
   //! \brief set a vector of property names that are need to be
   //! written out for each molecule
-  void setProps(const STR_VECT &propNames);
+  void setProps(const STR_VECT &propNames) override;
 
   //! \brief return the text that would be written to the file
   static std::string getText(const ROMol &mol, int confId = defaultConfId,
                              bool kekulize = true, bool force_V3000 = false,
-                             int molid = -1, STR_VECT *propNames = NULL);
+                             int molid = -1, STR_VECT *propNames = nullptr);
 
   //! \brief write a new molecule to the file
-  void write(const ROMol &mol, int confId = defaultConfId);
+  void write(const ROMol &mol, int confId = defaultConfId) override;
 
   //! \brief flush the ostream
-  void flush() {
+  void flush() override {
     PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
@@ -166,10 +166,10 @@ class SDWriter : public MolWriter {
   };
 
   //! \brief close our stream (the writer cannot be used again)
-  void close() {
+  void close() override {
     flush();
     std::ostream *tmp_ostream = dp_ostream;
-    dp_ostream = NULL;
+    dp_ostream = nullptr;
     if (df_owner) {
       df_owner = false;
       delete tmp_ostream;
@@ -177,7 +177,7 @@ class SDWriter : public MolWriter {
   };
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const override { return d_molid; };
 
   void setForceV3000(bool val) { df_forceV3000 = val; };
   bool getForceV3000() const { return df_forceV3000; };
@@ -213,17 +213,17 @@ class TDTWriter : public MolWriter {
   TDTWriter(const std::string &fileName);
   TDTWriter(std::ostream *outStream, bool takeOwnership = false);
 
-  ~TDTWriter();
+  ~TDTWriter() override;
 
   //! \brief set a vector of property names that are need to be
   //! written out for each molecule
-  void setProps(const STR_VECT &propNames);
+  void setProps(const STR_VECT &propNames) override;
 
   //! \brief write a new molecule to the file
-  void write(const ROMol &mol, int confId = defaultConfId);
+  void write(const ROMol &mol, int confId = defaultConfId) override;
 
   //! \brief flush the ostream
-  void flush() {
+  void flush() override {
     PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
@@ -237,10 +237,10 @@ class TDTWriter : public MolWriter {
   };
 
   //! \brief close our stream (the writer cannot be used again)
-  void close() {
+  void close() override {
     flush();
     std::ostream *tmp_ostream = dp_ostream;
-    dp_ostream = NULL;
+    dp_ostream = nullptr;
     if (df_owner) {
       df_owner = false;
       delete tmp_ostream;
@@ -248,7 +248,7 @@ class TDTWriter : public MolWriter {
   };
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const override { return d_molid; };
 
   void setWrite2D(bool state = true) { df_write2D = state; };
   bool getWrite2D() const { return df_write2D; };
@@ -279,15 +279,15 @@ class PDBWriter : public MolWriter {
   PDBWriter(const std::string &fileName, unsigned int flavor = 0);
   PDBWriter(std::ostream *outStream, bool takeOwnership = false,
             unsigned int flavor = 0);
-  ~PDBWriter();
+  ~PDBWriter() override;
 
   //! \brief write a new molecule to the file
-  void write(const ROMol &mol, int confId = defaultConfId);
+  void write(const ROMol &mol, int confId = defaultConfId) override;
 
-  void setProps(const STR_VECT &){};
+  void setProps(const STR_VECT &) override{};
 
   //! \brief flush the ostream
-  void flush() {
+  void flush() override {
     PRECONDITION(dp_ostream, "no output stream");
     try {
       dp_ostream->flush();
@@ -301,10 +301,10 @@ class PDBWriter : public MolWriter {
   };
 
   //! \brief close our stream (the writer cannot be used again)
-  void close() {
+  void close() override {
     flush();
     std::ostream *tmp_ostream = dp_ostream;
-    dp_ostream = NULL;
+    dp_ostream = nullptr;
     if (df_owner) {
       df_owner = false;
       delete tmp_ostream;
@@ -312,7 +312,7 @@ class PDBWriter : public MolWriter {
   };
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_count; };
+  unsigned int numMols() const override { return d_count; };
 
  private:
   std::ostream *dp_ostream;

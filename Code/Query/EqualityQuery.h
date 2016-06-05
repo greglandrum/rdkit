@@ -64,7 +64,7 @@ class EqualityQuery
 
   virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
       const {
-    EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setNegation(this->getNegation());
     res->setVal(this->d_val);

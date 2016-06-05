@@ -46,10 +46,10 @@ class AngleBendContrib : public ForceFieldContrib {
                    unsigned int idx3, double bondOrder12, double bondOrder23,
                    const AtomicParams *at1Params, const AtomicParams *at2Params,
                    const AtomicParams *at3Params, unsigned int order = 0);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual AngleBendContrib *copy() const {
+  AngleBendContrib *copy() const override {
     return new AngleBendContrib(*this);
   };
 

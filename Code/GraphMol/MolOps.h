@@ -96,8 +96,8 @@ unsigned int getMolFrags(const ROMol &mol,
 
 */
 std::vector<boost::shared_ptr<ROMol> > getMolFrags(
-    const ROMol &mol, bool sanitizeFrags = true, std::vector<int> *frags = 0,
-    std::vector<std::vector<int> > *fragsMolAtomMapping = 0,
+    const ROMol &mol, bool sanitizeFrags = true, std::vector<int> *frags = nullptr,
+    std::vector<std::vector<int> > *fragsMolAtomMapping = nullptr,
     bool copyConformers = true);
 
 //! splits a molecule into pieces based on labels assigned using a query
@@ -143,7 +143,7 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
 
 */
 double computeBalabanJ(const ROMol &mol, bool useBO = true, bool force = false,
-                       const std::vector<int> *bondPath = 0,
+                       const std::vector<int> *bondPath = nullptr,
                        bool cacheIt = true);
 //! \overload
 double computeBalabanJ(double *distMat, int nb, int nAts);
@@ -172,11 +172,11 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
    returns.
  */
 ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
-             bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL);
+             bool addCoords = false, const UINT_VECT *onlyOnAtoms = nullptr);
 //! \overload
 // modifies the molecule in place
 void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
-           const UINT_VECT *onlyOnAtoms = NULL);
+           const UINT_VECT *onlyOnAtoms = nullptr);
 
 //! returns a copy of a molecule with hydrogens removed
 /*!
@@ -273,11 +273,11 @@ struct AdjustQueryParameters {
   \return the new molecule
 */
 ROMol *adjustQueryProperties(const ROMol &mol,
-                             const AdjustQueryParameters *params = NULL);
+                             const AdjustQueryParameters *params = nullptr);
 //! \overload
 // modifies the molecule in place
 void adjustQueryProperties(RWMol &mol,
-                           const AdjustQueryParameters *params = NULL);
+                           const AdjustQueryParameters *params = nullptr);
 
 //! returns a copy of a molecule with the atoms renumbered
 /*!
@@ -512,7 +512,7 @@ void setHybridization(ROMol &mol);
 */
 int findSSSR(const ROMol &mol, std::vector<std::vector<int> > &res);
 //! \overload
-int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res = 0);
+int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res = nullptr);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -576,8 +576,8 @@ int symmetrizeSSSR(ROMol &mol);
 */
 double *getAdjacencyMatrix(const ROMol &mol, bool useBO = false,
                            int emptyVal = 0, bool force = false,
-                           const char *propNamePrefix = 0,
-                           const boost::dynamic_bitset<> *bondsToUse = 0);
+                           const char *propNamePrefix = nullptr,
+                           const boost::dynamic_bitset<> *bondsToUse = nullptr);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -603,7 +603,7 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO = false,
 */
 double *getDistanceMat(const ROMol &mol, bool useBO = false,
                        bool useAtomWts = false, bool force = false,
-                       const char *propNamePrefix = 0);
+                       const char *propNamePrefix = nullptr);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -655,7 +655,7 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
 */
 double *get3DDistanceMat(const ROMol &mol, int confId = -1,
                          bool useAtomWts = false, bool force = false,
-                         const char *propNamePrefix = 0);
+                         const char *propNamePrefix = nullptr);
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm

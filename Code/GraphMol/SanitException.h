@@ -26,9 +26,9 @@ namespace RDKit {
 class MolSanitizeException : public std::exception {
  public:
   MolSanitizeException(const char *msg) : _msg(msg){};
-  MolSanitizeException(const std::string &msg) : _msg(msg){};
+  MolSanitizeException(std::string msg) : _msg(std::move(msg)){};
   const char *message() const { return _msg.c_str(); };
-  ~MolSanitizeException() throw(){};
+  ~MolSanitizeException() throw() override{};
 
  private:
   std::string _msg;

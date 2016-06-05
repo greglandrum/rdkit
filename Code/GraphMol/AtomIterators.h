@@ -140,7 +140,7 @@ template <class Atom_, class Mol_>
 class QueryAtomIterator_ {
  public:
   typedef QueryAtomIterator_<Atom_, Mol_> ThisType;
-  QueryAtomIterator_() : _mol(0), _qA(0){};
+  QueryAtomIterator_() : _mol(0), _qA(nullptr){};
   QueryAtomIterator_(Mol_ *mol, QueryAtom const *what);
   QueryAtomIterator_(Mol_ *mol, int pos);
   ~QueryAtomIterator_();

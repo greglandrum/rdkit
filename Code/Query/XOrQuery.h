@@ -42,7 +42,7 @@ class XOrQuery
   };
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    XOrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new XOrQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
 
     typename BASE::CHILD_VECT_CI i;

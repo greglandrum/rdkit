@@ -41,12 +41,12 @@ class AngleConstraintContrib : public ForceFieldContrib {
                          double minAngleDeg, double maxAngleDeg,
                          double forceConst);
 
-  ~AngleConstraintContrib() {}
-  double getEnergy(double *pos) const;
+  ~AngleConstraintContrib() override {}
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual AngleConstraintContrib *copy() const {
+  AngleConstraintContrib *copy() const override {
     return new AngleConstraintContrib(*this);
   };
 

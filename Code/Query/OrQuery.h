@@ -37,7 +37,7 @@ class OrQuery
   };
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    OrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new OrQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
 
     typename BASE::CHILD_VECT_CI i;

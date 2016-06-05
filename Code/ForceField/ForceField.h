@@ -58,7 +58,10 @@ class ForceField {
  public:
   //! construct with a dimension
   ForceField(unsigned int dimension = 3)
-      : d_dimension(dimension), df_init(false), d_numPoints(0), dp_distMat(0){};
+      : d_dimension(dimension),
+        df_init(false),
+        d_numPoints(0),
+        dp_distMat(nullptr){};
 
   ~ForceField();
 
@@ -69,7 +72,7 @@ class ForceField {
   void initialize();
 
   //! calculates and returns the energy (in kcal/mol) based on existing
-  //positions in the forcefield
+  // positions in the forcefield
   /*!
 
   \return the current energy
@@ -178,7 +181,7 @@ class ForceField {
       - if the distance between i and j has not previously been calculated,
         our internal distance matrix will be updated.
   */
-  double distance(unsigned int i, unsigned int j, double *pos = 0);
+  double distance(unsigned int i, unsigned int j, double *pos = nullptr);
 
   //! returns the distance between two points
   /*!
@@ -193,7 +196,7 @@ class ForceField {
     <b>Note:</b>
       The internal distance matrix is not updated in this case
   */
-  double distance(unsigned int i, unsigned int j, double *pos = 0) const;
+  double distance(unsigned int i, unsigned int j, double *pos = nullptr) const;
 
   //! returns the dimension of the forcefield
   unsigned int dimension() const { return d_dimension; }

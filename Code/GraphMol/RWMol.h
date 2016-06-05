@@ -223,7 +223,7 @@ class RWMol : public ROMol {
 
  private:
   std::vector<BOND_SPTR> d_partialBonds;
-  void destroy();
+  void destroy() override;
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

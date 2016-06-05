@@ -91,7 +91,7 @@ class RangeQuery
   };
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setUpper(this->d_upper);
     res->setLower(this->d_lower);

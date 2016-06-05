@@ -67,7 +67,7 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   \param ignoreHs            Optinally ignore hydrogens
 */
 RDGeom::Transform3D *computeCanonicalTransform(
-    const RDKit::Conformer &conf, const RDGeom::Point3D *center = 0,
+    const RDKit::Conformer &conf, const RDGeom::Point3D *center = nullptr,
     bool normalizeCovar = false, bool ignoreHs = true);
 
 //! Transform the conformation using the specified transformation
@@ -88,7 +88,7 @@ void transformConformer(RDKit::Conformer &conf,
 
 */
 void canonicalizeConformer(RDKit::Conformer &conf,
-                           const RDGeom::Point3D *center = 0,
+                           const RDGeom::Point3D *center = nullptr,
                            bool normalizeCovar = false, bool ignoreHs = true);
 
 //! Canonicalize all the conformations in a molecule

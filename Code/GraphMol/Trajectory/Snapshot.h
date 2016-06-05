@@ -31,9 +31,9 @@ class Snapshot {
         \param energy is the energy associated with this set of coordinates
      */
     Snapshot(boost::shared_array<double> pos, double energy = 0.0) :
-      d_trajectory(NULL),
+      d_trajectory(nullptr),
       d_energy(energy),
-      d_pos(pos) {}
+      d_pos(std::move(pos)) {}
     /*! \return a const pointer to the parent Trajectory
      */
     const Trajectory *trajectory() const {

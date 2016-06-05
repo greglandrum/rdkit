@@ -37,7 +37,7 @@ class AndQuery
     return res;
   };
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
-    AndQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
+    auto res =
         new AndQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     typename BASE::CHILD_VECT_CI i;
     for (i = this->beginChildren(); i != this->endChildren(); ++i) {
