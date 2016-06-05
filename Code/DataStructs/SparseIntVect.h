@@ -67,7 +67,7 @@ class SparseIntVect {
       throw IndexErrorException(static_cast<int>(idx));
     }
     int res = 0;
-    typename StorageType::const_iterator iter = d_data.find(idx);
+    auto iter = d_data.find(idx);
     if (iter != d_data.end()) {
       res = iter->second;
     }
@@ -124,8 +124,8 @@ class SparseIntVect {
       throw ValueErrorException("SparseIntVect size mismatch");
     }
 
-    typename StorageType::iterator iter = d_data.begin();
-    typename StorageType::const_iterator oIter = other.d_data.begin();
+    auto iter = d_data.begin();
+    auto oIter = other.d_data.begin();
     while (iter != d_data.end()) {
       // we're relying on the fact that the maps are sorted:
       while (oIter != other.d_data.end() && oIter->first < iter->first) {
@@ -141,7 +141,7 @@ class SparseIntVect {
       } else {
         // not there; our value is zero, which means
         // we should remove this value:
-        typename StorageType::iterator tmpIter = iter;
+        auto tmpIter = iter;
         ++tmpIter;
         d_data.erase(iter);
         iter = tmpIter;
@@ -163,8 +163,8 @@ class SparseIntVect {
       throw ValueErrorException("SparseIntVect size mismatch");
     }
 
-    typename StorageType::iterator iter = d_data.begin();
-    typename StorageType::const_iterator oIter = other.d_data.begin();
+    auto iter = d_data.begin();
+    auto oIter = other.d_data.begin();
     while (iter != d_data.end()) {
       // we're relying on the fact that the maps are sorted:
       while (oIter != other.d_data.end() && oIter->first < iter->first) {
@@ -197,8 +197,8 @@ class SparseIntVect {
     if (other.d_length != d_length) {
       throw ValueErrorException("SparseIntVect size mismatch");
     }
-    typename StorageType::iterator iter = d_data.begin();
-    typename StorageType::const_iterator oIter = other.d_data.begin();
+    auto iter = d_data.begin();
+    auto oIter = other.d_data.begin();
     while (oIter != other.d_data.end()) {
       while (iter != d_data.end() && iter->first < oIter->first) {
         ++iter;
@@ -207,7 +207,7 @@ class SparseIntVect {
         // found it:
         iter->second += oIter->second;
         if (!iter->second) {
-          typename StorageType::iterator tIter = iter;
+          auto tIter = iter;
           ++tIter;
           d_data.erase(iter);
           iter = tIter;
@@ -231,8 +231,8 @@ class SparseIntVect {
     if (other.d_length != d_length) {
       throw ValueErrorException("SparseIntVect size mismatch");
     }
-    typename StorageType::iterator iter = d_data.begin();
-    typename StorageType::const_iterator oIter = other.d_data.begin();
+    auto iter = d_data.begin();
+    auto oIter = other.d_data.begin();
     while (oIter != other.d_data.end()) {
       while (iter != d_data.end() && iter->first < oIter->first) {
         ++iter;
@@ -241,7 +241,7 @@ class SparseIntVect {
         // found it:
         iter->second -= oIter->second;
         if (!iter->second) {
-          typename StorageType::iterator tIter = iter;
+          auto tIter = iter;
           ++tIter;
           d_data.erase(iter);
           iter = tIter;
@@ -332,7 +332,7 @@ class SparseIntVect {
     IndexType nEntries = d_data.size();
     streamWrite(ss, nEntries);
 
-    typename StorageType::const_iterator iter = d_data.begin();
+    auto iter = d_data.begin();
     while (iter != d_data.end()) {
       streamWrite(ss, iter->first);
       boost::int32_t tInt = iter->second;

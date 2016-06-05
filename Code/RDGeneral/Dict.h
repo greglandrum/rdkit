@@ -79,8 +79,8 @@ public:
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
   bool hasVal(const std::string &what) const {
-    for(size_t i=0 ; i< _data.size(); ++i) {
-      if (_data[i].key == what ) return true;
+    for(const auto & i : _data) {
+      if (i.key == what ) return true;
     }
     return false;
   };
@@ -119,9 +119,9 @@ public:
   //! \overload
   template <typename T>
   T getVal(const std::string &what) const {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        return from_rdvalue<T>(_data[i].val);
+    for(const auto & i : _data) {
+      if (i.key == what) {
+        return from_rdvalue<T>(i.val);
       }
     }
     throw KeyErrorException(what);
@@ -147,9 +147,9 @@ public:
 
   template <typename T>
   bool getValIfPresent(const std::string &what, T &res) const {
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        res = from_rdvalue<T>(_data[i].val);
+    for(const auto & i : _data) {
+      if (i.key == what) {
+        res = from_rdvalue<T>(i.val);
         return true;
       }
     }
@@ -176,9 +176,9 @@ public:
   template <typename T>
   void setVal(const std::string &what, T &val) {
     _hasNonPodData = true;
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
+    for(auto & i : _data) {
+      if (i.key == what) {
+        i.val = val;
         return;
       }
     }
@@ -188,9 +188,9 @@ public:
   template <typename T>
   void setPODVal(const std::string &what, T val) {
     // don't change the hasNonPodData status
-    for(size_t i=0; i< _data.size(); ++i) {
-      if (_data[i].key == what) {
-        _data[i].val = val;
+    for(auto & i : _data) {
+      if (i.key == what) {
+        i.val = val;
         return;
       }
     }
@@ -235,7 +235,7 @@ public:
         a KeyErrorException will be thrown.
   */
   void clearVal(const std::string &what) {
-    for(DataType::iterator it = _data.begin(); it < _data.end() ; ++it) {
+    for(auto it = _data.begin(); it < _data.end() ; ++it) {
       if (it->key == what) {
         _data.erase(it);
         return;
@@ -249,8 +249,8 @@ public:
   //!
   void reset() {
     if (_hasNonPodData) {
-      for (size_t i=0; i< _data.size(); ++i) {
-        RDValue::cleanup_rdvalue(_data[i].val);
+      for (auto & i : _data) {
+        RDValue::cleanup_rdvalue(i.val);
       }
     }
     DataType data;

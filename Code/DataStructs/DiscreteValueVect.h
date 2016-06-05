@@ -40,7 +40,7 @@ class DiscreteValueVect {
     d_valsPerInt = BITS_PER_INT / d_bitsPerVal;
     d_numInts = (length + d_valsPerInt - 1) / d_valsPerInt;
     d_mask = ((1 << d_bitsPerVal) - 1);
-    boost::uint32_t *data = new boost::uint32_t[d_numInts];
+    auto data = new boost::uint32_t[d_numInts];
     memset(static_cast<void *>(data), 0, d_numInts * sizeof(boost::uint32_t));
     d_data.reset(data);
   }

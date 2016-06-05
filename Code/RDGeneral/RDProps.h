@@ -38,7 +38,7 @@ protected:
       computed.push_back(detail::computedPropName);
     }
 
-    STR_VECT::const_iterator pos = tmp.begin();
+    auto pos = tmp.begin();
     while (pos != tmp.end()) {
       if ((includePrivate || (*pos)[0] != '_') &&
           std::find(computed.begin(), computed.end(), *pos) == computed.end()) {
@@ -127,7 +127,7 @@ protected:
   void clearProp(const std::string &key) const {
     STR_VECT compLst;
     if (getPropIfPresent(detail::computedPropName, compLst)) {
-      STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
+      auto svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
         compLst.erase(svi);
         dp_props.setVal(detail::computedPropName, compLst);

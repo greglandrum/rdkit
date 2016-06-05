@@ -287,7 +287,7 @@ void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
            from the union.
 */
 void Union(const VECT_INT_VECT &rings, INT_VECT &res,
-           const INT_VECT *exclude = NULL);
+           const INT_VECT *exclude = nullptr);
 
 //! given a current combination of numbers change it to the next possible
 // combination

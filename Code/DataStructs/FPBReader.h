@@ -57,8 +57,8 @@ struct FPBReader_impl;
 class FPBReader {
  public:
   FPBReader()
-      : dp_istrm(NULL),
-        dp_impl(NULL),
+      : dp_istrm(nullptr),
+        dp_impl(nullptr),
         df_owner(false),
         df_init(false),
         df_lazyRead(false){};
@@ -96,7 +96,7 @@ class FPBReader {
   ~FPBReader() {
     destroy();
     if (df_owner) delete dp_istrm;
-    dp_istrm = NULL;
+    dp_istrm = nullptr;
     df_init = false;
   };
 

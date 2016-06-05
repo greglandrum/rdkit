@@ -35,8 +35,8 @@ class rdLogger {
       : dp_dest(dest),
         df_owner(owner),
         df_enabled(true),
-        tee(NULL),
-        teestream(NULL){};
+        tee(nullptr),
+        teestream(nullptr){};
 
   //! Sets a stream to tee the output to.
   void SetTee(std::ostream &stream) {
@@ -52,8 +52,8 @@ class rdLogger {
     if (dp_dest) {
       delete teestream;
       delete tee;
-      tee = NULL;
-      teestream = NULL;
+      tee = nullptr;
+      teestream = nullptr;
     }
   }
   ~rdLogger() {
@@ -62,12 +62,12 @@ class rdLogger {
       if (df_owner) {
         delete dp_dest;
       }
-      dp_dest = NULL;
+      dp_dest = nullptr;
     }
     delete teestream;
-    teestream = NULL;
+    teestream = nullptr;
     delete tee;
-    tee = NULL;
+    tee = nullptr;
   }
 
  private:

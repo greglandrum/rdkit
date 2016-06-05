@@ -161,7 +161,7 @@ struct RDAny {
   template<class T>
   RDAny &operator=(const T &d) {
     RDValue::cleanup_rdvalue(m_value);
-    boost::any *v = new boost::any(d);
+    auto v = new boost::any(d);
     m_value = RDValue(v);
     return *this;
   }
