@@ -75,7 +75,7 @@ RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const &e);
 RDKIT_WRAP_DECL void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
-#endif                                               
+#endif
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()

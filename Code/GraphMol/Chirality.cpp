@@ -478,27 +478,27 @@ bool checkChiralAtomSpecialCases(ROMol &mol, const Atom *atom) {
     for (const auto &atomRing : atomRings) {
       if (std::find(atomRing.begin(), atomRing.end(),
                     static_cast<int>(atom->getIdx())) != atomRing.end()) {
-        for (auto idxIt = atomRing.begin(); idxIt != atomRing.end(); ++idxIt) {
+        for (int idxIt : atomRing) {
           int same = 1;
-          if (*idxIt != static_cast<int>(atom->getIdx()) &&
-              mol.getAtomWithIdx(*idxIt)->getChiralTag() !=
+          if (idxIt != static_cast<int>(atom->getIdx()) &&
+              mol.getAtomWithIdx(idxIt)->getChiralTag() !=
                   Atom::CHI_UNSPECIFIED &&
-              !mol.getAtomWithIdx(*idxIt)->hasProp(
+              !mol.getAtomWithIdx(idxIt)->hasProp(
                   common_properties::_CIPCode) &&
               atomIsCandidateForRingStereochem(mol,
-                                               mol.getAtomWithIdx(*idxIt))) {
+                                               mol.getAtomWithIdx(idxIt))) {
             // we get to keep the stereochem specification on this atom:
-            if (mol.getAtomWithIdx(*idxIt)->getChiralTag() !=
+            if (mol.getAtomWithIdx(idxIt)->getChiralTag() !=
                 atom->getChiralTag()) {
               same = -1;
             }
-            ringStereoAtoms.push_back(same * (*idxIt + 1));
+            ringStereoAtoms.push_back(same * (idxIt + 1));
             INT_VECT oAtoms(0);
-            mol.getAtomWithIdx(*idxIt)->getPropIfPresent(
+            mol.getAtomWithIdx(idxIt)->getPropIfPresent(
                 common_properties::_ringStereoAtoms, oAtoms);
 
             oAtoms.push_back(same * (atom->getIdx() + 1));
-            mol.getAtomWithIdx(*idxIt)->setProp(
+            mol.getAtomWithIdx(idxIt)->setProp(
                 common_properties::_ringStereoAtoms, oAtoms, true);
           }
         }

@@ -40,7 +40,7 @@ class CatalogEntry {
 
  private:
   int d_bitId;  //!< our bit Id. This needs to be signed so that we can mark
-                //uninitialized entries.
+                // uninitialized entries.
 };
 }
 

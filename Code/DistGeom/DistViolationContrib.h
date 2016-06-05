@@ -33,10 +33,10 @@ class DistViolationContrib : public ForceFields::ForceFieldContrib {
                        unsigned int idx2, double ub, double lb,
                        double weight = 1.0);
 
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
-  virtual DistViolationContrib *copy() const {
+  void getGrad(double *pos, double *grad) const override;
+  DistViolationContrib *copy() const override {
     return new DistViolationContrib(*this);
   };
 

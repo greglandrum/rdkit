@@ -148,7 +148,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       boost::vecS,  // FIX: should be using setS for edges so that parallel
                     // edges are never added (page 225 BGL book)
       // but that seems result in compile errors
-      boost::bidirectionalS, EntryProperty> CatalogGraph;
+      boost::bidirectionalS, EntryProperty>
+      CatalogGraph;
 
   typedef boost::graph_traits<CatalogGraph> CAT_GRAPH_TRAITS;
   typedef typename CAT_GRAPH_TRAITS::vertex_iterator VER_ITER;
@@ -279,7 +280,9 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const override { return boost::num_vertices(d_graph); }
+  unsigned int getNumEntries() const override {
+    return boost::num_vertices(d_graph);
+  }
 
   //------------------------------------
   //! fills the contents of this object from a string containing a \c pickle

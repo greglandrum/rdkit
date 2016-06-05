@@ -118,7 +118,7 @@ class MaxMinPicker : public DistPicker {
 
   /*! \overload */
   RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
-                       unsigned int pickSize) const {
+                       unsigned int pickSize) const override {
     RDKit::INT_VECT iv;
     return pick(distMat, poolSize, pickSize, iv);
   }
@@ -173,8 +173,8 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   // now pick 1 compound at a time
   while (picks.size() < pickSize) {
     double maxOFmin = -1.0;
-    RDKit::INT_LIST_I plri = pool.end();
-    for (RDKit::INT_LIST_I pli = pool.begin(); pli != pool.end(); ++pli) {
+    auto plri = pool.end();
+    for (auto pli = pool.begin(); pli != pool.end(); ++pli) {
       unsigned int poolIdx = (*pli);
       double minTOi = RDKit::MAX_DOUBLE;
       for (RDKit::INT_VECT_CI pi = picks.begin(); pi != picks.end(); ++pi) {

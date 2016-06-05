@@ -65,8 +65,8 @@ void MMFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
                                       unsigned int numThreads, int maxIters) {
   unsigned int i = 0;
   ff.positions().resize(mol->getNumAtoms());
-  for (ROMol::ConformerIterator cit = mol->beginConformers();
-       cit != mol->endConformers(); ++cit, ++i) {
+  for (auto cit = mol->beginConformers(); cit != mol->endConformers();
+       ++cit, ++i) {
     if (i % numThreads != threadIdx) continue;
     for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
       ff.positions()[aidx] = &(*cit)->getAtomPos(aidx);
@@ -115,8 +115,8 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
         mol, nonBondedThresh, -1, ignoreInterfragInteractions);
     if (numThreads == 1) {
       unsigned int i = 0;
-      for (ROMol::ConformerIterator cit = mol.beginConformers();
-           cit != mol.endConformers(); ++cit, ++i) {
+      for (auto cit = mol.beginConformers(); cit != mol.endConformers();
+           ++cit, ++i) {
         for (unsigned int aidx = 0; aidx < mol.getNumAtoms(); ++aidx) {
           ff->positions()[aidx] = &(*cit)->getAtomPos(aidx);
         }

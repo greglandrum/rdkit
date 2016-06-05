@@ -274,8 +274,9 @@ class MMFFPropCollection {
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
@@ -392,7 +393,8 @@ class MMFFChgCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
 
     bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canIAtomType);
@@ -488,7 +490,8 @@ class MMFFBondCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canAtomType);
     if (bounds.first != bounds.second) {
@@ -573,7 +576,8 @@ class MMFFBndkCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
                               canAtomicNum);
     if (bounds.first != bounds.second) {
@@ -654,7 +658,8 @@ class MMFFHerschbachLaurieCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
@@ -720,8 +725,9 @@ class MMFFCovRadPauEleCollection {
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
@@ -816,10 +822,12 @@ class MMFFAngleCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<boost::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffAngleParams)) {
         unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -944,10 +952,12 @@ class MMFFStbnCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<boost::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       bounds = std::equal_range(
           d_iAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
@@ -1136,10 +1146,12 @@ class MMFFOopCollection {
     }
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<boost::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffOopParams)) {
         canIKLAtomType[0] = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -1255,9 +1267,11 @@ class MMFFTorCollection {
     std::map<const unsigned int, MMFFTor>::const_iterator res5;
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> jBounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        jBounds;
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds;
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds;
 #endif
 
     while (((iter < maxIter) && ((!mmffTorParams) || (maxIter == 4))) ||
@@ -1418,8 +1432,9 @@ class MMFFVdWCollection {
     return (res != d_params.end() ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<boost::uint8_t>::const_iterator,
-              std::vector<boost::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
+              std::vector<boost::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]

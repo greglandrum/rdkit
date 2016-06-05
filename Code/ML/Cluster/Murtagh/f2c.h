@@ -124,7 +124,7 @@ typedef struct {
 
 #define VOID void
 
-union Multitype {/* for multiple entry points */
+union Multitype { /* for multiple entry points */
   integer1 g;
   shortint h;
   integer i;
@@ -139,7 +139,7 @@ typedef union Multitype Multitype;
 
 /*typedef long int Long;*/ /* No longer used; formerly in Namelist */
 
-struct Vardesc {/* for Namelist */
+struct Vardesc { /* for Namelist */
   char *name;
   char *addr;
   ftnlen *dims;

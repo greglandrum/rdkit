@@ -117,7 +117,7 @@ ForceFields::ForceField *constructForceField(
     double basinSizeTol = 5.0);
 
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
-//constraints
+// constraints
 /*!
 
   \param mmat            Distance bounds matrix
@@ -142,13 +142,13 @@ ForceFields::ForceField *construct3DForceField(
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
     const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
+    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+        &expTorsionAngles,
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums);
 
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
-//constraints
+// constraints
 /*!
 
   \param mmat            Distance bounds matrix
@@ -172,8 +172,8 @@ ForceFields::ForceField *constructPlain3DForceField(
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
     const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
+    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+        &expTorsionAngles,
     const std::vector<int> &atomNums);
 }
 

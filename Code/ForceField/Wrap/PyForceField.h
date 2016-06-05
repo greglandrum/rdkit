@@ -55,7 +55,8 @@ class PyForceField {
     return this->field->minimize(maxIts, forceTol, energyTol);
   }
 
-  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol);
+  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
+                                          double forceTol, double energyTol);
 
   void initialize() {
     PRECONDITION(this->field, "no force field");

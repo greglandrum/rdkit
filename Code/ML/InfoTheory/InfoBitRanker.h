@@ -119,9 +119,9 @@ class InfoBitRanker {
     d_clsCount.resize(d_classes, 0);
     d_nInst = 0;
     d_top = 0;
-    dp_topBits = 0;
+    dp_topBits = nullptr;
     d_biasList.resize(0);
-    dp_maskBits = 0;
+    dp_maskBits = nullptr;
   }
 
   ~InfoBitRanker() {

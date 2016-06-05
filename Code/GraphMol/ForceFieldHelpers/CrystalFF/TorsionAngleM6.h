@@ -49,11 +49,10 @@ class TorsionAngleContribM6 : public ForceFields::ForceFieldContrib {
   */
   TorsionAngleContribM6(ForceFields::ForceField *owner, unsigned int idx1,
                         unsigned int idx2, unsigned int idx3, unsigned int idx4,
-                        const std::vector<double> &V,
-                        const std::vector<int> &signs);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual TorsionAngleContribM6 *copy() const {
+                        std::vector<double> V, std::vector<int> signs);
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  TorsionAngleContribM6 *copy() const override {
     return new TorsionAngleContribM6(*this);
   };
 

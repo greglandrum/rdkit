@@ -54,8 +54,8 @@ void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
                                      unsigned int numThreads, int maxIters) {
   unsigned int i = 0;
   ff.positions().resize(mol->getNumAtoms());
-  for (ROMol::ConformerIterator cit = mol->beginConformers();
-       cit != mol->endConformers(); ++cit, ++i) {
+  for (auto cit = mol->beginConformers(); cit != mol->endConformers();
+       ++cit, ++i) {
     if (i % numThreads != threadIdx) continue;
     for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
       ff.positions()[aidx] = &(*cit)->getAtomPos(aidx);
@@ -96,8 +96,8 @@ void UFFOptimizeMoleculeConfs(ROMol &mol,
   numThreads = getNumThreadsToUse(numThreads);
   if (numThreads == 1) {
     unsigned int i = 0;
-    for (ROMol::ConformerIterator cit = mol.beginConformers();
-         cit != mol.endConformers(); ++cit, ++i) {
+    for (auto cit = mol.beginConformers(); cit != mol.endConformers();
+         ++cit, ++i) {
       res[i] = UFFOptimizeMolecule(mol, maxIters, vdwThresh, (*cit)->getId(),
                                    ignoreInterfragInteractions);
     }

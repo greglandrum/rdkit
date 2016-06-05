@@ -77,7 +77,7 @@ class HierarchicalClusterPicker : public DistPicker {
    *    \param pickSize - the number items to pick from pool (<= poolSize)
    */
   RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
-                       unsigned int pickSize) const;
+                       unsigned int pickSize) const override;
 
   /*! \brief This is the function that does the clustering of the items - used
    *by the picker
