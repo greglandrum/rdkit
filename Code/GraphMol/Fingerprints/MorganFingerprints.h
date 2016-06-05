@@ -102,10 +102,10 @@ const std::string morganFingerprintVersion = "1.0.0";
 */
 SparseIntVect<boost::uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius,
-    std::vector<boost::uint32_t> *invariants = 0,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
+    std::vector<boost::uint32_t> *invariants = nullptr,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
     bool useChirality = false, bool useBondTypes = true, bool useCounts = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = nullptr);
 
 //! returns the Morgan fingerprint for a molecule
 /*!
@@ -151,10 +151,10 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
 */
 SparseIntVect<boost::uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits = 2048,
-    std::vector<boost::uint32_t> *invariants = 0,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
+    std::vector<boost::uint32_t> *invariants = nullptr,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
     bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = nullptr);
 
 //! returns the Morgan fingerprint for a molecule as a bit vector
 /*!
@@ -190,10 +190,10 @@ SparseIntVect<boost::uint32_t> *getHashedFingerprint(
 */
 ExplicitBitVect *getFingerprintAsBitVect(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
-    std::vector<boost::uint32_t> *invariants = 0,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
+    std::vector<boost::uint32_t> *invariants = nullptr,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
     bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = nullptr);
 
 //! returns the connectivity invariants for a molecule
 /*!
@@ -223,7 +223,7 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
 */
 void getFeatureInvariants(const ROMol &mol,
                           std::vector<boost::uint32_t> &invars,
-                          std::vector<const ROMol *> *patterns = 0);
+                          std::vector<const ROMol *> *patterns = nullptr);
 const std::string morganFeatureInvariantVersion = "0.1.0";
 
 }  // end of namespace MorganFingerprints

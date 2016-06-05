@@ -76,10 +76,9 @@ namespace {
 bool hasReactionMoleculeTemplateSubstructMatch(
     const RDKit::ChemicalReaction &rxn,
     const RDKit::ChemicalReaction &query_rxn, RDKit::ReactionMoleculeType t) {
-  for (RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, t);
-       begin != getEndIterator(rxn, t); ++begin) {
-    for (RDKit::MOL_SPTR_VECT::const_iterator begin_query =
-             getStartIterator(query_rxn, t);
+  for (auto begin = getStartIterator(rxn, t); begin != getEndIterator(rxn, t);
+       ++begin) {
+    for (auto begin_query = getStartIterator(query_rxn, t);
          begin_query != getEndIterator(query_rxn, t); ++begin_query) {
       MatchVectType tvect;
       if (SubstructMatch(*begin->get(), *begin_query->get(), tvect)) {
@@ -137,8 +136,8 @@ bool hasReactionSubstructMatch(const ChemicalReaction &rxn,
 }
 
 bool hasReactionAtomMapping(const ChemicalReaction &rxn) {
-  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, Reactant);
-  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, Reactant);
+  auto begin = getStartIterator(rxn, Reactant);
+  auto end = getEndIterator(rxn, Reactant);
   for (; begin != end; ++begin) {
     const ROMol &reactant = *begin->get();
     if (MolOps::getNumAtomsWithDistinctProperty(
@@ -172,15 +171,19 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold) {
 
 namespace {
 
-void getMappingNumAtomIdxMapReactants(const ChemicalReaction& rxn, std::map<int,Atom::ChiralType>& reactantMapping){
-  for(MOL_SPTR_VECT::const_iterator reactIt=rxn.beginReactantTemplates();
-      reactIt!=rxn.endReactantTemplates();++reactIt){
-    for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
-        reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
+void getMappingNumAtomIdxMapReactants(
+    const ChemicalReaction &rxn,
+    std::map<int, Atom::ChiralType> &reactantMapping) {
+  for (auto reactIt = rxn.beginReactantTemplates();
+       reactIt != rxn.endReactantTemplates(); ++reactIt) {
+    for (ROMol::AtomIterator reactAtomIt = (*reactIt)->beginAtoms();
+         reactAtomIt != (*reactIt)->endAtoms(); ++reactAtomIt) {
       int reactMapNum = -1;
-      (*reactAtomIt)->getPropIfPresent(common_properties::molAtomMapNumber,reactMapNum);
-      if(reactMapNum > -1){
-        reactantMapping.insert(std::make_pair(reactMapNum,(*reactAtomIt)->getChiralTag()));
+      (*reactAtomIt)
+          ->getPropIfPresent(common_properties::molAtomMapNumber, reactMapNum);
+      if (reactMapNum > -1) {
+        reactantMapping.insert(
+            std::make_pair(reactMapNum, (*reactAtomIt)->getChiralTag()));
       }
     }
   }
@@ -239,26 +242,24 @@ void updateProductsStereochem(ChemicalReaction *rxn) {
 
 namespace {
 
-void removeMappingNumbersFromReactionMoleculeTemplate(const MOL_SPTR_VECT &molVec){
-  for(MOL_SPTR_VECT::const_iterator begin=molVec.begin(); begin != molVec.end() ; ++begin){
-    ROMol &mol = *begin->get();
-    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
-        atomIt!=mol.endAtoms();++atomIt){
-      if((*atomIt)->hasProp(common_properties::molAtomMapNumber)){
+void removeMappingNumbersFromReactionMoleculeTemplate(
+    const MOL_SPTR_VECT &molVec) {
+  for (const auto &begin : molVec) {
+    ROMol &mol = *begin.get();
+    for (ROMol::AtomIterator atomIt = mol.beginAtoms();
+         atomIt != mol.endAtoms(); ++atomIt) {
+      if ((*atomIt)->hasProp(common_properties::molAtomMapNumber)) {
         (*atomIt)->clearProp(common_properties::molAtomMapNumber);
       }
     }
   }
 }
-
 }
 
-void removeMappingNumbersFromReactions(const ChemicalReaction &rxn){
-
+void removeMappingNumbersFromReactions(const ChemicalReaction &rxn) {
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getAgents());
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getProducts());
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getReactants());
 }
 
-} // end of RDKit namespace
-
+}  // end of RDKit namespace

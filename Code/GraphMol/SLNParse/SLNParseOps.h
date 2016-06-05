@@ -87,7 +87,7 @@ template <typename AtomType>
 int startMol(std::vector<RWMol *> &molList, AtomType *firstAtom,
              bool doingQuery) {
   PRECONDITION(firstAtom, "empty atom");
-  RWMol *mp = new RWMol();
+  auto mp = new RWMol();
   mp->addAtom(firstAtom, true, true);
   bookmarkAtomID(mp, firstAtom);
 
@@ -239,8 +239,8 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
        bmIt != branch->getBondBookmarks()->end(); ++bmIt) {
     CHECK_INVARIANT(bmIt->second.size() >= 1,
                     "bad bond bookmark list on branch");
-    for (ROMol::BOND_PTR_LIST::const_iterator bondIt = bmIt->second.begin();
-         bondIt != bmIt->second.end(); ++bondIt) {
+    for (auto bondIt = bmIt->second.begin(); bondIt != bmIt->second.end();
+         ++bondIt) {
       Bond *tgtBond = *bondIt;
       if (bmIt->first > 0 && mp->hasAtomBookmark(bmIt->first)) {
         Atom *tmpAtom = mp->getActiveAtom();
@@ -266,7 +266,7 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
   } else {
     delete bond;
   }
-  bond = 0;
+  bond = nullptr;
 
   delete branch;
   unsigned int sz = molList.size();
@@ -278,7 +278,7 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
 //! \overload
 int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
                    unsigned int branchIdx) {
-  Bond *newBond = new Bond(Bond::SINGLE);
+  auto newBond = new Bond(Bond::SINGLE);
   return addBranchToMol(molList, molIdx, branchIdx, newBond);
 };
 
@@ -287,7 +287,7 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
 // between them
 int addFragToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
                  unsigned int fragIdx) {
-  Bond *newBond = new Bond(Bond::IONIC);
+  auto newBond = new Bond(Bond::IONIC);
   return addBranchToMol(molList, molIdx, fragIdx, newBond);
 }
 
@@ -302,12 +302,11 @@ void CleanupAfterParseError(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   // blow out any partial bonds:
   RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
-  RWMol::BOND_BOOKMARK_MAP::iterator markI = marks->begin();
+  auto markI = marks->begin();
   while (markI != marks->end()) {
     RWMol::BOND_PTR_LIST &bonds = markI->second;
-    for (RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
-         bondIt != bonds.end(); ++bondIt) {
-      delete *bondIt;
+    for (auto &bond : bonds) {
+      delete bond;
     }
     ++markI;
   }

@@ -73,11 +73,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Positive
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + nFeatures);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 void getErGAtomTypes(const ROMol &mol,
                      std::vector<boost::dynamic_bitset<> > &types,
-                     std::vector<const ROMol *> *patterns = 0) {
+                     std::vector<const ROMol *> *patterns = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
 
   std::vector<const ROMol *> featureMatchers;
@@ -116,8 +117,8 @@ RDNumeric::DoubleVector *getErGFingerprint(
   ROMol *rg = generateMolExtendedReducedGraph(mol, atomTypes);
 #ifdef VERBOSE_FINGERPRINTING
   rg->updatePropertyCache(false);
-  std::cerr << " reduced graph smiles: " << MolToSmiles(*rg, false, false, -1,
-                                                        false) << std::endl;
+  std::cerr << " reduced graph smiles: "
+            << MolToSmiles(*rg, false, false, -1, false) << std::endl;
 #endif
   RDNumeric::DoubleVector *res = generateErGFingerprintForReducedGraph(
       *rg, atomTypes, fuzzIncrement, minPath, maxPath);
@@ -136,7 +137,7 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
   unsigned int nBins = maxPath - minPath;
 
   unsigned int vSize = (nTypes * (nTypes + 1)) / 2 * (maxPath - minPath + 1);
-  RDNumeric::DoubleVector *res = new RDNumeric::DoubleVector(vSize, 0.0);
+  auto res = new RDNumeric::DoubleVector(vSize, 0.0);
 
   // we need the topological distance matrix:
   double *dm = MolOps::getDistanceMat(mol);
@@ -190,13 +191,13 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
 
 ROMol *generateMolExtendedReducedGraph(
     const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes) {
-  std::vector<boost::dynamic_bitset<> > *latomTypes = 0;
+  std::vector<boost::dynamic_bitset<> > *latomTypes = nullptr;
   if (!atomTypes) {
     latomTypes = new std::vector<boost::dynamic_bitset<> >();
     atomTypes = latomTypes;
     getErGAtomTypes(mol, *atomTypes);
   }
-  RWMol *res = new RWMol(mol);
+  auto res = new RWMol(mol);
 
   const int aliphaticFlag = atomTypes->size() - 1;  // the last type
   const int aromaticFlag = atomTypes->size();

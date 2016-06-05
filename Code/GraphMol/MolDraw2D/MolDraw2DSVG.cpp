@@ -203,7 +203,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
         MolDraw2D_detail::char_widths[(int)'M'];
     if (TextDrawSubscript == draw_mode) {
       char_width *= 0.5;
-      had_a_sub =true;
+      had_a_sub = true;
     } else if (TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
       had_a_super = true;

@@ -69,13 +69,13 @@ int getRXNRoleOfMolecule(const RDKit::ROMol &mol) {
 namespace RDKit {
 
 ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
-  ChemicalReaction *rxn = new ChemicalReaction();
+  auto rxn = new ChemicalReaction();
 
   MOL_SPTR_VECT fragments = MolOps::getMolFrags(mol);
 
   unsigned countFragments = 0;
-  for (MOL_SPTR_VECT::iterator iter = fragments.begin();
-       iter != fragments.end(); ++iter, countFragments++) {
+  for (auto iter = fragments.begin(); iter != fragments.end();
+       ++iter, countFragments++) {
     int role = getRXNRoleOfMolecule(*iter->get());
     if (!testForSameRXNRoleOfAllMoleculeAtoms(*iter->get(), role)) {
       BOOST_LOG(rdWarningLog)

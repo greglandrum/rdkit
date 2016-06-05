@@ -73,7 +73,8 @@ bool check(MatchVectType v, MatchVectType match) {
 
 void testFilterCatalog() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue "
-                          "2313979: aromaticity assignment hangs " << std::endl;
+                          "2313979: aromaticity assignment hangs "
+                       << std::endl;
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -86,52 +87,25 @@ void testFilterCatalog() {
 
     FilterCatalog catalog(params);
     boost::scoped_ptr<ROMol> mol;
-    const IntPair match1[10] = {{0, 23},
-                                {1, 22},
-                                {2, 20},
-                                {3, 19},
-                                {4, 25},
-                                {5, 24},
-                                {6, 18},
-                                {7, 17},
-                                {8, 16},
-                                {9, 21}};
+    const IntPair match1[10] = {{0, 23}, {1, 22}, {2, 20}, {3, 19}, {4, 25},
+                                {5, 24}, {6, 18}, {7, 17}, {8, 16}, {9, 21}};
     MatchVectType matchvec1;
-    for (int i = 0; i < 10; ++i)
-      matchvec1.push_back(std::make_pair(match1[i].first, match1[i].second));
+    for (auto i : match1)
+      matchvec1.push_back(std::make_pair(i.first, i.second));
 
-    const IntPair match2[13] = {{0, 11},
-                                {1, 12},
-                                {2, 13},
-                                {3, 14},
-                                {4, 15},
-                                {5, 10},
-                                {6, 9},
-                                {7, 8},
-                                {8, 7},
-                                {9, 6},
-                                {10, 5},
-                                {11, 17},
-                                {12, 16}};
+    const IntPair match2[13] = {{0, 11}, {1, 12},  {2, 13}, {3, 14}, {4, 15},
+                                {5, 10}, {6, 9},   {7, 8},  {8, 7},  {9, 6},
+                                {10, 5}, {11, 17}, {12, 16}};
     MatchVectType matchvec2;
-    for (int i = 0; i < 13; ++i)
-      matchvec2.push_back(std::make_pair(match2[i].first, match2[i].second));
+    for (auto i : match2)
+      matchvec2.push_back(std::make_pair(i.first, i.second));
 
-    const IntPair match3[12] = {{0, 0},
-                                {1, 1},
-                                {2, 2},
-                                {3, 4},
-                                {4, 5},
-                                {5, 6},
-                                {6, 7},
-                                {7, 8},
-                                {8, 9},
-                                {9, 14},
-                                {10, 15},
-                                {11, 16}};
+    const IntPair match3[12] = {{0, 0}, {1, 1},  {2, 2},   {3, 4},
+                                {4, 5}, {5, 6},  {6, 7},   {7, 8},
+                                {8, 9}, {9, 14}, {10, 15}, {11, 16}};
     MatchVectType matchvec3;
-    for (int i = 0; i < 12; ++i)
-      matchvec3.push_back(std::make_pair(match3[i].first, match3[i].second));
+    for (auto i : match3)
+      matchvec3.push_back(std::make_pair(i.first, i.second));
     int count = 0;
     while (!suppl.atEnd()) {
       mol.reset(suppl.next());
@@ -200,7 +174,7 @@ void testFilterCatalogEntry() {
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol("c:c:c:c:c", debugParse, mergeHs));
-  TEST_ASSERT(pattern.get() != 0);
+  TEST_ASSERT(pattern.get() != nullptr);
   sm->setPattern(pattern);
   sm->setMinCount(1);
   FilterCatalogEntry entry("Bar", matcher);

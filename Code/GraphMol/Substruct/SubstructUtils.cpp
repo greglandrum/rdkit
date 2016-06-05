@@ -24,8 +24,8 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
   // " " << a2->getIdx() << std::endl;
   bool res;
   if (useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
-    res = static_cast<QueryAtom *>(a1.get())
-              ->QueryMatch(static_cast<QueryAtom *>(a2.get()));
+    res = static_cast<QueryAtom *>(a1.get())->QueryMatch(
+        static_cast<QueryAtom *>(a2.get()));
   } else {
     res = a1->Match(a2);
   }
@@ -55,8 +55,8 @@ bool bondCompat(const BOND_SPTR &b1, const BOND_SPTR &b2,
   PRECONDITION(b2, "bad bond");
   bool res;
   if (useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
-    res = static_cast<QueryBond *>(b1.get())
-              ->QueryMatch(static_cast<QueryBond *>(b2.get()));
+    res = static_cast<QueryBond *>(b1.get())->QueryMatch(
+        static_cast<QueryBond *>(b2.get()));
   } else {
     res = b1->Match(b2);
   }
@@ -82,8 +82,8 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   for (std::vector<MatchVectType>::const_iterator i = v.begin(); i != v.end();
        ++i) {
     boost::dynamic_bitset<> val(nAtoms);
-    for (MatchVectType::const_iterator ci = i->begin(); ci != i->end(); ++ci) {
-      val.set(ci->second);
+    for (const auto &ci : *i) {
+      val.set(ci.second);
     }
     if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
       // it's something new

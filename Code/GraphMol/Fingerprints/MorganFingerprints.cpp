@@ -100,7 +100,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + 6);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
@@ -127,9 +128,8 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
     SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
     for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
          mvIt != matchVect.end(); ++mvIt) {
-      for (MatchVectType::const_iterator mIt = mvIt->begin();
-           mIt != mvIt->end(); ++mIt) {
-        invars[mIt->second] |= mask;
+      for (const auto &mIt : *mvIt) {
+        invars[mIt.second] |= mask;
       }
     }
   }
@@ -413,7 +413,7 @@ ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol, unsigned int radius,
                                          bool useChirality, bool useBondTypes,
                                          bool onlyNonzeroInvariants,
                                          BitInfoMap *atomsSettingBits) {
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
                   *res);

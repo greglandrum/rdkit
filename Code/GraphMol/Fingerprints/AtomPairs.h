@@ -119,15 +119,15 @@ boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
 */
 SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, unsigned int minLength, unsigned int maxLength,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 //! \overload
 SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
-    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 
 //! returns the hashed atom-pair fingerprint for a molecule
@@ -160,9 +160,9 @@ SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
 SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
     unsigned int maxLength = maxPathLen - 1,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
 /*!
@@ -196,9 +196,9 @@ SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
 ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
     unsigned int maxLength = maxPathLen - 1,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     unsigned int nBitsPerEntry = 4, bool includeChirality = false,
     bool use2D = true, int confId = -1);
 
@@ -239,9 +239,9 @@ boost::uint64_t getTopologicalTorsionCode(
 */
 SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int targetSize = 4,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false);
 //! returns a hashed topological-torsion fingerprint for a molecule
 /*!
@@ -272,9 +272,9 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
 */
 SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false);
 //! returns a hashed topological-torsion fingerprint for a molecule as a bit
 // vector
@@ -302,9 +302,9 @@ SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
 */
 ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-    const std::vector<boost::uint32_t> *atomInvariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+    const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<boost::uint32_t> *atomInvariants = nullptr,
     unsigned int nBitsPerEntry = 4, bool includeChirality = false);
 }
 }

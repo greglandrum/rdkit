@@ -654,7 +654,6 @@ const unsigned int NUM_NIH_PROPS =
 //
 #include "pains_a.in"
 
-
 const unsigned int NUM_PAINS_A =
     static_cast<unsigned int>(sizeof(PAINS_A) / sizeof(FilterData_t));
 
@@ -683,7 +682,6 @@ const unsigned int NUM_PAINS_A_PROPS =
 //
 #include "pains_b.in"
 
-
 const unsigned int NUM_PAINS_B =
     static_cast<unsigned int>(sizeof(PAINS_B) / sizeof(FilterData_t));
 
@@ -708,7 +706,6 @@ const unsigned int NUM_PAINS_B_PROPS =
 //
 #include "pains_c.in"
 
-  
 const unsigned int NUM_PAINS_C =
     static_cast<unsigned int>(sizeof(PAINS_C) / sizeof(FilterData_t));
 
@@ -824,7 +821,7 @@ const FilterData_t* GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
     case FilterCatalogParams::ZINC:
       return ZINC;
     default:
-      return 0;
+      return nullptr;
   }
 }
 
@@ -863,7 +860,7 @@ const FilterProperty_t* GetFilterProperties(
     case FilterCatalogParams::ZINC:
       return ZINC_PROPS;
     default:
-      return 0;
+      return nullptr;
   }
 }
 }

@@ -45,11 +45,11 @@ class ChemicalReactionParserException : public std::exception {
   //! construct with an error message
   explicit ChemicalReactionParserException(const char *msg) : _msg(msg){};
   //! construct with an error message
-  explicit ChemicalReactionParserException(const std::string &msg)
-      : _msg(msg){};
+  explicit ChemicalReactionParserException(std::string msg)
+      : _msg(std::move(msg)){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~ChemicalReactionParserException() throw(){};
+  ~ChemicalReactionParserException() throw() override{};
 
  private:
   std::string _msg;
@@ -78,7 +78,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &rxnStream,
  */
 ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
-    std::map<std::string, std::string> *replacements = 0,
+    std::map<std::string, std::string> *replacements = nullptr,
     bool useSmiles = false);
 
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before

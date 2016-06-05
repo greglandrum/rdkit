@@ -54,7 +54,7 @@ namespace RDDepict {
 
 */
 unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             const RDGeom::INT_POINT2D_MAP *coordMap = 0,
+                             const RDGeom::INT_POINT2D_MAP *coordMap = nullptr,
                              bool canonOrient = false, bool clearConfs = true,
                              unsigned int nFlipsPerSample = 0,
                              unsigned int nSamples = 0, int sampleSeed = 0,
@@ -110,7 +110,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 
 */
 unsigned int compute2DCoordsMimicDistMat(
-    RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = 0,
+    RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = nullptr,
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true);

@@ -41,7 +41,7 @@ using namespace RDKit;
 
 void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
                     boost::dynamic_bitset<> &done, int depth) {
-  INT_INT_VECT_MAP::const_iterator pos = neighMap.find(curr);
+  auto pos = neighMap.find(curr);
   PRECONDITION(pos != neighMap.end(), "bad argument");
   done[curr] = 1;
   res.push_back(curr);
@@ -53,9 +53,9 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
     std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
     std::cerr<<"\n";
 #endif
-  for (INT_VECT_CI ni = neighs.begin(); ni != neighs.end(); ++ni) {
-    if (!done[*ni]) {
-      pickFusedRings((*ni), neighMap, res, done, depth + 1);
+  for (int neigh : neighs) {
+    if (!done[neigh]) {
+      pickFusedRings(neigh, neighMap, res, done, depth + 1);
     }
   }
 }
@@ -652,10 +652,10 @@ int setAromaticity(RWMol &mol) {
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
+  for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
-    for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
+    for (auto ivi = sring.begin(); ivi != sring.end(); ++ivi) {
       unsigned int firstIdx = (*ivi);
       Atom *at = mol.getAtomWithIdx(firstIdx);
 
@@ -678,7 +678,7 @@ int setAromaticity(RWMol &mol) {
       if (!acands[firstIdx]) allAromatic = false;
     }
     if (allAromatic && !allDummy) {
-      cRings.push_back((*vivi));
+      cRings.push_back(sring);
     }
   }
 

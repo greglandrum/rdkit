@@ -55,17 +55,16 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    for (vector<int>::const_iterator ai = highlight_atoms->begin();
-         ai != highlight_atoms->end(); ++ai) {
-      for (vector<int>::const_iterator aj = ai + 1;
-           aj != highlight_atoms->end(); ++aj) {
+    for (auto ai = highlight_atoms->begin(); ai != highlight_atoms->end();
+         ++ai) {
+      for (auto aj = ai + 1; aj != highlight_atoms->end(); ++aj) {
         const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
         if (bnd) highlight_bonds.push_back(bnd->getIdx());
       }
     }
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, NULL, highlight_radii, confId);
+               highlight_atom_map, nullptr, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -194,8 +193,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              highlight_radii);
     // at this point we shouldn't be doing any more higlighting, so blow out
     // those variables:
-    highlight_bonds = NULL;
-    highlight_atoms = NULL;
+    highlight_bonds = nullptr;
+    highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
@@ -381,8 +380,7 @@ void MolDraw2D::calculateScale() {
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
       y_max(-numeric_limits<double>::max());
-  for (int i = 0, is = at_cds_.size(); i < is; ++i) {
-    const Point2D &pt = at_cds_[i];
+  for (auto &pt : at_cds_) {
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
@@ -562,7 +560,7 @@ DrawColour MolDraw2D::getColour(
     }
     // over-ride with explicit colour from highlight_map if there is one
     if (highlight_map) {
-      map<int, DrawColour>::const_iterator p = highlight_map->find(atom_idx);
+      auto p = highlight_map->find(atom_idx);
       if (p != highlight_map->end()) {
         retval = p->second;
       }

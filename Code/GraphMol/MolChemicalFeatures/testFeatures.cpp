@@ -808,7 +808,8 @@ void testNestedAtomTypes() {
 void testGithub252() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing Github Issue #252: crash when calling "
-                           "getPos() with no conformer." << std::endl;
+                           "getPos() with no conformer."
+                        << std::endl;
   BOOST_LOG(rdErrorLog) << "     expect a precondition failure message below"
                         << std::endl;
 

@@ -25,7 +25,7 @@ namespace RDKit {
 
 class FragCatalogEntry : public RDCatalog::CatalogEntry {
  public:
-  FragCatalogEntry() : dp_mol(0), d_descrip(""), d_order(0) {
+  FragCatalogEntry() : dp_mol(nullptr), d_descrip(""), d_order(0) {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -34,16 +34,16 @@ class FragCatalogEntry : public RDCatalog::CatalogEntry {
                    const MatchVectType &aidToFid);
   FragCatalogEntry(const std::string &pickle);
 
-  ~FragCatalogEntry() {
+  ~FragCatalogEntry() override {
     delete dp_mol;
-    dp_mol = 0;
+    dp_mol = nullptr;
     if (dp_props) {
       delete dp_props;
-      dp_props = 0;
+      dp_props = nullptr;
     }
   }
 
-  std::string getDescription() const { return d_descrip; }
+  std::string getDescription() const override { return d_descrip; }
 
   void setDescription(const std::string &val) { d_descrip = val; }
 
@@ -109,10 +109,10 @@ class FragCatalogEntry : public RDCatalog::CatalogEntry {
 
   void clearProp(const std::string &key) const { clearProp(key.c_str()); }
 
-  void toStream(std::ostream &ss) const;
-  std::string Serialize() const;
-  void initFromStream(std::istream &ss);
-  void initFromString(const std::string &text);
+  void toStream(std::ostream &ss) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
  private:
   ROMol *dp_mol;

@@ -113,7 +113,7 @@ ForceFields::ForceField *constructForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const VECT_CHIRALSET &csets, double weightChiral = 1.0,
     double weightFourthDim = 0.1,
-    std::map<std::pair<int, int>, double> *extraWeights = 0,
+    std::map<std::pair<int, int>, double> *extraWeights = nullptr,
     double basinSizeTol = 5.0);
 
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance

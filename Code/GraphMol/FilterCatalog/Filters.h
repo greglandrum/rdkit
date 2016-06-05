@@ -54,9 +54,9 @@ unsigned int GetNumPropertyEntries(FilterCatalogParams::FilterCatalogs catalog);
 const FilterProperty_t *GetFilterProperties(
     FilterCatalogParams::FilterCatalogs catalog);
 
-FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
-                                           unsigned int num_props = 0,
-                                           const FilterProperty_t *props = 0);
+FilterCatalogEntry *MakeFilterCatalogEntry(
+    const FilterData_t &, unsigned int num_props = 0,
+    const FilterProperty_t *props = nullptr);
 }
 
 #endif

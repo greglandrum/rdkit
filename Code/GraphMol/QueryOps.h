@@ -198,7 +198,7 @@ int queryBondIsInRingOfSize(Bond const *bond) {
 template <class T>
 T *makeAtomSimpleQuery(int what, int func(Atom const *),
                        const std::string &description = "Atom Simple") {
-  T *res = new T;
+  auto res = new T;
   res->setVal(what);
   res->setDataFunc(func);
   res->setDescription(description);
@@ -420,7 +420,7 @@ class AtomRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr, true> {
     this->setDataFunc(queryAtomRingMembership);
   };
 
-  virtual bool Match(const ConstAtomPtr what) const {
+  bool Match(const ConstAtomPtr what) const override {
     int v = this->TypeConvert(what, Queries::Int2Type<true>());
     bool res;
     if (this->d_val < 0) {
@@ -435,8 +435,8 @@ class AtomRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr, true> {
   }
 
   //! returns a copy of this query
-  Queries::Query<int, ConstAtomPtr, true> *copy() const {
-    AtomRingQuery *res = new AtomRingQuery(this->d_val);
+  Queries::Query<int, ConstAtomPtr, true> *copy() const override {
+    auto res = new AtomRingQuery(this->d_val);
     res->setNegation(getNegation());
     res->setTol(this->getTol());
     res->d_description = this->d_description;
@@ -482,8 +482,8 @@ class RecursiveStructureQuery
   ROMol const *getQueryMol() const { return dp_queryMol.get(); };
 
   //! returns a copy of this query
-  Queries::Query<int, Atom const *, true> *copy() const {
-    RecursiveStructureQuery *res = new RecursiveStructureQuery();
+  Queries::Query<int, Atom const *, true> *copy() const override {
+    auto res = new RecursiveStructureQuery();
     res->dp_queryMol.reset(new ROMol(*dp_queryMol, true));
 
     std::set<int>::const_iterator i;
@@ -527,14 +527,14 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     this->setDescription("AtomHasProp");
     this->setDataFunc(0);
   };
-  explicit HasPropQuery(const std::string &v)
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
+  explicit HasPropQuery(std::string v)
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(std::move(v)) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (this->getNegation()) {
       res = !res;
@@ -543,8 +543,8 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
-    HasPropQuery *res = new HasPropQuery(this->propname);
+  Queries::Query<int, TargetPtr, true> *copy() const override {
+    auto res = new HasPropQuery(this->propname);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
     return res;
@@ -576,18 +576,18 @@ class HasPropWithValueQuery
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
-  explicit HasPropWithValueQuery(const std::string &prop, const T &v,
+  explicit HasPropWithValueQuery(std::string prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(prop),
+        propname(std::move(prop)),
         val(v),
         tolerance(tol) {
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -595,25 +595,23 @@ class HasPropWithValueQuery
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
       } catch (KeyErrorException e) {
         res = false;
-        }
-        catch (boost::bad_any_cast) {
-          res = false;
-        }
+      } catch (boost::bad_any_cast) {
+        res = false;
+      }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                            \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
         res = false;
       }
 #endif
-#endif        
+#endif
     }
     if (this->getNegation()) {
       res = !res;
@@ -622,8 +620,8 @@ class HasPropWithValueQuery
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
-    HasPropWithValueQuery *res =
+  Queries::Query<int, TargetPtr, true> *copy() const override {
+    auto res =
         new HasPropWithValueQuery(this->propname, this->val, this->tolerance);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
@@ -644,16 +642,18 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
-  explicit HasPropWithValueQuery(const std::string &prop, const std::string &v,
+  explicit HasPropWithValueQuery(std::string prop, std::string v,
                                  const std::string &tol = "")
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(std::move(prop)),
+        val(std::move(v)) {
     RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -665,18 +665,17 @@ class HasPropWithValueQuery<TargetPtr, std::string>
         res = false;
       }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                             \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
-          res = false;
-        }
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
+        res = false;
+      }
 #endif
 #endif
     }
@@ -687,10 +686,9 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
-    HasPropWithValueQuery<TargetPtr, std::string> *res =
-        new HasPropWithValueQuery<TargetPtr, std::string>(this->propname,
-                                                          this->val);
+  Queries::Query<int, TargetPtr, true> *copy() const override {
+    auto res = new HasPropWithValueQuery<TargetPtr, std::string>(this->propname,
+                                                                 this->val);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
     return res;

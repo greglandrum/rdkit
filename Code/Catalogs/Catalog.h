@@ -42,7 +42,7 @@ class Catalog {
   typedef paramType paramType_t;
 
   //------------------------------------
-  Catalog() : d_fpLength(0), dp_cParams(0){};
+  Catalog() : d_fpLength(0), dp_cParams(nullptr){};
 
   //------------------------------------
   virtual ~Catalog() { delete dp_cParams; }
@@ -173,7 +173,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  ~HierarchCatalog() { destroy(); }
+  ~HierarchCatalog() override { destroy(); }
 
   //------------------------------------
   //! serializes this object to a stream
@@ -223,7 +223,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! serializes this object and returns the resulting \c pickle
-  std::string Serialize() const {
+  std::string Serialize() const override {
     std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                          std::ios_base::in);
     this->toStream(ss);
@@ -251,7 +251,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     // std::endl;
 
     // grab the params:
-    paramType *params = new paramType();
+    auto params = new paramType();
     params->initFromStream(ss);
     this->setCatalogParams(params);
 
@@ -262,7 +262,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
     // now all of the entries:
     for (unsigned int i = 0; i < numEntries; i++) {
-      entryType *entry = new entryType();
+      auto entry = new entryType();
       entry->initFromStream(ss);
       this->addEntry(entry, false);
     }
@@ -279,7 +279,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const { return boost::num_vertices(d_graph); }
+  unsigned int getNumEntries() const override { return boost::num_vertices(d_graph); }
 
   //------------------------------------
   //! fills the contents of this object from a string containing a \c pickle
@@ -301,7 +301,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     fingerprint length will also be updated.
 
   */
-  unsigned int addEntry(entryType *entry, bool updateFPLength = true) {
+  unsigned int addEntry(entryType *entry, bool updateFPLength = true) override {
     PRECONDITION(entry, "bad arguments");
     if (updateFPLength) {
       unsigned int fpl = this->getFPLength();
@@ -351,7 +351,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! returns a pointer to our entry with a particular index
-  const entryType *getEntryWithIdx(unsigned int idx) const {
+  const entryType *getEntryWithIdx(unsigned int idx) const override {
     URANGE_CHECK(idx, getNumEntries() - 1);
     int vd = boost::vertex(idx, d_graph);
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
@@ -365,7 +365,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     URANGE_CHECK(idx, this->getFPLength() - 1);
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
-    const entryType *res = NULL;
+    const entryType *res = nullptr;
     for (unsigned int i = idx; i < this->getNumEntries(); i++) {
       const entryType *e = pMap[i];
       if (e->getBitId() == static_cast<int>(idx)) {

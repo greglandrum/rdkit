@@ -68,10 +68,9 @@ class ComputedData {
  public:
   ComputedData(unsigned int nAtoms, unsigned int nBonds) {
     bondLengths.resize(nBonds);
-    RDNumeric::IntSymmMatrix *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
+    auto bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
     bondAdj.reset(bAdj);
-    RDNumeric::DoubleSymmMatrix *bAngles =
-        new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
+    auto bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
     cisPaths.resize(nBonds * nBonds * nBonds);
     transPaths.resize(nBonds * nBonds * nBonds);
@@ -1233,7 +1232,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     throw ValueErrorException("molecule has no atoms");
   }
   ComputedData accumData(na, nb);
-  double *distMatrix = 0;
+  double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
@@ -1261,7 +1260,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     throw ValueErrorException("molecule has no atoms");
   }
   ComputedData accumData(na, nb);
-  double *distMatrix = 0;
+  double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);

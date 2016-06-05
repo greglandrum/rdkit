@@ -70,7 +70,8 @@ Al      sp2     5.795   5.020   0.695 \n \
 
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, GasteigerParams>,
-    boost::flyweights::no_tracking> gparam_flyweight;
+    boost::flyweights::no_tracking>
+    gparam_flyweight;
 
 GasteigerParams::GasteigerParams(std::string paramData) {
   boost::char_separator<char> eolSep("\n");

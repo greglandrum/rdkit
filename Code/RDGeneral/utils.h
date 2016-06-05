@@ -52,8 +52,8 @@ double_source_type &getDoubleRandomSource();
 template <class T>
 unsigned int countSwapsToInterconvert(const T &ref, T probe) {
   PRECONDITION(ref.size() == probe.size(), "size mismatch");
-  typename T::const_iterator refIt = ref.begin();
-  typename T::iterator probeIt = probe.begin();
+  auto refIt = ref.begin();
+  auto probeIt = probe.begin();
   typename T::iterator probeIt2;
 
   unsigned int nSwaps = 0;

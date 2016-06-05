@@ -65,7 +65,7 @@ class FilterCatalogParams : public RDCatalog::CatalogParams {
   FilterCatalogParams(const FilterCatalogParams &other)
       : RDCatalog::CatalogParams(other), d_catalogs(other.d_catalogs) {}
 
-  virtual ~FilterCatalogParams() {}
+  ~FilterCatalogParams() override {}
 
   //------------------------------------
   //! Adds an existing FilterCatalog specification to be used in the
@@ -85,13 +85,13 @@ class FilterCatalogParams : public RDCatalog::CatalogParams {
   virtual void fillCatalog(FilterCatalog &catalog);
 
   //! serializes (pickles) to a stream
-  virtual void toStream(std::ostream &ss) const;
+  void toStream(std::ostream &ss) const override;
   //! returns a string with a serialized (pickled) representation
-  virtual std::string Serialize() const;
+  std::string Serialize() const override;
   //! initializes from a stream pickle
-  virtual void initFromStream(std::istream &ss);
+  void initFromStream(std::istream &ss) override;
   //! initializes from a string pickle
-  virtual void initFromString(const std::string &text);
+  void initFromString(const std::string &text) override;
 
  private:
   std::vector<FilterCatalogs> d_catalogs;
@@ -140,9 +140,9 @@ class FilterCatalog : public FCatalog {
 
   FilterCatalog(const std::string &binStr);
 
-  ~FilterCatalog();
+  ~FilterCatalog() override;
 
-  virtual std::string Serialize() const;
+  std::string Serialize() const override;
 
   // Adds a new FilterCatalogEntry to the catalog
   /*!
@@ -153,8 +153,8 @@ class FilterCatalog : public FCatalog {
     \param updateFPLength unused in the FilterCatalog object.
   */
 
-  virtual unsigned int addEntry(FilterCatalogEntry *entry,
-                                bool updateFPLength = true);
+  unsigned int addEntry(FilterCatalogEntry *entry,
+                        bool updateFPLength = true) override;
 
   // Adds a new FilterCatalogEntry to the catalog
   /*!
@@ -182,7 +182,7 @@ class FilterCatalog : public FCatalog {
   //------------------------------------
   //! returns a particular FilterCatalogEntry in the Catalog
   //!  required by Catalog.h API
-  virtual const FilterCatalogEntry *getEntryWithIdx(unsigned int idx) const;
+  const FilterCatalogEntry *getEntryWithIdx(unsigned int idx) const override;
 
   //------------------------------------
   //! returns a particular FilterCatalogEntry in the Catalog
@@ -197,7 +197,7 @@ class FilterCatalog : public FCatalog {
 
   //------------------------------------
   //! returns the number of entries in the catalog
-  virtual unsigned int getNumEntries() const { return d_entries.size(); }
+  unsigned int getNumEntries() const override { return d_entries.size(); }
 
   //------------------------------------
   //! Reset the current catalog to match the specified FilterCatalogParameters
@@ -205,7 +205,7 @@ class FilterCatalog : public FCatalog {
     \param params  The new FilterCatalogParams specifying the new state of the
     catalog
   */
-  virtual void setCatalogParams(FilterCatalogParams *params);
+  void setCatalogParams(FilterCatalogParams *params) override;
 
   //------------------------------------
   //! Returns true if the molecule matches any entry in the catalog

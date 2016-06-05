@@ -25,9 +25,9 @@ struct monomerinfo_wrapper {
         "The class to store monomer information attached to Atoms\n";
     python::class_<AtomMonomerInfo>("AtomMonomerInfo", classDoc.c_str(),
                                     python::init<>())
-        .def(python::init<AtomMonomerInfo::AtomMonomerType,
-                          const std::string &>(
-            (python::arg("type"), python::arg("name") = "")))
+        .def(
+            python::init<AtomMonomerInfo::AtomMonomerType, const std::string &>(
+                (python::arg("type"), python::arg("name") = "")))
         .def("GetName", &AtomMonomerInfo::getName,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetMonomerType", &AtomMonomerInfo::getMonomerType)

@@ -28,7 +28,7 @@ class QueryBond : public Bond {
  public:
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
-  QueryBond() : Bond(), dp_query(NULL){};
+  QueryBond() : Bond(), dp_query(nullptr){};
   //! initialize with a particular bond order
   explicit QueryBond(BondType bT);
   //! initialize from a bond
@@ -37,10 +37,10 @@ class QueryBond : public Bond {
   QueryBond(const QueryBond &other)
       : Bond(other), dp_query(other.dp_query->copy()){};
 
-  ~QueryBond();
+  ~QueryBond() override;
 
   //! returns a copy of this query, owned by the caller
-  virtual Bond *copy() const;
+  Bond *copy() const override;
 
   QueryBond &operator=(const QueryBond &other);
 
@@ -50,20 +50,20 @@ class QueryBond : public Bond {
   void setBondDir(BondDir bD);
 
   //! returns true if we match Bond \c what
-  bool Match(const Bond::BOND_SPTR what) const;
+  bool Match(const Bond::BOND_SPTR what) const override;
   //! \overload
-  bool Match(Bond const *what) const;
+  bool Match(Bond const *what) const override;
 
   //! returns true if our query details match those of QueryBond \c what
   bool QueryMatch(QueryBond const *what) const;
 
   // This method can be used to distinguish query bonds from standard bonds
-  bool hasQuery() const { return dp_query != 0; };
+  bool hasQuery() const override { return dp_query != nullptr; };
 
   //! returns our current query
-  QUERYBOND_QUERY *getQuery() const { return dp_query; };
+  QUERYBOND_QUERY *getQuery() const override { return dp_query; };
   //! replaces our current query with the value passed in
-  void setQuery(QUERYBOND_QUERY *what) {
+  void setQuery(QUERYBOND_QUERY *what) override {
     // free up any existing query (Issue255):
     if (dp_query) delete dp_query;
     dp_query = what;
@@ -86,7 +86,7 @@ class QueryBond : public Bond {
   */
   void expandQuery(QUERYBOND_QUERY *what,
                    Queries::CompositeQueryType how = Queries::COMPOSITE_AND,
-                   bool maintainOrder = true);
+                   bool maintainOrder = true) override;
 
  protected:
   QUERYBOND_QUERY *dp_query;

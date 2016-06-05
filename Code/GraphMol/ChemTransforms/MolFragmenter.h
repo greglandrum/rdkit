@@ -46,24 +46,26 @@ struct FragmenterBondType {
   The client is responsible for deleting this molecule.
 
 */
-ROMol *fragmentOnBonds(
-    const ROMol &mol, const std::vector<unsigned int> &bondIndices,
-    bool addDummies = true,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0,
-    const std::vector<Bond::BondType> *bondTypes = 0,
-    std::vector<unsigned int> *nCutsPerAtom = 0);
+ROMol *fragmentOnBonds(const ROMol &mol,
+                       const std::vector<unsigned int> &bondIndices,
+                       bool addDummies = true,
+                       const std::vector<std::pair<unsigned int, unsigned int> >
+                           *dummyLabels = nullptr,
+                       const std::vector<Bond::BondType> *bondTypes = nullptr,
+                       std::vector<unsigned int> *nCutsPerAtom = nullptr);
 //! \overload
 ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<FragmenterBondType> &bondPatterns,
-    const std::map<unsigned int, ROMOL_SPTR> *atomEnvirons = 0,
-    std::vector<unsigned int> *nCutsPerAtom = 0);
+    const std::map<unsigned int, ROMOL_SPTR> *atomEnvirons = nullptr,
+    std::vector<unsigned int> *nCutsPerAtom = nullptr);
 void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     std::vector<ROMOL_SPTR> &resMols, unsigned int maxToCut = 1,
     bool addDummies = true,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0,
-    const std::vector<Bond::BondType> *bondTypes = 0,
-    std::vector<std::vector<unsigned int> > *nCutsPerAtom = 0);
+    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels =
+        nullptr,
+    const std::vector<Bond::BondType> *bondTypes = nullptr,
+    std::vector<std::vector<unsigned int> > *nCutsPerAtom = nullptr);
 
 //! \brief Fragments a molecule by breaking all BRICS bonds
 /*!
@@ -76,13 +78,14 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol);
 void constructFragmenterAtomTypes(
     std::istream *inStream, std::map<unsigned int, std::string> &defs,
     const std::string &comment = "//", bool validate = true,
-    std::map<unsigned int, ROMOL_SPTR> *environs = 0);
+    std::map<unsigned int, ROMOL_SPTR> *environs = nullptr);
 void constructFragmenterAtomTypes(
     const std::string &str, std::map<unsigned int, std::string> &defs,
     const std::string &comment = "//", bool validate = true,
-    std::map<unsigned int, ROMOL_SPTR> *environs = 0);
-void constructBRICSAtomTypes(std::map<unsigned int, std::string> &defs,
-                             std::map<unsigned int, ROMOL_SPTR> *environs = 0);
+    std::map<unsigned int, ROMOL_SPTR> *environs = nullptr);
+void constructBRICSAtomTypes(
+    std::map<unsigned int, std::string> &defs,
+    std::map<unsigned int, ROMOL_SPTR> *environs = nullptr);
 void constructFragmenterBondTypes(
     std::istream *inStream,
     const std::map<unsigned int, std::string> &atomTypes,

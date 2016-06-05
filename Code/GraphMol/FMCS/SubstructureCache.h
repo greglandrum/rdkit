@@ -65,9 +65,9 @@ class SubstructureCache {
           const Bond* bond = seed.MoleculeFragment.Bonds[seedBondIdx];
           unsigned order =
               queryBondLabels[seed.MoleculeFragment.BondsIdx[seedBondIdx]];
-          unsigned atom1 =
-              seed.MoleculeFragment.SeedAtomIdxMap.find(bond->getBeginAtomIdx())
-                  ->second;
+          unsigned atom1 = seed.MoleculeFragment.SeedAtomIdxMap
+                               .find(bond->getBeginAtomIdx())
+                               ->second;
           unsigned atom2 =
               seed.MoleculeFragment.SeedAtomIdxMap.find(bond->getEndAtomIdx())
                   ->second;
@@ -124,7 +124,7 @@ class SubstructureCache {
     std::map<KeyNumericMetrics::TValue, size_t>::const_iterator entryit =
         NumericIndex.find(key.NumericMetrics.Value);
     if (NumericIndex.end() != entryit) return &ValueStorage[entryit->second];
-    return NULL;  // not found
+    return nullptr;  // not found
   }
 
   // if find() did not found any entry for this key of seed a new entry will be
@@ -143,9 +143,10 @@ class SubstructureCache {
     }
     entry->push_back(seed.Topology);
 
-    if (!NumericIndex.insert(std::pair<KeyNumericMetrics::TValue, size_t>(
-                                 key.NumericMetrics.Value,
-                                 ValueStorage.size() - 1)).second)
+    if (!NumericIndex
+             .insert(std::pair<KeyNumericMetrics::TValue, size_t>(
+                 key.NumericMetrics.Value, ValueStorage.size() - 1))
+             .second)
       return;  // not enought memory room to add the item, but it is just cache
   }
 
@@ -155,9 +156,7 @@ class SubstructureCache {
 
   size_t fullsize() const {  // for statistics only
     size_t n = 0;
-    for (std::vector<TIndexEntry>::const_iterator e = ValueStorage.begin();
-         e != ValueStorage.end(); e++)
-      n += e->size();
+    for (const auto& e : ValueStorage) n += e.size();
     return n;
   }
 };

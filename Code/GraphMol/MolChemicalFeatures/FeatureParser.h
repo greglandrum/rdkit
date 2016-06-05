@@ -22,11 +22,11 @@ class FeatureFileParseException : public std::exception {
  public:
   FeatureFileParseException(unsigned int lineNo, std::string line,
                             std::string msg)
-      : d_lineNo(lineNo), d_line(line), d_msg(msg){};
+      : d_lineNo(lineNo), d_line(std::move(line)), d_msg(std::move(msg)){};
   unsigned int lineNo() const { return d_lineNo; };
   std::string line() const { return d_line; };
   std::string message() const { return d_msg; };
-  ~FeatureFileParseException() throw(){};
+  ~FeatureFileParseException() throw() override{};
 
  private:
   unsigned int d_lineNo;

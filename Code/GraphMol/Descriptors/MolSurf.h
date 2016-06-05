@@ -92,12 +92,13 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
 double calcTPSA(const ROMol &mol, bool force = false);
 
 std::vector<double> calcSlogP_VSA(const ROMol &mol,
-                                  std::vector<double> *bins = 0,
+                                  std::vector<double> *bins = nullptr,
                                   bool force = false);
-std::vector<double> calcSMR_VSA(const ROMol &mol, std::vector<double> *bins = 0,
+std::vector<double> calcSMR_VSA(const ROMol &mol,
+                                std::vector<double> *bins = nullptr,
                                 bool force = false);
 std::vector<double> calcPEOE_VSA(const ROMol &mol,
-                                 std::vector<double> *bins = 0,
+                                 std::vector<double> *bins = nullptr,
                                  bool force = false);
 
 }  // end of namespace Descriptors

@@ -145,7 +145,7 @@ int MolHasProp(const ROMol &mol, const char *key) {
   return res;
 }
 
-template<class T>
+template <class T>
 void MolSetProp(const ROMol &mol, const char *key, const T &val,
                 bool computed = false) {
   mol.setProp<T>(key, val, computed);
@@ -262,17 +262,17 @@ struct mol_wrapper {
         .def(python::init<const ROMol &, bool, int>())
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>)
-        .def("GetNumAtoms", getMolNumAtoms,
-             (python::arg("onlyHeavy") = -1,
-              python::arg("onlyExplicit") = true),
-             "Returns the number of atoms in the molecule.\n\n"
-             "  ARGUMENTS:\n"
-             "    - onlyExplicit: (optional) include only explicit atoms "
-             "(atoms in the molecular graph)\n"
-             "                    defaults to 1.\n"
-             "  NOTE: the onlyHeavy argument is deprecated\n"
+        .def(
+            "GetNumAtoms", getMolNumAtoms,
+            (python::arg("onlyHeavy") = -1, python::arg("onlyExplicit") = true),
+            "Returns the number of atoms in the molecule.\n\n"
+            "  ARGUMENTS:\n"
+            "    - onlyExplicit: (optional) include only explicit atoms "
+            "(atoms in the molecular graph)\n"
+            "                    defaults to 1.\n"
+            "  NOTE: the onlyHeavy argument is deprecated\n"
 
-             )
+            )
         .def("GetNumHeavyAtoms", &ROMol::getNumHeavyAtoms,
              "Returns the number of heavy atoms (atomic number >1) in the "
              "molecule.\n\n")
@@ -442,7 +442,8 @@ struct mol_wrapper {
               python::arg("computed") = false),
              "Sets an integer valued molecular property\n\n"
              "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (an unsigned number).\n"
+             "    - key: the name of the property to be set (an unsigned "
+             "number).\n"
              "    - value: the property value as an integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
@@ -456,7 +457,7 @@ struct mol_wrapper {
              "    - value: the property value as an unsigned integer.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to False.\n\n")                
+             "                Defaults to False.\n\n")
         .def("SetBoolProp", MolSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
@@ -466,7 +467,7 @@ struct mol_wrapper {
              "    - value: the property value as a bool.\n"
              "    - computed: (optional) marks the property as being "
              "computed.\n"
-             "                Defaults to False.\n\n")                
+             "                Defaults to False.\n\n")
         .def("HasProp", MolHasProp,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"
@@ -547,7 +548,8 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),
              "Returns a dictionary populated with the molecules properties.\n"
-             " n.b. Some properties are not able to be converted to python types.\n\n"
+             " n.b. Some properties are not able to be converted to python "
+             "types.\n\n"
              "  ARGUMENTS:\n"
              "    - includePrivate: (optional) toggles inclusion of private "
              "properties in the result set.\n"
@@ -556,7 +558,6 @@ struct mol_wrapper {
              "properties in the result set.\n"
              "                      Defaults to False.\n\n"
              "  RETURNS: a dictionary\n")
-             
 
         .def("GetAtoms", MolGetAtoms,
              python::return_value_policy<

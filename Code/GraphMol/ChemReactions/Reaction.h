@@ -49,7 +49,7 @@ class ChemicalReactionException : public std::exception {
   explicit ChemicalReactionException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~ChemicalReactionException() throw(){};
+  ~ChemicalReactionException() throw() override{};
 
  private:
   std::string _msg;
@@ -168,7 +168,7 @@ class ChemicalReaction {
   */
   void removeUnmappedReactantTemplates(double thresholdUnmappedAtoms = 0.2,
                                        bool moveToAgentTemplates = true,
-                                       MOL_SPTR_VECT *targetVector = NULL);
+                                       MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Removes the product templates from a reaction if its atom mapping ratio is
   // below a given threshold
@@ -179,11 +179,11 @@ class ChemicalReaction {
   */
   void removeUnmappedProductTemplates(double thresholdUnmappedAtoms = 0.2,
                                       bool moveToAgentTemplates = true,
-                                      MOL_SPTR_VECT *targetVector = NULL);
+                                      MOL_SPTR_VECT *targetVector = nullptr);
 
   /*! Removes the agent templates from a reaction if a pointer to a
       molecule vector is provided the agents are stored therein.*/
-  void removeAgentTemplates(MOL_SPTR_VECT *targetVector = NULL);
+  void removeAgentTemplates(MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Runs the reaction on a set of reactants
   /*!
@@ -414,8 +414,8 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
 void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > *
-        reactantLabels = NULL);
+    std::vector<std::vector<std::pair<unsigned int, std::string> > >
+        *reactantLabels = nullptr);
 
 }  // end of RDKit namespace
 

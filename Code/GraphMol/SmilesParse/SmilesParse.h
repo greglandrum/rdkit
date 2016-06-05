@@ -46,7 +46,7 @@ class RWMol;
  */
 RWMol *SmilesToMol(const std::string &smi, int debugParse = 0,
                    bool sanitize = 1,
-                   std::map<std::string, std::string> *replacements = 0);
+                   std::map<std::string, std::string> *replacements = nullptr);
 //! Construct a molecule from a SMARTS string
 /*!
  \param sma           the SMARTS to convert
@@ -61,14 +61,14 @@ RWMol *SmilesToMol(const std::string &smi, int debugParse = 0,
  */
 RWMol *SmartsToMol(const std::string &sma, int debugParse = 0,
                    bool mergeHs = false,
-                   std::map<std::string, std::string> *replacements = 0);
+                   std::map<std::string, std::string> *replacements = nullptr);
 
 class SmilesParseException : public std::exception {
  public:
   SmilesParseException(const char *msg) : _msg(msg){};
   SmilesParseException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~SmilesParseException() throw(){};
+  ~SmilesParseException() throw() override{};
 
  private:
   std::string _msg;

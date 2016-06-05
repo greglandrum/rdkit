@@ -86,30 +86,30 @@ class MolDraw2D {
   virtual ~MolDraw2D() {}
 
   virtual void drawMolecule(
-      const ROMol &mol, const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const ROMol &mol, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   virtual void drawMolecule(
       const ROMol &mol, const std::string &legend,
-      const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   virtual void drawMolecule(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   virtual void drawMolecule(
       const ROMol &mol, const std::string &legend,
       const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
@@ -214,9 +214,9 @@ class MolDraw2D {
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
-  DrawColour getColour(int atom_idx,
-                       const std::vector<int> *highlight_atoms = NULL,
-                       const std::map<int, DrawColour> *highlight_map = NULL);
+  DrawColour getColour(
+      int atom_idx, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr);
   DrawColour getColourByAtomicNum(int atomic_num);
 
   void extractAtomCoords(const ROMol &mol, int confId);
@@ -225,16 +225,16 @@ class MolDraw2D {
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
   void drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
-                int at2_idx, const std::vector<int> *highlight_atoms = NULL,
-                const std::map<int, DrawColour> *highlight_atom_map = NULL,
-                const std::vector<int> *highlight_bonds = NULL,
-                const std::map<int, DrawColour> *highlight_bond_map = NULL);
+                int at2_idx, const std::vector<int> *highlight_atoms = nullptr,
+                const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+                const std::vector<int> *highlight_bonds = nullptr,
+                const std::map<int, DrawColour> *highlight_bond_map = nullptr);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
   void drawAtomLabel(int atom_num,
-                     const std::vector<int> *highlight_atoms = NULL,
-                     const std::map<int, DrawColour> *highlight_map = NULL);
+                     const std::vector<int> *highlight_atoms = nullptr,
+                     const std::map<int, DrawColour> *highlight_map = nullptr);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);

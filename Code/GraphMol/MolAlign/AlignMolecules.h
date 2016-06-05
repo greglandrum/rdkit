@@ -28,7 +28,7 @@ class MolAlignException : public std::exception {
   MolAlignException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~MolAlignException() throw(){};
+  ~MolAlignException() throw() override{};
 
  private:
   std::string _msg;
@@ -64,8 +64,9 @@ class MolAlignException : public std::exception {
 */
 double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
                              RDGeom::Transform3D &trans, int prbCid = -1,
-                             int refCid = -1, const MatchVectType *atomMap = 0,
-                             const RDNumeric::DoubleVector *weights = 0,
+                             int refCid = -1,
+                             const MatchVectType *atomMap = nullptr,
+                             const RDNumeric::DoubleVector *weights = nullptr,
                              bool reflect = false, unsigned int maxIters = 50);
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
@@ -96,8 +97,8 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   RMSD value
 */
 double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
-                int refCid = -1, const MatchVectType *atomMap = 0,
-                const RDNumeric::DoubleVector *weights = 0,
+                int refCid = -1, const MatchVectType *atomMap = nullptr,
+                const RDNumeric::DoubleVector *weights = nullptr,
                 bool reflect = false, unsigned int maxIters = 50);
 
 //! Align the conformations of a molecule using a common set of atoms. If
@@ -117,11 +118,11 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                    conformations
 */
 void alignMolConformers(ROMol &mol,
-                        const std::vector<unsigned int> *atomIds = 0,
-                        const std::vector<unsigned int> *confIds = 0,
-                        const RDNumeric::DoubleVector *weights = 0,
+                        const std::vector<unsigned int> *atomIds = nullptr,
+                        const std::vector<unsigned int> *confIds = nullptr,
+                        const RDNumeric::DoubleVector *weights = nullptr,
                         bool reflect = false, unsigned int maxIters = 50,
-                        std::vector<double> *RMSlist = 0);
+                        std::vector<double> *RMSlist = nullptr);
 }
 }
 #endif

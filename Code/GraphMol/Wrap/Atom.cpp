@@ -292,9 +292,10 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets an atomic property\n\n"
              "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (an unsigned integer).\n"
+             "    - key: the name of the property to be set (an unsigned "
+             "integer).\n"
              "    - value: the property value (a int >= 0).\n\n")
-        
+
         .def("GetIntProp", GetProp<Atom, int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
@@ -307,7 +308,8 @@ struct atom_wrapper {
         .def("GetUnsignedProp", GetProp<Atom, unsigned>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (an unsigned integer).\n\n"
+             "    - key: the name of the property to return (an unsigned "
+             "integer).\n\n"
              "  RETURNS: an integer (Python has no unsigned type)\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
@@ -360,13 +362,12 @@ struct atom_wrapper {
         .def("GetPropNames", &Atom::getPropList, (python::arg("self")),
              "Returns a list of the properties set on the Atom.\n\n")
 
-        .def("GetPropsAsDict", GetPropsAsDict<Atom>, (python::arg("self"),
-                                                      python::arg("includePrivate") = true,
-                                                      python::arg("includeComputed") = true
-                                                      ),
+        .def("GetPropsAsDict", GetPropsAsDict<Atom>,
+             (python::arg("self"), python::arg("includePrivate") = true,
+              python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the Atom.\n"
              " n.b. some properties cannot be converted to python types.\n")
-        
+
         .def("UpdatePropertyCache", &Atom::updatePropertyCache,
              (python::arg("self"), python::arg("strict") = true),
              "Regenerates computed properties like implicit valence and ring "

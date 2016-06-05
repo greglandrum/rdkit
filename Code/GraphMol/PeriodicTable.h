@@ -233,8 +233,7 @@ class PeriodicTable {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
     const std::map<unsigned int, std::pair<double, double> > &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    auto item =
-        m.find(isotope);
+    auto item = m.find(isotope);
     if (item == m.end()) {
       return 0.0;
     } else {
@@ -258,8 +257,7 @@ class PeriodicTable {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
     const std::map<unsigned int, std::pair<double, double> > &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    auto item =
-        m.find(isotope);
+    auto item = m.find(isotope);
     if (item == m.end()) {
       return 0.0;
     } else {

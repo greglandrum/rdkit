@@ -30,9 +30,9 @@ const std::string lipinskiHBDVersion = "2.0.0";
 unsigned int calcLipinskiHBD(const ROMol &mol);
 
 enum NumRotatableBondsOptions {
-  Default        = -1,
-  NonStrict      = 0,
-  Strict         = 1,
+  Default = -1,
+  NonStrict = 0,
+  Strict = 1,
   StrictLinkages = 2,
 };
 
@@ -46,8 +46,8 @@ extern const std::string NumRotatableBondsVersion;
                            handles rotatable bonds between rings as well.
                        if Default - uses the default choice (normally Strict)
 */
-unsigned int calcNumRotatableBonds(const ROMol &mol,
-                                   NumRotatableBondsOptions useStrictDefinition=Default);
+unsigned int calcNumRotatableBonds(
+    const ROMol &mol, NumRotatableBondsOptions useStrictDefinition = Default);
 
 //! calculates the number of rotatable bonds ( backwards compatibility function,
 //!  deprecated, please use calcNumRotatableBonds(const ROMol&, int)
@@ -128,13 +128,13 @@ extern const std::string NumSpiroAtomsVersion;
 //! calculates the number of spiro atoms (atoms shared between rings that share
 // exactly one atom)
 unsigned int calcNumSpiroAtoms(const ROMol &mol,
-                               std::vector<unsigned int> *atoms = NULL);
+                               std::vector<unsigned int> *atoms = nullptr);
 
 extern const std::string NumBridgeheadAtomsVersion;
 //! calculates the number of bridgehead atoms (atoms shared between rings that
 // share at least two bonds)
 unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
-                                    std::vector<unsigned int> *atoms = NULL);
+                                    std::vector<unsigned int> *atoms = nullptr);
 }  // end of namespace Descriptors
 }  // end of namespace RDKit
 

@@ -24,7 +24,7 @@ typedef boost::tuples::tuple<boost::uint32_t, boost::uint32_t, boost::uint32_t>
 
 DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,
-    std::vector<boost::uint32_t> *extraInvars = 0);
+    std::vector<boost::uint32_t> *extraInvars = nullptr);
 PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPathsb,
                         bool useBO = true);
 

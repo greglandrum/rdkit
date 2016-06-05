@@ -40,9 +40,9 @@ namespace MolShapes {
   process
 */
 void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
-                 const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
-                 double stepSize = 0.25, int maxLayers = -1,
-                 bool ignoreHs = true);
+                 const RDGeom::Transform3D *trans = nullptr,
+                 double vdwScale = 0.8, double stepSize = 0.25,
+                 int maxLayers = -1, bool ignoreHs = true);
 
 //! Emcode the shape of a conformer on to a grid
 /*!
@@ -64,9 +64,9 @@ void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
   process
 */
 void EncodeShape(const Conformer &conf, RDGeom::UniformGrid3D &grid,
-                 const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
-                 double stepSize = 0.25, int maxLayers = -1,
-                 bool ignoreHs = true);
+                 const RDGeom::Transform3D *trans = nullptr,
+                 double vdwScale = 0.8, double stepSize = 0.25,
+                 int maxLayers = -1, bool ignoreHs = true);
 }
 }
 #endif

@@ -2609,7 +2609,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 1, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 1, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, -1, 0));
@@ -2633,7 +2633,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 1, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 1, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, -1, 0));
@@ -2657,7 +2657,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 1, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 1, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, -1, 0));
@@ -2681,7 +2681,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 1, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 1, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, -1, 0));
@@ -2706,7 +2706,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 0, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 0, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, 1, 0));
@@ -2730,7 +2730,7 @@ void testIssue2963522() {
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto conf = new Conformer(m->getNumAtoms());
     conf->setAtomPos(0, RDGeom::Point3D(-1, 0, 0));
     conf->setAtomPos(1, RDGeom::Point3D(0, 0, 0));
     conf->setAtomPos(2, RDGeom::Point3D(0, 1, 0));
@@ -3408,7 +3408,7 @@ void testIssue269() {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue269.mol";
-    RWMol *m = 0;
+    RWMol *m = nullptr;
     try {
       m = MolFileToMol(fName);
     } catch (...) {
@@ -4375,7 +4375,7 @@ int main(int argc, char *argv[]) {
   BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- "
                        << std::endl;
   setlocale(LC_ALL, "de_DE.UTF-8");
-  std::cout << setlocale(LC_ALL, NULL) << std::endl;
+  std::cout << setlocale(LC_ALL, nullptr) << std::endl;
   testLocaleSwitcher();  // must be the last test
   testMultiThreadedSwitcher();
   RunTests();

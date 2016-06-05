@@ -28,7 +28,7 @@ namespace MolShapes {
 //! from the origin
 void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
                               RDGeom::Point3D &offSet,
-                              const RDGeom::Transform3D *trans = 0,
+                              const RDGeom::Transform3D *trans = nullptr,
                               double padding = 2.5);
 
 //! Compute the a box that will fit the confomer
@@ -42,7 +42,8 @@ void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
 */
 void computeConfBox(const Conformer &conf, RDGeom::Point3D &leftBottom,
                     RDGeom::Point3D &rightTop,
-                    const RDGeom::Transform3D *trans = 0, double padding = 2.5);
+                    const RDGeom::Transform3D *trans = nullptr,
+                    double padding = 2.5);
 
 //! Compute the union of two boxes
 void computeUnionBox(const RDGeom::Point3D &leftBottom1,
@@ -60,7 +61,7 @@ void computeUnionBox(const RDGeom::Point3D &leftBottom1,
 */
 std::vector<double> getConfDimensions(const Conformer &conf,
                                       double padding = 2.5,
-                                      const RDGeom::Point3D *center = 0,
+                                      const RDGeom::Point3D *center = nullptr,
                                       bool ignoreHs = true);
 
 //! Compute the shape tanimoto distance between two molecule based on a

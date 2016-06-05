@@ -142,7 +142,7 @@ RWMol *toMol(const std::string &inp,
              const std::string &origInp) {
   // empty strings produce empty molecules:
   if (inp == "") return new RWMol();
-  RWMol *res = 0;
+  RWMol *res = nullptr;
   std::vector<RDKit::RWMol *> molVect;
   try {
     func(inp, molVect);
@@ -155,8 +155,9 @@ RWMol *toMol(const std::string &inp,
         res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
       }
       SmilesParseOps::CleanupAfterParsing(res);
-      molVect[0] = 0;  // NOTE: to avoid leaks on failures, this should occur
-                       // last in this if.
+      molVect[0] =
+          nullptr;  // NOTE: to avoid leaks on failures, this should occur
+                    // last in this if.
     }
   } catch (SmilesParseException &e) {
     std::string nm = "SMILES";
@@ -165,7 +166,7 @@ RWMol *toMol(const std::string &inp,
     }
     BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
                           << " for input: '" << origInp << "'" << std::endl;
-    res = 0;
+    res = nullptr;
   }
   BOOST_FOREACH (RDKit::RWMol *molPtr, molVect) {
     if (molPtr) {

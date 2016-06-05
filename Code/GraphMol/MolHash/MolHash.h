@@ -21,11 +21,11 @@ namespace MolHash {
 typedef boost::uint32_t HashCodeType;
 
 HashCodeType generateMoleculeHashCode(
-    const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
+    const ROMol &mol, const std::vector<unsigned> *atomsToUse = nullptr,
     const std::vector<unsigned> *bondsToUse =
-        0,  // ?? listed bonds between/to/from excluded atom(s) ??
-    const std::vector<boost::uint32_t> *atomCodes = 0,
-    const std::vector<boost::uint32_t> *bondCodes = 0);
+        nullptr,  // ?? listed bonds between/to/from excluded atom(s) ??
+    const std::vector<boost::uint32_t> *atomCodes = nullptr,
+    const std::vector<boost::uint32_t> *bondCodes = nullptr);
 
 enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
 { CF_NO_LABELS = 0x0000,
@@ -74,12 +74,12 @@ struct HashSet {
 #pragma pack(pop)
 
 void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
-                             const std::vector<unsigned> *atomsToUse = 0,
-                             const std::vector<unsigned> *bondsToUse = 0);
+                             const std::vector<unsigned> *atomsToUse = nullptr,
+                             const std::vector<unsigned> *bondsToUse = nullptr);
 
 std::string generateMoleculeHashSet(
-    const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
-    const std::vector<unsigned> *bondsToUse = 0);
+    const ROMol &mol, const std::vector<unsigned> *atomsToUse = nullptr,
+    const std::vector<unsigned> *bondsToUse = nullptr);
 
 std::string encode(const void *bin,
                    size_t size);  // binary data to Base64 encoded string

@@ -37,7 +37,7 @@ void ROMol::destroy() {
 
   if (dp_ringInfo) {
     delete dp_ringInfo;
-    dp_ringInfo = 0;
+    dp_ringInfo = nullptr;
   }
 };
 
@@ -74,14 +74,13 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 
   if (!quickCopy) {
     // copy conformations
-    for (ConstConformerIterator ci = other.beginConformers();
-         ci != other.endConformers(); ++ci) {
+    for (auto ci = other.beginConformers(); ci != other.endConformers(); ++ci) {
       if (confId < 0 || rdcast<int>((*ci)->getId()) == confId) {
-        Conformer *conf = new Conformer(*(*ci));
+        auto conf = new Conformer(*(*ci));
         this->addConformer(conf);
       }
     }
-    
+
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -198,7 +197,7 @@ void ROMol::clearAtomBookmark(const int mark, const Atom *atom) {
   if (d_atomBookmarks.count(mark) != 0) {
     ATOM_PTR_LIST *entry = &d_atomBookmarks[mark];
     unsigned int tgtIdx = atom->getIdx();
-    for (ATOM_PTR_LIST::iterator i = entry->begin(); i != entry->end(); ++i) {
+    for (auto i = entry->begin(); i != entry->end(); ++i) {
       if ((*i)->getIdx() == tgtIdx) {
         entry->erase(i);
         break;
@@ -215,7 +214,7 @@ void ROMol::clearBondBookmark(const int mark, const Bond *bond) {
   if (d_bondBookmarks.count(mark) != 0) {
     BOND_PTR_LIST *entry = &d_bondBookmarks[mark];
     unsigned int tgtIdx = bond->getIdx();
-    for (BOND_PTR_LIST::iterator i = entry->begin(); i != entry->end(); ++i) {
+    for (auto i = entry->begin(); i != entry->end(); ++i) {
       if ((*i)->getIdx() == tgtIdx) {
         entry->erase(i);
         break;
@@ -248,7 +247,7 @@ Bond *ROMol::getBondWithIdx(unsigned int idx) {
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
   Bond *res = d_graph[*(bIter.first)].get();
 
-  POSTCONDITION(res != 0, "Invalid bond requested");
+  POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
 }
 
@@ -260,14 +259,14 @@ const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
   const Bond *res = d_graph[*(bIter.first)].get();
 
-  POSTCONDITION(res != 0, "Invalid bond requested");
+  POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
 }
 
 Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
   URANGE_CHECK(idx1, getNumAtoms() - 1);
   URANGE_CHECK(idx2, getNumAtoms() - 1);
-  Bond *res = 0;
+  Bond *res = nullptr;
 
   MolGraph::edge_descriptor edge;
   bool found;
@@ -283,7 +282,7 @@ const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
                                        unsigned int idx2) const {
   URANGE_CHECK(idx1, getNumAtoms() - 1);
   URANGE_CHECK(idx2, getNumAtoms() - 1);
-  const Bond *res = 0;
+  const Bond *res = nullptr;
 
   MolGraph::edge_descriptor edge;
   bool found;
@@ -328,8 +327,8 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
   if (updateLabel) {
     replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
   }
-  for (ConformerIterator cfi = this->beginConformers();
-       cfi != this->endConformers(); ++cfi) {
+  for (auto cfi = this->beginConformers(); cfi != this->endConformers();
+       ++cfi) {
     (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
   return rdcast<unsigned int>(which);
@@ -344,7 +343,8 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
   PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph).second),
+                             bond_pin->getEndAtomIdx(), d_graph)
+                     .second),
                "bond already exists");
 
   Bond *bond_p;
@@ -470,7 +470,7 @@ void ROMol::clearComputedProps(bool includeRings) const {
   if (includeRings) this->dp_ringInfo->reset();
 
   RDProps::clearComputedProps();
-  
+
   for (ConstAtomIterator atomIt = this->beginAtoms();
        atomIt != this->endAtoms(); ++atomIt) {
     (*atomIt)->clearComputedProps();
@@ -513,8 +513,7 @@ const Conformer &ROMol::getConformer(int id) const {
     return *(d_confs.front());
   }
   unsigned int cid = (unsigned int)id;
-  for (ConstConformerIterator ci = this->beginConformers();
-       ci != this->endConformers(); ++ci) {
+  for (auto ci = this->beginConformers(); ci != this->endConformers(); ++ci) {
     if ((*ci)->getId() == cid) {
       return *(*ci);
     }
@@ -535,8 +534,7 @@ Conformer &ROMol::getConformer(int id) {
     return *(d_confs.front());
   }
   unsigned int cid = (unsigned int)id;
-  for (ConformerIterator ci = this->beginConformers();
-       ci != this->endConformers(); ++ci) {
+  for (auto ci = this->beginConformers(); ci != this->endConformers(); ++ci) {
     if ((*ci)->getId() == cid) {
       return *(*ci);
     }
@@ -548,7 +546,7 @@ Conformer &ROMol::getConformer(int id) {
 }
 
 void ROMol::removeConformer(unsigned int id) {
-  for (CONF_SPTR_LIST_I ci = d_confs.begin(); ci != d_confs.end(); ++ci) {
+  for (auto ci = d_confs.begin(); ci != d_confs.end(); ++ci) {
     if ((*ci)->getId() == id) {
       d_confs.erase(ci);
       return;

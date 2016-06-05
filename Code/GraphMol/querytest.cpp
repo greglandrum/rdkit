@@ -25,7 +25,7 @@ void test1() {
   Mol qM;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
   // we copy in addAtom, so this is safe
   m.addAtom(a);
   m.addAtom(a);
@@ -37,7 +37,7 @@ void test1() {
   m.addBond(1, 2, Bond::DOUBLE);
   MolOps::sanitizeMol(m);
 
-  QueryAtom *qA = new QueryAtom(6);
+  auto qA = new QueryAtom(6);
   CHECK_INVARIANT(qA->Match(m.getAtomWithIdx(0)), "");
   CHECK_INVARIANT(qA->Match(m.getAtomWithIdx(1)), "");
   CHECK_INVARIANT(!qA->Match(m.getAtomWithIdx(2)), "");
@@ -93,7 +93,7 @@ void test2() {
   Mol qM;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
   // we copy in addAtom, so this is safe
   m.addAtom(a);
   m.addAtom(a);
@@ -127,7 +127,7 @@ void test3() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test3" << std::endl;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
   // we copy in addAtom, so this is safe
   m.addAtom(a);
   m.addAtom(a);
@@ -245,7 +245,7 @@ void test4() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test4" << std::endl;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
   // we copy in addAtom, so this is safe
   m.addAtom(a);
   m.addAtom(a);
@@ -278,7 +278,7 @@ void test5() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test5" << std::endl;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
   // we copy in addAtom, so this is safe
   m.addAtom(a);
   m.addAtom(a);
@@ -503,7 +503,7 @@ void testIssue2892580() {
                         << std::endl;
   Mol m;
 
-  Atom *a = new Atom(6);
+  auto a = new Atom(6);
 
   int massVal;
   massVal = queryAtomMass(a);
@@ -520,7 +520,8 @@ void testIssue2892580() {
 
 void testGithub153() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test github issue 53: query "
-                           "molecules not matching [R]" << std::endl;
+                           "molecules not matching [R]"
+                        << std::endl;
   RWMol *m = SmartsToMol("[C]1-[C]-[C]1");
   MolOps::findSSSR(*m);
 

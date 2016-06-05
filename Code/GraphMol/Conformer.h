@@ -43,7 +43,9 @@ class Conformer {
   friend class ROMol;
 
   //! Constructor
-  Conformer() : df_is3D(true), d_id(0), dp_mol(nullptr) { d_positions.clear(); };
+  Conformer() : df_is3D(true), d_id(0), dp_mol(nullptr) {
+    d_positions.clear();
+  };
 
   //! Constructor with number of atoms specified ID specification
   Conformer(unsigned int numAtoms) : df_is3D(true), d_id(0), dp_mol(nullptr) {
@@ -80,17 +82,17 @@ class Conformer {
   //! Get the position of the specified atom
   const RDGeom::Point3D &getAtomPos(unsigned int atomId) const;
   //! overload
-  template<class U>
+  template <class U>
   const RDGeom::Point3D &getAtomPos(U atomId) const {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Get the position of the specified atom
   RDGeom::Point3D &getAtomPos(unsigned int atomId);
   //! overload
-  template<class U>
+  template <class U>
   RDGeom::Point3D &getAtomPos(U atomId) {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Set the position of the specified atom
@@ -102,9 +104,9 @@ class Conformer {
     d_positions[atomId] = position;
   }
   //! overload
-  template<class U>
+  template <class U>
   void setAtomPos(U atomId, const RDGeom::Point3D &position) {
-      return setAtomPos(rdcast<unsigned int>(atomId), position);
+    return setAtomPos(rdcast<unsigned int>(atomId), position);
   }
   //! get the ID of this conformer
   inline unsigned int getId() const { return d_id; }
@@ -113,7 +115,9 @@ class Conformer {
   inline void setId(unsigned int id) { d_id = id; }
 
   //! Get the number of atoms
-  inline unsigned int getNumAtoms() const { return rdcast<unsigned int>(d_positions.size()); }
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(d_positions.size());
+  }
 
   inline bool is3D() const { return df_is3D; }
   inline void set3D(bool v) { df_is3D = v; }

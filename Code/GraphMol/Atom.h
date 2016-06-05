@@ -304,7 +304,6 @@ class Atom : public RDProps {
     return Match(what.get());
   };
 
-
   //! returns the perturbation order for a list of integers
   /*!
 

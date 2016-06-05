@@ -15,7 +15,7 @@ class ROMol;
 //! This class is used to store ROMol objects in a MolCatalog
 class MolCatalogEntry : public RDCatalog::CatalogEntry {
  public:
-  MolCatalogEntry() : dp_mol(0), d_descrip("") {
+  MolCatalogEntry() : dp_mol(nullptr), d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -32,9 +32,9 @@ class MolCatalogEntry : public RDCatalog::CatalogEntry {
   //! construct from a pickle
   MolCatalogEntry(const std::string &pickle) { this->initFromString(pickle); }
 
-  ~MolCatalogEntry();
+  ~MolCatalogEntry() override;
 
-  std::string getDescription() const { return d_descrip; }
+  std::string getDescription() const override { return d_descrip; }
 
   void setDescription(std::string val) { d_descrip = val; }
 
@@ -86,13 +86,13 @@ class MolCatalogEntry : public RDCatalog::CatalogEntry {
   void clearProp(const std::string &key) const { clearProp(key.c_str()); }
 
   //! serializes this entry to the stream
-  void toStream(std::ostream &ss) const;
+  void toStream(std::ostream &ss) const override;
   //! returns a serialized (pickled) form of the entry
-  std::string Serialize() const;
+  std::string Serialize() const override;
   //! initialize from a stream containing a pickle
-  void initFromStream(std::istream &ss);
+  void initFromStream(std::istream &ss) override;
   //! initialize from a string containing a pickle
-  void initFromString(const std::string &text);
+  void initFromString(const std::string &text) override;
 
  private:
   const ROMol *dp_mol;

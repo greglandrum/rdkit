@@ -22,7 +22,7 @@
 namespace RDKit {
 namespace MolHash {
 struct MolFragment  // Reference to a fragment of source molecule
-    {
+{
   std::vector<const Atom *> Atoms;
   std::vector<const Bond *> Bonds;
   std::vector<boost::uint32_t> AtomsIdx;
@@ -125,9 +125,8 @@ void fillAtomBondCodes(
   if (bondCodes) {
     std::map<unsigned, bool> bondsInRing;
     const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
-    for (RingInfo::VECT_INT_VECT::const_iterator r = rings.begin();
-         r != rings.end(); r++)
-      for (INT_VECT::const_iterator b = r->begin(); b != r->end(); b++)
+    for (const auto &ring : rings)
+      for (auto b = ring.begin(); b != ring.end(); b++)
         if (bondsInRing.end() == bondsInRing.find(*b))
           bondsInRing[(unsigned)*b] = true;
 
@@ -252,7 +251,8 @@ std::string generateMoleculeHashSet(const ROMol &mol,
   // snprintf(buf, sizeof(buf),"%u-%u-%u-", res.Version,
   // res.NumAtoms,res.NumBonds);
   str = (boost::format("%u-%u-%u-") % (res.Version) % (res.NumAtoms) %
-         (res.NumBonds)).str();
+         (res.NumBonds))
+            .str();
   str += encode(&res.FormulaCRC32, sizeof(res.FormulaCRC32));
   str += "-";
   str += encode(&res.NonChiralAtomsHash, sizeof(res.NonChiralAtomsHash));
@@ -309,10 +309,10 @@ static HashCodeType computeMorganCodeHash(
 static void prepareMolFragment(MolFragment &m, const ROMol &mol,
                                const std::vector<unsigned> *atomsToUse,
                                const std::vector<unsigned> *bondsToUse) {
-  if (0 != atomsToUse && atomsToUse->empty()) atomsToUse = 0;
-  if (0 != bondsToUse && bondsToUse->empty()) bondsToUse = 0;
+  if (nullptr != atomsToUse && atomsToUse->empty()) atomsToUse = nullptr;
+  if (nullptr != bondsToUse && bondsToUse->empty()) bondsToUse = nullptr;
 
-  if (0 == atomsToUse && 0 == bondsToUse)  // whole molecule
+  if (nullptr == atomsToUse && nullptr == bondsToUse)  // whole molecule
   {
     unsigned n = mol.getNumAtoms();
     m.AtomsIdx.resize(n);
@@ -321,8 +321,9 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
     n = mol.getNumBonds();
     m.BondsIdx.resize(n);
     for (unsigned i = 0; i < n; i++) m.BondsIdx[i] = i;
-  } else if (0 != atomsToUse)  // selected atoms only and all/selected bonds
-                               // between them
+  } else if (nullptr !=
+             atomsToUse)  // selected atoms only and all/selected bonds
+                          // between them
   {
     std::map<unsigned, unsigned> addedBonds;
     unsigned n = atomsToUse->size();
@@ -339,7 +340,7 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
         const Bond *bond = &*((mol)[*beg]);
         if (addedBonds.end() != addedBonds.find(bond->getIdx()))
           continue;  // the bond has been already added
-        if (0 != bondsToUse &&
+        if (nullptr != bondsToUse &&
             bondsToUse->end() ==
                 find(bondsToUse->begin(), bondsToUse->end(), bond->getIdx()))
           continue;  // skip unselected bond
@@ -347,22 +348,23 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
         unsigned endAtoms[2];
         endAtoms[0] = bond->getBeginAtomIdx();
         endAtoms[1] = bond->getEndAtomIdx();
-        for (unsigned ai = 0; ai < 2 && 0 != bond;
+        for (unsigned ai = 0; ai < 2 && nullptr != bond;
              ai++)  // both ending bonds of the atom
         {
-          if (0 != atomsToUse &&
+          if (nullptr != atomsToUse &&
               atomsToUse->end() ==
                   find(atomsToUse->begin(), atomsToUse->end(), endAtoms[ai]))
-            bond = 0;  // check if both ending atoms of the bond are selected by
-                       // atoms filter
+            bond = nullptr;  // check if both ending atoms of the bond are
+                             // selected by
+                             // atoms filter
         }
-        if (0 != bond) {
+        if (nullptr != bond) {
           addedBonds[bond->getIdx()] = m.BondsIdx.size();
           m.BondsIdx.push_back(bond->getIdx());
         }
       }
     }
-  } else if (0 != bondsToUse)  // note that 0==atomsToUse in this case
+  } else if (nullptr != bondsToUse)  // note that 0==atomsToUse in this case
   {
     std::map<unsigned, unsigned> addedAtoms;
     unsigned n = bondsToUse->size();
@@ -374,7 +376,7 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
       unsigned endAtoms[2];
       endAtoms[0] = bond->getBeginAtomIdx();
       endAtoms[1] = bond->getEndAtomIdx();
-      for (unsigned ai = 0; ai < 2 && 0 != bond;
+      for (unsigned ai = 0; ai < 2 && nullptr != bond;
            ai++)  // both ending bonds of the atom
       {
         if (addedAtoms.end() == addedAtoms.find(endAtoms[ai])) {

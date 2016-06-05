@@ -506,7 +506,7 @@ void testMultiThreaded() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -748,7 +748,7 @@ void testGithub781() {
     delete m;
   }
   {  // empty molecule
-    ROMol *m = new ROMol();
+    auto m = new ROMol();
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);

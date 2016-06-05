@@ -105,7 +105,7 @@ namespace boost{
       }
       std::sort(vect.begin(),vect.end(),nodeInfoComp2);
     
-      node_id *nodes=new node_id[vect.size()];
+      auto nodes=new node_id[vect.size()];
       for(unsigned int i=0; i<vect.size(); ++i){
         nodes[i]=vect[i].id;
       }
@@ -154,7 +154,7 @@ namespace boost{
         if (sortNodes){
           order = SortNodesByFrequency(ag1);
         } else {
-          order = NULL;
+          order = nullptr;
         }
 
         core_len=orig_core_len=0;
@@ -181,7 +181,7 @@ namespace boost{
           in_2[i]=0;
           out_2[i]=0;
         }
-        vs_compared=0;
+        vs_compared=nullptr;
         //vs_compared = new int[n1*n2];
         //memset((void *)vs_compared,0,n1*n2*sizeof(int));
         
@@ -288,7 +288,7 @@ namespace boost{
             prev_n2=0;
           }
         }
-        else if (prev_n1==0 && order!=NULL) {
+        else if (prev_n1==0 && order!=nullptr) {
           unsigned int i=0;
           while (i<n1 && core_1[prev_n1=order[i]] != NULL_NODE)
             i++;
@@ -617,8 +617,8 @@ namespace boost{
            BackInsertionSequence& F){
     detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling,MatchChecking> s0(&g1,&g2,vertex_labeling,
                                                                                   edge_labeling,match_checking,false);
-    detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
-    detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
+    auto ni1 = new detail::node_id[num_vertices(g1)];
+    auto ni2 = new detail::node_id[num_vertices(g2)];
     int n=0;
     
     F.clear();
@@ -647,8 +647,8 @@ namespace boost{
                unsigned int max_results=1000) {
     detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling,MatchChecking> s0(&g1,&g2,vertex_labeling,
                                                                                   edge_labeling,match_checking,false);
-    detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
-    detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
+    auto ni1 = new detail::node_id[num_vertices(g1)];
+    auto ni2 = new detail::node_id[num_vertices(g2)];
     
     F.clear();
     F.resize(0);

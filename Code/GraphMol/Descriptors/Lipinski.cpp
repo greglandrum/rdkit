@@ -54,7 +54,7 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(0){};
+  ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(nullptr){};
   std::string m_pattern;
   bool m_needCopies;
   const RDKit::ROMol *m_matcher;
@@ -62,7 +62,8 @@ class ss_matcher {
 }
 
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 #define SMARTSCOUNTFUNC(nm, pattern, vers)         \
   const std::string nm##Version = vers;            \
   unsigned int calc##nm(const RDKit::ROMol &mol) { \
@@ -101,16 +102,15 @@ const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 }
 
 const std::string NumRotatableBondsVersion = "3.0.0";
-unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
-  if (strict == Default)
-    strict = DefaultStrictDefinition;
-  
+unsigned int calcNumRotatableBonds(const ROMol &mol,
+                                   NumRotatableBondsOptions strict) {
+  if (strict == Default) strict = DefaultStrictDefinition;
+
   if (strict == NonStrict) {
     std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
     pattern_flyweight m(pattern);
     return m.get().countMatches(mol);
-  }
-  else if (strict==Strict) {
+  } else if (strict == Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
         "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
@@ -136,7 +136,8 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-!@[!$([D1&!#1])]");
     pattern_flyweight nonRingAmides_matcher("[C&!R](=O)NC");
     pattern_flyweight symRings_matcher(
-        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)]");
+        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)"
+        "]");
     pattern_flyweight terminalTripleBonds_matcher("C#[#6,#7]");
 
     std::vector<MatchVectType> matches;
@@ -157,12 +158,11 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
     BOOST_FOREACH (const MatchVectType &iv, matches) {
       bool distinct = true;
-      for (MatchVectType::const_iterator mIt = iv.begin(); mIt != iv.end();
-           ++mIt) {
-        if (atomsSeen[mIt->second]) {
+      for (const auto &mIt : iv) {
+        if (atomsSeen[mIt.second]) {
           distinct = false;
         }
-        atomsSeen.set(mIt->second);
+        atomsSeen.set(mIt.second);
       }
       if (distinct && res > 0) --res;
     }
@@ -173,9 +173,7 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
 }
 
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
-  return calcNumRotatableBonds(mol,
-                               (strict) ? Strict
-                                        : NonStrict );
+  return calcNumRotatableBonds(mol, (strict) ? Strict : NonStrict);
 }
 
 // SMARTSCOUNTFUNC(NumHBD,

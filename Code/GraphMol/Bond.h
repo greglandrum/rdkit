@@ -44,7 +44,7 @@ typedef boost::shared_ptr<Atom> ATOM_SPTR;
           clients who need to store extra data on Bond objects.
 
 */
-class Bond : public RDProps{
+class Bond : public RDProps {
   friend class RWMol;
   friend class ROMol;
 

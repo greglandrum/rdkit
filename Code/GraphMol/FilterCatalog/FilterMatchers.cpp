@@ -63,7 +63,7 @@ SmartsMatcher::SmartsMatcher(const std::string &name, const std::string &smarts,
 SmartsMatcher::SmartsMatcher(const std::string &name, ROMOL_SPTR pattern,
                              unsigned int minCount, unsigned int maxCount)
     : FilterMatcherBase(name),
-      d_pattern(pattern),
+      d_pattern(std::move(pattern)),
       d_min_count(minCount),
       d_max_count(maxCount) {}
 
@@ -100,8 +100,8 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
                    (d_max_count == UINT_MAX || count <= d_max_count));
     if (onPatExists) {
       boost::shared_ptr<FilterMatcherBase> clone = Clone();
-      for (size_t i = 0; i < matches.size(); ++i) {
-        matchVect.push_back(FilterMatch(clone, matches[i]));
+      for (auto &matche : matches) {
+        matchVect.push_back(FilterMatch(clone, matche));
       }
     }
   }
@@ -134,12 +134,13 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
   if (result) {
     std::vector<FilterMatch> children;
 
-    BOOST_FOREACH(boost::shared_ptr<FilterHierarchyMatcher> matcher, d_children) {
+    BOOST_FOREACH (boost::shared_ptr<FilterHierarchyMatcher> matcher,
+                   d_children) {
       matcher->getMatches(mol, children);
     }
 
     if (children.size()) {
-        m.insert(m.end(), children.begin(), children.end());      
+      m.insert(m.end(), children.begin(), children.end());
     } else {
       m.insert(m.end(), temp.begin(), temp.end());
     }
@@ -147,5 +148,4 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
 
   return result;
 }
-
 }

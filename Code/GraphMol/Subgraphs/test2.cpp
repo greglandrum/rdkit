@@ -133,7 +133,8 @@ void test2() {
 
 void testGithubIssue103() {
   std::cout << "-----------------------\n Testing github Issue103: "
-               "stereochemistry and pathToSubmol" << std::endl;
+               "stereochemistry and pathToSubmol"
+            << std::endl;
   {
     std::string smiles = "O=C(O)C(=O)C[C@@]1(C(=O)O)C=C[C@H](O)C=C1";
     RWMol *mol = SmilesToMol(smiles);

@@ -197,19 +197,17 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
                         (this shouldn't normally be altered in client code).
 
 */
-void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs = 10,
-                        int numThreads = 1, unsigned int maxIterations = 30,
-                        int seed = -1, bool clearConfs = true,
-                        bool useRandomCoords = false, double boxSizeMult = 2.0,
-                        bool randNegEig = true, unsigned int numZeroFail = 1,
-                        double pruneRmsThresh = -1.0,
-                        const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
-                        double optimizerForceTol = 1e-3,
-                        bool ignoreSmoothingFailures = false,
-                        bool enforceChirality = true,
-                        bool useExpTorsionAnglePrefs = false,
-                        bool useBasicKnowledge = false, bool verbose = false,
-                        double basinThresh = 5.0);
+void EmbedMultipleConfs(
+    ROMol &mol, INT_VECT &res, unsigned int numConfs = 10, int numThreads = 1,
+    unsigned int maxIterations = 30, int seed = -1, bool clearConfs = true,
+    bool useRandomCoords = false, double boxSizeMult = 2.0,
+    bool randNegEig = true, unsigned int numZeroFail = 1,
+    double pruneRmsThresh = -1.0,
+    const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
+    double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
+    bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
+    bool useBasicKnowledge = false, bool verbose = false,
+    double basinThresh = 5.0);
 //! \overload
 INT_VECT EmbedMultipleConfs(
     ROMol &mol, unsigned int numConfs = 10, unsigned int maxIterations = 30,

@@ -51,8 +51,8 @@ struct tdtwriter_wrap {
         "TDTWriter", "A class for writing molecules to TDT files.\n",
         python::no_init)
         .def("__init__", python::make_constructor(&getTDTWriter))
-        .def(python::init<std::string>(python::args("fileName"),
-                                       docStr.c_str()))
+        .def(
+            python::init<std::string>(python::args("fileName"), docStr.c_str()))
         .def("SetProps", SetTDTWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"

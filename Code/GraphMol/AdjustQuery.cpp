@@ -21,7 +21,7 @@ namespace RDKit {
 namespace MolOps {
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
-  RWMol *res = new RWMol(mol);
+  auto res = new RWMol(mol);
   try {
     adjustQueryProperties(*res, params);
   } catch (MolSanitizeException &se) {
@@ -78,7 +78,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     }  // end of adjust ring count
     if (params.makeDummiesQueries && atomicNum == 0 && !at->hasQuery() &&
         !at->getIsotope()) {
-      QueryAtom *qa = new QueryAtom();
+      auto qa = new QueryAtom();
       qa->setQuery(makeAtomNullQuery());
       mol.replaceAtom(i, qa);
       delete qa;

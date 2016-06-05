@@ -54,7 +54,7 @@ struct FilterMatch {
 
   FilterMatch(boost::shared_ptr<FilterMatcherBase> filter,
               MatchVectType atomPairs)
-      : filterMatch(filter), atomPairs(atomPairs) {}
+      : filterMatch(std::move(filter)), atomPairs(std::move(atomPairs)) {}
 
   FilterMatch(const FilterMatch &rhs)
       : filterMatch(rhs.filterMatch), atomPairs(rhs.atomPairs) {}
@@ -73,9 +73,9 @@ class FilterMatcherBase
   std::string d_filterName;
 
  public:
-  FilterMatcherBase(const std::string &name = DEFAULT_FILTERMATCHERBASE_NAME)
+  FilterMatcherBase(std::string name = DEFAULT_FILTERMATCHERBASE_NAME)
       : boost::enable_shared_from_this<FilterMatcherBase>(),
-        d_filterName(name) {}
+        d_filterName(std::move(name)) {}
 
   FilterMatcherBase(const FilterMatcherBase &rhs)
       : boost::enable_shared_from_this<FilterMatcherBase>(),

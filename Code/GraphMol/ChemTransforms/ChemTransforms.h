@@ -171,10 +171,11 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
         in \c queries
 
 */
-void addRecursiveQueries(
-    ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
-    std::vector<std::pair<unsigned int, std::string> > *reactantLabels = NULL);
+void addRecursiveQueries(ROMol &mol,
+                         const std::map<std::string, ROMOL_SPTR> &queries,
+                         const std::string &propName,
+                         std::vector<std::pair<unsigned int, std::string> >
+                             *reactantLabels = nullptr);
 
 //! \brief parses a query definition file and sets up a set of definitions
 //!  suitable for use by addRecursiveQueries()

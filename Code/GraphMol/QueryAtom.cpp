@@ -15,11 +15,11 @@ namespace RDKit {
 
 QueryAtom::~QueryAtom() {
   delete dp_query;
-  dp_query = NULL;
+  dp_query = nullptr;
 };
 
 Atom *QueryAtom::copy() const {
-  QueryAtom *res = new QueryAtom(*this);
+  auto res = new QueryAtom(*this);
   return static_cast<Atom *>(res);
 }
 
@@ -73,11 +73,15 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
 
   static const unsigned int nQueries = 18;
   static std::string equalityQueries[nQueries] = {
-      "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
-      "AtomImplicitValence", "AtomExplicitValence", "AtomTotalValence",
-      "AtomAtomicNum", "AtomExplicitDegree", "AtomTotalDegree", "AtomHCount",
-      "AtomIsAromatic", "AtomIsAliphatic", "AtomUnsaturated", "AtomMass",
-      "AtomFormalCharge", "AtomHybridization", "AtomInRing", "AtomInNRings"};
+      "AtomRingBondCount",   "AtomRingSize",
+      "AtomMinRingSize",     "AtomImplicitValence",
+      "AtomExplicitValence", "AtomTotalValence",
+      "AtomAtomicNum",       "AtomExplicitDegree",
+      "AtomTotalDegree",     "AtomHCount",
+      "AtomIsAromatic",      "AtomIsAliphatic",
+      "AtomUnsaturated",     "AtomMass",
+      "AtomFormalCharge",    "AtomHybridization",
+      "AtomInRing",          "AtomInNRings"};
 
   bool res = false;
   std::string d1 = q1->getDescription();
@@ -86,12 +90,11 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
     res = true;
   } else if (d1 == "AtomOr") {
     // FIX: handle negation on AtomOr and AtomAnd
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       if (d2 == "AtomOr") {
-        for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             res = true;
             break;
@@ -106,13 +109,12 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
     }
   } else if (d1 == "AtomAnd") {
     res = true;
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       bool matched = false;
       if (d2 == "AtomAnd") {
-        for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             matched = true;
             break;
@@ -129,8 +131,8 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
     // FIX : handle AtomXOr
   } else if (d2 == "AtomOr") {
     // FIX: handle negation on AtomOr and AtomAnd
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (queriesMatch(q1, iter2->get())) {
         res = true;
         break;
@@ -138,8 +140,8 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
     }
   } else if (d2 == "AtomAnd") {
     res = true;
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (!queriesMatch(q1, iter2->get())) {
         res = false;
         break;

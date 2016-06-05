@@ -96,7 +96,8 @@ unsigned int getMolFrags(const ROMol &mol,
 
 */
 std::vector<boost::shared_ptr<ROMol> > getMolFrags(
-    const ROMol &mol, bool sanitizeFrags = true, std::vector<int> *frags = nullptr,
+    const ROMol &mol, bool sanitizeFrags = true,
+    std::vector<int> *frags = nullptr,
     std::vector<std::vector<int> > *fragsMolAtomMapping = nullptr,
     bool copyConformers = true);
 
@@ -117,7 +118,7 @@ std::vector<boost::shared_ptr<ROMol> > getMolFrags(
 template <typename T>
 std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
-    bool sanitizeFrags = true, const std::vector<T> *whiteList = 0,
+    bool sanitizeFrags = true, const std::vector<T> *whiteList = nullptr,
     bool negateList = false);
 
 #if 0

@@ -47,7 +47,7 @@ ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
 }
 
 void ForwardSDMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = false;
   df_end = false;
   d_line = 0;
@@ -147,7 +147,8 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             else
               BOOST_LOG(rdWarningLog)
                   << "Spurious data before the first property will be "
-                     "ignored" << std::endl;
+                     "ignored"
+                  << std::endl;
             warningIssued = true;
           }
         }
@@ -160,7 +161,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
 
 ROMol *ForwardSDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
@@ -176,7 +177,7 @@ ROMol *ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
   if (dp_inStream->eof()) {
     df_end = true;
     return res;

@@ -27,25 +27,25 @@ class QueryAtom : public Atom {
  public:
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
-  QueryAtom() : Atom(), dp_query(NULL){};
+  QueryAtom() : Atom(), dp_query(nullptr){};
   explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)){};
   explicit QueryAtom(const Atom &other)
       : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())){};
   QueryAtom(const QueryAtom &other) : Atom(other) {
     dp_query = other.dp_query->copy();
   };
-  ~QueryAtom();
+  ~QueryAtom() override;
 
   //! returns a copy of this query, owned by the caller
-  Atom *copy() const;
+  Atom *copy() const override;
 
   // This method can be used to distinguish query atoms from standard atoms:
-  bool hasQuery() const { return dp_query != 0; };
+  bool hasQuery() const override { return dp_query != nullptr; };
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) { dp_query = what; }
+  void setQuery(QUERYATOM_QUERY *what) override { dp_query = what; }
   //! returns our current query
-  QUERYATOM_QUERY *getQuery() const { return dp_query; };
+  QUERYATOM_QUERY *getQuery() const override { return dp_query; };
 
   //! expands our current query
   /*!
@@ -63,12 +63,12 @@ class QueryAtom : public Atom {
   */
   void expandQuery(QUERYATOM_QUERY *what,
                    Queries::CompositeQueryType how = Queries::COMPOSITE_AND,
-                   bool maintainOrder = true);
+                   bool maintainOrder = true) override;
 
   //! returns true if we match Atom \c what
-  bool Match(const Atom::ATOM_SPTR &what) const;
+  bool Match(const Atom::ATOM_SPTR &what) const override;
   //! \overload
-  bool Match(Atom const *what) const;
+  bool Match(Atom const *what) const override;
 
   //! returns true if our query details match those of QueryAtom \c what
   bool QueryMatch(QueryAtom const *what) const;

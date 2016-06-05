@@ -80,9 +80,8 @@ class SmilesWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &e) {
       }
     }
   };
@@ -158,9 +157,8 @@ class SDWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &e) {
       }
     }
   };
@@ -229,9 +227,8 @@ class TDTWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &e) {
       }
     }
   };
@@ -293,9 +290,8 @@ class PDBWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &e) {
       }
     }
   };

@@ -32,7 +32,8 @@ bool inOrganicSubset(int atomicNumber);
   atom.
 */
 std::string GetAtomSmiles(const Atom *atom, bool doKekule = false,
-                          const Bond *bondIn = 0, bool allHsExplicit = false);
+                          const Bond *bondIn = nullptr,
+                          bool allHsExplicit = false);
 
 //! \brief returns the SMILES for a bond
 /*!
@@ -89,15 +90,13 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = false,
   \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
 
  */
-std::string MolFragmentToSmiles(const ROMol &mol,
-                                const std::vector<int> &atomsToUse,
-                                const std::vector<int> *bondsToUse = 0,
-                                const std::vector<std::string> *atomSymbols = 0,
-                                const std::vector<std::string> *bondSymbols = 0,
-                                bool doIsomericSmiles = false,
-                                bool doKekule = false, int rootedAtAtom = -1,
-                                bool canonical = true,
-                                bool allBondsExplicit = false,
-                                bool allHsExplicit = false);
+std::string MolFragmentToSmiles(
+    const ROMol &mol, const std::vector<int> &atomsToUse,
+    const std::vector<int> *bondsToUse = nullptr,
+    const std::vector<std::string> *atomSymbols = nullptr,
+    const std::vector<std::string> *bondSymbols = nullptr,
+    bool doIsomericSmiles = false, bool doKekule = false, int rootedAtAtom = -1,
+    bool canonical = true, bool allBondsExplicit = false,
+    bool allHsExplicit = false);
 }
 #endif

@@ -48,7 +48,7 @@ class SeedSet {  // sorted by amount of bonds
     for (where = Seeds.begin(); where != Seeds.end();
          where++)  // find position in sorted list
       if (where->getNumBonds() < seed.getNumBonds()) break;
-    iterator it = Seeds.insert(where, EmptySeed);
+    auto it = Seeds.insert(where, EmptySeed);
     Value& val = *it;
     val.setMoleculeFragment(seed);
 

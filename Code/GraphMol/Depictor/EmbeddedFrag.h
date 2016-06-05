@@ -151,7 +151,7 @@ class EmbeddedFrag {
 
  public:
   //! Default constructor
-  EmbeddedFrag() : d_done(false), dp_mol(0) {
+  EmbeddedFrag() : d_done(false), dp_mol(nullptr) {
     d_eatoms.clear();
     d_attachPts.clear();
   };
@@ -299,7 +299,7 @@ class EmbeddedFrag {
   }
 
   EmbeddedAtom GetEmbeddedAtom(unsigned int aid) const {
-    INT_EATOM_MAP_CI posi = d_eatoms.find(aid);
+    auto posi = d_eatoms.find(aid);
     if (posi == d_eatoms.end()) {
       PRECONDITION(0, "Embedded atom does not contain embedded atom specified");
     }
@@ -336,7 +336,7 @@ class EmbeddedFrag {
   void randomSampleFlipsAndPermutations(unsigned int nBondsPerSample = 3,
                                         unsigned int nSamples = 100,
                                         int seed = 100,
-                                        const DOUBLE_SMART_PTR *dmat = 0,
+                                        const DOUBLE_SMART_PTR *dmat = nullptr,
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 

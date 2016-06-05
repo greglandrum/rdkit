@@ -261,7 +261,7 @@ class SparseIntVect {
     return res -= other;
   }
   SparseIntVect<IndexType> &operator*=(int v) {
-    typename StorageType::iterator iter = d_data.begin();
+    auto iter = d_data.begin();
     while (iter != d_data.end()) {
       iter->second *= v;
       ++iter;

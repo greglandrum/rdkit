@@ -115,10 +115,10 @@ struct MCSParameters {
         Verbose(false),
         AtomTyper(MCSAtomCompareElements),
         BondTyper(MCSBondCompareOrder),
-        CompareFunctionsUserData(0),
+        CompareFunctionsUserData(nullptr),
         ProgressCallback(MCSProgressCallbackTimeout),
-        ProgressCallbackUserData(0),
-        FinalMatchChecker(0),
+        ProgressCallbackUserData(nullptr),
+        FinalMatchChecker(nullptr),
         InitialSeed("") {}
 };
 
@@ -136,7 +136,7 @@ struct MCSResult {
 void parseMCSParametersJSON(const char* json, MCSParameters* params);
 
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
-                  const MCSParameters* params = 0);
+                  const MCSParameters* params = nullptr);
 MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
                     const char* params_json);
 

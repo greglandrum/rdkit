@@ -15,7 +15,7 @@ class MolCatalogParams : public RDCatalog::CatalogParams {
  public:
   MolCatalogParams() { d_typeStr = "MolCatalog Parameters"; }
 
-  ~MolCatalogParams();
+  ~MolCatalogParams() override;
 
   //! copy constructor
   MolCatalogParams(const MolCatalogParams &other) {
@@ -25,13 +25,13 @@ class MolCatalogParams : public RDCatalog::CatalogParams {
   MolCatalogParams(const std::string &pickle);
 
   //! serializes to the stream
-  void toStream(std::ostream &) const;
+  void toStream(std::ostream &) const override;
   //! returns a serialized (pickled) form
-  std::string Serialize() const;
+  std::string Serialize() const override;
   //! initialize from a stream containing a pickle
-  void initFromStream(std::istream &ss);
+  void initFromStream(std::istream &ss) override;
   //! initialize from a string containing a pickle
-  void initFromString(const std::string &text);
+  void initFromString(const std::string &text) override;
 };
 }
 

@@ -82,7 +82,7 @@ struct table_wrapper {
                  PeriodicTable::getValenceList,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetValenceList",
-             (const INT_VECT &(PeriodicTable::*)(const std::string &) const) &
+             (const INT_VECT &(PeriodicTable::*)(const std::string &)const) &
                  PeriodicTable::getValenceList,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetNOuterElecs", (int (PeriodicTable::*)(UINT) const) &

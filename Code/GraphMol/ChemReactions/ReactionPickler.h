@@ -28,7 +28,7 @@ class ReactionPicklerException : public std::exception {
   ReactionPicklerException(const char *msg) : _msg(msg){};
   ReactionPicklerException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~ReactionPicklerException() throw(){};
+  ~ReactionPicklerException() throw() override{};
 
  private:
   std::string _msg;

@@ -188,7 +188,7 @@ static const char *getHELMMonomer(const AtomPDBResidueInfo *info) {
       if (!strcmp(ptr, "VAL")) return "V";
       break;
   }
-  return (const char *)0;
+  return (const char *)nullptr;
 }
 
 static bool IsEupeptideBond(AtomPDBResidueInfo *src, AtomPDBResidueInfo *dst) {

@@ -54,9 +54,9 @@ RWMol *SLNQueryToMol(const std::string &smi, bool mergeHs = true,
 class SLNParseException : public std::exception {
  public:
   SLNParseException(const char *msg) : _msg(msg){};
-  SLNParseException(const std::string &msg) : _msg(msg){};
+  SLNParseException(std::string msg) : _msg(std::move(msg)){};
   const char *message() const { return _msg.c_str(); };
-  ~SLNParseException() throw(){};
+  ~SLNParseException() throw() override{};
 
  private:
   std::string _msg;

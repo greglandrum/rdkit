@@ -65,30 +65,27 @@ struct TargetMatch {
                 for(size_t i = 0; i < TargetBondIdx.size(); i++)
                     TargetBondIdx[i] = -1;
     */
-    for (size_t i = 0; i < VisitedTargetBonds.size(); i++)
-      VisitedTargetBonds[i] = false;
-    for (size_t i = 0; i < VisitedTargetAtoms.size(); i++)
-      VisitedTargetAtoms[i] = false;
+    for (auto&& VisitedTargetBond : VisitedTargetBonds)
+      VisitedTargetBond = false;
+    for (auto&& VisitedTargetAtom : VisitedTargetAtoms)
+      VisitedTargetAtom = false;
 
     MatchedAtomSize = match.size();
-    for (match_V_t::const_iterator mit = match.begin(); mit != match.end();
-         mit++) {
-      TargetAtomIdx[seed.MoleculeFragment.AtomsIdx[mit->first]] = mit->second;
-      VisitedTargetAtoms[mit->second] = true;
+    for (const auto& mit : match) {
+      TargetAtomIdx[seed.MoleculeFragment.AtomsIdx[mit.first]] = mit.second;
+      VisitedTargetAtoms[mit.second] = true;
     }
 
     MatchedBondSize = 0;
-    for (std::vector<const Bond*>::const_iterator bond =
-             seed.MoleculeFragment.Bonds.begin();
-         bond != seed.MoleculeFragment.Bonds.end(); bond++) {
-      unsigned i = (*bond)->getBeginAtomIdx();
-      unsigned j = (*bond)->getEndAtomIdx();
+    for (auto bond : seed.MoleculeFragment.Bonds) {
+      unsigned i = bond->getBeginAtomIdx();
+      unsigned j = bond->getEndAtomIdx();
       unsigned ti = TargetAtomIdx[i];
       unsigned tj = TargetAtomIdx[j];
       const Bond* tb = target.Molecule->getBondBetweenAtoms(ti, tj);
       if (tb) {
         MatchedBondSize++;
-        TargetBondIdx[(*bond)->getIdx()] = tb->getIdx();  // add
+        TargetBondIdx[bond->getIdx()] = tb->getIdx();  // add
         VisitedTargetBonds[tb->getIdx()] = true;
       }
     }
