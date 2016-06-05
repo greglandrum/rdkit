@@ -30,7 +30,7 @@ class SquareMatrix : public Matrix<TYPE> {
   //  return d_nRows;
   //};
 
-  virtual SquareMatrix<TYPE> &operator*=(TYPE scale) {
+  SquareMatrix<TYPE> &operator*=(TYPE scale) override {
     Matrix<TYPE>::operator*=(scale);
     return *this;
   }
@@ -41,7 +41,7 @@ class SquareMatrix : public Matrix<TYPE> {
                     "Size mismatch during multiplication");
 
     const TYPE *bData = B.getData();
-    TYPE *newData = new TYPE[this->d_dataSize];
+    auto newData = new TYPE[this->d_dataSize];
     unsigned int i, j, k;
     unsigned int idA, idAt, idC, idCt, idB;
     TYPE *data = this->d_data.get();

@@ -15,6 +15,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include <cmath>
+#include <utility>
 
 using namespace RDKit;
 namespace RDGeom {

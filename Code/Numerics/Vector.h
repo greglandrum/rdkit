@@ -32,7 +32,7 @@ class Vector {
   //! Initialize with only a size.
   explicit Vector(unsigned int N) {
     d_size = N;
-    TYPE *data = new TYPE[N];
+    auto data = new TYPE[N];
     memset(static_cast<void *>(data), 0, d_size * sizeof(TYPE));
     d_data.reset(data);
   }
@@ -40,7 +40,7 @@ class Vector {
   //! Initialize with a size and default value.
   Vector(unsigned int N, TYPE val) {  //: Vector(N) {
     d_size = N;
-    TYPE *data = new TYPE[N];
+    auto data = new TYPE[N];
 
     unsigned int i;
     for (i = 0; i < N; i++) {
@@ -64,7 +64,7 @@ class Vector {
   Vector(const Vector &other) {
     d_size = other.size();
     const TYPE *otherData = other.getData();
-    TYPE *data = new TYPE[d_size];
+    auto data = new TYPE[d_size];
 
     memcpy(static_cast<void *>(data), static_cast<const void *>(otherData),
            d_size * sizeof(TYPE));

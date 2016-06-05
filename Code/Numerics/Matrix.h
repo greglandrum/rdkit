@@ -32,7 +32,7 @@ class Matrix {
   //! Initialize with a size.
   Matrix(unsigned int nRows, unsigned int nCols)
       : d_nRows(nRows), d_nCols(nCols), d_dataSize(nRows * nCols) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     memset(static_cast<void *>(data), 0, d_dataSize * sizeof(TYPE));
     d_data.reset(data);
   };
@@ -40,7 +40,7 @@ class Matrix {
   //! Initialize with a size and default value.
   Matrix(unsigned int nRows, unsigned int nCols, TYPE val)
       : d_nRows(nRows), d_nCols(nCols), d_dataSize(nRows * nCols) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     unsigned int i;
     for (i = 0; i < d_dataSize; i++) {
       data[i] = val;
@@ -65,7 +65,7 @@ class Matrix {
       : d_nRows(other.numRows()),
         d_nCols(other.numCols()),
         d_dataSize(d_nRows * d_nCols) {
-    TYPE *data = new TYPE[d_dataSize];
+    auto data = new TYPE[d_dataSize];
     const TYPE *otherData = other.getData();
     memcpy(static_cast<void *>(data), static_cast<const void *>(otherData),
            d_dataSize * sizeof(TYPE));

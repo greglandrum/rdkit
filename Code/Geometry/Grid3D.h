@@ -23,10 +23,10 @@ class GridException : public std::exception {
   //! construct with an error message
   GridException(const char *msg) : _msg(msg){};
   //! construct with an error message
-  GridException(const std::string &msg) : _msg(msg){};
+  GridException(std::string msg) : _msg(std::move(msg)){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~GridException() throw(){};
+  ~GridException() throw() override{};
 
  private:
   std::string _msg;
