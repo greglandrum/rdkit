@@ -37,12 +37,13 @@ namespace Utils {
 // instead of whatever we started in.
 
 namespace detail {
-class LocaleSwitcherImpl; // concrete OS dependent implementation
+class LocaleSwitcherImpl;  // concrete OS dependent implementation
 }
 
 class LocaleSwitcher {
   detail::LocaleSwitcherImpl *impl;
-public:
+
+ public:
   LocaleSwitcher();
   ~LocaleSwitcher();
 };

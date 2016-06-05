@@ -72,7 +72,7 @@ class Invariant : public std::runtime_error {
   int getLine() const { return line_d; }
 
   std::string toString() const;
-  std::string toUserString() const; // strips build info, adds version
+  std::string toUserString() const;  // strips build info, adds version
 
  private:
   std::string mess_d, expr_d, prefix_d;
@@ -187,6 +187,6 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
 
 // Silence warnings for unused params while
 //   still indicating that they are unused
-#define RDUNUSED_PARAM(x) (void) x;
+#define RDUNUSED_PARAM(x) (void)x;
 
 #endif

@@ -52,19 +52,17 @@ std::string Invariant::toUserString() const {
   std::string line = boost::lexical_cast<std::string>(this->getLine());
 
   std::string filename = this->getFile();
-  
-  std::size_t pos = filename.find("Code"); // strip out build directory info
+
+  std::size_t pos = filename.find("Code");  // strip out build directory info
   if (pos != std::string::npos) {
     filename = filename.substr(pos);
   }
-  
-  std::string stringRep = this->prefix_d + "\n\t" + this->getMessage() +
-      "\n\tViolation occurred on line " + line + " in file " +
-      filename + "\n\tFailed Expression: " +
-      this->getExpression() + "\n\t" +
-      "RDKIT: " + RDKit::rdkitVersion + "\n\t" +
-      "BOOST: " + RDKit::boostVersion + "\n";
 
+  std::string stringRep =
+      this->prefix_d + "\n\t" + this->getMessage() +
+      "\n\tViolation occurred on line " + line + " in file " + filename +
+      "\n\tFailed Expression: " + this->getExpression() + "\n\t" + "RDKIT: " +
+      RDKit::rdkitVersion + "\n\t" + "BOOST: " + RDKit::boostVersion + "\n";
 
 #ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
   void *arr[10];
@@ -77,5 +75,4 @@ std::string Invariant::toUserString() const {
 
   return stringRep;
 }
-
 };

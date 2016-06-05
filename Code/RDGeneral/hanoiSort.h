@@ -19,7 +19,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push, 1)
-#pragma warning(disable: 4800)
+#pragma warning(disable : 4800)
 #endif
 namespace RDKit {
 template <typename CompareFunc>

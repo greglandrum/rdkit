@@ -68,7 +68,8 @@ struct RDAny {
   RDValue m_value;
 
   RDAny() : m_value() {}
-  template <class T> RDAny(const T &d) : m_value(d) {}
+  template <class T>
+  RDAny(const T &d) : m_value(d) {}
   /*
   explicit RDAny(bool v) : m_value(v) {}
   template <class T>
@@ -76,9 +77,7 @@ struct RDAny {
   template <class T>
   explicit RDAny(const boost::shared_ptr<T> &v) : m_value(v) {}
   */
-  RDAny(const RDAny &rhs) {
-    copy_rdvalue(m_value, rhs.m_value);
-  }
+  RDAny(const RDAny &rhs) { copy_rdvalue(m_value, rhs.m_value); }
 
   ~RDAny() { RDValue::cleanup_rdvalue(m_value); }
 
@@ -154,24 +153,22 @@ struct RDAny {
 
   RDAny &operator=(const boost::any &d) {
     RDValue::cleanup_rdvalue(m_value);
-    m_value = RDValue(d);//new boost::any(d);
+    m_value = RDValue(d);  // new boost::any(d);
     return *this;
   }
 
-  template<class T>
+  template <class T>
   RDAny &operator=(const T &d) {
     RDValue::cleanup_rdvalue(m_value);
     auto v = new boost::any(d);
     m_value = RDValue(v);
     return *this;
   }
-    
 };
 
 ////////////////////////////////////////////////////////////////
 // rdany_cast
 ////////////////////////////////////////////////////////////////
-
 
 // Const Access
 template <class T>
@@ -211,6 +208,5 @@ typename boost::disable_if<boost::is_arithmetic<T>, T>::type from_rdany(
     const RDAny &arg) {
   return rdany_cast<T>(arg);
 }
-
 }
 #endif

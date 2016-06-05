@@ -23,14 +23,13 @@ void Dict::getVal(const std::string &what, std::string &res) const {
   //  little bit by trying that and, if the cast fails, attempting a couple of
   //  other casts, which will then be lexically cast to type T.
   //
-  for(const auto & i : _data) {
+  for (const auto &i : _data) {
     if (i.key == what) {
       rdvalue_tostring(i.val, res);
       return;
     }
-
   }
-  throw KeyErrorException(what);    
+  throw KeyErrorException(what);
 }
 
 bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
@@ -44,7 +43,7 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
   //  little bit by trying that and, if the cast fails, attempting a couple of
   //  other casts, which will then be lexically cast to type T.
   //
-  for(const auto & i : _data) {
+  for (const auto &i : _data) {
     if (i.key == what) {
       rdvalue_tostring(i.val, res);
       return true;
@@ -52,5 +51,4 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
   }
   return false;
 }
-
 }

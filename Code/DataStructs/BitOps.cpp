@@ -580,11 +580,11 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
 
   int initSize = bv1.getNumBits();
   int resSize = initSize / factor;
-  auto  res = new T1(resSize);
+  auto res = new T1(resSize);
 
   IntVect onBits;
   bv1.getOnBits(onBits);
-  for (int & onBit : onBits) {
+  for (int& onBit : onBits) {
     int pos = onBit % resSize;
     res->setBit(pos);
   }
@@ -845,11 +845,12 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     union_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] |
-                                           ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+                                             ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
@@ -878,10 +879,11 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     a_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
     b_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
@@ -909,12 +911,13 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
 #else
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
     acount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
     bcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
     acount += byte_popcounts[afp[i]];
     bcount += byte_popcounts[bfp[i]];
@@ -943,7 +946,7 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
   unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
     if (BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i] &
-                           ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
+                               ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
         BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i])) {
       return false;
     }

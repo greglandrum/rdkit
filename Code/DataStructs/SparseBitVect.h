@@ -56,7 +56,7 @@ class SparseBitVect : public BitVect {
 
   bool operator[](const unsigned int which) const;
   SparseBitVect operator|(const SparseBitVect &) const;
-  SparseBitVect operator&(const SparseBitVect &) const;
+  SparseBitVect operator&(const SparseBitVect &)const;
   SparseBitVect operator^(const SparseBitVect &) const;
   SparseBitVect operator~() const;
 
