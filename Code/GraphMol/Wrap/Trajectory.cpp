@@ -39,7 +39,7 @@ Trajectory *constructTrajectory_wrap(unsigned int dimension,
                                      unsigned int numPoints,
                                      python::list snapshotList) {
   unsigned int l = python::len(snapshotList);
-  Trajectory *traj = new Trajectory(dimension, numPoints);
+  auto traj = new Trajectory(dimension, numPoints);
   for (unsigned int i = 0; i < l; ++i) {
     Snapshot *s = python::extract<Snapshot *>(snapshotList[i]);
     traj->addSnapshot(*s);

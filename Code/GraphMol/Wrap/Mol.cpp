@@ -59,7 +59,7 @@ bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
   try {
     mol = new ROMol(pkl);
   } catch (...) {
-    mol = NULL;
+    mol = nullptr;
   }
   if (!mol) {
     throw ValueErrorException("Null Molecule");
@@ -120,7 +120,7 @@ PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,
 
 unsigned int AddMolConformer(ROMol &mol, Conformer *conf,
                              bool assignId = false) {
-  Conformer *nconf = new Conformer(*conf);
+  auto nconf = new Conformer(*conf);
   return mol.addConformer(nconf, assignId);
 }
 
@@ -164,11 +164,11 @@ void MolDebug(const ROMol &mol) { mol.debugMol(std::cout); }
 
 // FIX: we should eventually figure out how to do iterators properly
 AtomIterSeq *MolGetAtoms(ROMol *mol) {
-  AtomIterSeq *res = new AtomIterSeq(mol->beginAtoms(), mol->endAtoms());
+  auto res = new AtomIterSeq(mol->beginAtoms(), mol->endAtoms());
   return res;
 }
 QueryAtomIterSeq *MolGetAromaticAtoms(ROMol *mol) {
-  QueryAtom *qa = new QueryAtom();
+  auto qa = new QueryAtom();
   qa->setQuery(makeAtomAromaticQuery());
   QueryAtomIterSeq *res =
       new QueryAtomIterSeq(mol->beginQueryAtoms(qa), mol->endQueryAtoms());
@@ -186,7 +186,7 @@ QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol, QueryAtom *qa) {
 //  return res;
 //}
 BondIterSeq *MolGetBonds(ROMol *mol) {
-  BondIterSeq *res = new BondIterSeq(mol->beginBonds(), mol->endBonds());
+  auto res = new BondIterSeq(mol->beginBonds(), mol->endBonds());
   return res;
 }
 
@@ -221,7 +221,7 @@ class ReadWriteMol : public RWMol {
   };
   void ReplaceAtom(unsigned int idx, Atom *atom) { replaceAtom(idx, atom); };
   ROMol *GetMol() const {
-    ROMol *res = new ROMol(*this);
+    auto res = new ROMol(*this);
     return res;
   }
 };

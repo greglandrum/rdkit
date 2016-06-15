@@ -76,16 +76,16 @@ boost::python::dict GetPropsAsDict(const T &obj,
   // precedence double, int, unsigned, std::vector<double>,
   // std::vector<int>, std::vector<unsigned>, string
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
-  for(size_t i=0;i<keys.size();++i) {
-    if (AddToDict<double>(obj, dict, keys[i])) continue;
-    if (AddToDict<int>(obj, dict, keys[i])) continue;
-    if (AddToDict<unsigned int>(obj, dict, keys[i])) continue;
-    if (AddToDict<bool>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<double> >(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<int> >(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<unsigned int> >(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<std::string> >(obj, dict, keys[i])) continue;    
-    if (AddToDict<std::string>(obj, dict, keys[i])) continue;
+  for(auto & key : keys) {
+    if (AddToDict<double>(obj, dict, key)) continue;
+    if (AddToDict<int>(obj, dict, key)) continue;
+    if (AddToDict<unsigned int>(obj, dict, key)) continue;
+    if (AddToDict<bool>(obj, dict, key)) continue;
+    if (AddToDict<std::vector<double> >(obj, dict, key)) continue;
+    if (AddToDict<std::vector<int> >(obj, dict, key)) continue;
+    if (AddToDict<std::vector<unsigned int> >(obj, dict, key)) continue;
+    if (AddToDict<std::vector<std::string> >(obj, dict, key)) continue;    
+    if (AddToDict<std::string>(obj, dict, key)) continue;
   }
   return dict;
 }

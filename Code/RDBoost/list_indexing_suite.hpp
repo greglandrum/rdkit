@@ -71,28 +71,28 @@ namespace boost { namespace python {
         >::type
         get_item(Container& container, index_type i)
         {
-	  iterator_type pos=moveToPos(container,i);
+	  auto pos=moveToPos(container,i);
 	  return *pos;
         }
         static object 
         get_slice(Container& container, index_type from, index_type to){
 	  Container res;
-	  iterator_type beg=moveToPos(container,from);
-	  iterator_type end=moveToPos(container,to);
+	  auto beg=moveToPos(container,from);
+	  auto end=moveToPos(container,to);
 	  std::copy(beg,end,res.begin());
 	  return object(res);
 	};
         static void 
         set_item(Container& container, index_type i, data_type const& v){
-	  iterator_type pos=moveToPos(container,i);
+	  auto pos=moveToPos(container,i);
 	  *pos = v;
 	};
 
         static void 
         set_slice(Container& container, index_type from, 
 		  index_type to, data_type const& v){
-	  iterator_type beg=moveToPos(container,from);
-	  iterator_type end=moveToPos(container,to);
+	  auto beg=moveToPos(container,from);
+	  auto end=moveToPos(container,to);
 	  container.erase(beg,end);
 	  // FIX: didn't we just invalidate this iterator?
 	  container.insert(beg,v);
@@ -102,8 +102,8 @@ namespace boost { namespace python {
         static void 
         set_slice(Container& container, index_type from, 
 		  index_type to, Iter first, Iter last){
-	  iterator_type beg=moveToPos(container,from);
-	  iterator_type end=moveToPos(container,to);
+	  auto beg=moveToPos(container,from);
+	  auto end=moveToPos(container,to);
 	  container.erase(beg,end);
 	  // FIX: didn't we just invalidate this iterator?
 	  container.insert(beg,first,last);
@@ -112,14 +112,14 @@ namespace boost { namespace python {
         static void 
         delete_item(Container& container, index_type i)
         { 
-	  iterator_type pos=moveToPos(container,i);
+	  auto pos=moveToPos(container,i);
 	  container.erase(pos);
         }
         
         static void 
         delete_slice(Container& container, index_type from, index_type to){
-	  iterator_type beg=moveToPos(container,from);
-	  iterator_type end=moveToPos(container,to);
+	  auto beg=moveToPos(container,from);
+	  auto end=moveToPos(container,to);
 	  container.erase(beg,end);
 	}
         

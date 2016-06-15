@@ -58,7 +58,7 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj, bool useCache)
-      : dp_obj(obj), dp_cache(NULL) {
+      : dp_obj(std::move(obj)), dp_cache(nullptr) {
     if (useCache)
       dp_cache = new std::map<std::pair<unsigned int, unsigned int>, double>();
   }
@@ -106,7 +106,7 @@ class pyBVFunctor {
  public:
   pyBVFunctor(const std::vector<const BV *> &obj, DistanceMethod method,
               bool useCache)
-      : d_obj(obj), d_method(method), dp_cache(NULL) {
+      : d_obj(obj), d_method(method), dp_cache(nullptr) {
     if (useCache)
       dp_cache = new std::map<std::pair<unsigned int, unsigned int>, double>();
   }
