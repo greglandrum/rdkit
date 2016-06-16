@@ -648,6 +648,11 @@ extern "C" int MolBitmapFingerPrintSize(MolBitmapFingerPrint a) {
   return numBits;
 }
 
+extern "C" double calcBigIntTanimotoSml(int64_t a, int64_t b) {
+  return CalcBitmapTanimoto((const unsigned char *)&a,
+                            (const unsigned char *)&b, 8);
+}
+
 extern "C" double calcBitmapTanimotoSml(MolBitmapFingerPrint a,
                                         MolBitmapFingerPrint b) {
   std::string *abv = (std::string *)a;
@@ -1147,14 +1152,15 @@ extern "C" MolSparseFingerPrint makeMorganSFP(CROMol data, int radius) {
   return (MolSparseFingerPrint)res;
 }
 
-extern "C" MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius) {
+extern "C" MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius,
+                                              int size) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
   std::vector<boost::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getConnectivityInvariants(*mol, invars, true);
-    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-        *mol, radius, getMorganFpSize(), &invars);
+    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius, size,
+                                                             &invars);
   } catch (...) {
     elog(ERROR, "makeMorganBFP: Unknown exception");
   }
@@ -1166,6 +1172,11 @@ extern "C" MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius) {
   } else {
     return NULL;
   }
+}
+
+extern "C" int64_t BitmapFingerprintToInt64(MolBitmapFingerPrint fp) {
+  const char *d = ((std::string *)fp)->data();
+  return *((int64_t *)d);
 }
 
 extern "C" MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius) {

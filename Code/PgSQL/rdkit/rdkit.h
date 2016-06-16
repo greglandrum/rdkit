@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 #include "postgres.h"
+#include <stdint.h>
 
 typedef bytea Mol;
 
@@ -201,6 +202,7 @@ bytea *makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data);
 
 int MolBitmapFingerPrintSize(MolBitmapFingerPrint a);
 
+double calcBigIntTanimotoSml(int64_t a, int64_t b);
 double calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
 double calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
 double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,
@@ -233,10 +235,11 @@ void countLowOverlapValues(bytea *sign, MolSparseFingerPrint data, int numInts,
 /*
  * Various mol -> fp transformation
  */
+int64_t BitmapFingerprintToInt64(MolBitmapFingerPrint fp);
 
 MolBitmapFingerPrint makeLayeredBFP(CROMol data);
 MolBitmapFingerPrint makeRDKitBFP(CROMol data);
-MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius);
+MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius, int size);
 MolSparseFingerPrint makeMorganSFP(CROMol data, int radius);
 MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius);
 MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius);
