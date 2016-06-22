@@ -385,7 +385,7 @@ SparseIntVect<uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius, std::vector<uint32_t> *invariants,
     const std::vector<uint32_t> *fromAtoms, bool useChirality,
     bool useBondTypes, bool useCounts, bool onlyNonzeroInvariants,
-    bool includeRedundantEnvironments, BitInfoMap *atomsSettingBits) {
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
@@ -397,7 +397,7 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
-    bool includeRedundantEnvironments, BitInfoMap *atomsSettingBits) {
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
@@ -410,7 +410,7 @@ ExplicitBitVect *getFingerprintAsBitVect(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
-    bool includeRedundantEnvironments, BitInfoMap *atomsSettingBits) {
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   ExplicitBitVect *res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
