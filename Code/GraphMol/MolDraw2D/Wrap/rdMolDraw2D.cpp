@@ -179,7 +179,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
-                     "fraction of empty space to leave around molecule");
+                     "fraction of empty space to leave around molecule")
+      .def_readwrite("includeRDKitMetadata",
+                     &RDKit::MolDrawOpsions::includeRDKitMetadata,
+                     "determines which metadata are included in the output");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)

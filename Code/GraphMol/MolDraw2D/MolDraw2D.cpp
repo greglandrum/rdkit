@@ -10,10 +10,13 @@
 //
 
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <cstdlib>
 #include <limits>
@@ -306,6 +309,22 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
 
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
+  }
+
+  if (drawOptions().includeRDKitMetadata) {
+    std::map<unsigned int, std::string> md;
+    if (drawOptions().includeRDKitMetadata & METADATA_PKL) {
+      std::string pkl;
+      MolPickler::pickleMol(mol, pkl);
+      md[METADATA_PKL] = pkl;
+    }
+    if (drawOptions().includeRDKitMetadata & METADATA_SMILES) {
+      md[METADATA_SMILES] = MolToSmiles(mol, true);
+    }
+    if (drawOptions().includeRDKitMetadata & METADATA_CTAB) {
+      md[METADATA_CTAB] = MolToMolBlock(mol);
+    }
+    rdkit_metadata_.push_back(md);
   }
   // {
   //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);

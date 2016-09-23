@@ -1652,6 +1652,68 @@ void test12DrawMols() {
   std::cerr << " Done" << std::endl;
 }
 
+void test13Metadata() {
+  std::cout << " ----------------- Testing inclusion of metadata" << std::endl;
+
+  std::string smiles =
+      "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
+  RWMol *m1 = SmilesToMol(smiles);
+  TEST_ASSERT(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+  {
+    MolDraw2DSVG drawer(200, 150);
+    drawer.drawOptions().includeRDKitMetadata = METADATA_SMILES;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test13_1.svg");
+    outs << text;
+    outs.flush();
+
+    TEST_ASSERT(text.find("<rdkit:metadata") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:mol") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:smiles") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:ctab") == std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:pkl") == std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(200, 150);
+    drawer.drawOptions().includeRDKitMetadata = METADATA_CTAB;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test13_2.svg");
+    outs << text;
+    outs.flush();
+
+    TEST_ASSERT(text.find("<rdkit:metadata") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:mol") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:smiles") == std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:ctab") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:pkl") == std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(200, 150);
+    drawer.drawOptions().includeRDKitMetadata = METADATA_CTAB | METADATA_SMILES;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test13_3.svg");
+    outs << text;
+    outs.flush();
+
+    TEST_ASSERT(text.find("<rdkit:metadata") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:mol") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:smiles") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:ctab") != std::string::npos);
+    TEST_ASSERT(text.find("<rdkit:pkl") == std::string::npos);
+  }
+
+  delete m1;
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1679,4 +1741,5 @@ int main() {
   test11DrawMolGrid();
 #endif
   test12DrawMols();
+  test13Metadata();
 }

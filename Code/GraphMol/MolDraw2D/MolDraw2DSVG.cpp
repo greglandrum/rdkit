@@ -50,6 +50,25 @@ void MolDraw2DSVG::initDrawing() {
 // ****************************************************************************
 void MolDraw2DSVG::finishDrawing() {
   // d_os << "</svg:g>";
+  if (drawOptions().includeRDKitMetadata) {
+    d_os << "<rdkit:metadata version='1.0'>";
+    for (std::vector<std::map<unsigned int, std::string> >::iterator mdit =
+             rdkit_metadata_.begin();
+         mdit != rdkit_metadata_.end(); ++mdit) {
+      d_os << "<rdkit:mol>";
+      if (drawOptions().includeRDKitMetadata & METADATA_SMILES) {
+        d_os << "<rdkit:smiles>" << (*mdit)[METADATA_SMILES]
+             << "</rdkit:smiles>";
+      }
+      if (drawOptions().includeRDKitMetadata & METADATA_CTAB) {
+        d_os << "<rdkit:ctab><![CDATA[" << (*mdit)[METADATA_CTAB]
+             << "]]></rdkit:ctab>";
+      }
+      // FIX: figure out how to properly encode the pickles
+      d_os << "</rdkit:mol>";
+    }
+    d_os << "</rdkit:metadata>";
+  }
   d_os << "</svg:svg>\n";
 }
 
@@ -131,7 +150,8 @@ void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
   d_os << " x='" << cds.x;
   d_os << "' y='" << cds.y << "'";
   d_os << " style='font-size:" << fontSz
-       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
+       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:"
+          "none;"
           "font-family:sans-serif;text-anchor:start;"
        << "fill:" << col << "'";
   d_os << " >";
@@ -292,7 +312,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "' y='" << draw_coords.y << "'";
 
   d_os << " style='font-size:" << fontSz
-       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
+       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:"
+          "none;"
           "font-family:sans-serif;text-anchor:start;"
        << "fill:" << col << "'";
   d_os << " >";

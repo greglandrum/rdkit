@@ -23,6 +23,7 @@
 #define RDKITMOLDRAW2D_H
 
 #include <vector>
+#include <map>
 
 #include <Geometry/point.h>
 #include <GraphMol/RDKitBase.h>
@@ -36,6 +37,11 @@ namespace RDKit {
 
 typedef boost::tuple<float, float, float> DrawColour;
 typedef std::vector<unsigned int> DashPattern;
+typedef enum {
+  METADATA_SMILES = 0x1,
+  METADATA_CTAB = 0x2,
+  METADATA_PKL = 0x4
+} RDKitMetadataType;
 
 struct MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
@@ -58,7 +64,8 @@ struct MolDrawOptions {
   double multipleBondOffset;  // offset (in Angstroms) for the extra lines in a
                               // multiple bond
   double padding;  // fraction of empty space to leave around the molecule
-  std::map<int, std::string> atomLabels;       // replacement labels for atoms
+  int includeRDKitMetadata;               // which RDKit metadata to include
+  std::map<int, std::string> atomLabels;  // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
 
   MolDrawOptions()
@@ -74,7 +81,8 @@ struct MolDrawOptions {
         legendFontSize(12),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
-        padding(0.05){};
+        padding(0.05),
+        includeRDKitMetadata(0){};
 };
 
 class MolDraw2D {
@@ -297,6 +305,8 @@ class MolDraw2D {
       const Atom &atom, const Point2D &nbr_sum);
 
  protected:
+  std::vector<std::map<unsigned int, std::string> > rdkit_metadata_;
+
   virtual void doContinuousHighlighting(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
