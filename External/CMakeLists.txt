@@ -1,3 +1,5 @@
 add_subdirectory(INCHI-API)
 add_subdirectory(AvalonTools)
-
+if(RDK_USE_URF)
+  #add_subdirectory(RingDecomposerLib)
+endif(RDK_USE_URF)

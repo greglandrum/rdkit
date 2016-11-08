@@ -12,6 +12,15 @@
 
 #include <map>
 #include <vector>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_USE_URF
+#include <RingDecomposerLib/RDLdataStruct.h>
+#include <RingDecomposerLib/RingDecomposerLib.h>
+#else
+typedef void RDL_data;
+#endif
 
 namespace RDKit {
 //! A class to store information about a molecule's rings
@@ -33,7 +42,8 @@ class RingInfo {
         d_atomMembers(other.d_atomMembers),
         d_bondMembers(other.d_bondMembers),
         d_atomRings(other.d_atomRings),
-        d_bondRings(other.d_bondRings){};
+        d_bondRings(other.d_bondRings),
+        dp_urfData(other.dp_urfData){};
 
   //! checks to see if we've been properly initialized
   bool isInitialized() const { return df_init; };
@@ -134,6 +144,9 @@ class RingInfo {
   bool df_init;
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
+
+ public:
+  boost::shared_ptr<RDL_data> dp_urfData;
 };
 }
 

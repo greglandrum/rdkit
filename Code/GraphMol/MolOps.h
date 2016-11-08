@@ -555,6 +555,8 @@ int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res = 0);
 */
 void fastFindRings(const ROMol &mol);
 
+void findRingFamilies(const ROMol &mol);
+
 //! symmetrize the molecule's Smallest Set of Smallest Rings
 /*!
    SSSR rings obatined from "findSSSR" can be non-unique in some case.

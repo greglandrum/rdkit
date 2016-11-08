@@ -884,8 +884,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
-    if (curFrag.size() < 3)
-      continue;
+    if (curFrag.size() < 3) continue;
 
     // the following is the list of atoms that are useful in the next round of
     // trimming
@@ -907,13 +906,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     }
 
     // check to see if this fragment can even have a possible ring
-    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0, "fragment graph has a dangling degree");
+    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0,
+                    "fragment graph has a dangling degree");
     bndcnt_with_zero_order_bonds = bndcnt_with_zero_order_bonds / 2;
     int num_possible_rings = bndcnt_with_zero_order_bonds - curFrag.size() + 1;
-    if (num_possible_rings < 1)
-      continue;
+    if (num_possible_rings < 1) continue;
 
-    CHECK_INVARIANT(nbnds % 2 == 0, "fragment graph problem when including zero-order bonds");
+    CHECK_INVARIANT(nbnds % 2 == 0,
+                    "fragment graph problem when including zero-order bonds");
     nbnds = nbnds / 2;
 
     boost::dynamic_bitset<> doneAts(nats);
@@ -1272,6 +1272,25 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
+#ifdef RDK_USE_URF
+#include <RingDecomposerLib/RDLdataStruct.h>
+void findRingFamilies(const ROMol &mol) {
+  // FIX: probably want to do something else here
+  if (mol.getRingInfo()->isInitialized()) {
+    // return;
+  } else {
+    mol.getRingInfo()->initialize();
+  }
+
+  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
+  for (ROMol::ConstBondIterator cbi = mol.beginBonds(); cbi != mol.endBonds();
+       ++cbi) {
+    RDL_addUEdge(graph, (*cbi)->getBeginAtomIdx(), (*cbi)->getEndAtomIdx());
+  }
+  RDL_data *urfdata = RDL_calculate(graph);
+  mol.getRingInfo()->dp_urfData.reset(urfdata);
+}
+#endif
 }  // end of MolOps namespace
 
 }  // end of RDKit namespace
