@@ -68,11 +68,15 @@ if(APPLE)
 endif(APPLE)
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
-  SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
+  SET(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} -package "org.RDKit")
 else()
-  SET(CMAKE_SWIG_FLAGS -package "org.RDKit" "-DSWIGWORDSIZE64")
+  SET(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} -package "org.RDKit" "-DSWIGWORDSIZE64")
 endif()
 SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit )
+
+if(MSVC)
+SET(CMAKE_SWIG_FLAGS "-DSWIGWIN" ${CMAKE_SWIG_FLAGS} )
+endif(MSVC)
 
 if(RDK_BUILD_INCHI_SUPPORT)
   SET(CMAKE_SWIG_FLAGS "-DBUILD_INCHI_SUPPORT" ${CMAKE_SWIG_FLAGS} )
@@ -128,18 +132,18 @@ ADD_CUSTOM_COMMAND(
   DEPENDS "${swig_generated_file_fullname}"
   COMMENT "javac *.java; jar cf -> .jar"
 
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
-  ## Run Javadoc against newly created .java files to create docs
-  COMMAND ${JAVADOC_EXE}  ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  ## Put the doc files into their own separate archive.
-  COMMAND ${JAVA_ARCHIVE} cf
-    ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
-    doc
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  #DEPENDS GraphMolWrap
-  DEPENDS "${swig_generated_file_fullname}"
-  COMMENT "jar cf org.RDKitDoc.jar -d doc"
+#  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
+#  ## Run Javadoc against newly created .java files to create docs
+#  COMMAND ${JAVADOC_EXE}  ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
+#    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#  ## Put the doc files into their own separate archive.
+#  COMMAND ${JAVA_ARCHIVE} cf
+#    ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
+#    doc
+#    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#  #DEPENDS GraphMolWrap
+#  DEPENDS "${swig_generated_file_fullname}"
+#  COMMENT "jar cf org.RDKitDoc.jar -d doc"
 )
 ADD_CUSTOM_TARGET(GraphMolWrapJar ALL
   DEPENDS GraphMolWrap ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar
@@ -164,7 +168,7 @@ ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class
   COMMAND ${JAVA_COMPILE} ${DOCLINT_FLAGS} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" ${JAVA_TEST_FILES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS GraphMolWrapJar ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar ${JAVA_TEST_FILES}
+  DEPENDS GraphMolWrapJar ${JAVA_TEST_FILES} # ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
 )
 ADD_CUSTOM_TARGET(BuildJavaWrapperTests ALL
   DEPENDS ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class GraphMolWrap

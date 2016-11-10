@@ -51,6 +51,14 @@
 %}
 #endif
 
+#ifdef SWIGWIN
+%{
+#ifdef _MSC_VER
+#pragma warning(disable:4101)
+#endif
+%}
+#endif
+
 /* Suppress the unimportant warnings */
 #pragma SWIG nowarn=503,516
 

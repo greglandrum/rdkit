@@ -59,11 +59,5 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %template(DiceSimilarity) RDKit::DiceSimilarity<boost::int32_t>;
 %template(TanimotoSimilaritySIVu32) RDKit::TanimotoSimilarity<boost::uint32_t>;
 %template(TanimotoSimilaritySIVi32) RDKit::TanimotoSimilarity<boost::int32_t>;
-#ifdef SWIGWIN
-// this really makes my head hurt
-%template(DiceSimilarity) RDKit::DiceSimilarity<__int64>;
-%template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<__int64>;
-#else
 %template(DiceSimilarity) RDKit::DiceSimilarity<boost::int64_t>;
 %template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<boost::int64_t>;
-#endif

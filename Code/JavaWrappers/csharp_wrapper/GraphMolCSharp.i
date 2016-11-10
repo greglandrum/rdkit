@@ -1,4 +1,3 @@
-
 /*
 * $Id: GraphMolJava.i 2141 2012-07-27 06:16:45Z glandrum $
 *
@@ -32,6 +31,14 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 %module RDKFuncs
+
+#ifdef SWIGWIN
+%{
+#ifdef _MSC_VER
+#pragma warning(disable:4101)
+#endif
+%}
+#endif
 
 #if defined(SWIGWORDSIZE64)
 %{
@@ -161,6 +168,8 @@ typedef unsigned long long int	uintmax_t;
 */
 #endif
 
+%shared_ptr(std::exception)
+%shared_ptr(RDKit::RDProps)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -181,6 +190,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
+%shared_ptr(RDKit::FilterCatalogEntry);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);
@@ -196,6 +206,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../types.i"
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
+%include "../RDProps.i"
 %include "../ROMol.i"
 %include "../RWMol.i"
 %include "../Bond.i"
@@ -208,6 +219,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
 %include "../SmilesParse.i"
@@ -231,6 +243,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolTransforms.i"
 %include "../FMCS.i"
 %include "../MolDraw2D.i"
+%include "../FilterCatalog.i"
+%include "../Trajectory.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
