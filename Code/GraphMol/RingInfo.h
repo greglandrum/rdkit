@@ -115,6 +115,12 @@ class RingInfo {
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &atomRings() const { return d_atomRings; };
+  //! returns our \c atom-ring-families vectors
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; };
 
   //@}
 

@@ -325,8 +325,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
 
   operationThatFailed = SANITIZE_SYMMRINGS;
   if (sanitizeOps & operationThatFailed) {
+#ifndef RDK_USE_URF
     VECT_INT_VECT arings;
     MolOps::symmetrizeSSSR(mol, arings);
+#else
+    MolOps::findRingFamilies(mol);
+#endif
   }
 
   // kekulizations

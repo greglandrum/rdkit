@@ -831,7 +831,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   res.resize(0);
   // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
+#ifndef RDK_USE_URF
     res = mol.getRingInfo()->atomRings();
+#else
+    res = mol.getRingInfo()->atomRingFamilies();
+#endif
     return rdcast<int>(res.size());
   } else {
     mol.getRingInfo()->initialize();
