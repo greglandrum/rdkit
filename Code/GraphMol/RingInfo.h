@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -144,6 +144,8 @@ class RingInfo {
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
+      - if the RDKit has been built with URF support, this returns the number
+        of ring families.
   */
   unsigned int numRings() const;
 
@@ -153,6 +155,13 @@ class RingInfo {
       - the object must be initialized before calling this
   */
   unsigned int numRingFamilies() const;
+
+  //! returns the total number of relevant cycles
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  unsigned int numRelevantCycles() const;
 
   //! returns our \c bond-rings vectors
   /*!
