@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -103,7 +102,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
     }
     ++beg;
   }
-  int nNbrs = neighborBondIndices.size();
+  size_t nNbrs = neighborBondIndices.size();
 
   //----------------------------------------------------------
   //
@@ -647,12 +646,6 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
 void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
 
-  // make sure we've calculated the implicit valence on each atom:
-  for (RWMol::AtomIterator atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
-       ++atomIt) {
-    (*atomIt)->calcImplicitValence(false);
-  }
-
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     Bond *bond = *bondIt;
@@ -662,8 +655,8 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         Atom *atom = bond->getBeginAtom();
         if (atom->getImplicitValence() == -1) {
-          atom->calcExplicitValence();
-          atom->calcImplicitValence();
+          atom->calcExplicitValence(false);
+          atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = FindAtomStereochemistry(mol, bond, conf);
         atom->setChiralTag(code);
@@ -766,6 +759,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   std::vector<Bond *> followupBonds;
 
   Bond *bond1 = 0, *obond1 = 0;
+  bool squiggleBondSeen = false;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg].get();
@@ -788,11 +782,17 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         bond1 = tBond;
       }
     }
+    if (tBond->getBondType() == Bond::SINGLE &&
+        tBond->getBondDir() == Bond::UNKNOWN) {
+      squiggleBondSeen = true;
+      break;
+    }
+
     ++beg;
   }
-  if (!bond1) {
-    // no single bonds from the beginning atom, mark
-    // the double bond as directionless and return:
+  // Don't do any direction setting if we've seen a squiggle bond, but do mark
+  // the double bond as a crossed bond and return
+  if (!bond1 || squiggleBondSeen) {
     dblBond->setBondDir(Bond::EITHERDOUBLE);
     return;
   }
@@ -820,9 +820,17 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         bond2 = tBond;
       }
     }
+    if (tBond->getBondType() == Bond::SINGLE &&
+        tBond->getBondDir() == Bond::UNKNOWN) {
+      squiggleBondSeen = true;
+      break;
+    }
+
     ++beg;
   }
-  if (!bond2) {
+  // Don't do any direction setting if we've seen a squiggle bond, but do mark
+  // the double bond as a crossed bond and return
+  if (!bond2 || squiggleBondSeen) {
     dblBond->setBondDir(Bond::EITHERDOUBLE);
     return;
   }

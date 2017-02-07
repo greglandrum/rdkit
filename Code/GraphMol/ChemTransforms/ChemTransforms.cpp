@@ -15,10 +15,12 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -327,15 +329,31 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
     return 0;
   }
 
+  return replaceCore(mol, coreQuery, matchV,
+                     replaceDummies, labelByIndex,
+                     requireDummyMatch);
+}
+
+ROMol *replaceCore(const ROMol &mol,
+                   const ROMol &core,
+                   const MatchVectType &matchV,
+                   bool replaceDummies,
+                   bool labelByIndex,
+                   bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
-  //  std::cerr << "replaceDummies " << (int) replaceDummies << std::endl;
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
+    if(mvit->first < 0 || mvit->first >= rdcast<int>(core.getNumAtoms()))
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the core molecule" );
+    if(mvit->second < 0 || mvit->second >= rdcast<int>(mol.getNumAtoms()))
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the target molecule" );
+    
     if (replaceDummies ||
-        coreQuery.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
-      //      std::cerr << "matchingIndices[" << mvit->second << "] = " << mvit->first << std::endl;
+        core.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
       matchingIndices[mvit->second] = mvit->first;
     }
     allIndices[mvit->second] = mvit->first;
@@ -389,7 +407,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
         if (matchingIndices[nbrIdx] > -1) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
-              coreQuery.getAtomWithIdx(matchingIndices[nbrIdx])
+              core.getAtomWithIdx(matchingIndices[nbrIdx])
                       ->getAtomicNum() != 0) {
             delete newMol;
             return NULL;

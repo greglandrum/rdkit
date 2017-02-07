@@ -37,6 +37,8 @@ unsigned int getHeavyDegree(const RDKit::Atom *atom) {
     if (atom->getOwningMol()[*nbrIdx]->getAtomicNum() != 1) ++res;
     ++nbrIdx;
   }
+  // special case: only explicit H attachments
+  if (res == 0 && atom->getAtomicNum() == 1) res = atom->getDegree();
   return res;
 }
 }  // end of anonymous namespace
@@ -283,7 +285,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   eeatm.loc = RDGeom::Point2D(BOND_LEN, 0.0);
   eeatm.nbr1 = begAtm;
   eeatm.CisTransNbr = nbrAtms[1];
-  if (stype == RDKit::Bond::STEREOZ) {
+  if (stype == RDKit::Bond::STEREOZ || stype == RDKit::Bond::STEREOCIS) {
     eeatm.normal = RDGeom::Point2D(0.0, -1.0);
     eeatm.ccw = true;
   } else {

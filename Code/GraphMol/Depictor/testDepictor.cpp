@@ -802,6 +802,86 @@ void testGitHubIssue910() {
     delete m;
   }
 }
+
+void testGitHubIssue1073() {
+  // computeInitialCoords() should call the SSSR code before it calls
+  // assignStereochemistry()
+  {
+    std::string smarts = "[a]12[a][a][a][a][a]1[a][a][a]2";
+    RWMol *m = SmartsToMol(smarts);
+    TEST_ASSERT(m);
+
+    RDDepict::compute2DCoords(*m);
+
+    RingInfo *ri = m->getRingInfo();
+    TEST_ASSERT(ri->isInitialized());
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 6));
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 5));
+    TEST_ASSERT(!ri->isAtomInRingOfSize(0, 9));
+
+    delete m;
+  }
+}
+
+void testConstrainedCoords() {
+
+  std::string rdbase = getenv("RDBASE");
+  std::string ofile =
+    rdbase + "/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf";
+  SDWriter writer(ofile);
+
+  std::string templ_smiles= "c1nccc2n1ccc2";
+  ROMol *templ = SmilesToMol( templ_smiles );
+  TEST_ASSERT( templ );
+  RDDepict::compute2DCoords( *templ );
+  std::string smiles = "c1cccc2ncn3cccc3c21";
+  ROMol *m = SmilesToMol( smiles );
+  TEST_ASSERT( m );
+  RDDepict::generateDepictionMatching2DStructure( *m , *templ );
+  writer.write( *m );
+  
+  std::string smarts = "*1****2*1***2";
+  ROMol *refPatt = SmartsToMol( smarts );
+  RDDepict::generateDepictionMatching2DStructure( *m , *templ , -1 , refPatt );
+  writer.write( *m );
+  
+  delete templ;
+  delete m;
+  delete refPatt;
+
+  std::string xp0_file =
+    rdbase + "/Code/GraphMol/Depictor/test_data/1XP0_ligand.sdf";
+  RDKit::ROMol *xp0_lig = RDKit::MolFileToMol( xp0_file );
+  RDKit::ROMol *xp0_lig_2d = new RDKit::ROMol( *xp0_lig );
+  RDDepict::compute2DCoords( *xp0_lig_2d );
+  writer.write( *xp0_lig_2d );
+  RDDepict::generateDepictionMatching3DStructure( *xp0_lig_2d , *xp0_lig );
+  writer.write( *xp0_lig_2d );
+
+  delete xp0_lig;
+  delete xp0_lig_2d;
+}  
+void testGitHubIssue1112() {
+  // Bad coordinate generation for H2
+  {
+    std::string smiles = "[H][H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+
+    RDDepict::compute2DCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).y, -1));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).z, 0));
+
+    delete m;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -965,5 +1045,28 @@ int main() {
   testGitHubIssue910();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1073\n";
+  testGitHubIssue1073();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   testConstrainedCoords\n";
+  testConstrainedCoords();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "   Test GitHub Issue 1112: Bad coordinate generation for H2\n";
+  testGitHubIssue1112();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
   return (0);
 }

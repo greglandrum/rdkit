@@ -127,14 +127,16 @@ struct bond_wrapper {
              "Set the type of the bond as a BondDir\n")
 
         .def("GetStereo", &Bond::getStereo,
-             "Returns the CIP-classification of the bond as a BondStereo\n")
-        // this is no longer exposed because it requires that stereo atoms
-        // be set. This is a task that is tricky and "dangerous".
-        //.def("SetStereo",&Bond::setStereo,
-        //	   "Set the CIP-classification of the bond as a BondStereo\n")
+             "Returns the stereo configuration of the bond as a BondStereo\n")
+        .def("SetStereo", &Bond::setStereo,
+             "Set the stereo configuration of the bond as a BondStereo\n")
         .def("GetStereoAtoms", getBondStereoAtoms,
              "Returns the indices of the atoms setting this bond's "
-             "stereochemistry.")
+             "stereochemistry.\n")
+        .def("SetStereoAtoms", &Bond::setStereoAtoms,
+             "Set the indices of the atoms setting this bond's "
+             "stereochemistry.\n")
+
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
              "Returns the contribution of the bond to the valence of an "
@@ -333,12 +335,15 @@ struct bond_wrapper {
         .value("BEGINDASH", Bond::BEGINDASH)
         .value("ENDDOWNRIGHT", Bond::ENDDOWNRIGHT)
         .value("ENDUPRIGHT", Bond::ENDUPRIGHT)
+        .value("EITHERDOUBLE", Bond::EITHERDOUBLE)
         .value("UNKNOWN", Bond::UNKNOWN);
     python::enum_<Bond::BondStereo>("BondStereo")
         .value("STEREONONE", Bond::STEREONONE)
         .value("STEREOANY", Bond::STEREOANY)
         .value("STEREOZ", Bond::STEREOZ)
-        .value("STEREOE", Bond::STEREOE);
+        .value("STEREOE", Bond::STEREOE)
+        .value("STEREOCIS", Bond::STEREOCIS)
+        .value("STEREOTRANS", Bond::STEREOTRANS);
 
     bondClassDoc =
         "The class to store QueryBonds.\n\
