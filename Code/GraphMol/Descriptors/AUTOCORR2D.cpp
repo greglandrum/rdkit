@@ -138,17 +138,15 @@ namespace RDKit {
                                 }
                             }
 
-                            for (unsigned int j = 0; j < 6; ++j) {
-                                for (unsigned int i = 0; i < 8; ++i) {
-                                  std::cout <<   TDBmatC[j][i]  << ",";
-                                  std::cout <<   TDBmatM[j][i]  << ",";
-                                  std::cout <<   TDBmatG[j][i]  << ",";
-                                  std::cout <<   TDBmat[j][i]  << ",";
-
-                                }
-                            }
-
-
+                            // for (unsigned int j = 0; j < 6; ++j) {
+                            //     for (unsigned int i = 0; i < 8; ++i) {
+                            //       std::cout <<   TDBmatC[j][i]  << ",";
+                            //       std::cout <<   TDBmatM[j][i]  << ",";
+                            //       std::cout <<   TDBmatG[j][i]  << ",";
+                            //       std::cout <<   TDBmat[j][i]  << ",";
+                            //
+                            //     }
+                            // }
 
                             // update the Output vector!
                             for (unsigned int j = 0; j < 6; ++j) {
