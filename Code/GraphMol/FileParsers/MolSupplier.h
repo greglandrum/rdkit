@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2013 greg landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2017 greg landrum, Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_MOLSUPPLIER_H
-#define _RD_MOLSUPPLIER_H
+#pragma once
 
 #include <RDGeneral/types.h>
 
@@ -350,4 +349,6 @@ class PDBMolSupplier : public MolSupplier {
 };
 }
 
+#ifdef RDK_BUILD_MAESTRO_SUPPORT
+#include <MaestroSupport/MAESupplier.h>
 #endif
