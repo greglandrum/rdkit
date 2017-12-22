@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -952,6 +952,10 @@ void testGitHubIssue1286() {
 }
 
 int main() {
+#ifdef BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   BOOST_LOG(rdInfoLog)
