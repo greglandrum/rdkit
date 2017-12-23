@@ -119,6 +119,25 @@
 %newobject deleteSubstructs;
 %newobject getAtoms;
 
+%{
+#ifdef BUILD_COORDGEN_SUPPORT
+bool getPreferCoordGen() {
+  return RDDepict::preferCoordGen;
+}
+void setPreferCoordGen(bool val) {
+  RDDepict::preferCoordGen = val;
+}
+#else
+bool getPreferCoordGen() {
+  return false;
+}
+void setPreferCoordGen(bool val) {
+}
+#endif 
+%}
+
+bool getPreferCoordGen();
+void setPreferCoordGen(bool);
 
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
@@ -235,7 +254,8 @@
                                unsigned int nFlipsPerSample=0,
                                unsigned int nSamples=0,
                                int sampleSeed=0,
-                               bool permuteDeg4Nodes=false) {
+                               bool permuteDeg4Nodes=false,
+			       bool forceRDKit=false) {
     return RDDepict::compute2DCoords(*($self),
                                coordMap,
                                canonOrient,
@@ -243,7 +263,7 @@
                                nFlipsPerSample,
                                nSamples,
                                sampleSeed,
-                               permuteDeg4Nodes);
+				     permuteDeg4Nodes, forceRDKit);
   }
 
   unsigned int compute2DCoords(RDKit::ROMol &templ){
@@ -272,7 +292,7 @@
                                            unsigned int nFlipsPerSample=3,
                                            unsigned int nSamples=100,
                                            int sampleSeed=25,
-                                           bool permuteDeg4Nodes=true) {
+                                           bool permuteDeg4Nodes=true, bool forceRDKit=false) {
     return RDDepict::compute2DCoordsMimicDistMat(*($self),
                                                  dmat,
                                                  canonOrient,
@@ -281,7 +301,7 @@
                                                  nFlipsPerSample,
                                                  nSamples,
                                                  sampleSeed,
-                                                 permuteDeg4Nodes);
+                                                 permuteDeg4Nodes, forceRDKit);
 
   }
 
