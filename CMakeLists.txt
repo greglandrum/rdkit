@@ -364,16 +364,16 @@ if(RDK_USE_STRICT_ROTOR_DEFINITION)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
 
-add_subdirectory(External)
+#add_subdirectory(External)
 add_subdirectory(Code)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
-  add_subdirectory(Projects)
+#  add_subdirectory(Projects)
   add_subdirectory(rdkit)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)
-  add_subdirectory(Contrib)
+#  add_subdirectory(Contrib)
 endif(RDK_BUILD_CONTRIB)
 
 # Packaging
