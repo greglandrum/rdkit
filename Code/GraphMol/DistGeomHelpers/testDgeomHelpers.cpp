@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -118,9 +118,8 @@ void computeDistMat(const RDGeom::PointPtrVect &origCoords,
       d = ptj.length();
       distMat.setVal(i, j, d);
     }
-  }
 }
-
+}
 void computeMolDmat(ROMol &mol, RDNumeric::DoubleSymmMatrix &distMat) {
   RDGeom::PointPtrVect origCoords;
   unsigned int i, nat = mol.getNumAtoms();
@@ -2014,13 +2013,70 @@ void testGithubPullRequest1635() {
   }
 }
 
+
+
+void testGithub1738() {
+  {
+    RWMol *m = SmilesToMol("N[C@@H](CCCNC(N)=N)C(O)=O");
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+
+    RWMol firstMol(*m);
+    RWMol secondMol(*m);
+    delete m;
+
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 0;
+
+    INT_VECT firstCids = DGeomHelpers::EmbedMultipleConfs(firstMol, 10, params);
+    INT_VECT secondCids = DGeomHelpers::EmbedMultipleConfs(secondMol, 10, params);
+    TEST_ASSERT(firstCids.size() == 10);
+    TEST_ASSERT(secondCids.size() == 10);
+
+    // first make sure that we get the same conformer for each of the molecules:
+    for (size_t i = 0; i < 10; i++) {
+        TEST_ASSERT(firstCids[i] == secondCids[i]);
+
+        int confIdx = firstCids[i];
+        const Conformer &firstConf = firstMol.getConformer(confIdx);
+        const Conformer &secondConf = secondMol.getConformer(confIdx);
+
+        for (int atomIdx = 0; atomIdx < firstMol.getNumAtoms(); ++atomIdx) {
+            const RDGeom::Point3D &firstPoint = firstConf.getAtomPos(atomIdx);
+            const RDGeom::Point3D &secondPoint = secondConf.getAtomPos(atomIdx);
+            TEST_ASSERT(firstPoint.x == secondPoint.x);
+            TEST_ASSERT(firstPoint.y == secondPoint.y);
+            TEST_ASSERT(firstPoint.z == secondPoint.z);
+        }
+    }
+    // now check that the conformers within the molecule are different
+    std::cerr<<MolToMolBlock(firstMol,0)<<std::endl;
+    for (size_t i = 1; i < 10; i++) {
+      std::cerr<<"------ "<<i<<std::endl;
+        std::cerr<<MolToMolBlock(firstMol,firstCids[i])<<std::endl;
+
+        const Conformer &firstConf = firstMol.getConformer(firstCids[0]);
+        const Conformer &secondConf = secondMol.getConformer(firstCids[i]);
+
+        for (int atomIdx = 0; atomIdx < firstMol.getNumAtoms(); ++atomIdx) {
+            const RDGeom::Point3D &firstPoint = firstConf.getAtomPos(atomIdx);
+            const RDGeom::Point3D &secondPoint = secondConf.getAtomPos(atomIdx);
+            TEST_ASSERT(firstPoint.x != secondPoint.x ||
+            firstPoint.y != secondPoint.y ||
+            firstPoint.z != secondPoint.z);
+        }
+    }
+
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
+#if 0
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -2177,7 +2233,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
   testEmbedParameters();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog)
@@ -2191,6 +2246,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Deterministic with large random seeds\n";
   testGithubPullRequest1635();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test github 1738: zero seed returning degen confs\n";
+  testGithub1738();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
