@@ -383,6 +383,8 @@ int Atom::calcImplicitValence(bool strict) {
       }
     }
     if (res < 0) {
+      res = std::max(res,0);
+#if 0
       if (strict) {
         // this means that the explicit valence is greater than any
         // allowed valence for the atoms - raise an error
@@ -396,6 +398,7 @@ int Atom::calcImplicitValence(bool strict) {
       } else {
         res = 0;
       }
+#endif
     }
   }
 

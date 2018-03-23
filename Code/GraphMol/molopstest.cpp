@@ -4693,7 +4693,7 @@ void testRenumberAtoms() {
     ROMol *nm = MolOps::renumberAtoms(*m, nVect);
     delete m;
   }
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 void testGithubIssue141() {
@@ -7097,6 +7097,47 @@ void testGithub1703() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void testGithub1768() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1768: cannot roundtrip 5-coordinate C+"
+                       << std::endl;
+  {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("F[C+](F)(F)(F)F", ps));
+    TEST_ASSERT(mol);
+    mol->updatePropertyCache();
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getExplicitValence()==5);
+  }
+
+  {
+    std::string mb="\n"
+"     RDKit          2D\n"
+"\n"
+"  6  5  0  0  0  0  0  0  0  0999 V2000\n"
+"    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -0.0000   -1.5000    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"   -1.2990   -0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"    1.2990   -0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n"
+"  1  2  1  0\n"
+"  2  3  1  0\n"
+"  2  4  1  0\n"
+"  2  5  1  0\n"
+"  2  6  1  0\n"
+"M  CHG  1   2   1\n"
+"M  END\n";
+    std::unique_ptr<RWMol> mol(MolBlockToMol(mb, false));
+    TEST_ASSERT(mol);
+    mol->updatePropertyCache();
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getExplicitValence()==5);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -7201,7 +7242,8 @@ int main() {
   testGithub1281();
   testGithub1605();
   testGithub1622();
-#endif
   testGithub1703();
+#endif
+  testGithub1768();
   return 0;
 }
