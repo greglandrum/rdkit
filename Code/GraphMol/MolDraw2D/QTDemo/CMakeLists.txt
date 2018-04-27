@@ -9,7 +9,6 @@ set(CMAKE_AUTOMOC ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   ADD_DEFINITIONS("-fPIC")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 include_directories(
@@ -40,4 +39,3 @@ set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )
 target_link_libraries( rdkitsv MolDraw2D ${LIBS}  )
-

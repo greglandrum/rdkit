@@ -24,7 +24,6 @@ if(RDK_BUILD_QT_SUPPORT)
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 
   target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp)
-  target_compile_options(MolDraw2D PRIVATE "-std=c++11")
   target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
   rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D)
 endif(RDK_BUILD_QT_SUPPORT)
