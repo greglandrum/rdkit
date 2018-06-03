@@ -19,6 +19,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
@@ -3507,6 +3508,59 @@ void testGitHubIssue1793() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testAtomPairFPGenerator() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test compatibility between atom pair "
+                           "implementation for FingerprintGenerator"
+                           " and old atom pairs implementation"
+                        << std::endl;
+  {
+    ROMol *mol;
+    SparseIntVect<boost::int32_t> *fp1, *fp2;
+    SparseIntVect<boost::uint32_t> *fpu;
+
+    FingerprintGenerator atomPairGenerator = AtomPair::getAtomPairGenerator();
+
+    mol = SmilesToMol("CCC");
+    fp1 = AtomPairs::getAtomPairFingerprint(*mol);
+    fpu = atomPairGenerator.getFingerprint(*mol);
+    fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
+    std::map<boost::uint32_t, int> nz = fpu->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
+    }
+
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete fpu;
+
+    mol = SmilesToMol("CC=O.Cl");
+    fp1 = AtomPairs::getAtomPairFingerprint(*mol);
+    fpu = atomPairGenerator.getFingerprint(*mol);
+    fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
+    nz = fpu->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
+    }
+
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete fpu;
+
+    atomPairGenerator.cleanUpResources();
+  }
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3561,6 +3615,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue874();
   testGitHubIssue879();
   testGitHubIssue1496();
+  testAtomPairFPGenerator();
 #endif
   testGitHubIssue1793();
 
