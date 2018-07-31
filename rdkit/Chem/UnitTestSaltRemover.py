@@ -4,15 +4,18 @@ import unittest
 import os
 from rdkit import Chem
 
-import Chem.SaltRemover
-from Chem.SaltRemover import SaltRemover, InputFormat
+from rdkit.Chem import SaltRemover
+from rdkit.Chem.SaltRemover import SaltRemover, InputFormat
+
 
 def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(Chem.SaltRemover, optionflags=doctest.ELLIPSIS))
   return tests
 
+
 class TestCase(unittest.TestCase):
+
   def test_withSmiles(self):
     remover = SaltRemover(defnData="[Na+]\nCC(=O)O", defnFormat=InputFormat.SMILES)
     self.assertEqual(len(remover.salts), 2)
@@ -27,7 +30,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(remover.salts), 240)
     m = Chem.MolFromSmiles("Cc1onc(-c2ccccc2)c1C([O-])=NC1C(=O)N2C1SC(C)(C)C2C(=O)O.O.[Na+]")
     tuple = remover.StripMolWithDeleted(m)
-    self.assertEqual(Chem.MolToSmiles(tuple.mol), 'Cc1onc(-c2ccccc2)c1C([O-])=NC1C(=O)N2C1SC(C)(C)C2C(=O)O.O')
+    self.assertEqual(
+      Chem.MolToSmiles(tuple.mol), 'Cc1onc(-c2ccccc2)c1C([O-])=NC1C(=O)N2C1SC(C)(C)C2C(=O)O.O')
     self.assertEqual(len(tuple.deleted), 1)
     self.assertEqual(Chem.MolToSmiles(tuple.deleted[0]), '[Na+]')
 
@@ -66,6 +70,15 @@ class TestCase(unittest.TestCase):
     res = remover.StripMol(mol)
     self.assertEqual(res.GetNumAtoms(), 4)
     self.assertEqual(Chem.MolToSmiles(res), 'CN(Cl)Br')
+
+  def test_github1987(self):
+    remover = SaltRemover()
+    mol = Chem.MolFromSmiles('CC(=O)O.[Na]')
+    res, deleted = remover.StripMolWithDeleted(mol, dontRemoveEverything=True)
+    self.assertEqual(res.GetNumAtoms(), 4)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), '[Na]')
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

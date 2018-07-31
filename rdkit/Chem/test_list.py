@@ -24,20 +24,49 @@ tests = [
   ("python", "UnitTestDocTestsChem.py", {}),
   ("python", "UnitTestFeatFinderCLI.py", {}),
   ("python", "UnitTestQED.py", {}),
-  ("python", "test_list.py", {'dir': 'AtomPairs'}),
-  ("python", "test_list.py", {'dir': 'ChemUtils'}),
-  ("python", "test_list.py", {'dir': 'EState'}),
-  ("python", "test_list.py", {'dir': 'FeatMaps'}),
-  ("python", "test_list.py", {'dir': 'Fingerprints'}),
-  ("python", "test_list.py", {'dir': 'Pharm2D'}),
-  ("python", "test_list.py", {'dir': 'Pharm3D'}),
-  ("python", "test_list.py", {'dir': 'Subshape'}),
-  ("python", "test_list.py", {'dir': 'Suppliers'}),
-  ("python", "test_list.py", {'dir': 'Scaffolds'}),
-  ("python", "test_list.py", {'dir': 'Draw'}),
-  ("python", "test_list.py", {'dir': 'Fraggle'}),
-  ("python", "test_list.py", {'dir': 'SimpleEnum'}),
-  ("python", "test_list.py", {'dir': 'Features'}),
+  ("python", "UnitTestSaltRemover.py", {}),
+  ("python", "test_list.py", {
+    'dir': 'AtomPairs'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'ChemUtils'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'EState'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'FeatMaps'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Fingerprints'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Pharm2D'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Pharm3D'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Subshape'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Suppliers'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Scaffolds'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Draw'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Fraggle'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'SimpleEnum'
+  }),
+  ("python", "test_list.py", {
+    'dir': 'Features'
+  }),
 ]
 
 # only attempt the MolKey tests if we have the pre-reqs:
