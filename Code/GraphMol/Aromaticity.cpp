@@ -286,6 +286,39 @@ bool incidentCyclicMultipleBond(const Atom *at) {
   return false;
 }
 
+bool aromaticSpecialCaseHeteroatom(const Atom *at) {
+  PRECONDITION(at, "bad atom");
+  return at->getAtomicNum() == 7 || at->getAtomicNum() == 8;
+}
+bool doubleBondedHeteroatomNeighbor(const Atom *at) {
+  PRECONDITION(at, "bad atom");
+  const ROMol &mol = at->getOwningMol();
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(at);
+  while (beg != end) {
+    const Bond *bond = mol[*beg];
+    if (bond->getBondType() == Bond::DOUBLE &&
+        aromaticSpecialCaseHeteroatom(bond->getOtherAtom(at))) {
+      return true;
+    }
+    ++beg;
+  }
+}
+bool doubleBondedCarbonNeighbor(const Atom *at) {
+  PRECONDITION(at, "bad atom");
+  const ROMol &mol = at->getOwningMol();
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(at);
+  while (beg != end) {
+    const Bond *bond = mol[*beg];
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getOtherAtom(at)->getAtomicNum() == 6) {
+      return true;
+    }
+    ++beg;
+  }
+}
+
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   int deg = at->getDegree() + at->getNumExplicitHs();
@@ -551,29 +584,21 @@ ElectronDonorType getAtomDonorTypeArom(
       res = NoElectronDonorType;
     }
   } else if (nelec == 1) {
-    if (incidentNonCyclicMultipleBond(at, who)) {
-      // the only available electron is going to be from the
-      // external multiple bond this electron will not be available
-      // for aromaticity if this atom is bonded to a more electro
-      // negative atom
-      const Atom *at2 = mol.getAtomWithIdx(who);
-      if (exocyclicBondsStealElectrons &&
-          PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
-                                                         at->getAtomicNum())) {
-        res = VacantElectronDonorType;
-      } else {
-        res = OneElectronDonorType;
-      }
-    } else {
-      // require that the atom have at least one multiple bond
-      if (incidentMultipleBond(at)) {
-        res = OneElectronDonorType;
-      }
-      // account for the tropylium and cyclopropenyl cation cases
-      else if (at->getFormalCharge() == 1) {
-        res = VacantElectronDonorType;
+    // require that the atom have at least one multiple bond
+    if (incidentMultipleBond(at)) {
+      res = OneElectronDonorType;
+      if (at->getAtomicNum() == 6 && doubleBondedHeteroatomNeighbor(at)) {
+        res = NoElectronDonorType;
+      } else if (aromaticSpecialCaseHeteroatom(at) &&
+                 doubleBondedCarbonNeighbor(at)) {
+        res = TwoElectronDonorType;
       }
     }
+    // account for the tropylium and cyclopropenyl cation cases
+    else if (at->getFormalCharge() == 1) {
+      res = VacantElectronDonorType;
+    }
+
   } else {
     if (incidentNonCyclicMultipleBond(at, who)) {
       // for cases with more than one electron :
@@ -593,6 +618,7 @@ ElectronDonorType getAtomDonorTypeArom(
       res = TwoElectronDonorType;
     }
   }
+  std::cerr << "  " << at->getIdx() << ": " << nelec << " " << res << std::endl;
   return (res);
 }
 }  // namespace
@@ -826,7 +852,8 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     // shares at least one bond
     // useful to figure out fused systems
     INT_INT_VECT_MAP neighMap;
-    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize, 1);
+    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize,
+                                   1);
 
     // now loop over all the candidate rings and check the
     // huckel rule - of course paying attention to fused systems.

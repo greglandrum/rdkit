@@ -2506,7 +2506,7 @@ void testSFIssue1836576() {
   TEST_ASSERT(ok);
   TEST_ASSERT(opThatFailed == MolOps::SANITIZE_PROPERTIES);
   delete m;
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7514,11 +7514,21 @@ void testGithub1990() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testAlternateAromaticity() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing alternate aromaticity" << std::endl;
+  {
+    auto mol = "C1=CC2=NCCCN2C=C1"_smiles;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic());
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -7624,7 +7634,8 @@ int main() {
   testGithub1810();
   testGithub1936();
   testGithub1928();
-#endif
   testGithub1990();
+#endif
+  testAlternateAromaticity();
   return 0;
 }
