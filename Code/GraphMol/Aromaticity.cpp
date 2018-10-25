@@ -288,6 +288,8 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 
 bool aromaticSpecialCaseHeteroatom(const Atom *at) {
   PRECONDITION(at, "bad atom");
+  // std::cerr<<"  asch: "<<at->getIdx()<<" "<<(at->getAtomicNum() == 7 ||
+  // at->getAtomicNum() == 8)<<std::endl;
   return at->getAtomicNum() == 7 || at->getAtomicNum() == 8;
 }
 bool doubleBondedHeteroatomNeighbor(const Atom *at) {
@@ -299,10 +301,14 @@ bool doubleBondedHeteroatomNeighbor(const Atom *at) {
     const Bond *bond = mol[*beg];
     if (bond->getBondType() == Bond::DOUBLE &&
         aromaticSpecialCaseHeteroatom(bond->getOtherAtom(at))) {
+      // std::cerr<<" dbhan: "<<at->getIdx()<<" true"<<std::endl;
       return true;
     }
     ++beg;
   }
+  // std::cerr<<" dbhan: "<<at->getIdx()<<" false"<<std::endl;
+
+  return false;
 }
 bool doubleBondedCarbonNeighbor(const Atom *at) {
   PRECONDITION(at, "bad atom");
@@ -313,10 +319,14 @@ bool doubleBondedCarbonNeighbor(const Atom *at) {
     const Bond *bond = mol[*beg];
     if (bond->getBondType() == Bond::DOUBLE &&
         bond->getOtherAtom(at)->getAtomicNum() == 6) {
+      // std::cerr<<" dbhcn: "<<at->getIdx()<<" true"<<std::endl;
       return true;
     }
     ++beg;
   }
+
+  // sstd::cerr<<" dbhcn: "<<at->getIdx()<<" false"<<std::endl;
+  return false;
 }
 
 bool incidentMultipleBond(const Atom *at) {
@@ -330,6 +340,12 @@ bool incidentMultipleBond(const Atom *at) {
     ++beg;
   }
   return at->getExplicitValence() != static_cast<int>(deg);
+}
+
+unsigned int numUnsaturations(const Atom *at) {
+  PRECONDITION(at, "bogus atom");
+  int res = at->getExplicitValence() - at->getDegree();
+  return static_cast<unsigned int>(std::max(res, 0));
 }
 
 bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
@@ -476,16 +492,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
        (at->getAtomicNum() != 34 && at->getAtomicNum() != 52))) {
     return false;
   }
-  switch (edon) {
-    case VacantElectronDonorType:
-    case OneElectronDonorType:
-    case TwoElectronDonorType:
-    case OneOrTwoElectronDonorType:
-    case AnyElectronDonorType:
-      break;
-    default:
-      return (false);
-  }
+  if (edon == NoElectronDonorType)
+    return false;
 
   // atoms that aren't in their default valence state also get shut out
   int defVal = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
@@ -507,7 +515,7 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // than one double or triple bond. This is to handle
   // the situation:
   //   C1=C=NC=N1 (sf.net bug 1934360)
-  int nUnsaturations = at->getExplicitValence() - at->getDegree();
+  int nUnsaturations = numUnsaturations(at);
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const ROMol &mol = at->getOwningMol();
@@ -555,7 +563,7 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
 }
 
 ElectronDonorType getAtomDonorTypeArom(
-    const Atom *at, bool exocyclicBondsStealElectrons = true) {
+    const Atom *at, bool exocyclicBondsStealElectrons = true, bool useAlternateModel = true) {
   PRECONDITION(at, "bad atom");
   if (at->getAtomicNum() == 0) {
     // dummies can be anything:
@@ -564,6 +572,7 @@ ElectronDonorType getAtomDonorTypeArom(
 
   ElectronDonorType res = NoElectronDonorType;
   int nelec = MolOps::countAtomElec(at);
+
   int who = -1;
   const ROMol &mol = at->getOwningMol();
   if (nelec < 0) {
@@ -587,12 +596,21 @@ ElectronDonorType getAtomDonorTypeArom(
     // require that the atom have at least one multiple bond
     if (incidentMultipleBond(at)) {
       res = OneElectronDonorType;
-      if (at->getAtomicNum() == 6 && doubleBondedHeteroatomNeighbor(at)) {
-        res = NoElectronDonorType;
-      } else if (aromaticSpecialCaseHeteroatom(at) &&
+      if (useAlternateModel && at->getAtomicNum() == 6 && doubleBondedHeteroatomNeighbor(at)) {
+        res = VacantElectronDonorType;
+      } else if (useAlternateModel && aromaticSpecialCaseHeteroatom(at) &&
                  doubleBondedCarbonNeighbor(at)) {
         res = TwoElectronDonorType;
+      } else if (at->getAtomicNum() != 6 && exocyclicBondsStealElectrons &&
+                 incidentNonCyclicMultipleBond(at, who)) {
+        const Atom *at2 = mol.getAtomWithIdx(who);
+        if (exocyclicBondsStealElectrons &&
+            PeriodicTable::getTable()->moreElectroNegative(
+                at2->getAtomicNum(), at->getAtomicNum())) {
+          res = VacantElectronDonorType;
+        }
       }
+
     }
     // account for the tropylium and cyclopropenyl cation cases
     else if (at->getFormalCharge() == 1) {
@@ -600,25 +618,28 @@ ElectronDonorType getAtomDonorTypeArom(
     }
 
   } else {
-    if (incidentNonCyclicMultipleBond(at, who)) {
-      // for cases with more than one electron :
-      // if there is an incident multiple bond with an element that
-      // is more electronegative than the this atom, count one less
-      // electron
-      const Atom *at2 = mol.getAtomWithIdx(who);
-      if (exocyclicBondsStealElectrons &&
-          PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
-                                                         at->getAtomicNum())) {
-        nelec--;
+    if (useAlternateModel && aromaticSpecialCaseHeteroatom(at) && doubleBondedCarbonNeighbor(at)) {
+      res = TwoElectronDonorType;
+    } else {
+      if (incidentNonCyclicMultipleBond(at, who)) {
+        // for cases with more than one electron :
+        // if there is an incident multiple bond with an element that
+        // is more electronegative than the this atom, count one less
+        // electron
+        const Atom *at2 = mol.getAtomWithIdx(who);
+        if (exocyclicBondsStealElectrons &&
+            PeriodicTable::getTable()->moreElectroNegative(
+                at2->getAtomicNum(), at->getAtomicNum())) {
+          nelec--;
+        }
+      }
+      if (nelec % 2 == 1) {
+        res = OneElectronDonorType;
+      } else {
+        res = TwoElectronDonorType;
       }
     }
-    if (nelec % 2 == 1) {
-      res = OneElectronDonorType;
-    } else {
-      res = TwoElectronDonorType;
-    }
   }
-  std::cerr << "  " << at->getIdx() << ": " << nelec << " " << res << std::endl;
   return (res);
 }
 }  // namespace
@@ -715,7 +736,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
-      edon[firstIdx] = getAtomDonorTypeArom(at, false);
+      edon[firstIdx] = getAtomDonorTypeArom(at, false, false);
       // we only accept one electron donors?
       if (edon[firstIdx] != OneElectronDonorType) {
         allAromatic = false;
@@ -824,6 +845,8 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       edon[firstIdx] = getAtomDonorTypeArom(at);
       acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
       if (!acands[firstIdx]) allAromatic = false;
+//      std::cerr << "  cand: " << firstIdx << " " << acands[firstIdx] << " "
+//                << edon[firstIdx] << std::endl;
     }
     if (allAromatic && !allDummy) {
       cRings.push_back(sring);

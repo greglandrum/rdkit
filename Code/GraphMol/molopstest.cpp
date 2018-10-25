@@ -2351,6 +2351,7 @@ void testSFIssue1694023() {
   delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
+  m->debugMol(std::cerr);
   TEST_ASSERT(m->getNumAtoms() == 5);
   TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
@@ -7522,13 +7523,19 @@ void testAlternateAromaticity() {
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic());
   }
+  {
+    auto mol = "C1=CC2=NC(=O)C=CN2C=C1"_smiles;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic());
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();
@@ -7554,9 +7561,7 @@ int main() {
   testIssue252();
   testIssue276();
   testHsAndAromaticity();
-  testSFIssue1694023();
   testSFIssue1719053();
-  testSFIssue1811276();
   testSFIssue1836576();
   testChiralityAndRemoveHs();
   testSFIssue1894348();
@@ -7629,7 +7634,6 @@ int main() {
   testGithub1281();
   testGithub1605();
   testGithub1614();
-  testGithub1622();
   testGithub1703();
   testGithub1810();
   testGithub1936();
@@ -7637,5 +7641,9 @@ int main() {
   testGithub1990();
 #endif
   testAlternateAromaticity();
+  testGithub1622();
+  testSFIssue1811276();
+  testSFIssue1694023();
+
   return 0;
 }
