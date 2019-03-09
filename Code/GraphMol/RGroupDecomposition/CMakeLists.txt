@@ -18,3 +18,7 @@ rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
            LINK_LIBRARIES RGroupDecomposition ChemTransforms FMCS FileParsers
            SmilesParse SubstructMatch GraphMol RDGeometryLib RDGeneral
            ${RDKit_THREAD_LIBS})
+
+rdkit_catch_test(rgroupTestCatch catch_tests.cpp LINK_LIBRARIES RGroupDecomposition Depictor ChemTransforms FMCS FileParsers
+           SmilesParse SubstructMatch GraphMol RDGeometryLib RDGeneral
+           ${RDKit_THREAD_LIBS} )
