@@ -40,7 +40,9 @@ TEST_CASE("A set of linked improvements", "[RGD]") {
     for (auto &mol : mols) {
       RDDepict::compute2DCoords(*mol);
     }
-    RGroupDecomposition rgd(*core);
+    RGroupDecompositionParameters params;
+    params.removeHydrogensPostMatch = false;
+    RGroupDecomposition rgd(*core, params);
     for (auto &mol : mols) {
       CHECK(rgd.add(*mol) >= 0);
     }
@@ -57,6 +59,25 @@ TEST_CASE("A set of linked improvements", "[RGD]") {
           // has been set. :-)
           auto sum = abs(conf.getAtomPos(i).x) + abs(conf.getAtomPos(i).y);
           CHECK(sum != 0.0);
+        }
+      }
+    }
+  }
+  SECTION("github #2331: default to removeHydrogensPostMatch=true") {
+    RGroupDecomposition rgd(*core);
+    for (auto &mol : mols) {
+      CHECK(rgd.add(*mol) >= 0);
+    }
+    CHECK(rgd.process());
+    auto columns = rgd.getRGroupsAsColumns();
+    for (auto col : columns) {
+      // if (col.first == "Core") continue;
+      for (auto mol : col.second) {
+        REQUIRE(mol);
+        // skip r groups that are just Hs
+        if (mol->getNumAtoms() == 2) continue;
+        for (const auto atom : mol->atoms()) {
+          CHECK(atom->getAtomicNum() != 1);
         }
       }
     }

@@ -68,7 +68,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
                                 unsigned int chunkSize = 5,
                                 bool matchOnlyAtRGroups = false,
                                 bool removeHydrogenOnlyGroups = true,
-                                bool removeHydrogensPostMatch = false)
+                                bool removeHydrogensPostMatch = true)
       : labels(labels),
         matchingStrategy(strategy),
         rgroupLabelling(labelling),
@@ -116,19 +116,17 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupColumns getRGroupsAsColumns() const;
 };
 
-RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
-                             const std::vector<ROMOL_SPTR> &mols,
-                             RGroupRows &rows,
-                             std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options =
-                                 RGroupDecompositionParameters());
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
+    const std::vector<ROMOL_SPTR> &cores, const std::vector<ROMOL_SPTR> &mols,
+    RGroupRows &rows, std::vector<unsigned int> *unmatched = 0,
+    const RGroupDecompositionParameters &options =
+        RGroupDecompositionParameters());
 
-RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
-                             const std::vector<ROMOL_SPTR> &mols,
-                             RGroupColumns &columns,
-                             std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options =
-                                 RGroupDecompositionParameters());
-}
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
+    const std::vector<ROMOL_SPTR> &cores, const std::vector<ROMOL_SPTR> &mols,
+    RGroupColumns &columns, std::vector<unsigned int> *unmatched = 0,
+    const RGroupDecompositionParameters &options =
+        RGroupDecompositionParameters());
+}  // namespace RDKit
 
 #endif
