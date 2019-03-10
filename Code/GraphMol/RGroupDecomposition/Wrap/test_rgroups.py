@@ -31,7 +31,9 @@
 
 
 import unittest
-import os,sys, copy
+import os
+import sys
+import copy
 
 import pickle
 
@@ -40,42 +42,51 @@ from rdkit import Chem
 from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecomposition, RGroupDecompositionParameters
 from collections import OrderedDict
 
-class TestCase(unittest.TestCase) :
+
+class TestCase(unittest.TestCase):
     def test_multicores(self):
         cores_smi_easy = OrderedDict()
         cores_smi_hard = OrderedDict()
 
         #cores_smi_easy['cephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
         cores_smi_easy['cephem'] = Chem.MolFromSmarts('O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CS2')
-        cores_smi_hard['cephem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
+        cores_smi_hard['cephem'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
 
         #cores_smi_easy['carbacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
         cores_smi_easy['carbacephem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])CC2')
-        cores_smi_hard['carbacephem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
+        cores_smi_hard['carbacephem'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
 
         #cores_smi_easy['oxacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
         cores_smi_easy['oxacephem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])CO2')
-        cores_smi_hard['oxacephem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
+        cores_smi_hard['oxacephem'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
 
         #cores_smi_easy['carbapenem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
         cores_smi_easy['carbapenem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])C2')
-        cores_smi_hard['carbapenem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
+        cores_smi_hard['carbapenem'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
 
         #cores_smi_easy['carbapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
         cores_smi_easy['carbapenam'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)C([3*])([4*])C2')
-        cores_smi_hard['carbapenam'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
+        cores_smi_hard['carbapenam'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
 
         #cores_smi_easy['penem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
         cores_smi_easy['penem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])S2')
-        cores_smi_hard['penem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
+        cores_smi_hard['penem'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
 
         #cores_smi_easy['penam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])S2')
         cores_smi_easy['penam'] = Chem.MolFromSmarts('O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])S2')
-        cores_smi_hard['penam'] = Chem.MolFromSmarts('O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2')
+        cores_smi_hard['penam'] = Chem.MolFromSmarts(
+            'O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2')
 
         #cores_smi_easy['oxapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
         cores_smi_easy['oxapenam'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)C([3*])([4*])O2')
-        cores_smi_hard['oxapenam'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
+        cores_smi_hard['oxapenam'] = Chem.MolFromSmarts(
+            'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
 
         cores_smi_easy['monobactam'] = Chem.MolFromSmarts('O=C1C([1*])C([5*])N1')
         cores_smi_hard['monobactam'] = Chem.MolFromSmarts('O=C1C([2*])([1*])C([6*])([5*])N1')
@@ -116,19 +127,18 @@ C1CCO[C@@](S)(P)1
         rgroups.Process()
         columns = rgroups.GetRGroupsAsColumns()
         data = {}
-        for k,v in columns.items():
-            data[k] = [Chem.MolToSmiles(m,True) for m in v]
+        for k, v in columns.items():
+            data[k] = [Chem.MolToSmiles(m, True) for m in v]
 
-        rgroups2,unmatched = RGroupDecompose([core], mols)
-        columns2,unmatched = RGroupDecompose([core], mols, asRows=False)
+        rgroups2, unmatched = RGroupDecompose([core], mols)
+        columns2, unmatched = RGroupDecompose([core], mols, asRows=False)
         data2 = {}
-        for k,v in columns2.items():
-            data2[k] = [Chem.MolToSmiles(m,True) for m in v]
+        for k, v in columns2.items():
+            data2[k] = [Chem.MolToSmiles(m, True) for m in v]
 
         self.assertEqual(data, data2)
         columns3, unmatched = RGroupDecompose([core], mols, asRows=False, asSmiles=True)
         self.assertEqual(data, columns3)
-        
 
     def test_h_options(self):
         core = Chem.MolFromSmiles("O=c1oc2ccccc2cc1")
@@ -136,22 +146,22 @@ C1CCO[C@@](S)(P)1
                   "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
                   "COc1ccc2c(Cn3cncn3)cc(=O)oc2c1")
         params = RGroupDecompositionParameters()
-        rgd = RGroupDecomposition(core,params)
+        rgd = RGroupDecomposition(core, params)
         for smi in smiles:
             m = Chem.MolFromSmiles(smi)
             rgd.Add(m)
         rgd.Process()
         columns = rgd.GetRGroupsAsColumns()
-        self.assertEqual(columns['R2'][0].GetNumAtoms(),12)
+        self.assertEqual(columns['R2'][0].GetNumAtoms(), 7)
 
-        params.removeHydrogensPostMatch = True
-        rgd = RGroupDecomposition(core,params)
+        params.removeHydrogensPostMatch = False
+        rgd = RGroupDecomposition(core, params)
         for smi in smiles:
             m = Chem.MolFromSmiles(smi)
             rgd.Add(m)
         rgd.Process()
         columns = rgd.GetRGroupsAsColumns()
-        self.assertEqual(columns['R2'][0].GetNumAtoms(),7)
+        self.assertEqual(columns['R2'][0].GetNumAtoms(), 12)
 
     def test_unmatched(self):
         cores = [Chem.MolFromSmiles("N")]
@@ -163,7 +173,7 @@ C1CCO[C@@](S)(P)1
 
         res, unmatched = RGroupDecompose(cores, mols)
         self.assertEqual(len(res), 1)
-        self.assertEqual(unmatched, [0,1,2,4])
+        self.assertEqual(unmatched, [0, 1, 2, 4])
 
     def test_userlabels(self):
         smis = ["C(Cl)N(N)O(O)"]
@@ -177,8 +187,8 @@ C1CCO[C@@](S)(P)1
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
                          {'Core': ['C(N(O[*:6])[*:5])[*:1]'],
                           'R1': ['Cl[*:1]'],
-                          'R5': ['[H]N([H])[*:5]'],
-                          'R6': ['[H]O[*:6]']})
+                          'R5': ['N[*:5]'],
+                          'R6': ['O[*:6]']})
 
         smarts = 'C([*:4])N([*:5])O([*:6])'
 
@@ -190,21 +200,20 @@ C1CCO[C@@](S)(P)1
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
                          {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
                           'R4': ['Cl[*:4]'],
-                          'R5': ['[H]N([H])[*:5]'],
-                          'R6': ['[H]O[*:6]']})
+                          'R5': ['N[*:5]'],
+                          'R6': ['O[*:6]']})
 
     def test_match_only_at_rgroups(self):
-        smiles = ['c1ccccc1']#, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
+        smiles = ['c1ccccc1']  # , 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
         mols = [Chem.MolFromSmiles(smi) for smi in smiles]
 
         core1 = Chem.MolFromSmiles("c1([*:5])cc([*:6])ccc1")
         params = RGroupDecompositionParameters()
-        params.onlyMatchAtRGroups=True
+        params.onlyMatchAtRGroups = True
         rg = RGroupDecomposition(core1, params)
-        for smi,m in zip(smiles,mols):
-            self.assertTrue(rg.Add(m)!=-1, smi)
-
+        for smi, m in zip(smiles, mols):
+            self.assertTrue(rg.Add(m) != -1, smi)
 
 
 if __name__ == '__main__':
-  unittest.main()
+    unittest.main()

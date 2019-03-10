@@ -147,7 +147,7 @@ void testRGroupOnlyMatching() {
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
 const char *ringDataRes[3] = {"Core:c1cc:[*:1]:c1 R1:o(:[*:1]):[*:1]",
-                              "Core:c1cc:[*:1]:c1 R1:[H]n(:[*:1]):[*:1]",
+                              "Core:c1cc:[*:1]:c1 R1:[nH](:[*:1]):[*:1]",
                               "Core:c1cc:[*:1]:c1 R1:s(:[*:1]):[*:1]"};
 
 void testRingMatching() {
@@ -182,10 +182,10 @@ void testRingMatching() {
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes2[3] = {
-    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1oc([H])c([*:1])c1[H] R2:Cl[*:2]",
-    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1c([*:1])c([H])n([H])c1[H] "
+    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])co1 R2:Cl[*:2]",
+    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])c[nH]1 "
     "R2:I[*:2]",
-    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1sc([H])c([*:1])c1[H] R2:F[*:2]"};
+    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])cs1 R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -220,9 +220,9 @@ void testRingMatching2() {
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes3[3] = {
-    "Core:c1co([*:2])cc1[*:1] R1:[H]C([H])(Cl)[*:1]",
-    "Core:c1cn([*:2])cc1[*:1] R1:[H]C([H])(I)[*:1] R2:[H][*:2]",
-    "Core:c1cs([*:2])cc1[*:1] R1:[H]C([H])(F)[*:1]"};
+    "Core:c1co([*:2])cc1[*:1] R1:ClC[*:1]",
+    "Core:c1cn([*:2])cc1[*:1] R1:IC[*:1] R2:[H][*:2]",
+    "Core:c1cs([*:2])cc1[*:1] R1:FC[*:1]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -331,7 +331,7 @@ void testGithub1550() {
   TEST_ASSERT(coreRes->getNumAtoms() == 14);
   MolOps::Kekulize(*coreRes);
   RWMol *rg2 = (RWMol *)groups["R2"][0].get();
-  TEST_ASSERT(rg2->getNumAtoms() == 12);
+  TEST_ASSERT(rg2->getNumAtoms() == 7);
   MolOps::Kekulize(*rg2);
 
   delete core;
@@ -360,11 +360,11 @@ void testRemoveHs() {
     decomp.process();
     RGroupColumns groups = decomp.getRGroupsAsColumns();
     RWMol *rg2 = (RWMol *)groups["R2"][0].get();
-    TEST_ASSERT(rg2->getNumAtoms() == 12);
+    TEST_ASSERT(rg2->getNumAtoms() == 7);
   }
   {
     RGroupDecompositionParameters params;
-    params.removeHydrogensPostMatch = true;
+    params.removeHydrogensPostMatch = false;
     RGroupDecomposition decomp(*core, params);
     const char *smilesData[3] = {"O=c1cc(Cn2ccnc2)c2ccc(Oc3ccccc3)cc2o1",
                                  "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
@@ -379,7 +379,7 @@ void testRemoveHs() {
     decomp.process();
     RGroupColumns groups = decomp.getRGroupsAsColumns();
     RWMol *rg2 = (RWMol *)groups["R2"][0].get();
-    TEST_ASSERT(rg2->getNumAtoms() == 7);
+    TEST_ASSERT(rg2->getNumAtoms() == 12);
   }
   delete core;
 }
@@ -387,34 +387,37 @@ void testRemoveHs() {
 void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test preferring grouping non hydrogens over hydrogens if possible" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "test preferring grouping non hydrogens over hydrogens if possible"
+      << std::endl;
 #if 1
-{
-  RWMol *core = SmilesToMol("Oc1ccccc1");
-  RGroupDecompositionParameters params;
+  {
+    RWMol *core = SmilesToMol("Oc1ccccc1");
+    RGroupDecompositionParameters params;
 
-  RGroupDecomposition decomp(*core, params);
-  const char *smilesData[5] = {"Oc1ccccc1","Oc1c(F)cccc1","Oc1ccccc1F","Oc1c(F)cc(N)cc1","Oc1ccccc1Cl"};
-  for (int i = 0; i < 5; ++i) {
-    ROMol *mol = SmilesToMol(smilesData[i]);
-    int res = decomp.add(*mol);
-    delete mol;
-    TEST_ASSERT(res == i);
-  }
-
-  decomp.process();
-  std::stringstream ss;
-  RGroupColumns groups = decomp.getRGroupsAsColumns();
-  for (auto &column : groups) {
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+    RGroupDecomposition decomp(*core, params);
+    const char *smilesData[5] = {"Oc1ccccc1", "Oc1c(F)cccc1", "Oc1ccccc1F",
+                                 "Oc1c(F)cc(N)cc1", "Oc1ccccc1Cl"};
+    for (int i = 0; i < 5; ++i) {
+      ROMol *mol = SmilesToMol(smilesData[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
     }
-  }
-  delete core;
-  //std::cerr<<ss.str()<<std::endl;
 
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Oc1ccc([*:1])cc1[*:2]
 Oc1ccc([*:1])cc1[*:2]
 Oc1ccc([*:1])cc1[*:2]
@@ -424,7 +427,7 @@ Rgroup===R1
 [H][*:1]
 [H][*:1]
 [H][*:1]
-[H]N([H])[*:1]
+N[*:1]
 [H][*:1]
 Rgroup===R2
 [H][*:2]
@@ -433,33 +436,34 @@ F[*:2]
 F[*:2]
 Cl[*:2]
 )RES");
-}
+  }
 #endif
-//std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
-{
-  RWMol *core = SmilesToMol("Cc1ccccc1");
-  RGroupDecompositionParameters params;
+  // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
+  {
+    RWMol *core = SmilesToMol("Cc1ccccc1");
+    RGroupDecompositionParameters params;
 
-  RGroupDecomposition decomp(*core, params);
-  std::vector<std::string> smilesData = {"c1ccccc1C","Fc1ccccc1C","c1cccc(F)c1C","Fc1cccc(F)c1C"};
-  for (const auto &smi : smilesData) {
-    ROMol *mol = SmilesToMol(smi);
-    int res = decomp.add(*mol);
-    delete mol;
-  }
-
-  decomp.process();
-  std::stringstream ss;
-  RGroupColumns groups = decomp.getRGroupsAsColumns();
-  for (auto &column : groups) {
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+    RGroupDecomposition decomp(*core, params);
+    std::vector<std::string> smilesData = {"c1ccccc1C", "Fc1ccccc1C",
+                                           "c1cccc(F)c1C", "Fc1cccc(F)c1C"};
+    for (const auto &smi : smilesData) {
+      ROMol *mol = SmilesToMol(smi);
+      int res = decomp.add(*mol);
+      delete mol;
     }
-  }
-  delete core;
-  //std::cerr<<ss.str()<<std::endl;
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -475,20 +479,20 @@ Rgroup===R2
 [H][*:2]
 F[*:2]
 )RES");
-}
-
+  }
 }
 
 void testMatchOnlyAtRgroupHs() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs"
+                       << std::endl;
 
   RWMol *core = SmilesToMol("*OCC");
   RGroupDecompositionParameters params;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp(*core, params);
-  const char *smilesData[2] = {"OCC","COCC"};
+  const char *smilesData[2] = {"OCC", "COCC"};
   for (int i = 0; i < 2; ++i) {
     ROMol *mol = SmilesToMol(smilesData[i]);
     decomp.add(*mol);
@@ -500,14 +504,16 @@ void testMatchOnlyAtRgroupHs() {
   RGroupColumns groups = decomp.getRGroupsAsColumns();
   for (auto &column : groups) {
     ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
+    for (auto &rgroup : column.second) {
       ss << MolToSmiles(*rgroup) << std::endl;
     }
   }
   std::cerr << ss.str() << std::endl;
 
   delete core;
-  TEST_ASSERT(ss.str() == "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C([H])([H])[*:1]\n");
+  TEST_ASSERT(
+      ss.str() ==
+      "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\nC[*:1]\n");
 }
 
 int main() {
@@ -530,7 +536,7 @@ int main() {
 #endif
   testRingMatching2();
   testGitHubIssue1705();
-  
+
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
