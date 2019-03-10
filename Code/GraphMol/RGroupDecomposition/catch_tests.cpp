@@ -32,7 +32,7 @@ TEST_CASE("A set of linked improvements", "[RGD]") {
     REQUIRE(m);
     mols.push_back(m);
   }
-  auto core = "c1cc([*:2])c([*:1])cn1"_smiles;
+  auto core = "c1c([*:2])c([*:1])ccn1"_smiles;
   REQUIRE(core);
 
   SECTION("github #2332: addHs() call should set coords") {
@@ -81,5 +81,33 @@ TEST_CASE("A set of linked improvements", "[RGD]") {
         }
       }
     }
+  }
+  SECTION(
+      "github #2330: remove RGroups that are a mix of Hs and empty values") {
+    auto core2 = "c1c([*:2])c([*:1])ncn1"_smiles;
+    REQUIRE(core2);
+    std::vector<ROMOL_SPTR> cores;
+    cores.push_back(ROMOL_SPTR(new ROMol(*core)));
+    cores.push_back(ROMOL_SPTR(new ROMol(*core2)));
+
+    RGroupDecomposition rgd(cores);
+    for (auto &mol : mols) {
+      CHECK(rgd.add(*mol) >= 0);
+    }
+    // add an extra molecule
+    auto m = "c1c(F)cncn1"_smiles;
+    REQUIRE(m);
+    std::cerr << "-----------------------------------" << std::endl;
+    CHECK(rgd.add(*m) >= 0);
+    CHECK(rgd.process());
+    auto columns = rgd.getRGroupsAsColumns();
+    for (const auto elem : columns) {
+      std::cerr << elem.first << " " << elem.second.size() << std::endl;
+    }
+    CHECK(columns.size() == 3);
+    CHECK(columns.find("Core") != columns.end());
+    CHECK(columns.find("R1") != columns.end());
+    CHECK(columns.find("R2") != columns.end());
+    CHECK(columns.find("R3") == columns.end());
   }
 }

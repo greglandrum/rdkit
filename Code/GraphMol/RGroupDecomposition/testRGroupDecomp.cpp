@@ -219,10 +219,9 @@ void testRingMatching2() {
 
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
-const char *ringDataRes3[3] = {
-    "Core:c1co([*:2])cc1[*:1] R1:ClC[*:1]",
-    "Core:c1cn([*:2])cc1[*:1] R1:IC[*:1] R2:[H][*:2]",
-    "Core:c1cs([*:2])cc1[*:1] R1:FC[*:1]"};
+const char *ringDataRes3[3] = {"Core:c1cc([*:1])co1 R1:ClC[*:1]",
+                               "Core:c1cc([*:1])cn1 R1:IC[*:1]",
+                               "Core:c1cc([*:1])cs1 R1:FC[*:1]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -232,7 +231,6 @@ void testRingMatching3() {
 
   RWMol *core = SmartsToMol("*1***[*:1]1");
   RGroupDecompositionParameters params;
-
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
     ROMol *mol = SmilesToMol(ringData3[i]);
@@ -254,17 +252,15 @@ void testRingMatching3() {
   delete core;
 }
 
-const char *coreSmi[] = {
-    "C1CCNC(Cl)CC1", "C1CC(Cl)NCCC1", "C1CCNC(I)CC1", "C1CC(I)NCCC1",
+const char *coreSmi[] = {"C1CCNC(Cl)CC1", "C1CC(Cl)NCCC1", "C1CCNC(I)CC1",
+                         "C1CC(I)NCCC1",  "C1CCSC(Cl)CC1", "C1CC(Cl)SCCC1",
+                         "C1CCSC(I)CC1",  "C1CC(I)SCCC1",  "C1CCOC(Cl)CC1",
+                         "C1CC(Cl)OCCC1", "C1CCOC(I)CC1",  "C1CC(I)OCCC1"};
 
-    "C1CCSC(Cl)CC1", "C1CC(Cl)SCCC1", "C1CCSC(I)CC1", "C1CC(I)SCCC1",
-
-    "C1CCOC(Cl)CC1", "C1CC(Cl)OCCC1", "C1CCOC(I)CC1", "C1CC(I)OCCC1"};
-
-const char *coreSmiRes[] = {"Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
+const char *coreSmiRes[] = {"Core:C1CCNC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:I[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",

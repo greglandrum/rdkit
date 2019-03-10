@@ -544,7 +544,7 @@ struct RGroupDecompData {
         bool allH = true;
         for (auto &i : result) {
           R_DECOMP::const_iterator rgroup = i.rgroups.find(label);
-          if (rgroup == i.rgroups.end() || !rgroup->second->isHydrogen()) {
+          if (rgroup != i.rgroups.end() && !rgroup->second->isHydrogen()) {
             allH = false;
             break;
           }
