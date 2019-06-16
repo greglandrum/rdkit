@@ -608,6 +608,18 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   } catch (...) {
     target << "N/A";
   }
+  target << " impH: ";
+  try {
+    target << at.getNumImplicitHs();
+  } catch (...) {
+    target << "N/A";
+  }
+  target << " expH: ";
+  try {
+    target << at.getNumExplicitHs();
+  } catch (...) {
+    target << "N/A";
+  }
   target << " hyb: " << at.getHybridization();
   target << " arom?: " << at.getIsAromatic();
   target << " chi: " << at.getChiralTag();

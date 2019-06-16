@@ -702,10 +702,12 @@ void test8() {
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 6);
 
+#if 0
   delete m;
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 3);
+#endif
 
   delete m;
   fName = rdbase + "test_data/unsanitary2.mol";
@@ -1568,49 +1570,49 @@ void testMolFileQueryToSmarts() {
   std::string sma;
 
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_2.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#6&x2]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_3.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#6&x3]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_0.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#6&x0]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_4.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#16&x4]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#6&x0]-[#6]")
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star2.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma.find("[#6&x2]") != std::string::npos);
 
   delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/unsaturation.mol";
-  m = MolFileToMol(fName);
+  m = MolFileToMol(fName, false);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
   TEST_ASSERT(sma == "[#6&$(*=,:,#*)]~[#8]")
@@ -2609,7 +2611,7 @@ void test3V3K() {
     TEST_ASSERT(m);
 
     TEST_ASSERT(m->getNumAtoms() == 6);
-    std::string sma = MolToSmarts(*m);
+    std::string sma = MolToSmarts(*m, false);
     TEST_ASSERT(sma == "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
 
     std::string mb = MolToMolBlock(*m, true, -1, true, true);
@@ -2617,7 +2619,7 @@ void test3V3K() {
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 6);
-    sma = MolToSmarts(*m);
+    sma = MolToSmarts(*m, false);
     TEST_ASSERT(sma == "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1");
     delete m;
   }
@@ -2629,7 +2631,7 @@ void test3V3K() {
     TEST_ASSERT(m);
 
     TEST_ASSERT(m->getNumAtoms() == 4);
-    std::string sma = MolToSmarts(*m);
+    std::string sma = MolToSmarts(*m,false;
     TEST_ASSERT(sma == "[#6]-[#6](-[#6])=[!#7&!#8]");
 
     std::string mb = MolToMolBlock(*m, true, -1, true, true);
@@ -2638,7 +2640,7 @@ void test3V3K() {
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
-    sma = MolToSmarts(*m);
+    sma = MolToSmarts(*m,false);
     TEST_ASSERT(sma == "[#6]-[#6](-[#6])=[!#7&!#8]");
     delete m;
   }
@@ -4159,7 +4161,7 @@ void testZBO() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 0);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
     TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
     delete m;

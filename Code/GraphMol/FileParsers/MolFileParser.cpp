@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 #include "FileParserUtils.h"
 #include "MolSGroupParsing.h"
 #include "MolFileStereochem.h"
+#include "MDLValence.h"
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
@@ -145,6 +146,8 @@ void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
   }
 }
 void completeMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
+  if (!mol->getRingInfo()->isInitialized()) MolOps::fastFindRings(*mol);
+
   for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
        ++ai) {
     if ((*ai)->hasQuery()) {
@@ -2696,14 +2699,31 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     res->clearAllBondBookmarks();
 
     // calculate explicit valence on each atom:
-    for (RWMol::AtomIterator atomIt = res->beginAtoms();
-         atomIt != res->endAtoms(); ++atomIt) {
-      (*atomIt)->calcExplicitValence(false);
+    for (auto atom : res->atoms()) {
+      atom->calcExplicitValence(false);
     }
 
     // postprocess mol file flags
     ProcessMolProps(res);
 
+    // calculate valence on each atom according to the MDL model:
+    if (sanitize) {
+      for (auto atom : res->atoms()) {
+        if (atom->getAtomicNum() > 0 && !atom->hasQuery() &&
+            !atom->hasProp(common_properties::molTotValence)) {
+          atom->updatePropertyCache(false);
+          int mdlValence =
+              calcMDLValence(atom->getAtomicNum(), atom->getFormalCharge(),
+                             atom->getExplicitValence());
+          int toAdd = mdlValence;
+          toAdd -= atom->getExplicitValence() + atom->getNumExplicitHs();
+          if (toAdd >= 0) {
+            atom->setNumExplicitHs(toAdd);
+            atom->setNoImplicit(true);
+          }
+        }
+      }
+    }
     // update the chirality and stereo-chemistry
     //
     // NOTE: we detect the stereochemistry before sanitizing/removing
@@ -2723,6 +2743,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     }
 
     if (sanitize) {
+      // std::cerr << "2===========" << std::endl;
+      // res->debugMol(std::cerr);
       try {
         if (removeHs) {
           MolOps::removeHs(*res, false, false);

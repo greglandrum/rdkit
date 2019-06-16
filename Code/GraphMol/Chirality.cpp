@@ -2272,7 +2272,7 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
         }
         if (atom->getImplicitValence() == -1) {
           atom->calcExplicitValence(false);
-          atom->calcImplicitValence(false);
+          //atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = atomChiralTypeFromBondDir(mol, bond, &conf);
         atom->setChiralTag(code);
