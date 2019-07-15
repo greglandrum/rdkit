@@ -118,19 +118,21 @@ struct AtomInfo {
 
   void setRLabel(unsigned int rlabel) {
     PRECONDITION(atom, "Internal error in SanitizeRxn - null atom");
-    RWMol &mol = dynamic_cast<RWMol &>(atom->getOwningMol());
-
-    QueryAtom qatom(*atom);
-    qatom.setProp(common_properties::_MolFileRLabel, rlabel);
-    std::string dLabel = "R" + std::to_string(rlabel);
-    qatom.setProp(common_properties::dummyLabel, dLabel);
-    if (rlabel > 0 && rlabel < 999) {
-      qatom.setIsotope(rlabel);
+    if(!atom->hasQuery() || describeQuery(atom) == "AtomAtomicNum 0 = val\n") {
+      RWMol &mol = dynamic_cast<RWMol &>(atom->getOwningMol());
+      QueryAtom qatom(*atom);
+      qatom.setQuery(makeAtomNullQuery());
+      unsigned int idx = atom->getIdx();
+      mol.replaceAtom(idx, &qatom);
+      atom = mol.getAtomWithIdx(idx);
     }
-    qatom.setQuery(makeAtomNullQuery());
-    unsigned int idx = atom->getIdx();
-    mol.replaceAtom(idx, &qatom);
-    atom = mol.getAtomWithIdx(idx);
+
+    atom->setProp(common_properties::_MolFileRLabel, rlabel);
+    std::string dLabel = "R" + std::to_string(rlabel);
+    atom->setProp(common_properties::dummyLabel, dLabel);
+    if (rlabel > 0 && rlabel < 999) {
+      atom->setIsotope(rlabel);
+    }
   }
 
   void setAtomMap(int map) {
