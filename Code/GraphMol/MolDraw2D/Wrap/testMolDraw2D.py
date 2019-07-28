@@ -353,49 +353,54 @@ M  END""")
     hs = []
     for i in range(conf.GetNumAtoms()):
       p = conf.GetAtomPosition(i)
-      p2 = Geometry.Point2D(p.x,p.y)
+      p2 = Geometry.Point2D(p.x, p.y)
       gs.append(p2)
       hs.append(0.4)
-      if not i%2 :
+      if not i % 2:
         ws.append(-0.5)
       else:
         ws.append(1)
 
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
-    Draw.ContourAndDrawGaussians(d,gs,hs,ws)
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    with open("contour_from_py_1.svg",'w+') as outf:
-      print(txt,file=outf)
+    with open("contour_from_py_1.svg", 'w+') as outf:
+      print(txt, file=outf)
 
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
     ps = Draw.ContourParams()
-    ps.fillGrid=True
-    Draw.ContourAndDrawGaussians(d,gs,hs,ws,params=ps)
+    ps.fillGrid = True
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    with open("contour_from_py_2.svg",'w+') as outf:
-      print(txt,file=outf)
+    with open("contour_from_py_2.svg", 'w+') as outf:
+      print(txt, file=outf)
 
   def testExtraDrawingCommands(self):
+    " this is another test just to make sure that things work "
     m = Chem.MolFromMolBlock("""
   Mrv1810 07271915232D          
 
-  4  4  0  0  0  0            999 V2000
+  6  6  0  0  0  0            999 V2000
    -1.5      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -1.5       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5       1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
   3  4  1  0  0  0  0
   4  1  1  0  0  0  0
+  2  5  1  0  0  0  0
+  4  6  1  0  0  0  0
 M  END
 """)
     d = Draw.MolDraw2DSVG(300, 300)
@@ -410,10 +415,9 @@ M  END
     ps = [Geometry.Point2D(p.x, p.y) for p in ps3]
     d.DrawPolygon(ps)
     d.DrawArrow(Geometry.Point2D(0, 0), Geometry.Point2D(0, 1.5))
-    d.DrawAttachmentLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0), Draw.DrawColour(1, 0, 1))
-    d.DrawWavyLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.0, 1.0), Draw.DrawColour(0, 0, 0),
-                   Draw.DrawColour(1, 0, 0))
-
+    d.DrawAttachmentLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0), (0.5, 0.5, 0.5), len=0.5)
+    d.DrawLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0))
+    d.DrawWavyLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 1.5), (0, 0, 0), (1, 0.2, 0.2))
     d.FinishDrawing()
     txt = d.GetDrawingText()
     with open("extras_1.svg", "w+") as outf:
