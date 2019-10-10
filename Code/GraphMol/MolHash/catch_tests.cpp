@@ -208,3 +208,83 @@ TEST_CASE("Tautomers and chirality", "[molhash]") {
 }  
 }
 }
+
+TEST_CASE("Isotopes", "[molhash]"){
+  SECTION("ElementGraph"){
+    auto om = "[13CH3]C(F)(Cl)Br"_smiles;
+    REQUIRE(om);
+    {
+      std::unique_ptr<RWMol> m(new RWMol(*om));
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::ElementGraph);
+      CHECK(hsh == "[13CH3]C(F)(Cl)Br");
+    }
+    {
+      std::unique_ptr<RWMol> m(new RWMol(*om));
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::ElementGraphNoIso);
+      CHECK(hsh == "CC(F)(Cl)Br");
+    }
+  }
+    SECTION("Canonical SMILES"){
+    auto om = "[13CH3]C(F)(Cl)Br"_smiles;
+    REQUIRE(om);
+    {
+      std::unique_ptr<RWMol> m(new RWMol(*om));
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::CanonicalSmiles);
+      CHECK(hsh == "[13CH3]C(F)(Cl)Br");
+    }
+    {
+      std::unique_ptr<RWMol> m(new RWMol(*om));
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::CanonicalSmilesNoIso);
+      CHECK(hsh == "CC(F)(Cl)Br");
+    }
+  }
+
+  SECTION("H removal"){
+    {
+      auto om = "[2H]C(F)(Cl)O"_smiles;
+      REQUIRE(om);
+      std::unique_ptr<RWMol> m(new RWMol(*om));
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::ElementGraphNoIso);
+      CHECK(hsh == "OC(F)Cl");
+    }
+  }
+  SECTION("Stereo"){
+    {
+      auto om = "[2H][C@H](F)O"_smiles;
+      REQUIRE(om);
+      {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::ElementGraph);
+        CHECK(hsh == "[2H][C@@H](O)F");
+      }
+      {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::CanonicalSmiles);
+        CHECK(hsh == "[2H][C@@H](O)F");
+      }
+    }
+    {
+      auto om = "[2H][C@H](F)O"_smiles;
+      REQUIRE(om);
+      {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::ElementGraphNoIso);
+        CHECK(hsh == "OCF");
+      }
+      {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::CanonicalSmilesNoIso);
+        CHECK(hsh == "OCF");
+      }
+    }
+  }
+}

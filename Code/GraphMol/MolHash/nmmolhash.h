@@ -39,7 +39,11 @@ enum class RDKIT_MOLHASH_EXPORT HashFunction {
   NetCharge = 14,
   SmallWorldIndexBR = 15,
   SmallWorldIndexBRL = 16,
-  ArthorSubstructureOrder = 17
+  ArthorSubstructureOrder = 17,
+  ElementGraphNoIso = 18,
+  CanonicalSmilesNoIso = 19,
+  
+
 };
 
 RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, enum HashFunction func);

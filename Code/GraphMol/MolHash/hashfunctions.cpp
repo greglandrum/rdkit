@@ -101,6 +101,29 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
   }
 }
 
+void RemoveIsotopes(RDKit::RWMol &mol){
+  bool changes = false;
+  bool hasIsoH = false;
+  for( auto at : mol.atoms()){
+    if(at->getIsotope()){
+      at->setIsotope(0);
+      changes=true;
+      if(at->getAtomicNum()==1){
+          hasIsoH = true;
+      }
+    }
+  }
+  if(hasIsoH){
+    bool implicitOnly = false;
+    bool updateExplicitCount = false;
+    bool sanitize=false;
+    RDKit::MolOps::removeHs(mol,implicitOnly,updateExplicitCount,sanitize);
+    bool cleanIt=true;
+    bool force=true;
+    RDKit::MolOps::assignStereochemistry(mol,cleanIt,force);
+  }
+} 
+
 }  // namespace
 
 namespace RDKit {
@@ -680,6 +703,8 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
   return buffer;
 }
 
+
+
 std::string MolHash(RWMol *mol, enum HashFunction func) {
   std::string result;
   char buffer[32];
@@ -690,9 +715,13 @@ std::string MolHash(RWMol *mol, enum HashFunction func) {
     case HashFunction::AnonymousGraph:
       result = AnonymousGraph(mol, false);
       break;
+    case HashFunction::ElementGraphNoIso:
+      RemoveIsotopes(*mol);
     case HashFunction::ElementGraph:
       result = AnonymousGraph(mol, true);
       break;
+    case HashFunction::CanonicalSmilesNoIso:
+      RemoveIsotopes(*mol);
     case HashFunction::CanonicalSmiles:
       result = MolToSmiles(*mol);
       break;
