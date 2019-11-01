@@ -5250,8 +5250,29 @@ void testGithub2000() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testPDBCrash() {
+  BOOST_LOG(rdInfoLog)
+      << "testing crash while generating SMILES for a protein"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName = rdbase + "PF00012_1ATR_6_384_A_cropped.pdb";
+    std::unique_ptr<RWMol> m1(PDBFileToMol(fName));
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==2938);
+    std::cerr<<"  go... "<<std::endl;
+    int v;
+    std::cin>>v;
+    auto smiles = MolToSmiles(*m1);
+    std::cerr<<"  "<<smiles<<std::endl;
+    std::cerr<<smiles.size()<<std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -5347,8 +5368,9 @@ void RunTests() {
   testGithub1689();
   testWedgeBondToDoublebond();
   testGithub1615();
-#endif
   testGithub2000();
+#endif
+  testPDBCrash();
 }
 
 // must be in German Locale for test...

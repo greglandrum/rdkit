@@ -1,5 +1,4 @@
 /* 
- * $Id: ForceFieldsTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
@@ -66,6 +65,17 @@ public class PDBTests extends GraphMolTest {
             assert(mi instanceof AtomPDBResidueInfo);
             // FIX: need to actually test this
             
+	}
+
+	@Test
+	public void testPDBCrashFromKNIME() {
+            File molFile = new File(testDataDir, "PF00012_1ATR_6_384_A_cropped.pdb");
+            ROMol m = RWMol.MolFromPDBFile(molFile.getPath());
+            String mb = new String(m.MolToPDBBlock());
+            ROMol m2 = RWMol.MolFromPDBBlock(mb);
+            assertEquals(2938, m2.getNumAtoms());
+            assertEquals(2983, m2.getNumBonds());
+            String smiles = new String(m.MolToSmiles(true));          
 	}
 
 
