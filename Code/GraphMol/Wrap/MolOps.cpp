@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +20,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
@@ -824,6 +825,12 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
                      requireDummyMatch);
 }
 
+std::vector<unsigned int> chiralRankAtomsHelper(const ROMol &mol) {
+  std::vector<unsigned int> res;
+  Canon::chiralRankMolAtoms(mol,res);
+  return res;
+}
+
 void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   Conformer *conf = nullptr;
   if (confObj) {
@@ -1618,6 +1625,9 @@ struct molops_wrapper {
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
+
+    python::def("ChiralRankMolAtoms",chiralRankAtomsHelper,(python::arg("mol")),
+    "returns atom rankings using the chiral atom ordering (*not* CIP ranking).");
 
     // ------------------------------------------------------------------------
     docString =
