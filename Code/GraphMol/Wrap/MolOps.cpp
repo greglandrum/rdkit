@@ -21,6 +21,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
@@ -831,6 +832,12 @@ std::vector<unsigned int> chiralRankAtomsHelper(const ROMol &mol) {
   return res;
 }
 
+std::vector<unsigned int> cipRankAtomsHelper(const ROMol &mol) {
+  std::vector<unsigned int> res(mol.getNumAtoms());
+  Chirality::assignAtomCIPRanks(mol,res);
+  return res;
+}
+
 void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   Conformer *conf = nullptr;
   if (confObj) {
@@ -1629,6 +1636,8 @@ struct molops_wrapper {
     python::def("ChiralRankMolAtoms",chiralRankAtomsHelper,(python::arg("mol")),
     "returns atom rankings using the chiral atom ordering (*not* CIP ranking).");
 
+    python::def("CIPRankMolAtoms",cipRankAtomsHelper,(python::arg("mol")),
+    "returns atom rankings using an approximation to the CIP ranking.");
     // ------------------------------------------------------------------------
     docString =
         "Uses bond directions to assign ChiralTypes to a molecule's atoms.\n\

@@ -329,7 +329,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     else if (ivi > ivj)
       return 1;
 
-    // FIX: get this working w/o R/S labels
     // chirality if we're using it
     if (df_useChirality) {
       // first atom stereochem:
@@ -489,6 +488,7 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     else if (ivi > ivj)
       return 1;
 
+    // FIX: get this working w/o R/S labels
     // atom stereochem:
     ivi = 0;
     ivj = 0;

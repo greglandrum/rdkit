@@ -37,6 +37,8 @@ namespace Chirality {
 */
 RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
+RDKIT_GRAPHMOL_EXPORT void assignAtomChiralRanks(const ROMol &mol,
+                                              UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
 

@@ -651,6 +651,22 @@ void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks) {
   }
 }
 
+
+// Figure out the CIP ranks for the atoms of a molecule
+void assignAtomChiralRanks(const ROMol &mol, UINT_VECT &ranks) {
+  PRECONDITION((!ranks.size() || ranks.size() >= mol.getNumAtoms()),
+               "bad ranks size");
+  if (!ranks.size()) ranks.resize(mol.getNumAtoms());
+  unsigned int numAtoms = mol.getNumAtoms();
+  Canon::chiralRankMolAtoms(mol, ranks);
+
+  // copy the ranks onto the atoms:
+  for (unsigned int i = 0; i < numAtoms; ++i) {
+    mol[i]->setProp(common_properties::_CIPRank, ranks[i], 1);
+  }
+}
+
+
 // construct a vector with <atomIdx,direction> pairs for
 // neighbors of a given atom.  This list will only be
 // non-empty if at least one of the bonds has its direction
