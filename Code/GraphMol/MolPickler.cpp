@@ -1994,7 +1994,7 @@ void MolPickler::_pickleStereo(std::ostream &ss,
   T tmpT = static_cast<T>(groups.size());
   streamWrite(ss, tmpT);
   for (auto &&group : groups) {
-    streamWrite(ss, static_cast<T>(group.getGroupType()));
+    streamWrite(ss, static_cast<T>(group.getStereoVal()));
     auto &atoms = group.getAtoms();
     streamWrite(ss, static_cast<T>(atoms.size()));
     for (auto &&atom : atoms) {
@@ -2015,7 +2015,7 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
     for (unsigned group = 0u; group < numGroups; ++group) {
       T tmpT;
       streamRead(ss, tmpT, version);
-      const auto groupType = static_cast<RDKit::StereoGroupType>(tmpT);
+      const auto groupType = static_cast<RDKit::StereoValType>(tmpT);
 
       streamRead(ss, tmpT, version);
       const unsigned numAtoms = static_cast<unsigned>(tmpT);

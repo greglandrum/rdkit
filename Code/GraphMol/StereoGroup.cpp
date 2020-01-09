@@ -3,13 +3,13 @@
 
 namespace RDKit {
 
-StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
+StereoGroup::StereoGroup(StereoValType grouptype, std::vector<Atom *> &&atoms)
     : d_grouptype(grouptype), d_atoms(atoms) {}
-StereoGroup::StereoGroup(StereoGroupType grouptype,
+StereoGroup::StereoGroup(StereoValType grouptype,
                          const std::vector<Atom *> &atoms)
     : d_grouptype(grouptype), d_atoms(atoms) {}
 
-StereoGroupType StereoGroup::getGroupType() const { return d_grouptype; }
+StereoValType StereoGroup::getStereoVal() const { return d_grouptype; }
 
 const std::vector<Atom *> &StereoGroup::getAtoms() const { return d_atoms; }
 

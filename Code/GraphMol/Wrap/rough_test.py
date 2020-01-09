@@ -5135,7 +5135,7 @@ M  END
     sg = m.GetStereoGroups()
     self.assertEqual(len(sg), 2)
     group1 = sg[1]
-    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(group1.GetStereoVal(), Chem.StereoValType.STEREO_OR)
     stereo_atoms = group1.GetAtoms()
     self.assertEqual(len(stereo_atoms), 2)
     # file is 1 indexed and says 5
@@ -5183,7 +5183,7 @@ M  END
     self.assertEqual(len(m2.GetStereoGroups()), 0)
 
     # Can add new StereoGroups
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m2,
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m2,
                                      [1])
     m2.SetStereoGroups([group1])
     self.assertEqual(len(m2.GetStereoGroups()), 1)
@@ -5192,7 +5192,7 @@ M  END
     # make sure that the object returned by CreateStereoGroup()
     # preserves the owning molecule:
     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m,
                                      [1])
     m.SetStereoGroups([group1])
     self.assertEqual(len(m.GetStereoGroups()), 1)
@@ -5214,20 +5214,20 @@ M  END
     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
 
     # List or tuple should be allowed:
-    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 3])
-    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, (1, 3))
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m, [1, 3])
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m, (1, 3))
 
     # Python ValueError (range error) with index past the end
     with self.assertRaises(ValueError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [100])
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m, [100])
 
     # Mol is None
     with self.assertRaises(TypeError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, None, [1])
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, None, [1])
 
     # Atom indices must be numbers
     with self.assertRaises(TypeError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 'text'])
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoValType.STEREO_OR, m, [1, 'text'])
 
   def testSubstructParameters(self):
     m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')

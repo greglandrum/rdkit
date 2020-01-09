@@ -1049,16 +1049,16 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
     res += "M  V30 BEGIN COLLECTION\n";
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
-      switch (group.getGroupType()) {
-        case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+      switch (group.getStereoVal()) {
+        case RDKit::StereoValType::STEREO_ABSOLUTE:
           res += "STEABS";
           break;
-        case RDKit::StereoGroupType::STEREO_OR:
+        case RDKit::StereoValType::STEREO_OR:
           res += "STEREL";
           res += boost::lexical_cast<std::string>(or_count);
           ++or_count;
           break;
-        case RDKit::StereoGroupType::STEREO_AND:
+        case RDKit::StereoValType::STEREO_AND:
           res += "STERAC";
           res += boost::lexical_cast<std::string>(and_count);
           ++and_count;

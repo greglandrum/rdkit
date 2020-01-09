@@ -1341,12 +1341,12 @@ void testEnhancedStereoChemistry() {
   {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE,
+    groups.emplace_back(RDKit::StereoValType::STEREO_ABSOLUTE,
                         std::move(atoms0));
     std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1));
+    groups.emplace_back(RDKit::StereoValType::STEREO_OR, std::move(atoms1));
     std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_AND, std::move(atoms2));
+    groups.emplace_back(RDKit::StereoValType::STEREO_AND, std::move(atoms2));
     m.setStereoGroups(std::move(groups));
   }
 
@@ -1359,7 +1359,7 @@ void testEnhancedStereoChemistry() {
   auto &new_groups = roundTripped->getStereoGroups();
   TEST_ASSERT(ref_groups.size() == new_groups.size());
   for (unsigned i = 0u; i < 3; ++i) {
-    TEST_ASSERT(ref_groups[i].getGroupType() == new_groups[i].getGroupType());
+    TEST_ASSERT(ref_groups[i].getStereoVal() == new_groups[i].getStereoVal());
   }
 }
 
