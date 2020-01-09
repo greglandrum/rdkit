@@ -54,9 +54,9 @@ python::object getAtomsHelper(StereoGroup &sg) {
 struct stereogroup_wrap {
   static void wrap() {
     python::enum_<RDKit::StereoValType>("StereoValType")
-        .value("STEREO_ABSOLUTE", RDKit::StereoValType::STEREO_ABSOLUTE)
-        .value("STEREO_OR", RDKit::StereoValType::STEREO_OR)
-        .value("STEREO_AND", RDKit::StereoValType::STEREO_AND)
+        .value("REL_ABSOLUTE", RDKit::StereoValType::REL_ABSOLUTE)
+        .value("REL_OR", RDKit::StereoValType::REL_OR)
+        .value("REL_AND", RDKit::StereoValType::REL_AND)
         .export_values();
 
     python::class_<StereoGroup, boost::shared_ptr<StereoGroup>>(

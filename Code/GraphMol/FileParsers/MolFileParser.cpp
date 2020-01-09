@@ -178,14 +178,14 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
     if (regex_match(tempStr, match, stereo_label)) {
-      StereoValType grouptype = RDKit::StereoValType::STEREO_ABSOLUTE;
+      StereoValType grouptype = RDKit::StereoValType::REL_ABSOLUTE;
 
       if (match[1] == "ABS") {
-        grouptype = RDKit::StereoValType::STEREO_ABSOLUTE;
+        grouptype = RDKit::StereoValType::REL_ABSOLUTE;
       } else if (match[1] == "REL") {
-        grouptype = RDKit::StereoValType::STEREO_OR;
+        grouptype = RDKit::StereoValType::REL_OR;
       } else if (match[1] == "RAC") {
-        grouptype = RDKit::StereoValType::STEREO_AND;
+        grouptype = RDKit::StereoValType::REL_AND;
       } else {
         std::ostringstream errout;
         errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
