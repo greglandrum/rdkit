@@ -21,7 +21,7 @@
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/StereoGroup.h>
+#include <GraphMol/ExtendedStereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
@@ -170,7 +170,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
       R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\))regex");
 
   smatch match;
-  std::vector<StereoGroup> groups;
+  std::vector<ExtendedStereoGroup> groups;
 
   // Read the collection until the end
   auto tempStr = getV3000Line(inStream, line);
@@ -178,17 +178,17 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
     if (regex_match(tempStr, match, stereo_label)) {
-      StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      ExtendedStereoGroupType grouptype = RDKit::ExtendedStereoGroupType::STEREO_ABSOLUTE;
 
       if (match[1] == "ABS") {
-        grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+        grouptype = RDKit::ExtendedStereoGroupType::STEREO_ABSOLUTE;
       } else if (match[1] == "REL") {
-        grouptype = RDKit::StereoGroupType::STEREO_OR;
+        grouptype = RDKit::ExtendedStereoGroupType::STEREO_OR;
       } else if (match[1] == "RAC") {
-        grouptype = RDKit::StereoGroupType::STEREO_AND;
+        grouptype = RDKit::ExtendedStereoGroupType::STEREO_AND;
       } else {
         std::ostringstream errout;
-        errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
+        errout << "Unrecognized ExtendedStereoGroup type : '" << tempStr << "' on line"
                << line;
         throw FileParseException(errout.str());
       }
@@ -214,7 +214,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   }
 
   if (!groups.empty()) {
-    mol->setStereoGroups(std::move(groups));
+    mol->setExtendedStereoGroups(std::move(groups));
   }
   tempStr = getV3000Line(inStream, line);
   return tempStr;

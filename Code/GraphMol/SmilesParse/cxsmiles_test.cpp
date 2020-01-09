@@ -426,19 +426,19 @@ void testEnhancedStereo() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
 
-    auto &stereo_groups = m->getStereoGroups();
+    auto &stereo_groups = m->getExtendedStereoGroups();
 
     TEST_ASSERT(stereo_groups.size() == 2);
 
     auto stg = stereo_groups.begin();
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    TEST_ASSERT(stg->getGroupType() == ExtendedStereoGroupType::STEREO_ABSOLUTE);
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 1);
       TEST_ASSERT(atoms[0]->getIdx() == 1);
     }
     ++stg;
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_OR);
+    TEST_ASSERT(stg->getGroupType() == ExtendedStereoGroupType::STEREO_OR);
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 2);
@@ -455,12 +455,12 @@ void testEnhancedStereo() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
 
-    auto &stereo_groups = m->getStereoGroups();
+    auto &stereo_groups = m->getExtendedStereoGroups();
 
     TEST_ASSERT(stereo_groups.size() == 2);
 
     auto stg = stereo_groups.begin();
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_AND);
+    TEST_ASSERT(stg->getGroupType() == ExtendedStereoGroupType::STEREO_AND);
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 2);
@@ -468,7 +468,7 @@ void testEnhancedStereo() {
       TEST_ASSERT(atoms[1]->getIdx() == 5);
     }
     ++stg;
-    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    TEST_ASSERT(stg->getGroupType() == ExtendedStereoGroupType::STEREO_ABSOLUTE);
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 1);

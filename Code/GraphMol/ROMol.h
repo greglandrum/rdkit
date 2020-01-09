@@ -35,7 +35,7 @@
 #include "Bond.h"
 #include "Conformer.h"
 #include "SubstanceGroup.h"
-#include "StereoGroup.h"
+#include "ExtendedStereoGroup.h"
 
 namespace RDKit {
 class SubstanceGroup;
@@ -659,7 +659,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
     file format.
   */
-  const std::vector<StereoGroup> &getStereoGroups() const {
+  const std::vector<ExtendedStereoGroup> &getExtendedStereoGroups() const {
     return d_stereo_groups;
   }
 
@@ -675,7 +675,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
       &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
-  std::vector<StereoGroup> d_stereo_groups;
+  std::vector<ExtendedStereoGroup> d_stereo_groups;
 
   ROMol &operator=(
       const ROMol &);  // disable assignment, RWMol's support assignment
@@ -718,7 +718,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
     file format. stereo_groups should be std::move()ed into this function.
   */
-  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
+  void setExtendedStereoGroups(std::vector<ExtendedStereoGroup> stereo_groups);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add

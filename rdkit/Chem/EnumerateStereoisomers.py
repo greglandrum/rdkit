@@ -21,18 +21,18 @@ class StereoEnumerationOptions(object):
             number of results (and execution time) it's important to
             keep an eye on this.
 
-          - onlyStereoGroups: Only find stereoisomers that differ at the
-            StereoGroups associated with the molecule.
+          - onlyExtendedStereoGroups: Only find stereoisomers that differ at the
+            ExtendedStereoGroups associated with the molecule.
     """
     __slots__ = ('tryEmbedding', 'onlyUnassigned',
-                 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
+                 'onlyExtendedStereoGroups', 'maxIsomers', 'rand', 'unique')
 
     def __init__(self, tryEmbedding=False, onlyUnassigned=True,
                  maxIsomers=1024, rand=None, unique=True,
-                 onlyStereoGroups=False):
+                 onlyExtendedStereoGroups=False):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
-        self.onlyStereoGroups = onlyStereoGroups
+        self.onlyExtendedStereoGroups = onlyExtendedStereoGroups
         self.maxIsomers = maxIsomers
         self.rand = rand
         self.unique = unique
@@ -60,7 +60,7 @@ class _AtomFlipper(object):
             self.atom.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
 
-class _StereoGroupFlipper(object):
+class _ExtendedStereoGroupFlipper(object):
     def __init__(self, group):
         self._original_parities = [(a, a.GetChiralTag()) for a in group.GetAtoms()]
 
@@ -80,7 +80,7 @@ def _getFlippers(mol, options):
     Chem.FindPotentialStereoBonds(mol)
 
     flippers = []
-    if not options.onlyStereoGroups:
+    if not options.onlyExtendedStereoGroups:
         for atom in mol.GetAtoms():
             if atom.HasProp("_ChiralityPossible"):
                 if (not options.onlyUnassigned
@@ -96,9 +96,9 @@ def _getFlippers(mol, options):
 
     if options.onlyUnassigned:
         # otherwise these will be counted twice
-        for group in mol.GetStereoGroups():
-            if group.GetGroupType() != Chem.StereoGroupType.STEREO_ABSOLUTE:
-                flippers.append(_StereoGroupFlipper(group))
+        for group in mol.GetExtendedStereoGroups():
+            if group.GetGroupType() != Chem.ExtendedStereoGroupType.STEREO_ABSOLUTE:
+                flippers.append(_ExtendedStereoGroupFlipper(group))
 
     return flippers
 
@@ -169,7 +169,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       - options: parameters controlling the enumeration
       - verbose: toggles how verbose the output is
 
-    If m has stereogroups, they will be expanded
+    If m has ExtendedStereoGroups, they will be expanded
 
     A small example with 3 chiral atoms and 1 chiral bond (16 theoretical stereoisomers):
 

@@ -2763,7 +2763,7 @@ void testIssue1735() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testStereoGroupUpdating() {
+void testExtendedStereoGroupUpdating() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------------------------------------------"
       << std::endl;
@@ -2777,11 +2777,11 @@ void testStereoGroupUpdating() {
   std::unique_ptr<RWMol> m(MolFileToMol(fName));
   TEST_ASSERT(m.get());
 
-  TEST_ASSERT(m->getStereoGroups().size() == 2);
+  TEST_ASSERT(m->getExtendedStereoGroups().size() == 2);
   m->removeAtom(3);
-  TEST_ASSERT(m->getStereoGroups().size() == 1);
+  TEST_ASSERT(m->getExtendedStereoGroups().size() == 1);
   m->removeAtom(m->getAtomWithIdx(0));
-  TEST_ASSERT(m->getStereoGroups().size() == 0u);
+  TEST_ASSERT(m->getExtendedStereoGroups().size() == 0u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -3083,7 +3083,7 @@ int main() {
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();
   testIssue1735();
-  testStereoGroupUpdating();
+  testExtendedStereoGroupUpdating();
 #endif
   testClearDirsOnDoubleBondsWithoutStereo();
   testAssignChiralTypesFromMolParity();

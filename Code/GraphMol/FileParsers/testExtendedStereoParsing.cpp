@@ -8,7 +8,7 @@
 //
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/StereoGroup.h>
+#include <GraphMol/ExtendedStereoGroup.h>
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/FileParseException.h>
@@ -38,12 +38,13 @@ void testOr() {
   TEST_ASSERT(m.get());
   TEST_ASSERT(m->getNumAtoms() == 8);
 
-  auto stereo_groups = m->getStereoGroups();
+  auto stereo_groups = m->getExtendedStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
-              RDKit::StereoGroupType::STEREO_ABSOLUTE);
+              RDKit::ExtendedStereoGroupType::STEREO_ABSOLUTE);
   TEST_ASSERT(stereo_groups[0].getAtoms().size() == 1u);
-  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(stereo_groups[1].getGroupType() ==
+              RDKit::ExtendedStereoGroupType::STEREO_OR);
   TEST_ASSERT(stereo_groups[1].getAtoms().size() == 2u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -57,11 +58,12 @@ void testAnd() {
   TEST_ASSERT(m.get());
   TEST_ASSERT(m->getNumAtoms() == 8);
 
-  auto stereo_groups = m->getStereoGroups();
+  auto stereo_groups = m->getExtendedStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
-              RDKit::StereoGroupType::STEREO_ABSOLUTE);
-  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+              RDKit::ExtendedStereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[1].getGroupType() ==
+              RDKit::ExtendedStereoGroupType::STEREO_AND);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -76,12 +78,13 @@ void testWrite() {
 
   // Check that the extended stereo information has the same extended stereo
   // types and same atoms marked for extended stereo.
-  auto stereo_groups0 = m0->getStereoGroups();
-  auto stereo_groups1 = m1->getStereoGroups();
+  auto stereo_groups0 = m0->getExtendedStereoGroups();
+  auto stereo_groups1 = m1->getExtendedStereoGroups();
   TEST_ASSERT(stereo_groups0.size() == stereo_groups1.size());
 
   for (unsigned i = 0u; i < 2; ++i) {
-    TEST_ASSERT(stereo_groups0[i].getGroupType() == stereo_groups1[i].getGroupType());
+    TEST_ASSERT(stereo_groups0[i].getGroupType() ==
+                stereo_groups1[i].getGroupType());
     TEST_ASSERT(stereo_groups0[i].getAtoms().size() ==
                 stereo_groups1[i].getAtoms().size());
     for (auto &&atom0 = stereo_groups0[i].getAtoms().begin(),

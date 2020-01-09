@@ -7,7 +7,7 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
+              Renumber.cpp AdjustQuery.cpp Resonance.cpp ExtendedStereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  
@@ -44,7 +44,7 @@ rdkit_headers(Atom.h
               RWMol.h
               SanitException.h
               SubstanceGroup.h
-              StereoGroup.h
+              ExtendedStereoGroup.h
               MonomerInfo.h
               new_canon.h
               MolBundle.h

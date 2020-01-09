@@ -1191,10 +1191,10 @@ void checkAndCorrectChiralityOfProduct(
 // Copy enhanced stereo groups from one reactant to the product
 // stereo groups are copied if any atoms are in the product with
 // the stereochemical information from the reactant preserved.
-void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
+void copyEnhancedExtendedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
                               const ReactantProductAtomMapping &mapping) {
-  std::vector<StereoGroup> new_stereo_groups;
-  for (const auto &sg : reactant.getStereoGroups()) {
+  std::vector<ExtendedStereoGroup> new_stereo_groups;
+  for (const auto &sg : reactant.getExtendedStereoGroups()) {
     std::vector<Atom *> atoms;
     for (auto &&reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
@@ -1225,10 +1225,10 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   }
 
   if (!new_stereo_groups.empty()) {
-    auto &existing_sg = product->getStereoGroups();
+    auto &existing_sg = product->getExtendedStereoGroups();
     new_stereo_groups.insert(new_stereo_groups.end(), existing_sg.begin(),
                              existing_sg.end());
-    product->setStereoGroups(std::move(new_stereo_groups));
+    product->setExtendedStereoGroups(std::move(new_stereo_groups));
   }
 }
 
@@ -1323,9 +1323,9 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   updateStereoBonds(product, *reactant, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
-  // Copy enhanced StereoGroup data from reactant to product if it is
+  // Copy enhanced ExtendedStereoGroup data from reactant to product if it is
   // still valid. Uses ChiralTag checks above.
-  copyEnhancedStereoGroups(*reactant, product, *mapping);
+  copyEnhancedExtendedStereoGroups(*reactant, product, *mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
   // finally we may need to set the coordinates in the product conformer:

@@ -134,8 +134,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINBONDPROPS,
     BEGINQUERYATOMDATA,
     BEGINSGROUP,
-    BEGINSTEREOGROUP,
-    BEGINCONFPROPS,    
+    BEGINExtendedStereoGroup,
+    BEGINCONFPROPS,
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
@@ -215,7 +215,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! do the actual work of pickling Stereo Group data
   template <typename T>
   static void _pickleStereo(std::ostream &ss,
-                            const std::vector<StereoGroup> &groups,
+                            const std::vector<ExtendedStereoGroup> &groups,
                             std::map<int, int> &atomIdxMap);
 
   //! do the actual work of pickling a Conformer

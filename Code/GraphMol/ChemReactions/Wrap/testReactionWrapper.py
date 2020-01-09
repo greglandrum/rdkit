@@ -750,11 +750,11 @@ def _reactAndSummarize(rxn_smarts, *smiles):
   return products
 
 
-class StereoGroupTests(unittest.TestCase):
+class ExtendedStereoGroupTests(unittest.TestCase):
 
   def test_reaction_preserves_stereo(self):
     """
-    StereoGroup atoms are in the reaction, but the reaction doesn't affect
+    ExtendedStereoGroup atoms are in the reaction, but the reaction doesn't affect
     the chirality at the stereo centers
     -> preserve stereo group
     """
@@ -766,7 +766,7 @@ class StereoGroupTests(unittest.TestCase):
 
   def test_reaction_ignores_stereo(self):
     """
-    StereoGroup atoms are in the reaction, but the reaction doesn't specify the
+    ExtendedStereoGroup atoms are in the reaction, but the reaction doesn't specify the
     chirality at the stereo centers
     -> preserve stereo group
     """
@@ -778,7 +778,7 @@ class StereoGroupTests(unittest.TestCase):
 
   def test_reaction_inverts_stereo(self):
     """
-    StereoGroup atoms are in the reaction, and the reaction inverts the specified
+    ExtendedStereoGroup atoms are in the reaction, and the reaction inverts the specified
     chirality at the stereo centers.
     -> preserve stereo group
     """
@@ -793,7 +793,7 @@ class StereoGroupTests(unittest.TestCase):
 
   def test_reaction_destroys_stereo(self):
     """
-    StereoGroup atoms are in the reaction, and the reaction destroys the specified
+    ExtendedStereoGroup atoms are in the reaction, and the reaction destroys the specified
     chirality at the stereo centers
     -> invalidate stereo center, preserve the rest of the stereo group.
     """
@@ -816,7 +816,7 @@ class StereoGroupTests(unittest.TestCase):
 
   def test_reaction_defines_stereo(self):
     """
-    StereoGroup atoms are in the reaction, and the reaction creates the specified
+    ExtendedStereoGroup atoms are in the reaction, and the reaction creates the specified
     chirality at the stereo centers
     -> remove the stereo center from 
     -> invalidate stereo group
@@ -838,9 +838,9 @@ class StereoGroupTests(unittest.TestCase):
                                   'F[C@H](Cl)[C@@H](Cl)Br |o1:1,3|')
     self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
 
-  def test_stereogroup_is_spectator_to_reaction(self):
+  def test_ExtendedStereoGroup_is_spectator_to_reaction(self):
     """
-    StereoGroup atoms are not in the reaction
+    ExtendedStereoGroup atoms are not in the reaction
     -> stereo group is unaffected
     """
     # 5a. Reaction preserves unrelated stereo
@@ -864,9 +864,9 @@ class StereoGroupTests(unittest.TestCase):
                                   'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
     self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
 
-  def test_reaction_splits_stereogroup(self):
+  def test_reaction_splits_ExtendedStereoGroup(self):
     """
-    StereoGroup atoms are split into two products by the reaction
+    ExtendedStereoGroup atoms are split into two products by the reaction
     -> Should the group be invalidated or trimmed?
     """
     products = _reactAndSummarize('[C:1]OO[C:2]>>[C:2]O.O[C:1]',
@@ -874,27 +874,27 @@ class StereoGroupTests(unittest.TestCase):
     # Two product sets, each with two mols:
     self.assertEqual(products.count('|o1:1|'), 4)
 
-  def test_reaction_copies_stereogroup(self):
+  def test_reaction_copies_ExtendedStereoGroup(self):
     """
-    If multiple copies of an atom in StereoGroup show up in the product, they
-    should all be part of the same product StereoGroup.
+    If multiple copies of an atom in ExtendedStereoGroup show up in the product, they
+    should all be part of the same product ExtendedStereoGroup.
     """
-    # Stereogroup atoms are in the reaction with multiple copies in the product
+    # ExtendedStereoGroup atoms are in the reaction with multiple copies in the product
     products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
                                   'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|',
                                   'CC(=O)C')
-    # stereogroup manually checked, product SMILES assumed correct.
+    # ExtendedStereoGroup manually checked, product SMILES assumed correct.
     self.assertEqual(
         products,
         'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|'
     )
 
-    # Stereogroup atoms are not in the reaction, but have multiple copies in the
+    # ExtendedStereoGroup atoms are not in the reaction, but have multiple copies in the
     # product.
     products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
                                   'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|',
                                   'CC(=O)C')
-    # stereogroup manually checked, product SMILES assumed correct.
+    # ExtendedStereoGroup manually checked, product SMILES assumed correct.
     self.assertEqual(
         products,
         'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|'

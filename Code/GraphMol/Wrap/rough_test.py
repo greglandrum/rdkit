@@ -5132,10 +5132,10 @@ M  END
     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
     m = Chem.MolFromMolFile(filename)
 
-    sg = m.GetStereoGroups()
+    sg = m.GetExtendedStereoGroups()
     self.assertEqual(len(sg), 2)
     group1 = sg[1]
-    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(group1.GetGroupType(), Chem.ExtendedStereoGroupType.STEREO_OR)
     stereo_atoms = group1.GetAtoms()
     self.assertEqual(len(stereo_atoms), 2)
     # file is 1 indexed and says 5
@@ -5161,7 +5161,7 @@ M  END
     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
     m = Chem.MolFromMolFile(filename)
 
-    sg = m.GetStereoGroups()
+    sg = m.GetExtendedStereoGroups()
     m = None
     gc.collect()
     self.assertEqual(len(sg), 2)
@@ -5172,30 +5172,30 @@ M  END
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
     self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(),8)
 
-  def testSetEnhancedStereoGroup(self):
+  def testSetEnhancedExtendedStereoGroup(self):
     m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
     m2 = Chem.RWMol(m)
 
-    groups = m2.GetStereoGroups()
+    groups = m2.GetExtendedStereoGroups()
     self.assertEqual(len(groups), 1)
-    # Can clear the StereoGroups by setting to an empty list
-    m2.SetStereoGroups([])
-    self.assertEqual(len(m2.GetStereoGroups()), 0)
+    # Can clear the ExtendedStereoGroups by setting to an empty list
+    m2.SetExtendedStereoGroups([])
+    self.assertEqual(len(m2.GetExtendedStereoGroups()), 0)
 
-    # Can add new StereoGroups
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m2,
+    # Can add new ExtendedStereoGroups
+    group1 = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m2,
                                      [1])
-    m2.SetStereoGroups([group1])
-    self.assertEqual(len(m2.GetStereoGroups()), 1)
+    m2.SetExtendedStereoGroups([group1])
+    self.assertEqual(len(m2.GetExtendedStereoGroups()), 1)
 
-  def testSetEnhancedStereoGroupOwnershipCheck(self):
-    # make sure that the object returned by CreateStereoGroup()
+  def testSetEnhancedExtendedStereoGroupOwnershipCheck(self):
+    # make sure that the object returned by CreateExtendedStereoGroup()
     # preserves the owning molecule:
     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,
+    group1 = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m,
                                      [1])
-    m.SetStereoGroups([group1])
-    self.assertEqual(len(m.GetStereoGroups()), 1)
+    m.SetExtendedStereoGroups([group1])
+    self.assertEqual(len(m.GetExtendedStereoGroups()), 1)
 
     m = None
     gc.collect()
@@ -5204,30 +5204,30 @@ M  END
     return
     self.assertEqual(stereo_atoms[0].GetOwningMol().GetNumAtoms(), 6)
 
-    # make sure we can't add StereoGroups constructed from one molecule
+    # make sure we can't add ExtendedStereoGroups constructed from one molecule
     # to a different one:
     m2 = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
     with self.assertRaises(ValueError):
-      m2.SetStereoGroups([group1])
+      m2.SetExtendedStereoGroups([group1])
 
   def testSetEnhancedStereoTypeChecking(self):
     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
 
     # List or tuple should be allowed:
-    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 3])
-    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, (1, 3))
+    group = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m, [1, 3])
+    group = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m, (1, 3))
 
     # Python ValueError (range error) with index past the end
     with self.assertRaises(ValueError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [100])
+      group = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m, [100])
 
     # Mol is None
     with self.assertRaises(TypeError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, None, [1])
+      group = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, None, [1])
 
     # Atom indices must be numbers
     with self.assertRaises(TypeError):
-      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 'text'])
+      group = Chem.rdchem.CreateExtendedStereoGroup(Chem.rdchem.ExtendedStereoGroupType.STEREO_OR, m, [1, 'text'])
 
   def testSubstructParameters(self):
     m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')

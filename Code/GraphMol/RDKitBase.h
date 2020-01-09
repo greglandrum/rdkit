@@ -30,6 +30,6 @@
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/SanitException.h>
-#include <GraphMol/StereoGroup.h>
+#include <GraphMol/ExtendedStereoGroup.h>
 
 #endif

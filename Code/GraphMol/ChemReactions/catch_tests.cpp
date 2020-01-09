@@ -61,7 +61,7 @@ static void clearAtomMappingProps(ROMol& mol) {
   }
 }
 
-TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
+TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,ExtendedStereoGroup,bug]") {
   SECTION("Reaction Preserves Stereo") {
     ROMOL_SPTR mol("F[C@H](Cl)Br |o1:1|"_smiles);
     REQUIRE(mol);
@@ -80,7 +80,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     clearAtomMappingProps(*p);
     CHECK(MolToCXSmiles(*p) == "F[C@H](Cl)Br |o1:1|");
   }
-  SECTION("Reaction destroys one center in StereoGroup") {
+  SECTION("Reaction destroys one center in ExtendedStereoGroup") {
     ROMOL_SPTR mol("F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|"_smiles);
     REQUIRE(mol);
     unique_ptr<ChemicalReaction> rxn(
@@ -98,7 +98,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     clearAtomMappingProps(*p);
     CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@@H](Cl)Br |&1:3|");
   }
-  SECTION("Reaction splits StereoGroup") {
+  SECTION("Reaction splits ExtendedStereoGroup") {
     ROMOL_SPTR mol("F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|"_smiles);
     REQUIRE(mol);
     unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
@@ -119,7 +119,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     CHECK(MolToCXSmiles(*p0) == "O[C@@H](F)Cl |&1:1|");
     CHECK(MolToCXSmiles(*p1) == "O[C@@H](Cl)Br |&1:1|");
   }
-  SECTION("Reaction combines StereoGroups") {
+  SECTION("Reaction combines ExtendedStereoGroups") {
     ROMOL_SPTR mol1("F[C@H](Cl)O |&1:1|"_smiles);
     REQUIRE(mol1);
     ROMOL_SPTR mol2("Cl[C@H](Br)O |&1:1|"_smiles);

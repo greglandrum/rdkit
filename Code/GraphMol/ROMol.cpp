@@ -404,7 +404,7 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   return numBonds;  // res;
 }
 
-void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
+void ROMol::setExtendedStereoGroups(std::vector<ExtendedStereoGroup> stereo_groups) {
   d_stereo_groups = std::move(stereo_groups);
 }
 

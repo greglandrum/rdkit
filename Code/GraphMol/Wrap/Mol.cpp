@@ -192,18 +192,18 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(bond, "bad bond");
     replaceBond(idx, bond, preserveProps);
   };
-  void SetStereoGroups(python::list &stereo_groups) {
-    std::vector<StereoGroup> groups;
-    pythonObjectToVect<StereoGroup>(stereo_groups, groups);
+  void SetExtendedStereoGroups(python::list &stereo_groups) {
+    std::vector<ExtendedStereoGroup> groups;
+    pythonObjectToVect<ExtendedStereoGroup>(stereo_groups, groups);
     for (const auto group : groups) {
       for (const auto atom : group.getAtoms()) {
-        if (!atom) throw_value_error("NULL atom in StereoGroup");
+        if (!atom) throw_value_error("NULL atom in ExtendedStereoGroup");
         if (&atom->getOwningMol() != this)
           throw_value_error(
-              "atom in StereoGroup does not belong to this molecule.");
+              "atom in ExtendedStereoGroup does not belong to this molecule.");
       }
     }
-    setStereoGroups(std::move(groups));
+    setExtendedStereoGroups(std::move(groups));
   }
   ROMol *GetMol() const {
     auto *res = new ROMol(*this);
@@ -251,7 +251,7 @@ struct mol_wrapper {
         .export_values();
     ;
 
-    RegisterVectorConverter<StereoGroup>("StereoGroup_vect");
+    RegisterVectorConverter<ExtendedStereoGroup>("ExtendedStereoGroup_vect");
 
     python::def("GetDefaultPickleProperties",
                 MolPickler::getDefaultPickleProperties,
@@ -666,8 +666,8 @@ struct mol_wrapper {
              "explicit "
              "valence of the molecule have already been calculated.\n\n")
 
-        .def("GetStereoGroups", &ROMol::getStereoGroups,
-             "Returns a list of StereoGroups defining the relative "
+        .def("GetExtendedStereoGroups", &ROMol::getExtendedStereoGroups,
+             "Returns a list of ExtendedStereoGroups defining the relative "
              "stereochemistry "
              "of the atoms.\n",
              python::return_internal_reference<
@@ -803,7 +803,7 @@ struct mol_wrapper {
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
 
-        .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
+        .def("SetExtendedStereoGroups", &ReadWriteMol::SetExtendedStereoGroups,
              (python::arg("stereo_groups")), "Set the stereo groups")
 
         // enable pickle support

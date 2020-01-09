@@ -11,7 +11,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/MonomerInfo.h>
-#include <GraphMol/StereoGroup.h>
+#include <GraphMol/ExtendedStereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
@@ -922,9 +922,9 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   }
   // Write Stereo Groups
   {
-    auto &stereo_groups = mol->getStereoGroups();
+    auto &stereo_groups = mol->getExtendedStereoGroups();
     if (stereo_groups.size() > 0u) {
-      streamWrite(ss, BEGINSTEREOGROUP);
+      streamWrite(ss, BEGINExtendedStereoGroup);
       _pickleStereo<T>(ss, stereo_groups, atomIdxMap);
     }
   }
@@ -1071,7 +1071,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     streamRead(ss, tag, version);
   }
 
-  if (tag == BEGINSTEREOGROUP) {
+  if (tag == BEGINExtendedStereoGroup) {
     _depickleStereo<T>(ss, mol, version);
     streamRead(ss, tag, version);
   }
@@ -1989,7 +1989,7 @@ SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
 
 template <typename T>
 void MolPickler::_pickleStereo(std::ostream &ss,
-                               const std::vector<StereoGroup> &groups,
+                               const std::vector<ExtendedStereoGroup> &groups,
                                std::map<int, int> &atomIdxMap) {
   T tmpT = static_cast<T>(groups.size());
   streamWrite(ss, tmpT);
@@ -2011,11 +2011,11 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
   const unsigned numGroups = static_cast<unsigned>(tmpT);
 
   if (numGroups > 0u) {
-    std::vector<StereoGroup> groups;
+    std::vector<ExtendedStereoGroup> groups;
     for (unsigned group = 0u; group < numGroups; ++group) {
       T tmpT;
       streamRead(ss, tmpT, version);
-      const auto groupType = static_cast<RDKit::StereoGroupType>(tmpT);
+      const auto groupType = static_cast<RDKit::ExtendedStereoGroupType>(tmpT);
 
       streamRead(ss, tmpT, version);
       const unsigned numAtoms = static_cast<unsigned>(tmpT);
@@ -2030,7 +2030,7 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
       groups.emplace_back(groupType, std::move(atoms));
     }
 
-    mol->setStereoGroups(std::move(groups));
+    mol->setExtendedStereoGroups(std::move(groups));
   }
 }
 

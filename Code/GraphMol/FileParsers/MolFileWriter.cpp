@@ -1042,23 +1042,23 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
+void appendEnhancedExtendedStereoGroups(std::string &res, const RWMol &tmol) {
   unsigned or_count = 1u, and_count = 1u;
-  auto &stereo_groups = tmol.getStereoGroups();
+  auto &stereo_groups = tmol.getExtendedStereoGroups();
   if (!stereo_groups.empty()) {
     res += "M  V30 BEGIN COLLECTION\n";
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
       switch (group.getGroupType()) {
-        case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+        case RDKit::ExtendedStereoGroupType::STEREO_ABSOLUTE:
           res += "STEABS";
           break;
-        case RDKit::StereoGroupType::STEREO_OR:
+        case RDKit::ExtendedStereoGroupType::STEREO_OR:
           res += "STEREL";
           res += boost::lexical_cast<std::string>(or_count);
           ++or_count;
           break;
-        case RDKit::StereoGroupType::STEREO_AND:
+        case RDKit::ExtendedStereoGroupType::STEREO_AND:
           res += "STERAC";
           res += boost::lexical_cast<std::string>(and_count);
           ++and_count;
@@ -1142,7 +1142,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   res += "\n";
 
   isV3000 = forceV3000 || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
-            !tmol.getStereoGroups().empty();
+            !tmol.getExtendedStereoGroups().empty();
 
   // the counts line:
   std::stringstream ss;
@@ -1239,7 +1239,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "M  V30 END SGROUP\n";
     }
 
-    appendEnhancedStereoGroups(res, tmol);
+    appendEnhancedExtendedStereoGroups(res, tmol);
 
     res += "M  V30 END CTAB\n";
   }

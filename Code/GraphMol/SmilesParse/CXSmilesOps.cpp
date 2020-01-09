@@ -256,18 +256,18 @@ bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  StereoGroupType group_type = StereoGroupType::STEREO_ABSOLUTE;
+  ExtendedStereoGroupType group_type = ExtendedStereoGroupType::STEREO_ABSOLUTE;
   if (*first == 'a') {
-    group_type = StereoGroupType::STEREO_ABSOLUTE;
+    group_type = ExtendedStereoGroupType::STEREO_ABSOLUTE;
   } else if (*first == 'o') {
-    group_type = StereoGroupType::STEREO_OR;
+    group_type = ExtendedStereoGroupType::STEREO_OR;
   } else if (*first == '&') {
-    group_type = StereoGroupType::STEREO_AND;
+    group_type = ExtendedStereoGroupType::STEREO_AND;
   }
   ++first;
 
   // OR and AND groups carry a group number
-  if (group_type != StereoGroupType::STEREO_ABSOLUTE) {
+  if (group_type != ExtendedStereoGroupType::STEREO_ABSOLUTE) {
     unsigned int group_id = 0;
     read_int(first, last, group_id);
   }
@@ -295,9 +295,9 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     }
   }
 
-  std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
+  std::vector<ExtendedStereoGroup> mol_stereo_groups(mol.getExtendedStereoGroups());
   mol_stereo_groups.emplace_back(group_type, std::move(atoms));
-  mol.setStereoGroups(std::move(mol_stereo_groups));
+  mol.setExtendedStereoGroups(std::move(mol_stereo_groups));
 
   return true;
 }
@@ -428,21 +428,21 @@ std::string get_enhanced_stereo_block(
   std::vector<std::vector<unsigned int>> andGps;
 
   // we want this to be canonical (future proofing)
-  for (const auto &sg : mol.getStereoGroups()) {
+  for (const auto &sg : mol.getExtendedStereoGroups()) {
     std::vector<unsigned int> aids;
     aids.reserve(sg.getAtoms().size());
     for (const auto at : sg.getAtoms()) {
       aids.push_back(revOrder[at->getIdx()]);
     }
     switch (sg.getGroupType()) {
-      case StereoGroupType::STEREO_ABSOLUTE:
+      case ExtendedStereoGroupType::STEREO_ABSOLUTE:
         absAts.insert(absAts.end(), aids.begin(), aids.end());
         break;
-      case StereoGroupType::STEREO_OR:
+      case ExtendedStereoGroupType::STEREO_OR:
         std::sort(aids.begin(), aids.end());
         orGps.push_back(aids);
         break;
-      case StereoGroupType::STEREO_AND:
+      case ExtendedStereoGroupType::STEREO_AND:
         std::sort(aids.begin(), aids.end());
         andGps.push_back(aids);
         break;
