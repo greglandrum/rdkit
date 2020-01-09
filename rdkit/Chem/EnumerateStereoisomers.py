@@ -97,7 +97,7 @@ def _getFlippers(mol, options):
     if options.onlyUnassigned:
         # otherwise these will be counted twice
         for group in mol.GetStereoGroups():
-            if group.GetStereoVal() != Chem.StereoValType.REL_ABSOLUTE:
+            if group.GetStereoVal() != Chem.StereoValType.STEREO_ABSOLUTE:
                 flippers.append(_StereoGroupFlipper(group))
 
     return flippers

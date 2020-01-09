@@ -1341,11 +1341,12 @@ void testEnhancedStereoChemistry() {
   {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
-    groups.emplace_back(RDKit::StereoValType::REL_ABSOLUTE, std::move(atoms0));
+    groups.emplace_back(RDKit::StereoValType::STEREO_ABSOLUTE,
+                        std::move(atoms0));
     std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
-    groups.emplace_back(RDKit::StereoValType::REL_OR, std::move(atoms1));
+    groups.emplace_back(RDKit::StereoValType::STEREO_OR, std::move(atoms1));
     std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
-    groups.emplace_back(RDKit::StereoValType::REL_AND, std::move(atoms2));
+    groups.emplace_back(RDKit::StereoValType::STEREO_AND, std::move(atoms2));
     m.setStereoGroups(std::move(groups));
   }
 
@@ -1364,7 +1365,8 @@ void testEnhancedStereoChemistry() {
 
 void testCustomPickler() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing custom pickler (bitvector)" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing custom pickler (bitvector)"
+                       << std::endl;  
   const bool bitsSet = false;
   ExplicitBitVect bv(1024, bitsSet);
   bv.setBit(100);
@@ -1373,10 +1375,10 @@ void testCustomPickler() {
 
   m.getAtomWithIdx(0)->setProp<ExplicitBitVect>("bv", bv);
 
-  TEST_ASSERT(m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) ==
-              true);
-  TEST_ASSERT(m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) ==
-              false);
+  TEST_ASSERT(
+      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
+  TEST_ASSERT(
+      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
 
   std::string pkl;
   MolPickler::pickleMol(m, pkl, PicklerOps::AllProps);
@@ -1384,18 +1386,16 @@ void testCustomPickler() {
 
   TEST_ASSERT(roundTripped->getAtomWithIdx(0)->hasProp("bv"));
   TEST_ASSERT(
-      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(
-          100) == true);
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
   TEST_ASSERT(
-      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(
-          101) == false);
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
 }
+
 
 void testGithub2441() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
-      << "Testing Github2441: Add RDProps interface to Conformers."
-      << std::endl;
+      << "Testing Github2441: Add RDProps interface to Conformers." << std::endl;
 
   auto m1 = "CC"_smiles;
   TEST_ASSERT(m1);
@@ -1433,6 +1433,7 @@ void testGithub2441() {
     TEST_ASSERT(m2->getConformer(12).getProp<int>("foo") == 2);
     TEST_ASSERT(!m2->getConformer().hasProp("bar"));
     TEST_ASSERT(m2->getConformer(12).getProp<int>("bar") == 23);
+    
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;

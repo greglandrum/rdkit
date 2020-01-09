@@ -41,9 +41,9 @@ void testOr() {
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getStereoVal() ==
-              RDKit::StereoValType::REL_ABSOLUTE);
+              RDKit::StereoValType::STEREO_ABSOLUTE);
   TEST_ASSERT(stereo_groups[0].getAtoms().size() == 1u);
-  TEST_ASSERT(stereo_groups[1].getStereoVal() == RDKit::StereoValType::REL_OR);
+  TEST_ASSERT(stereo_groups[1].getStereoVal() == RDKit::StereoValType::STEREO_OR);
   TEST_ASSERT(stereo_groups[1].getAtoms().size() == 2u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -60,8 +60,8 @@ void testAnd() {
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getStereoVal() ==
-              RDKit::StereoValType::REL_ABSOLUTE);
-  TEST_ASSERT(stereo_groups[1].getStereoVal() == RDKit::StereoValType::REL_AND);
+              RDKit::StereoValType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[1].getStereoVal() == RDKit::StereoValType::STEREO_AND);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -81,8 +81,7 @@ void testWrite() {
   TEST_ASSERT(stereo_groups0.size() == stereo_groups1.size());
 
   for (unsigned i = 0u; i < 2; ++i) {
-    TEST_ASSERT(stereo_groups0[i].getStereoVal() ==
-                stereo_groups1[i].getStereoVal());
+    TEST_ASSERT(stereo_groups0[i].getStereoVal() == stereo_groups1[i].getStereoVal());
     TEST_ASSERT(stereo_groups0[i].getAtoms().size() ==
                 stereo_groups1[i].getAtoms().size());
     for (auto &&atom0 = stereo_groups0[i].getAtoms().begin(),
