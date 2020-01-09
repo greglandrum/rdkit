@@ -488,14 +488,6 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     else if (ivi > ivj)
       return 1;
 
-    // number of Hs:
-    ivi = dp_atoms[i].totalNumHs;
-    ivj = dp_atoms[j].totalNumHs;
-    if (ivi < ivj)
-      return -1;
-    else if (ivi > ivj)
-      return 1;
-
     // FIX: get this working w/o R/S labels
     // atom stereochem:
     ivi = 0;
@@ -532,7 +524,7 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     PRECONDITION(i != j, "bad call");
     int v = basecomp(i, j);
     if (v) return v;
-#if 0
+
     if (df_useNbrs) {
       getAtomNeighborhood(dp_atoms[i].bonds);
       getAtomNeighborhood(dp_atoms[j].bonds);
@@ -561,27 +553,6 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
       }
     }
     return 0;
-#else
-    if (df_useNbrs) {
-      updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
-      updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
-
-      for (unsigned int ii = 0;
-           ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size();
-           ++ii) {
-        int cmp =
-            bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-        if (cmp) return cmp;
-      }
-
-      if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
-        return -1;
-      } else if (dp_atoms[i].bonds.size() > dp_atoms[j].bonds.size()) {
-        return 1;
-      }
-    }
-    return 0;
-#endif
   }
 };
 
@@ -625,8 +596,8 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     offset = atoms[partition].index;
     start = order + offset;
     // std::cerr<<"\n\n**************************************************************"<<std::endl;
-    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len:
-    // "<<len<<":"; for(unsigned int ii=0;ii<len;++ii){
+    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
+    // for(unsigned int ii=0;ii<len;++ii){
     //   std::cerr<<" "<<order[offset+ii]+1;
     // }
     // std::cerr<<std::endl;

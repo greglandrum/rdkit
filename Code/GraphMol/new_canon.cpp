@@ -413,10 +413,10 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;
     bondholder bh(bondholder(Bond::SINGLE, stereo, nbrIdx, symclass));
     auto iPos = std::lower_bound(nbrs.begin(), nbrs.end(), bh);
-    nbrs.insert(iPos, 1, bh);
+    nbrs.insert(iPos, nReps, bh);
   }
   std::reverse(nbrs.begin(), nbrs.end());
-#if 0
+
   if (!at->needsUpdatePropertyCache()) {
     for (unsigned int ii = 0; ii < at->getTotalNumHs(); ++ii) {
       nbrs.push_back(bondholder(Bond::SINGLE, Bond::STEREONONE,
@@ -425,7 +425,6 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
                                 ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET));
     }
   }
-#endif
 }
 
 void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
@@ -523,7 +522,6 @@ void initChiralCanonAtoms(const ROMol &mol,
                           std::vector<Canon::canon_atom> &atoms) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     basicInitCanonAtom(mol, atoms[i], i);
-    atoms[i].totalNumHs = atoms[i].atom->getTotalNumHs();
     getChiralBonds(mol, atoms[i].atom, atoms[i].bonds);
   }
 }
