@@ -256,18 +256,18 @@ bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  StereoValType group_type = StereoValType::STEREO_ABSOLUTE;
+  StereoGroupType group_type = StereoGroupType::STEREO_ABSOLUTE;
   if (*first == 'a') {
-    group_type = StereoValType::STEREO_ABSOLUTE;
+    group_type = StereoGroupType::STEREO_ABSOLUTE;
   } else if (*first == 'o') {
-    group_type = StereoValType::STEREO_OR;
+    group_type = StereoGroupType::STEREO_OR;
   } else if (*first == '&') {
-    group_type = StereoValType::STEREO_AND;
+    group_type = StereoGroupType::STEREO_AND;
   }
   ++first;
 
   // OR and AND groups carry a group number
-  if (group_type != StereoValType::STEREO_ABSOLUTE) {
+  if (group_type != StereoGroupType::STEREO_ABSOLUTE) {
     unsigned int group_id = 0;
     read_int(first, last, group_id);
   }
@@ -434,15 +434,15 @@ std::string get_enhanced_stereo_block(
     for (const auto at : sg.getAtoms()) {
       aids.push_back(revOrder[at->getIdx()]);
     }
-    switch (sg.getStereoVal()) {
-      case StereoValType::STEREO_ABSOLUTE:
+    switch (sg.getGroupType()) {
+      case StereoGroupType::STEREO_ABSOLUTE:
         absAts.insert(absAts.end(), aids.begin(), aids.end());
         break;
-      case StereoValType::STEREO_OR:
+      case StereoGroupType::STEREO_OR:
         std::sort(aids.begin(), aids.end());
         orGps.push_back(aids);
         break;
-      case StereoValType::STEREO_AND:
+      case StereoGroupType::STEREO_AND:
         std::sort(aids.begin(), aids.end());
         andGps.push_back(aids);
         break;

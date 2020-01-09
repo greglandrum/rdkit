@@ -25,7 +25,7 @@ class Atom;
 
 // OR means that it is known to be one or the other, but not both
 // AND means that it is known to be a mix.
-enum class StereoValType {
+enum class StereoGroupType {
   STEREO_ABSOLUTE = 0,
   STEREO_OR = 1,
   STEREO_AND = 2
@@ -40,15 +40,15 @@ enum class StereoValType {
  */
 class RDKIT_GRAPHMOL_EXPORT StereoGroup {
  private:
-  StereoValType d_grouptype;
+  StereoGroupType d_grouptype;
   std::vector<Atom*> d_atoms;
 
  public:
-  StereoGroup() : d_grouptype(StereoValType::STEREO_ABSOLUTE), d_atoms(0u){};
+  StereoGroup() : d_grouptype(StereoGroupType::STEREO_ABSOLUTE), d_atoms(0u){};
   // Takes control of atoms if possible.
-  StereoGroup(StereoValType grouptype, std::vector<Atom*>&& atoms);
-  StereoGroup(StereoValType grouptype, const std::vector<Atom*>& atoms);
-  StereoValType getStereoVal() const;
+  StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
+  StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
+  StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
   // Seems odd to have to define these, but otherwise the SWIG wrappers
   // won't build
