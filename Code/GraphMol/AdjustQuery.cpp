@@ -282,14 +282,10 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     for (auto bnd : mol.bonds()) {
       if (bnd->getBondType() == Bond::BondType::DOUBLE) {
         if (bnd->getStereo() > Bond::BondStereo::STEREOANY) {
-          bool preserve = false;
           int val = 0;
-          // is stereoCare set on the bond or both atoms?
-          if (bnd->getPropIfPresent(common_properties::molStereoCare, val) &&
-              val) {
-            preserve = true;
-          }
-          if (!preserve) {
+          // If we don't care about the stereochemistry of this bond, clear it
+          if (!(bnd->getPropIfPresent(common_properties::molStereoCare, val) &&
+              val)) {
             bnd->setStereo(Bond::BondStereo::STEREONONE);
           }
         }
