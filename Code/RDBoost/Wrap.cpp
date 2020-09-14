@@ -47,22 +47,24 @@ void translate_key_error(KeyErrorException const& e) {
   throw_key_error(e.key());
 }
 
-#ifdef INVARIANT_EXCEPTION_METHOD
 // A helper function for dealing with errors. Throw a Python RuntimeError
 void throw_runtime_error(const std::string err) {
   PyErr_SetString(PyExc_RuntimeError, err.c_str());
   python::throw_error_already_set();
 }
 
+#ifdef INVARIANT_EXCEPTION_METHOD
 void translate_invariant_error(Invar::Invariant const& e) {
   throw_runtime_error(e.toUserString());
 }
+#endif
 
-boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV) {
+boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object& obj, boost::dynamic_bitset<>::size_type maxV) {
   boost::dynamic_bitset<> res(maxV);
   if (obj) {
-    python::stl_input_iterator<boost::dynamic_bitset<>::size_type> beg(obj), end;
+    python::stl_input_iterator<boost::dynamic_bitset<>::size_type> beg(obj),
+        end;
     while (beg != end) {
       auto v = *beg;
       if (v >= maxV) {
@@ -74,6 +76,3 @@ boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
   }
   return res;
 }
-
-
-#endif

@@ -13,6 +13,8 @@
 #ifndef __RD_INVARIANT_H__
 #define __RD_INVARIANT_H__
 
+#define INVARIANT_ASSERT_METHOD 1
+
 #include <cassert>
 #include <string>
 #include <iostream>
@@ -158,15 +160,25 @@ RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s,
   }
 
 #elif INVARIANT_ASSERT_METHOD
-
-#define CHECK_INVARIANT(expr, mess) assert(expr);
-#define PRECONDITION(expr, mess) assert(expr);
-#define POSTCONDITION(expr, mess) assert(expr);
+#define CHECK_INVARIANT(expr, mess) \
+  (void)(expr);                     \
+  assert(expr);
+#define PRECONDITION(expr, mess) \
+  (void)(expr);                  \
+  assert(expr);
+#define POSTCONDITION(expr, mess) \
+  (void)(expr);                   \
+  assert(expr);
 #define UNDER_CONSTRUCTION(fn) assert(0);
 #define RANGE_CHECK(lo, x, hi) \
+  (void)(x);                   \
   assert((lo) <= (hi) && (x) >= (lo) && (x) <= (hi));
-#define URANGE_CHECK(lo, x, hi) assert((hi > 0) && (x < hi));
-#define TEST_ASSERT(expr) assert(expr);
+#define URANGE_CHECK(x, hi) \
+  (void)(x);                \
+  assert((x < hi));
+#define TEST_ASSERT(expr) \
+  (void)(expr);           \
+  assert(expr);
 
 #elif INVARIANT_SILENT_METHOD
 

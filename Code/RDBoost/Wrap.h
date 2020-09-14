@@ -44,9 +44,9 @@ RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const &e);
 RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException const &e);
 RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
 
-#ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
+#ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
 //! \brief Registers a templated converter for returning \c vectors of a
@@ -136,9 +136,8 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   }
 }
 
-RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV);
-
+RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
 
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)
@@ -148,13 +147,11 @@ RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const pytho
 #endif
 
 class PyGILStateHolder {
-public:
-  PyGILStateHolder() :
-    d_gstate(PyGILState_Ensure()) {}
-  ~PyGILStateHolder() {
-    PyGILState_Release(d_gstate);
-  }
-private:
+ public:
+  PyGILStateHolder() : d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() { PyGILState_Release(d_gstate); }
+
+ private:
   PyGILState_STATE d_gstate;
 };
 
