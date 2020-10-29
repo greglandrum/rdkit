@@ -16,7 +16,7 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {}
+CIPMol::CIPMol(ROMol &mol) : d_mol(mol) {}
 
 boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
   PRECONDITION(atom, "bad atom")

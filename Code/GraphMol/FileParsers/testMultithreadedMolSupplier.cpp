@@ -12,6 +12,7 @@
 #include <RDGeneral/test.h>
 #include <RDStreams/streams.h>
 
+#include <boost/version.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -64,7 +65,11 @@ void testSmiConcurrent(std::istream* strm, bool takeOwnership,
     delete mol;
   }
   // if all bits are set then we have seen possible ids
+#if BOOST_VERSION >= 105600
   TEST_ASSERT(bitVector.all());
+#else
+  TEST_ASSERT(bitVector.count() == expectedResult);
+#endif
   TEST_ASSERT(nMols == expectedResult);
 }
 
@@ -194,7 +199,11 @@ void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
     delete mol;
   }
   // if all bits are set then we have seen possible ids
+#if BOOST_VERSION >= 105600
   TEST_ASSERT(bitVector.all());
+#else
+  TEST_ASSERT(bitVector.count() == expectedResult);
+#endif
   TEST_ASSERT(nMols == expectedResult);
 }
 

@@ -19,7 +19,20 @@
 #include <sstream>
 #include <iostream>
 #include <boost/cstdint.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105500
 #include <boost/predef.h>
+#else
+  #if !defined(BOOST_ENDIAN_LITTLE_BYTE) && !defined(BOOST_ENDIAN_BIG_BYTE)
+    #if defined(__BYTE_ORDER__)
+      #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        #define BOOST_ENDIAN_LITTLE_BYTE
+      #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        #define BOOST_ENDIAN_BIG_BYTE
+      #endif
+    #endif
+  #endif
+#endif
 
 namespace RDKit {
 // this code block for handling endian problems is adapted from :
@@ -27,12 +40,14 @@ namespace RDKit {
 enum EEndian {
   LITTLE_ENDIAN_ORDER,
   BIG_ENDIAN_ORDER,
-#if defined(BOOST_ENDIAN_LITTLE_BYTE) || defined(BOOST_ENDIAN_LITTLE_WORD)
+#if defined(BOOST_ENDIAN_LITTLE_BYTE)
   HOST_ENDIAN_ORDER = LITTLE_ENDIAN_ORDER
 #elif defined(BOOST_ENDIAN_BIG_BYTE)
   HOST_ENDIAN_ORDER = BIG_ENDIAN_ORDER
 #elif defined(BOOST_ENDIAN_BIG_WORD)
 #error "Cannot compile on word-swapped big-endian systems"
+#elif defined(BOOST_ENDIAN_LITTLE_WORD)
+#error "Cannot compile on word-swapped little-endian systems"
 #else
 #error "Failed to determine the system endian value"
 #endif

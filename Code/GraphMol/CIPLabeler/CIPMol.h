@@ -26,7 +26,7 @@ public:
   class CIPMolIter {
   public:
     CIPMolIter() = delete;
-    CIPMolIter(ROMol &mol, U pos) : d_mol{mol}, d_pos{std::move(pos)} {}
+    CIPMolIter(ROMol &mol, U pos) : d_mol(mol), d_pos(std::move(pos)) {}
 
     T &operator*() {
       d_current = d_mol[*d_pos];
@@ -49,8 +49,8 @@ public:
 public:
   CIPMolSpan() = delete;
   CIPMolSpan(ROMol &mol, std::pair<U, U> &&itr)
-      : d_mol{mol}, d_istart{std::move(itr.first)},
-        d_iend{std::move(itr.second)} {}
+      : d_mol(mol), d_istart(std::move(itr.first)),
+        d_iend(std::move(itr.second)) {}
 
   CIPMolIter begin() { return {d_mol, d_istart}; }
   CIPMolIter end() { return {d_mol, d_iend}; }

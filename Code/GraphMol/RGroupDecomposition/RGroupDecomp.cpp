@@ -40,6 +40,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <set>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
