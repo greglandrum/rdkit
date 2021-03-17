@@ -352,29 +352,30 @@ void testRingMatching3() {
 
   RWMol *core = SmartsToMol("*1***[*:1]1");
   // RWMol *core = SmartsToMol("*1****1");
-  RGroupDecompositionParameters params;
-  // This test is currently failing using the default scoring method (the
-  // halogens are not all in the same group)
-  params.scoreMethod = FingerprintVariance;
-  params.allowNonTerminalRGroups = true;
+  std::vector<RGroupScore> methods{Match, FingerprintVariance};
+  for (const auto &method : methods) {
+    RGroupDecompositionParameters params;
+    params.scoreMethod = method;
+    params.allowNonTerminalRGroups = true;
 
-  RGroupDecomposition decomp(*core, params);
-  for (int i = 0; i < 3; ++i) {
-    ROMol *mol = SmilesToMol(ringData3[i]);
-    int res = decomp.add(*mol);
-    delete mol;
-    TEST_ASSERT(res == i);
-  }
+    RGroupDecomposition decomp(*core, params);
+    for (int i = 0; i < 3; ++i) {
+      ROMol *mol = SmilesToMol(ringData3[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
+    }
 
-  decomp.process();
-  RGroupRows rows = decomp.getRGroupsAsRows();
-  std::ostringstream str;
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    std::ostringstream str;
 
-  // All Cl's should be labeled with the same rgroup
-  int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
-       ++it, ++i) {
-    CHECK_RGROUP(it, ringDataRes3[i]);
+    // All Cl's should be labeled with the same rgroup
+    int i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+         ++it, ++i) {
+      CHECK_RGROUP(it, ringDataRes3[i]);
+    }
   }
   delete core;
 }
