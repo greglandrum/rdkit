@@ -2140,21 +2140,25 @@ void testUserMatchTypes() {
   auto mol = "C1CCCCC1(N)(O)"_smiles;
   auto core = "C1CCCCC1[*:1]"_smiles;
   core = "C1CCCCC1[*:1]"_smarts;
-  RGroupDecompositionParameters params;
-  params.onlyMatchAtRGroups = true;
-  params.scoreMethod = FingerprintVariance;
-  RGroupDecomposition decomp(*core, params);
-  int res = decomp.add(*mol);
-  TEST_ASSERT(res == -1);
 
-  params.onlyMatchAtRGroups = false;
-  std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
-  TestMatchType::test(*core, *mol, params, expected);
-  core = "C1CCCCC1([*:1])([*:2])"_smiles;
-  TestMatchType::test(*core, *mol, params, expected);
-  core = "C1CCCC[*:2]1[*:1]"_smiles;
-  params.allowNonTerminalRGroups = true;
-  TestMatchType::test(*core, *mol, params, expected);
+  std::vector<RGroupScore> methods{Match, FingerprintVariance};
+  for (const auto &method : methods) {
+    RGroupDecompositionParameters params;
+    params.scoreMethod = method;
+    params.onlyMatchAtRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    int res = decomp.add(*mol);
+    TEST_ASSERT(res == -1);
+
+    params.onlyMatchAtRGroups = false;
+    std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
+    TestMatchType::test(*core, *mol, params, expected);
+    core = "C1CCCCC1([*:1])([*:2])"_smiles;
+    TestMatchType::test(*core, *mol, params, expected);
+    core = "C1CCCC[*:2]1[*:1]"_smiles;
+    params.allowNonTerminalRGroups = true;
+    TestMatchType::test(*core, *mol, params, expected);
+  }
 }
 
 void testUnlabelledRGroupsOnAromaticNitrogen() {
