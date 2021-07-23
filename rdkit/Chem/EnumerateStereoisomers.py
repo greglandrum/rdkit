@@ -230,14 +230,14 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...
     F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
     F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C/C=C\[C@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C\[C@H](F)Cl
+    F[C@@H](Cl)/C=C/C=C\\[C@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C/[C@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
 
@@ -294,6 +294,9 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   tm = Chem.Mol(m)
   for atom in tm.GetAtoms():
     atom.ClearProp("_CIPCode")
+  for bond in tm.GetBonds():
+    if bond.GetBondDir() == Chem.BondDir.EITHERDOUBLE:
+      bond.SetBondDir(Chem.BondDir.NONE)
   flippers = _getFlippers(tm, options)
   nCenters = len(flippers)
   if not nCenters:
@@ -324,9 +327,9 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       flippers[i].flip(flag)
     isomer = Chem.Mol(tm)
     Chem.SetDoubleBondNeighborDirections(isomer)
-    isomer.ClearComputedProps()
+    isomer.ClearComputedProps(includeRings=False)
 
-    Chem.AssignStereochemistry(isomer, cleanIt=True, force=True)
+    Chem.AssignStereochemistry(isomer, cleanIt=True, force=True, flagPossibleStereoCenters=True)
     if options.unique:
       cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       if cansmi in isomersSeen:

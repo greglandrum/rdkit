@@ -70,7 +70,7 @@ class PyResonanceMolSupplierCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()() { return getCallbackOverride()(); }
+  bool operator()() override { return getCallbackOverride()(); }
   python::object getPyCallbackObject() { return d_pyCallbackObject; }
 
  private:
@@ -212,7 +212,7 @@ struct resmolsup_wrap {
             python::return_internal_reference<1>())
         .def("__next__",
              (ROMol * (*)(ResonanceMolSupplier *)) &
-                 MolSupplNextAcceptNullLastMolecule,
+                 MolSupplNext,
              "Returns the next resonance structure in the supplier. Raises "
              "_StopIteration_ on end.\n",
              python::return_value_policy<python::manage_new_object>())

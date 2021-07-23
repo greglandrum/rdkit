@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,9 @@ namespace RDKit {
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
+  if (atomicNum <= 1) {
+    return false;
+  }
   switch (PeriodicTable::getTable()->getNouterElecs(atomicNum)) {
     case 1:
     case 2:
@@ -210,11 +213,10 @@ int Atom::calcExplicitValence(bool strict) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    accum += getOwningMol()[*beg]->getValenceContrib(this);
-    ++beg;
+  for (const auto &nbri :
+       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
+    const auto bnd = getOwningMol()[nbri];
+    accum += bnd->getValenceContrib(this);
   }
   accum += getNumExplicitHs();
 
@@ -326,6 +328,42 @@ int Atom::calcImplicitValence(bool strict) {
   if (d_explicitValence == -1) {
     this->calcExplicitValence(strict);
   }
+  // special cases
+  if (d_atomicNum == 0) {
+    d_implicitValence = 0;
+    return 0;
+  }
+  for (const auto &nbri :
+       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
+    const auto bnd = getOwningMol()[nbri];
+    if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
+      d_implicitValence = 0;
+      return 0;
+    }
+  }
+  if (d_explicitValence == 0 && d_atomicNum == 1 &&
+      d_numRadicalElectrons == 0) {
+    if (d_formalCharge == 1 || d_formalCharge == -1) {
+      d_implicitValence = 0;
+      return 0;
+    } else if (d_formalCharge == 0) {
+      d_implicitValence = 1;
+      return 1;
+    } else {
+      if (strict) {
+        std::ostringstream errout;
+        errout << "Unreasonable formal charge on hydrogen # " << getIdx()
+               << ".";
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw AtomValenceException(msg, getIdx());
+      } else {
+        d_implicitValence = 0;
+        return 0;
+      }
+    }
+  }
+
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
   // many Hs to add

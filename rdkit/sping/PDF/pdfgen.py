@@ -171,8 +171,8 @@ class Canvas:
     """PDF escapes are like Python ones, but brackets need slashes before them too.
         Use Python's repr function and chop off the quotes first"""
     s = repr(s)[1:-1]
-    s = s.replace('(', '\(')
-    s = s.replace(')', '\)')
+    s = s.replace('(', r'\(')
+    s = s.replace(')', r'\)')
     return s
 
   #info functions - non-standard
@@ -632,7 +632,7 @@ class Canvas:
       imagedata.append('ID')
 
       #use a flate filter and Ascii Base 85 to compress
-      raw = getattr(myimage, 'tobytes', myimage.tostring)()
+      raw = myimage.tobytes()
       assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
       compressed = zlib.compress(raw)  #this bit is very fast...
       encoded = pdfutils._AsciiBase85Encode(compressed)  #...sadly this isn't

@@ -18,7 +18,9 @@
 #include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace FMCS {
@@ -305,7 +307,7 @@ struct QueryRings {
 struct WeightedBond {
   const Bond* BondPtr{nullptr};
   unsigned Weight{0};
-  WeightedBond()  {}
+  WeightedBond() {}
   WeightedBond(const Bond* bond, const QueryRings& r)
       : BondPtr(bond), Weight(0) {
     // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)
@@ -388,7 +390,13 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
         QueryMoleculeMatchedBonds = seed.getNumBonds();
       }
     }
-  } else {  // create a set of seeds from each query bond
+    if (Seeds.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "The provided InitialSeed is not an MCS and will be ignored"
+          << std::endl;
+    }
+  }
+  if (Seeds.empty()) {  // create a set of seeds from each query bond
     // R1 additional performance OPTIMISATION
     // if(Parameters.BondCompareParameters.CompleteRingsOnly)
     // disable all mismatched rings, and do not generate initial seeds
@@ -569,6 +577,31 @@ bool checkIfRingsAreClosed(const Seed& fs) {
   return res;
 }
 
+bool checkNoLoneRingAtoms(const Seed& fs) {
+  if (!fs.MoleculeFragment.Atoms.size()) {
+    return true;
+  }
+
+  bool res = true;
+  const auto& om = fs.MoleculeFragment.Atoms[0]->getOwningMol();
+  const auto ri = om.getRingInfo();
+  for (const auto& ithRingAtomIndices : ri->atomRings()) {
+    size_t count = 0;
+    for (const auto atom : fs.MoleculeFragment.Atoms) {
+      if (std::find(ithRingAtomIndices.begin(), ithRingAtomIndices.end(),
+                    atom->getIdx()) != ithRingAtomIndices.end() &&
+          ++count > 1) {
+        break;
+      }
+    }
+    if (count == 1) {
+      res = false;
+      break;
+    }
+  }
+  return res;
+}
+
 }  // namespace
 bool MaximumCommonSubgraph::growSeeds() {
   bool mcsFound = false;
@@ -608,6 +641,9 @@ bool MaximumCommonSubgraph::growSeeds() {
         // #945: test here to see if the MCS actually has all rings closed
         if (possibleMCS && Parameters.BondCompareParameters.CompleteRingsOnly) {
           possibleMCS = checkIfRingsAreClosed(fs);
+        }
+        if (possibleMCS && Parameters.AtomCompareParameters.CompleteRingsOnly) {
+          possibleMCS = checkNoLoneRingAtoms(fs);
         }
         if (possibleMCS) {
           mcsFound = true;
@@ -727,7 +763,7 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
 
   // create molecule from MCS for MolToSmarts()
   auto* mol = new RWMol();
-  const RingInfo* ri = QueryMolecule->getRingInfo();
+  const RingInfo* ri = mcsIdx.QueryMolecule->getRingInfo();
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
@@ -793,7 +829,7 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
 
 bool MaximumCommonSubgraph::addFusedBondQueries(const MCS& mcsIdx,
                                                 RWMol* rwMol) const {
-  const RingInfo* ri = QueryMolecule->getRingInfo();
+  const RingInfo* ri = mcsIdx.QueryMolecule->getRingInfo();
   unsigned bi = 0;  // Seed Idx
   bool haveFusedBondQuery = false;
   std::map<int, std::set<size_t>> bondRingMembership;
@@ -908,11 +944,20 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     ThresholdCount = src_mols.size() - 1;
   }
 
+  // AtomCompareParameters.CompleteRingsOnly implies
+  // BondCompareParameters.CompleteRingsOnly
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.BondCompareParameters.CompleteRingsOnly = true;
+  }
+
   // Selecting CompleteRingsOnly option also enables
   // --ring-matches-ring-only. ring--ring and chain bonds only match chain
   // bonds.
   if (Parameters.BondCompareParameters.CompleteRingsOnly) {
     Parameters.BondCompareParameters.RingMatchesRingOnly = true;
+  }
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
   }
 
   for (const auto& src_mol : src_mols) {

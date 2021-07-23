@@ -27,7 +27,7 @@ def cacheImageFile(filename):
     code.append('/W %s /H %s /BPC 8 /CS /RGB /F [/A85 /Fl]' % (imgwidth, imgheight))
     code.append('ID')
     # use a flate filter and Ascii Base 85
-    raw = getattr(img, 'tobytes', img.tostring)()
+    raw = img.tobytes()
     assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
 
     compressed = zlib.compress(raw)  # this bit is very fast...
@@ -51,7 +51,7 @@ def cacheImageFile(filename):
 
 
 def preProcessImages(spec):
-    """accepts either a filespec ('C:\mydir\*.jpg') or a list
+    r"""accepts either a filespec ('C:\mydir\*.jpg') or a list
       of image filenames, crunches them all to save time.  Run this
       to save huge amounts of time when repeatedly building image
       documents."""
@@ -94,8 +94,8 @@ def _escape(s):
       need slashes before them too. Use Python's repr function
       and chop off the quotes first"""
     s = repr(s)[1:-1]
-    s = s.replace('(', '\(')
-    s = s.replace(')', '\)')
+    s = s.replace('(', r'\(')
+    s = s.replace(')', r'\)')
     return s
 
 

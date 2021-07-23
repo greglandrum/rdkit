@@ -674,6 +674,207 @@ select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
 (1 row)
 
 set rdkit.do_chiral_sss=false;
+-- Enhanced stereo
+set rdkit.do_chiral_sss=false;
+set rdkit.do_enhanced_stereo_sss=false; /* has no effect when do_chiral_sss is false */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+set rdkit.do_enhanced_stereo_sss=true; /* has no effect when do_chiral_sss is false */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+set rdkit.do_chiral_sss=true;
+set rdkit.do_enhanced_stereo_sss=false;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+set rdkit.do_enhanced_stereo_sss=true; /* now we expect to see an effect */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+set rdkit.do_chiral_sss=false;
+set rdkit.do_enhanced_stereo_sss=false;
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
  substruct_count 
@@ -959,5 +1160,28 @@ SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
                   mol_out                  
 -------------------------------------------
  C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|
+(1 row)
+
+-- github #3688: bad input to qmol_from_ctab() crashes db
+select qmol_from_ctab('a'::cstring,false);
+WARNING:  could not create molecule from CTAB 'a'
+ qmol_from_ctab 
+----------------
+ 
+(1 row)
+
+-- github #3689: bad input to qmol_from_smiles() crashes db
+select qmol_from_smiles('a'::cstring);
+WARNING:  could not create molecule from SMILES 'a'
+ qmol_from_smiles 
+------------------
+ 
+(1 row)
+
+select qmol_from_smiles('C1C'::cstring);
+WARNING:  could not create molecule from SMILES 'C1C'
+ qmol_from_smiles 
+------------------
+ 
 (1 row)
 

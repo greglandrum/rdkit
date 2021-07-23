@@ -7,7 +7,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
 
 
 rdkit_library(RDGeneral
-              Invariant.cpp types.cpp utils.cpp RDLog.cpp 
+              Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
               LocaleSwitcher.cpp versions.cpp SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
@@ -62,8 +62,10 @@ rdkit_headers(Exceptions.h
               LocaleSwitcher.h
               Ranking.h
               hanoiSort.h
+              RDExportMacros.h
               export.h
               test.h
+              ConcurrentQueue.h
               DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)
@@ -72,3 +74,8 @@ endif (NOT RDK_INSTALL_INTREE)
 
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
+
+if(RDK_BUILD_THREADSAFE_SSS)
+rdkit_test(testConcurrentQueue testConcurrentQueue.cpp LINK_LIBRARIES RDGeneral)
+endif(RDK_BUILD_THREADSAFE_SSS)
+

@@ -21,7 +21,6 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <cstdint>
 
 namespace Rankers {
@@ -50,7 +49,7 @@ struct pairLess
 template <typename T>
 class argless : public std::binary_function<T, T, bool> {
  public:
-  argless(const T &c) : std::binary_function<T, T, bool>(), container(c){};
+  argless(const T &c) : std::binary_function<T, T, bool>(), container(c) {}
   bool operator()(unsigned int v1, unsigned int v2) const {
     return container[v1] < container[v2];
   }
@@ -72,14 +71,13 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
   std::sort(indices.begin(), indices.end(), argless<std::vector<T1>>(vect));
 
   int currRank = 0;
-  T1 lastV = vect[indices[0]];
-  BOOST_FOREACH (unsigned int idx, indices) {
-    T1 v = vect[idx];
-    if (v == lastV) {
+  unsigned int lastIdx = indices[0];
+  for (auto idx : indices) {
+    if (vect[idx] == vect[lastIdx]) {
       res[idx] = currRank;
     } else {
       res[idx] = ++currRank;
-      lastV = v;
+      lastIdx = idx;
     }
   }
 }

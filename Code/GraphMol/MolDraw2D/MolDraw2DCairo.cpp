@@ -64,7 +64,7 @@ void MolDraw2DCairo::finishDrawing() {}
 void MolDraw2DCairo::setColour(const DrawColour &col) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setColour(col);
-  cairo_set_source_rgb(dp_cr, col.r, col.g, col.b);
+  cairo_set_source_rgba(dp_cr, col.r, col.g, col.b, col.a);
 }
 
 // ****************************************************************************
@@ -105,8 +105,9 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
     ++nSegments;  // we're going to assume an even number of segments
   }
 
-  Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D delta = (cds2 - cds1);
+  Point2D perp(delta.y, -delta.x);
+  perp.normalize();
   perp *= vertOffset;
   delta /= nSegments;
 
@@ -135,7 +136,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
 
   cairo_line_cap_t olinecap = cairo_get_line_cap(dp_cr);
   cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);
@@ -167,7 +168,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
 void MolDraw2DCairo::clearDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   setColour(drawOptions().backgroundColour);
-  cairo_rectangle(dp_cr, 0, 0, width(), height());
+  cairo_rectangle(dp_cr, offset().x, offset().y, width(), height());
   cairo_fill(dp_cr);
 }
 
@@ -226,7 +227,8 @@ void addMoleculeMetadata(
 
   bool includeStereo = true;
   if (mol.getNumConformers()) {
-    auto molb = MolToMolBlock(mol, includeStereo, confId);
+    bool kekulize = false;
+    auto molb = MolToMolBlock(mol, includeStereo, confId, kekulize);
     metadata.push_back(
         std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
   }

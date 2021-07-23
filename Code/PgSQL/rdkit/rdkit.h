@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,6 +106,9 @@ CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
 char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
+const char *makeMolJSON(CROMol data);
+CROMol parseMolJSON(char *data, bool warnOnFail);
+
 bool isValidSmiles(char *data);
 bool isValidSmarts(char *data);
 bool isValidCTAB(char *data);
@@ -152,6 +156,7 @@ double MolChi4n(CROMol i);
 double MolKappa1(CROMol i);
 double MolKappa2(CROMol i);
 double MolKappa3(CROMol i);
+double MolPhi(CROMol i);
 
 int MolNumSpiroAtoms(CROMol i);
 int MolNumBridgeheadAtoms(CROMol i);

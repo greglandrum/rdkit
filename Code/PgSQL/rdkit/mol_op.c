@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -188,6 +188,7 @@ MOLDESCR(chi4v, MolChi4v, FLOAT4)
 MOLDESCR(kappa1, MolKappa1, FLOAT4)
 MOLDESCR(kappa2, MolKappa2, FLOAT4)
 MOLDESCR(kappa3, MolKappa3, FLOAT4)
+MOLDESCR(phi, MolPhi, FLOAT4)
 
 MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)
 MOLDESCR(numbridgeheadatoms, MolNumBridgeheadAtoms, INT32)

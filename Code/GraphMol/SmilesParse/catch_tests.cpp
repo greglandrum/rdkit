@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2018-2019 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -747,5 +744,226 @@ TEST_CASE(
     CHECK(m->getBondBetweenAtoms(0, 1)->getBondType() ==
           Bond::BondType::AROMATIC);
     CHECK(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+}
+
+TEST_CASE("github #3320: incorrect bond properties from CXSMILES",
+          "[cxsmiles][bug]") {
+  SECTION("as reported") {
+    auto m = "[Cl-][Pt++]1([Cl-])NCCN1C1CCCCC1 |C:6.6,3.2,0.0,2.1|"_smiles;
+    REQUIRE(m);
+    std::vector<std::pair<unsigned, unsigned>> bonds = {
+        {0, 1}, {3, 1}, {2, 1}, {6, 1}};
+    for (const auto &pr : bonds) {
+      auto bnd = m->getBondBetweenAtoms(pr.first, pr.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(bnd->getBeginAtomIdx() == pr.first);
+    }
+  }
+  SECTION("as reported") {
+    auto m = "[Cl-][Pt++]1([Cl-])NCC3C2CCCCC2.N13 |C:12.12,3.2,0.0,2.1|"_smiles;
+    REQUIRE(m);
+    std::vector<std::pair<unsigned, unsigned>> bonds = {
+        {0, 1}, {3, 1}, {2, 1}, {12, 1}};
+    for (const auto &pr : bonds) {
+      auto bnd = m->getBondBetweenAtoms(pr.first, pr.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(bnd->getBeginAtomIdx() == pr.first);
+    }
+  }
+}
+
+TEST_CASE("github #3774: MolToSmarts inverts direction of dative bond",
+          "[smarts][bug]") {
+  SECTION("as reported") {
+    {
+      auto m = "N->[Cu+]"_smiles;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "[#7]->[Cu+]");
+      CHECK(MolToSmiles(*m) == "N->[Cu+]");
+    }
+    {
+      auto m = "N<-[Cu+]"_smiles;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "[#7]<-[Cu+]");
+      CHECK(MolToSmiles(*m) == "N<-[Cu+]");
+    }
+  }
+  SECTION("from smarts") {
+    {
+      auto m = "N->[Cu+]"_smarts;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "N->[#29&+]");
+    }
+    {
+      auto m = "N<-[Cu+]"_smarts;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "N<-[#29&+]");
+    }
+  }
+}
+
+TEST_CASE("Hydrogen bonds", "[smiles]") {
+  SECTION("basics") {
+    auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getBondBetweenAtoms(3, 4));
+    CHECK(m->getBondBetweenAtoms(3, 4)->getBondType() ==
+          Bond::BondType::HYDROGEN);
+  }
+}
+
+TEST_CASE("Github #2788: doKekule=true should kekulize the molecule",
+          "[smiles]") {
+  SECTION("basics1") {
+    auto m = "c1ccccc1"_smiles;
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = true;
+    CHECK(MolToSmiles(*m, doIsomeric, doKekule) == "C1=CC=CC=C1");
+  }
+  SECTION("basics2") {
+    auto m = "c1cc[nH]c1"_smiles;
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = true;
+    CHECK(MolToSmiles(*m, doIsomeric, doKekule) == "C1=CNC=C1");
+  }
+
+  SECTION("can thrown exceptions") {
+    int debugParse = 0;
+    bool sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("c1ccnc1", debugParse, sanitize)};
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = false;
+    {
+      RWMol tm(*m);
+      CHECK(MolToSmiles(tm, doIsomeric, doKekule) == "c1ccnc1");
+    }
+    doKekule = true;
+    {
+      RWMol tm(*m);
+      CHECK_THROWS_AS(MolToSmiles(tm, doIsomeric, doKekule), KekulizeException);
+    }
+  }
+}
+
+TEST_CASE("bogus recursive SMARTS", "[smarts]") {
+  std::string sma = "C)foo";
+  CHECK(SmartsToMol(sma) == nullptr);
+}
+
+TEST_CASE(
+    "Github #3998 MolFragmentToSmiles failing in Kekulization with "
+    "kekuleSmiles=true") {
+  auto mol = "Cc1ccccc1"_smiles;
+  REQUIRE(mol);
+  SECTION("normal") {
+    std::vector<int> ats{0};
+    std::string smi = MolFragmentToSmiles(*mol, ats);
+    CHECK(smi == "C");
+  }
+  SECTION("kekulized") {
+    std::vector<int> ats{0};
+    bool doIsomericSmiles = true;
+    bool doKekule = true;
+    std::string smi = MolFragmentToSmiles(*mol, ats, nullptr, nullptr, nullptr,
+                                          doIsomericSmiles, doKekule);
+    CHECK(smi == "C");
+  }
+  SECTION("including ring parts") {
+    std::vector<int> ats{0, 1, 2};
+    bool doIsomericSmiles = true;
+    bool doKekule = true;
+    std::string smi = MolFragmentToSmiles(*mol, ats, nullptr, nullptr, nullptr,
+                                          doIsomericSmiles, doKekule);
+    CHECK(smi == "C:CC");
+  }
+}
+
+TEST_CASE("Github #4319 add CXSMARTS support") {
+  // note: the CXSMARTS support uses exactly the same code as the CXSMILES
+  // parser/writer. We aren't testing that here since it's tested already with
+  // the CXSMILES tests. The goal here is just to make sure that it's being
+  // called by default and that we can control its behavior with the
+  // SmartsParseParams structure
+  SECTION("defaults") {
+    auto mol = "CCC |$foo;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "bar");
+    CHECK(!mol->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+  }
+  SECTION("params") {
+    std::string sma = "CCC |$foo;;bar$|";
+    SmartsParserParams ps;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "bar");
+    CHECK(!mol->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+  }
+  SECTION("no cxsmarts") {
+    std::string sma = "CCC |$foo;;bar$|";
+    SmartsParserParams ps;
+    ps.allowCXSMILES = false;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(!mol);
+  }
+  SECTION("name") {
+    std::string sma = "CCC foobar";
+    SmartsParserParams ps;
+    ps.parseName = true;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getProp<std::string>(common_properties::_Name) == "foobar");
+  }
+  SECTION("writer") {
+    auto mol = "CCC |$foo;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(MolToSmarts(*mol) == "CCC");
+    CHECK(MolToCXSmarts(*mol) == "CCC |$foo;;bar$|");
+  }
+  SECTION("writer, check reordering") {
+    auto mol = "CC1.OC1 |$foo;;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 4);
+    CHECK(MolToSmarts(*mol) == "CCCO");
+    CHECK(MolToCXSmarts(*mol) == "CCCO |$foo;;bar;$|");
+  }
+
+  SECTION("parser, confirm enhanced stereo working") {
+    auto mol = "[#6][C@]([#8])(F)Cl |&1:1|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 5);
+    CHECK(MolToSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl");
+    CHECK(MolToCXSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl |&1:1|");
+
+    {
+      auto smol = "C[C@](O)(F)Cl |&1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).size() == 1);
+    }
+    {
+      auto smol = "C[C@](O)(F)Cl |o1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).empty());
+    }
   }
 }

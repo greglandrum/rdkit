@@ -422,6 +422,25 @@ class TestCase(unittest.TestCase):
                                     (14, 'S')], [(1, 'S'), (12, 'S'),
                                                  (14, 'R')], [(1, 'S'), (12, 'S'), (14, 'S')]])
 
+  def testIssue3505(self):
+    m = Chem.MolFromSmiles('CCC(C)Br')
+    mols = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(mols), 2)
+    for mol in mols:
+      at = mol.GetAtomWithIdx(2)
+      self.assertIn(at.GetChiralTag(),
+                    [Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.ChiralType.CHI_TETRAHEDRAL_CCW])
+      self.assertTrue(at.HasProp("_ChiralityPossible"))
+
+
+  def testEnumerateEitherDoubleStereo(self):
+    """ EnumerateStereoisomers from MOL with explicit either cis/trans bond """
+    rdbase = os.environ["RDBASE"]
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/simple_either.mol')
+    mol = Chem.MolFromMolFile(filename)
+    smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol)]
+    self.assertEqual(set(smiles), {"C/C=C/C", "C/C=C\\C"})
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -11,9 +11,14 @@
 #define RGROUP_UTILS
 
 #include <GraphMol/RDKitBase.h>
+#include "RGroupDecomp.h"
+
 #include <map>
 namespace RDKit {
-extern const std::string RLABEL;
+
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL;
+extern const std::string RLABEL_TYPE;
+extern const std::string RLABEL_CORE_INDEX;
 extern const std::string SIDECHAIN_RLABELS;
 extern const std::string done;
 
@@ -46,6 +51,42 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 
 //! Returns true if the core has a dummy atom
 bool hasDummy(const RWMol &core);
+
+//! Returns true if the core atom is either an atom with multiple
+// connections or an atom with a single connection that has no user
+// defined rgroup label
+bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
+
+//! Return true if the atom has a user-defined R group label
+bool isUserRLabel(const Atom &atom);
+
+//! Returns true if the core atom is either a dummy atom with multiple
+// connections or a dummy atom with a single connection that has no user
+// defined rgroup label
+inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
+  if (atom.getAtomicNum()) {
+    return false;
+  }
+  return isAtomWithMultipleNeighborsOrNotUserRLabel(atom);
 }
+
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupRow &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupRows &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupColumn &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupColumns &rgr, const std::string &prefix = "");
+
+}  // namespace RDKit
 
 #endif

@@ -23,6 +23,9 @@ void PositionVariationOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
+  if (!dp_mol->hasProp(detail::idxPropName)) {
+    detail::preserveOrigIndices(*dp_mol);
+  }
   for (const auto bond : dp_mol->bonds()) {
     std::string endpts;
     std::string attach;
@@ -87,12 +90,11 @@ std::unique_ptr<ROMol> PositionVariationOp::operator()(
     res->addBond(begAtomIdx, endAtomIdx, Bond::BondType::SINGLE);
   }
   // now remove the dummies:
-  std::vector<size_t> atsToRemove = d_dummiesAtEachPoint;
-  std::sort(atsToRemove.begin(), atsToRemove.end());
-  for (auto riter = atsToRemove.rbegin(); riter != atsToRemove.rend();
-       ++riter) {
-    res->removeAtom(*riter);
+  res->beginBatchEdit();
+  for (auto idx : d_dummiesAtEachPoint) {
+    res->removeAtom(idx);
   }
+  res->commitBatchEdit();
   return std::unique_ptr<ROMol>(static_cast<ROMol *>(res));
 }
 

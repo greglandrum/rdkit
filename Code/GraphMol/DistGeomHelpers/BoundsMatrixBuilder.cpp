@@ -80,7 +80,7 @@ class ComputedData {
     set15Atoms.resize(nAtoms * nAtoms);
   }
 
-  ~ComputedData() {}
+  ~ComputedData() = default;
 
   DOUBLE_VECT bondLengths;
   SymmIntMatPtr bondAdj;  // bond adjacency matrix
@@ -220,9 +220,10 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
     begId = (*bi)->getBeginAtomIdx();
     endId = (*bi)->getEndAtomIdx();
-    if (atomParams[begId] && atomParams[endId]) {
+    auto bOrder = (*bi)->getBondTypeAsDouble();
+    if (atomParams[begId] && atomParams[endId] && bOrder > 0) {
       bl = ForceFields::UFF::Utils::calcBondRestLength(
-          (*bi)->getBondTypeAsDouble(), atomParams[begId], atomParams[endId]);
+          bOrder, atomParams[begId], atomParams[endId]);
       accumData.bondLengths[(*bi)->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
@@ -619,7 +620,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     if (mol.getRingInfo()->numBondRings(bid2) > 1) {
       if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
           mol.getRingInfo()->numBondRings(bid3) == 1) {
-        BOOST_FOREACH (const INT_VECT &br, mol.getRingInfo()->bondRings()) {
+        for (const auto &br : mol.getRingInfo()->bondRings()) {
           if (std::find(br.begin(), br.end(), bid1) != br.end()) {
             if (std::find(br.begin(), br.end(), bid3) != br.end()) {
               preferCis = true;
@@ -774,14 +775,14 @@ void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1,
 }
 
 bool _checkH2NX3H1OX2(const Atom *atm) {
-  if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs() == 2)) {
+  if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs(true) == 2)) {
     // CH2
     return true;
-  } else if ((atm->getAtomicNum() == 8) && (atm->getTotalNumHs() == 0)) {
+  } else if ((atm->getAtomicNum() == 8) && (atm->getTotalNumHs(true) == 0)) {
     // OX2
     return true;
   } else if ((atm->getAtomicNum() == 7) && (atm->getDegree() == 3) &&
-             (atm->getTotalNumHs() == 1)) {
+             (atm->getTotalNumHs(true) == 1)) {
     // FIX: assuming hydrogen is not in the graph
     // this is NX3H1 situation
     return true;
@@ -815,19 +816,37 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
-
-  if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+  // std::cerr << " -> " << atm1->getIdx() << "-" << atm2->getIdx() << "-"
+  //           << atm3->getIdx() << "-" << atm4->getIdx()
+  //           << " bonds: " << bnd1->getIdx() << "," << bnd3->getIdx()
+  //           << std::endl;
+  // std::cerr << "   " << a1Num << " " << a3Num << " " << bnd3->getBondType()
+  //           << " " << a4Num << " " << bnd1->getBondType() << " " << a2Num <<
+  //           " "
+  //           << atm2->getTotalNumHs(true) << std::endl;
+  if (a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
       (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs() == 1))) {
+      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1))) {
+    // std::cerr << " yes!" << std::endl;
     return true;
   }
+  // std::cerr << " no!" << std::endl;
   return false;
 }
 
-bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
-                                  const Bond *bnd3, const Atom *atm1,
-                                  const Atom *atm2, const Atom *atm3,
-                                  const Atom *atm4) {
+// checking for amide/ester when all three bonds are
+// part of the macrocycle ring
+// here we look for something like this:
+// It's an amide or ester:
+//
+//        5    <- 5 is the O
+//        |    <- That's the double bond
+//    1   3
+//     \ / \                                         T.S.I.Left Blank
+//      2   4  <- 2 is an oxygen/nitrogen
+bool _checkMacrocycleAllInSameRingAmideEster14(
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
   RDUNUSED_PARAM(bnd1);
   RDUNUSED_PARAM(bnd3);
 
@@ -847,7 +866,8 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
         if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
-          if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
+          if ((res->getAtomicNum() != 6 &&
+               res->getAtomicNum() != 1) ||  // check is (methylated)amide
               resbnd->getBondType() != Bond::SINGLE) {
             return false;
           }
@@ -861,7 +881,7 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
         if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
-          if (res->getAtomicNum() != 8 ||
+          if (res->getAtomicNum() != 8 ||  // check for the carbonyl oxygen
               resbnd->getBondType() != Bond::DOUBLE) {
             return false;
           }
@@ -899,8 +919,8 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
                         const Atom *atm4) {
   RDUNUSED_PARAM(atm4);
   unsigned int a2Num = atm2->getAtomicNum();
-  if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs() == 1))) {
-    if ((atm1->getAtomicNum() != 1) && (bnd1->getBondType() == Bond::SINGLE)) {
+  if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {
+    if ((bnd1->getBondType() == Bond::SINGLE)) {
       if ((atm3->getAtomicNum() == 6) &&
           (bnd3->getBondType() == Bond::SINGLE) && _isCarbonyl(mol, atm3)) {
         return true;
@@ -912,7 +932,8 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
 
 void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        const Bond *bnd3, ComputedData &accumData,
-                       DistGeom::BoundsMatPtr mmat, double *dmat) {
+                       DistGeom::BoundsMatPtr mmat, double *dmat,
+                       bool forceTransAmides) {
   RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
@@ -1033,58 +1054,59 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         // "\n";
       } else if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-// It's an amide or ester:
-//
-//        4    <- 4 is the O
-//        |    <- That's the double bond
-//    1   3
-//     \ / \                                         T.S.I.Left Blank
-//      2   5  <- 2 is an oxygen/nitrogen
-//
-// Here we set the distance between atoms 1 and 4,
-//  we'll handle atoms 1 and 5 below.
+        // It's an amide or ester:
+        //
+        //        4    <- 4 is the O
+        //        |    <- That's the double bond
+        //    1   3
+        //     \ / \                                         T.S.I.Left Blank
+        //      2   5  <- 2 is an oxygen/nitrogen
+        //
+        // Here we set the distance between atoms 1 and 4,
+        //  we'll handle atoms 1 and 5 below.
 
-// fix for issue 251 - we were marking this as a cis configuration earlier
-// -------------------------------------------------------
-// Issue284:
-//   As this code originally stood, we forced amide bonds to be trans. This is
-//   convenient a lot of the time for generating nice-looking structures, but is
-//   unfortunately totally bogus.  So here we'll allow the distance to
-//   roam from cis to trans and hope that the force field planarizes things
-//   later.
-//
-//   What we'd really like to be able to do is specify multiple possible ranges
-//   for the distances, but a single bounds matrix doesn't support this kind
-//   of fanciness.
-//
-#ifdef FORCE_TRANS_AMIDES
-        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-        path14.type = Path14Configuration::TRANS;
-        accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                             bid2 * nb + bid3] = 1;
-        accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                             bid2 * nb + bid1] = 1;
-#else
-        if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
-            atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
-          // secondary amide, this is the H
-          setTheBound = false;
+        // fix for issue 251 - we were marking this as a cis configuration
+        // earlier
+        // -------------------------------------------------------
+        // Issue284:
+        //   As this code originally stood, we forced amide bonds to be trans.
+        //   This is convenient a lot of the time for generating nice-looking
+        //   structures, but is unfortunately totally bogus.  So here we'll
+        //   allow the distance to roam from cis to trans and hope that the
+        //   force field planarizes things later.
+        //
+        //   What we'd really like to be able to do is specify multiple possible
+        //   ranges for the distances, but a single bounds matrix doesn't
+        //   support this kind of fanciness.
+        //
+        if (forceTransAmides) {
+          if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
+               atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
+              (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
+               atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
+            // secondary amide, this is the H, it should be trans to the O
+            dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+            path14.type = Path14Configuration::TRANS;
+            accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
+                                 bid2 * nb + bid3] = 1;
+            accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
+                                 bid2 * nb + bid1] = 1;
+          } else {
+            dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+            path14.type = Path14Configuration::CIS;
+            accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
+                               bid2 * nb + bid3] = 1;
+            accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
+                               bid2 * nb + bid1] = 1;
+          }
+          du = dl;
+          dl -= GEN_DIST_TOL;
+          du += GEN_DIST_TOL;
         } else {
-          // force the amide to be cis:
           dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-          path14.type = Path14Configuration::CIS;
-          accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                             bid2 * nb + bid3] = 1;
-          accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                             bid2 * nb + bid1] = 1;
+          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+          path14.type = Path14Configuration::OTHER;
         }
-#endif
-        du = dl;
-        dl -= GEN_DIST_TOL;
-        du += GEN_DIST_TOL;
-
-        // BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": "
-        // << dl << "->" << du << "\n";
       } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
                                      atm4)) ||
                  (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2,
@@ -1097,42 +1119,40 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         //     \ / \                                          T.S.I.Left Blank
         //      2   5  <- 2 is oxygen or nitrogen
         //
-        // we set the 1-4 contact above.
+        // we already set the 1-4 contact above, here we are doing 1-5
 
         // If we're going to have a hope of getting good geometries
         // out of here we need to set some reasonably smart bounds between 1
         // and 5 (ref Issue355):
 
-        // NOTE THAT WE REVERSE THE ORDER HERE:
-
-#ifdef FORCE_TRANS_AMIDES
-        // amide is trans, we're cis:
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        path14.type = Path14Configuration::CIS;
-        accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                           bid2 * nb + bid3] = 1;
-        accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                           bid2 * nb + bid1] = 1;
-#else
-        // amide is cis, we're trans:
-        if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
-            atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
-          // secondary amide, this is the H
-          setTheBound = false;
-        } else {
-          dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
+        if (forceTransAmides) {
+          if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
+               atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
+              (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
+               atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
+            // secondary amide, this is the H, it's cis to atom 5
+            dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+            path14.type = Path14Configuration::CIS;
+            accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
                                bid2 * nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
+            accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
                                bid2 * nb + bid1] = 1;
+          } else {
+            dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+            path14.type = Path14Configuration::TRANS;
+            accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
+                                 bid2 * nb + bid3] = 1;
+            accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
+                                 bid2 * nb + bid1] = 1;
+          }
+          du = dl;
+          dl -= GEN_DIST_TOL;
+          du += GEN_DIST_TOL;
+        } else {
+          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+          path14.type = Path14Configuration::OTHER;
         }
-#endif
-        du = dl;
-        dl -= GEN_DIST_TOL;
-        du += GEN_DIST_TOL;
-        // BOOST_LOG(rdDebugLog) << "    amide neighbor: " << aid1 << " " <<
-        // aid4 << ": " << dl << "->" << du << "\n";
       } else {
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
         du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
@@ -1140,8 +1160,6 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     default:
-      // BOOST_LOG(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 <<
-      // "\n";
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
       du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
 
@@ -1152,7 +1170,6 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
-    // std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
     _checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
   }
@@ -1183,10 +1200,144 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   accumData.paths14.push_back(path14);
 }
 
-void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1,
-                            const Bond *bnd2, const Bond *bnd3,
-                            ComputedData &accumData,
-                            DistGeom::BoundsMatPtr mmat, double *dmat) {
+// this is adapted from `_checkAmideEster14`, with only changing
+// (a2Num == 7 && atm2->getTotalNumHs() == 1) into
+// (a2Num == 7).
+// This is necessary as the original function does not detect attached
+// hydrogen even when is present (possibly due to explict/implicit H-count?),
+// a new function is used (currently only for macrocycle treatment with ETKDGv3)
+// in order to not break backward compatibility (also allow recognising
+// methylated amide) here we look for something like this: It's an amide or
+// ester:
+//
+//        4    <- 4 is the O
+//        |    <- That's the double bond
+//    1   3
+//     \ / \                                         T.S.I.Left Blank
+//      2   5  <- 2 is an oxygen/nitrogen
+bool _checkMacrocycleTwoInSameRingAmideEster14(
+    const Bond *bnd1, const Bond *bnd3, const Atom *atm1, const Atom *atm2,
+    const Atom *atm3, const Atom *atm4) {
+  unsigned int a1Num = atm1->getAtomicNum();
+  unsigned int a2Num = atm2->getAtomicNum();
+  unsigned int a3Num = atm3->getAtomicNum();
+  unsigned int a4Num = atm4->getAtomicNum();
+
+  if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+      (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
+      (a2Num == 8 || (a2Num == 7))) {
+    return true;
+  }
+  return false;
+}
+
+void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
+                                         const Bond *bnd2, const Bond *bnd3,
+                                         ComputedData &accumData,
+                                         DistGeom::BoundsMatPtr mmat,
+                                         double *dmat) {
+  PRECONDITION(bnd1, "");
+  PRECONDITION(bnd2, "");
+  PRECONDITION(bnd3, "");
+  unsigned int bid1, bid2, bid3;
+  bid1 = bnd1->getIdx();
+  bid2 = bnd2->getIdx();
+  bid3 = bnd3->getIdx();
+  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
+  PRECONDITION(atm2, "");
+  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
+  PRECONDITION(atm3, "");
+
+  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
+  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+  const Atom *atm1 = mol.getAtomWithIdx(aid1);
+  const Atom *atm4 = mol.getAtomWithIdx(aid4);
+
+  // check that this actually is a 1-4 contact:
+  if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
+      2.9) {
+    // std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because
+    // d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
+    return;
+  }
+
+  // when we have fused rings, it can happen that this isn't actually a 1-4
+  // contact,
+  // (this was the cause of sf.net bug 2835784) check that now:
+  if (mol.getBondBetweenAtoms(aid1, atm3->getIdx()) ||
+      mol.getBondBetweenAtoms(aid4, atm2->getIdx())) {
+    return;
+  }
+
+  Atom::HybridizationType ahyb3 = atm3->getHybridization();
+  Atom::HybridizationType ahyb2 = atm2->getHybridization();
+
+  double bl1 = accumData.bondLengths[bid1];
+  double bl2 = accumData.bondLengths[bid2];
+  double bl3 = accumData.bondLengths[bid3];
+
+  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
+  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
+  CHECK_INVARIANT(ba12 > 0.0, "");
+  CHECK_INVARIANT(ba23 > 0.0, "");
+  double dl, du;
+  Path14Configuration path14;
+  unsigned int nb = mol.getNumBonds();
+
+  path14.bid1 = bid1;
+  path14.bid2 = bid2;
+  path14.bid3 = bid3;
+  if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
+                                                 atm4)) ||
+      (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
+                                                 atm1))) {
+    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+    path14.type = Path14Configuration::CIS;
+    accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
+    accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
+    du = dl;
+    dl -= GEN_DIST_TOL;
+    du += GEN_DIST_TOL;
+  } else if ((ahyb2 == Atom::SP2) &&
+             (ahyb3 == Atom::SP2)) {  // FIX: check for trans
+    // here we will assume 180 degrees: basically flat ring with an external
+    // substituent
+    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+    du = dl;
+    dl -= GEN_DIST_TOL;
+    du += GEN_DIST_TOL;
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
+    accumData.transPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
+
+  } else {
+    // here we will assume anything is possible
+    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+    du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+
+    // in highly-strained situations these can get mixed up:
+    if (du < dl) {
+      double tmpD = dl;
+      dl = du;
+      du = tmpD;
+    }
+    if (fabs(du - dl) < DIST12_DELTA) {
+      dl -= GEN_DIST_TOL;
+      du += GEN_DIST_TOL;
+    }
+    path14.type = Path14Configuration::OTHER;
+  }
+  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
+  //           << std::endl;
+  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  accumData.paths14.push_back(path14);
+}
+
+void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
+                                         const Bond *bnd2, const Bond *bnd3,
+                                         ComputedData &accumData,
+                                         DistGeom::BoundsMatPtr mmat,
+                                         double *dmat) {
   // This is adapted from `_setChain14Bounds`, with changes on how trans amide
   // is handled
   RDUNUSED_PARAM(dmat);
@@ -1309,10 +1460,10 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1,
         path14.type = Path14Configuration::OTHER;
         // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 <<
         // "\n";
-      } else if ((_checkMacrocycleAmideEster14(mol, bnd1, bnd3, atm1, atm2,
-                                               atm3, atm4)) ||
-                 (_checkMacrocycleAmideEster14(mol, bnd3, bnd1, atm4, atm3,
-                                               atm2, atm1))) {
+      } else if ((_checkMacrocycleAllInSameRingAmideEster14(
+                     mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+                 (_checkMacrocycleAllInSameRingAmideEster14(
+                     mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
         dl =
             RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
             0.1;  // we saw that the currently defined max distance for trans is
@@ -1389,7 +1540,7 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1,
 
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData, double *distMatrix,
-                 bool useMacrocycle14config) {
+                 bool useMacrocycle14config, bool forceTransAmides) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
 
@@ -1403,6 +1554,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   ROMol::OEDGE_ITER beg1, beg2, end1, end2;
   ROMol::ConstBondIterator bi;
 
+  std::set<unsigned int> bidIsMacrocycle;
   unsigned int nb = mol.getNumBonds();
   BIT_SET ringBondPairs(nb * nb), donePaths(nb * nb * nb);
   unsigned int id1, id2, pid1, pid2, pid3, pid4;
@@ -1431,9 +1583,10 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
-          _setMacrocycle14Bounds(
+          _setMacrocycleAllInSameRing14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
               mol.getBondWithIdx(bid3), accumData, mmat, distMatrix);
+          bidIsMacrocycle.insert(bid2);
         } else {
           _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                              mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
@@ -1474,9 +1627,14 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // either (bid1, bid2) or (bid2, bid3) are in the
                 // same ring (note all three cannot be in the same
                 // ring; we dealt with that before)
-
-                _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
-                                          mmat, distMatrix);
+                if (useMacrocycle14config &&
+                    bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
+                  _setMacrocycleTwoInSameRing14Bounds(
+                      mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
+                } else {
+                  _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
+                                            mmat, distMatrix);
+                }
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||
                          ((rinfo->numBondRings(bid2) > 0) &&
@@ -1501,7 +1659,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               } else {
                 // middle bond not a ring
                 _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat,
-                                  distMatrix);
+                                  distMatrix, forceTransAmides);
               }
             }
           }
@@ -1530,8 +1688,8 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 };
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    bool set15bounds, bool scaleVDW,
-                    bool useMacrocycle14config) {
+                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
+                    bool forceTransAmides) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1545,7 +1703,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
 
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config);
+  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+              forceTransAmides);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1605,7 +1764,8 @@ void collectBondsAndAngles(const ROMol &mol,
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
                     std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config) {
+                    bool scaleVDW, bool useMacrocycle14config,
+                    bool forceTransAmides) {
   PRECONDITION(mmat.get(), "bad pointer");
   bonds.clear();
   angles.clear();
@@ -1620,7 +1780,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config);
+  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+              forceTransAmides);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);

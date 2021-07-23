@@ -34,10 +34,12 @@ struct CoordGenParams {
   // length of 50.
   std::string templateFileDir = "";
   float minimizerPrecision =
-      sketcherCoarsePrecision;  // controls sketch precision
-  bool dbg_useConstrained = true;   // debugging
-  bool dbg_useFixed = false;        // debugging
-  bool minimizeOnly = false;        // don't actually generate full coords
+      sketcherCoarsePrecision;     // controls sketch precision
+  bool dbg_useConstrained = true;  // debugging
+  bool dbg_useFixed = false;       // debugging
+  bool minimizeOnly = false;       // don't actually generate full coords
+  bool treatNonterminalBondsToMetalAsZeroOrder =
+      false;  // set non-terminal bonds to metal atoms to be zero-order bonds
 };
 
 static CoordGenParams defaultParams;
@@ -74,6 +76,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
 
   sketcherMinimizer minimizer(params->minimizerPrecision);
   auto min_mol = new sketcherMinimizerMolecule();
+
+  minimizer.setTreatNonterminalBondsToMetalAsZOBs(
+      params->treatNonterminalBondsToMetalAsZeroOrder);
 
   // FIX: only do this check once.
   // std::cerr << "  TEMPLATES: " << templateFileDir << std::endl;
@@ -215,6 +220,10 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   } else {
     CoordgenFragmenter::splitIntoFragments(min_mol);
     minimizer.m_minimizer.minimizeMolecule(min_mol);
+
+    // Hook the fragments into the minimizer so that they
+    // get cleaned up when the minimizer is terminated
+    minimizer._fragments = min_mol->getFragments();
   }
   auto conf = new Conformer(mol.getNumAtoms());
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {

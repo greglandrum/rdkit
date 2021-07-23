@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -259,6 +259,17 @@ std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
                                     doIsomericSmarts);
 }
 
+std::string molFragmentToCXSmarts(const ROMol &mol, python::object atomsToUse,
+                                  python::object bondsToUse,
+                                  bool doIsomericSmarts = true) {
+  auto atomIndices =
+      pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto bondIndices =
+      pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  return RDKit::MolFragmentToCXSmarts(mol, *atomIndices, bondIndices.get(),
+                                      doIsomericSmarts);
+}
+
 struct smilesfrag_gen {
   std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
                          const std::vector<int> *bondsToUse,
@@ -376,7 +387,22 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
                            const SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
-  return SmilesToMol(smiles, params);
+  try {
+    return SmilesToMol(smiles, params);
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+ROMol *MolFromSmartsHelper(python::object ismiles,
+                           const SmartsParserParams &params) {
+  std::string smiles = pyObjectToString(ismiles);
+
+  try {
+    return SmartsToMol(smiles, params);
+  } catch (...) {
+    return nullptr;
+  }
 }
 
 python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
@@ -451,16 +477,17 @@ python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
   return retval;
 }
 
-python::object addMetadataToPNGFileHelper(python::dict pymetadata, python::object fname) {
+python::object addMetadataToPNGFileHelper(python::dict pymetadata,
+                                          python::object fname) {
   std::string cstr = python::extract<std::string>(fname);
 
   std::vector<std::pair<std::string, std::string>> metadata;
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
        ++i) {
-    std::string key = python::extract<std::string>(pymetadata.keys()[i]); 
+    std::string key = python::extract<std::string>(pymetadata.keys()[i]);
     std::string val = python::extract<std::string>(pymetadata.values()[i]);
-    metadata.push_back(std::make_pair(key,val));
+    metadata.push_back(std::make_pair(key, val));
   }
 
   auto res = addMetadataToPNGFile(cstr, metadata);
@@ -470,16 +497,17 @@ python::object addMetadataToPNGFileHelper(python::dict pymetadata, python::objec
   return retval;
 }
 
-python::object addMetadataToPNGStringHelper(python::dict pymetadata, python::object png) {
+python::object addMetadataToPNGStringHelper(python::dict pymetadata,
+                                            python::object png) {
   std::string cstr = python::extract<std::string>(png);
 
   std::vector<std::pair<std::string, std::string>> metadata;
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
        ++i) {
-    std::string key = python::extract<std::string>(pymetadata.keys()[i]); 
+    std::string key = python::extract<std::string>(pymetadata.keys()[i]);
     std::string val = python::extract<std::string>(pymetadata.values()[i]);
-    metadata.push_back(std::make_pair(key,val));
+    metadata.push_back(std::make_pair(key, val));
   }
 
   auto res = addMetadataToPNGString(cstr, metadata);
@@ -488,7 +516,6 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata, python::obj
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
-
 
 python::object MolsFromPNGFile(const char *filename, const std::string &tag,
                                python::object pyParams) {
@@ -532,33 +559,32 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
 }
 
 namespace {
-python::dict translateMetadata(const std::vector<std::pair<std::string,std::string>> &metadata){
+python::dict translateMetadata(
+    const std::vector<std::pair<std::string, std::string>> &metadata) {
   python::dict res;
-  for(const auto &pr : metadata ){
+  for (const auto &pr : metadata) {
     // keys are safe to extract:
     std::string key = pr.first;
     // but values may include binary, so we convert them directly to bytes:
-    python::object val = python::object(
-        python::handle<>(PyBytes_FromStringAndSize(pr.second.c_str(), pr.second.length())));
+    python::object val = python::object(python::handle<>(
+        PyBytes_FromStringAndSize(pr.second.c_str(), pr.second.length())));
     res[key] = val;
   }
   return res;
 }
 
-}
-python::dict MetadataFromPNGFile(python::object fname){
+}  // namespace
+python::dict MetadataFromPNGFile(python::object fname) {
   std::string cstr = python::extract<std::string>(fname);
   auto metadata = PNGFileToMetadata(cstr);
   return translateMetadata(metadata);
 }
 
-python::dict MetadataFromPNGString(python::object png){
+python::dict MetadataFromPNGString(python::object png) {
   std::string cstr = python::extract<std::string>(png);
   auto metadata = PNGStringToMetadata(cstr);
   return translateMetadata(metadata);
 }
-
-
 
 }  // namespace RDKit
 
@@ -579,6 +605,10 @@ void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
+
+// MultithreadedMolSupplier stuff
+void wrap_multiSmiSupplier();
+void wrap_multiSDSupplier();
 
 BOOST_PYTHON_MODULE(rdmolfiles) {
   std::string docString;
@@ -930,6 +960,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("includeStereo") = true, python::arg("confId") = -1,
                python::arg("kekulize") = true),
               docString.c_str());
+  //
+
+  docString =
+      "Writes a CML block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written\n\
+\n";
+  python::def("MolToCMLBlock", RDKit::MolToCMLBlock,
+              (python::arg{"mol"}, python::arg{"confId"} = -1,
+               python::arg{"kekulize"} = true),
+              docString.c_str());
+
+  docString =
+      "Writes a CML file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - confId: (optional) selects which conformation to output\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written\n\
+\n";
+  python::def("MolToCMLFile", RDKit::MolToCMLFile,
+              (python::arg{"mol"}, python::arg{"filename"},
+               python::arg{"confId"} = -1, python::arg{"kekulize"} = true),
+              docString.c_str());
 
   //
 
@@ -965,7 +1023,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
       "SmilesParserParams", "Parameters controlling SMILES Parsing")
-      .def_readwrite("maxIterations", &RDKit::SmilesParserParams::debugParse,
+      .def_readwrite("debugParse", &RDKit::SmilesParserParams::debugParse,
                      "controls the amount of debugging information produced")
       .def_readwrite("parseName", &RDKit::SmilesParserParams::parseName,
                      "controls whether or not the molecule name is also parsed")
@@ -986,6 +1044,22 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      &RDKit::SmilesParserParams::useLegacyStereo,
                      "controls whether or not the legacy stereochemistry "
                      "perception code is used");
+  python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
+      "SmartsParserParams", "Parameters controlling SMARTS Parsing")
+      .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,
+                     "controls the amount of debugging information produced")
+      .def_readwrite("parseName", &RDKit::SmartsParserParams::parseName,
+                     "controls whether or not the molecule name is also parsed")
+      .def_readwrite(
+          "allowCXSMILES", &RDKit::SmartsParserParams::allowCXSMILES,
+          "controls whether or not the CXSMILES extensions are parsed")
+      .def_readwrite("strictCXSMILES",
+                     &RDKit::SmartsParserParams::strictCXSMILES,
+                     "controls whether or not problems in CXSMILES parsing "
+                     "causes molecule parsing to fail")
+      .def_readwrite(
+          "mergeHs", &RDKit::SmartsParserParams::mergeHs,
+          "toggles merging H atoms in the SMARTS into neighboring atoms");
   docString =
       "Construct a molecule from a SMILES string.\n\n\
      ARGUMENTS:\n\
@@ -1027,7 +1101,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
  \n\
      CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\n\
      C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\n\
-     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\n\
+     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CNCCNC  \n\n\
 \n";
   python::def("MolFromSmiles", RDKit::MolFromSmiles,
               (python::arg("SMILES"), python::arg("sanitize") = true,
@@ -1072,6 +1146,22 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   docString = "Construct a bond from a SMARTS string";
   python::def("BondFromSmarts", SmartsToBond, python::arg("SMILES"),
               docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from a SMARTS string.\n\n\
+     ARGUMENTS:\n\
+   \n\
+       - SMARTS: the smarts string\n\
+   \n\
+       - params: used to provide optional parameters for the SMARTS parsing\n\
+   \n\
+     RETURNS:\n\
+   \n\
+       a Mol object, None on failure.\n\
+   \n";
+  python::def("MolFromSmarts", MolFromSmartsHelper,
+              (python::arg("SMARTS"), python::arg("params")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   docString =
@@ -1250,6 +1340,41 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolFragmentToSmarts", molFragmentToSmarts,
+      (python::arg("mol"), python::arg("atomsToUse"),
+       python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
+      docString.c_str());
+  docString =
+      "Returns a SMARTS string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
+      the SMARTS.  Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToCXSmarts", RDKit::MolToCXSmarts,
+              (python::arg("mol"), python::arg("isomericSmiles") = true),
+              docString.c_str());
+
+  docString =
+      "Returns a SMARTS string for a fragment of a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse: indices of atoms to include in the SMARTS string\n\
+    - bondsToUse: indices of bonds to include in the SMARTS string (optional)\n\
+    - isomericSmarts: (optional) include information about stereochemistry in\n\
+      the SMARTS.  Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def(
+      "MolFragmentToCXSmarts", molFragmentToCXSmarts,
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
       docString.c_str());
@@ -1713,46 +1838,41 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      ARGUMENTS:
 
-       - metadata: dict with the metadata to be written 
+       - metadata: dict with the metadata to be written
                    (keys and values should be strings)
 
        - filename: the PNG filename
 
      RETURNS:
        the updated PNG data)DOC";
-  python::def(
-      "AddMetadataToPNGFile", addMetadataToPNGFileHelper,
-      (python::arg("metadata"), python::arg("filename")),
-      docString.c_str());
+  python::def("AddMetadataToPNGFile", addMetadataToPNGFileHelper,
+              (python::arg("metadata"), python::arg("filename")),
+              docString.c_str());
 
   docString =
       R"DOC(Adds metadata to a PNG string.
 
      ARGUMENTS:
 
-       - metadata: dict with the metadata to be written 
+       - metadata: dict with the metadata to be written
                    (keys and values should be strings)
 
        - png: the PNG string
 
      RETURNS:
        the updated PNG data)DOC";
-  python::def(
-      "AddMetadataToPNGString", addMetadataToPNGStringHelper,
-      (python::arg("metadata"), python::arg("png")),
-      docString.c_str());
+  python::def("AddMetadataToPNGString", addMetadataToPNGStringHelper,
+              (python::arg("metadata"), python::arg("png")), docString.c_str());
 
-  python::def(
-      "MetadataFromPNGFile", MetadataFromPNGFile,
-      (python::arg("filename")),
-      "Returns a dict with all metadata from the PNG file. Keys are strings, values are bytes.");
+  python::def("MetadataFromPNGFile", MetadataFromPNGFile,
+              (python::arg("filename")),
+              "Returns a dict with all metadata from the PNG file. Keys are "
+              "strings, values are bytes.");
 
-  python::def(
-      "MetadataFromPNGString", MetadataFromPNGString,
-      (python::arg("png")),
-      "Returns a dict with all metadata from the PNG string. Keys are strings, values are bytes.");
-
-
+  python::def("MetadataFromPNGString", MetadataFromPNGString,
+              (python::arg("png")),
+              "Returns a dict with all metadata from the PNG string. Keys are "
+              "strings, values are bytes.");
 
 /********************************************************
  * MolSupplier stuff
@@ -1776,4 +1896,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+
+#ifdef RDK_THREADSAFE_SSS
+  /********************************************************
+   * MultithreadedMolWriter stuff
+   *******************************************************/
+  wrap_multiSmiSupplier();
+  wrap_multiSDSupplier();
+#endif
 }

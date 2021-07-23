@@ -211,17 +211,17 @@ class streambuf : public std::basic_streambuf<char> {
     CHECK_INVARIANT(iobase, "base class not found");
 #endif
 
-    bool isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
+    df_isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
     switch (mode) {
       case 's':  /// yeah, is redundant, but it is somehow natural to do "s"
       case 't':
-        if (!isTextMode)
+        if (!df_isTextMode)
           throw ValueErrorException(
               "Need a text mode file object like StringIO or a file opened "
               "with mode 't'");
         break;
       case 'b':
-        if (isTextMode)
+        if (df_isTextMode)
           throw ValueErrorException(
               "Need a binary mode file object like BytesIO or a file opened "
               "with mode 'b'");
@@ -232,7 +232,7 @@ class streambuf : public std::basic_streambuf<char> {
   }
 
   /// Mundane destructor freeing the allocated resources
-  virtual ~streambuf() {
+  ~streambuf() override {
     if (write_buffer) delete[] write_buffer;
   }
 
@@ -240,7 +240,7 @@ class streambuf : public std::basic_streambuf<char> {
   /** It is essential to override this virtual function for the stream
       member function readsome to work correctly (c.f. 27.6.1.3, alinea 30)
    */
-  virtual std::streamsize showmanyc() {
+  std::streamsize showmanyc() override {
     int_type const failure = traits_type::eof();
     int_type status = underflow();
     if (status == failure) return -1;
@@ -248,7 +248,7 @@ class streambuf : public std::basic_streambuf<char> {
   }
 
   /// C.f. C++ standard section 27.5.2.4.3
-  virtual int_type underflow() {
+  int_type underflow() override {
     int_type const failure = traits_type::eof();
     if (py_read == bp::object()) {
       throw std::invalid_argument(
@@ -273,24 +273,49 @@ class streambuf : public std::basic_streambuf<char> {
   }
 
   /// C.f. C++ standard section 27.5.2.4.5
-  virtual int_type overflow(int_type c = traits_type_eof()) {
+  int_type overflow(int_type c = traits_type_eof()) override {
     if (py_write == bp::object()) {
       throw std::invalid_argument(
           "That Python file object has no 'write' attribute");
     }
     farthest_pptr = std::max(farthest_pptr, pptr());
     off_type n_written = (off_type)(farthest_pptr - pbase());
-    bp::str chunk(pbase(), farthest_pptr);
+    off_type orig_n_written = n_written;
+    const unsigned int STD_ASCII = 0x7F;
+    if (df_isTextMode && static_cast<unsigned int>(c) > STD_ASCII) {
+      // we're somewhere in the middle of a utf8 block. If we
+      // only write part of it we'll end up with an exception,
+      // so push everything that could be utf8 into the next block
+      while (n_written > 0 && static_cast<unsigned int>(
+                                  write_buffer[n_written - 1]) > STD_ASCII) {
+        --n_written;
+      }
+    }
+    bp::str chunk(pbase(), pbase() + n_written);
     py_write(chunk);
-    if (!traits_type::eq_int_type(c, traits_type::eof())) {
+
+    if ((!df_isTextMode || static_cast<unsigned int>(c) <= STD_ASCII) &&
+        !traits_type::eq_int_type(c, traits_type::eof())) {
       py_write(traits_type::to_char_type(c));
       n_written++;
     }
+
+    setp(pbase(), epptr());
+    // ^^^ 27.5.2.4.5 (5)
+    farthest_pptr = pptr();
     if (n_written) {
       pos_of_write_buffer_end_in_py_file += n_written;
-      setp(pbase(), epptr());
-      // ^^^ 27.5.2.4.5 (5)
-      farthest_pptr = pptr();
+      if (df_isTextMode && static_cast<unsigned int>(c) > STD_ASCII &&
+          !traits_type::eq_int_type(c, traits_type::eof())) {
+        size_t n_to_copy = orig_n_written - n_written;
+
+        for (size_t i = 0; i < n_to_copy; ++i) {
+          sputc(write_buffer[n_written + i]);
+          ++farthest_pptr;
+        }
+        sputc(c);
+        ++farthest_pptr;
+      }
     }
     return traits_type::eq_int_type(c, traits_type::eof())
                ? traits_type::not_eof(c)
@@ -304,7 +329,7 @@ class streambuf : public std::basic_streambuf<char> {
       read buffer, set the Python file object seek position to the
       seek position in that read buffer.
   */
-  virtual int sync() {
+  int sync() override {
     int result = 0;
     farthest_pptr = std::max(farthest_pptr, pptr());
     if (farthest_pptr && farthest_pptr > pbase()) {
@@ -325,9 +350,9 @@ class streambuf : public std::basic_streambuf<char> {
       is avoided as much as possible (e.g. parsers which may do a lot of
       backtracking)
   */
-  virtual pos_type seekoff(off_type off, std::ios_base::seekdir way,
-                           std::ios_base::openmode which = std::ios_base::in |
-                                                           std::ios_base::out) {
+  pos_type seekoff(off_type off, std::ios_base::seekdir way,
+                   std::ios_base::openmode which =
+                       std::ios_base::in | std::ios_base::out) override {
     /* In practice, "which" is either std::ios_base::in or out
        since we end up here because either seekp or seekg was called
        on the stream using this buffer. That simplifies the code
@@ -383,9 +408,9 @@ class streambuf : public std::basic_streambuf<char> {
   }
 
   /// C.f. C++ standard section 27.5.2.4.2
-  virtual pos_type seekpos(pos_type sp,
-                           std::ios_base::openmode which = std::ios_base::in |
-                                                           std::ios_base::out) {
+  pos_type seekpos(pos_type sp,
+                   std::ios_base::openmode which =
+                       std::ios_base::in | std::ios_base::out) override {
     return streambuf::seekoff(sp, std::ios_base::beg, which);
   }
 
@@ -405,6 +430,7 @@ class streambuf : public std::basic_streambuf<char> {
      de-allocated only at destruction time.
   */
   char* write_buffer;
+  bool df_isTextMode;
 
   off_type pos_of_read_buffer_end_in_py_file,
       pos_of_write_buffer_end_in_py_file;
@@ -466,7 +492,7 @@ class streambuf : public std::basic_streambuf<char> {
       exceptions(std::ios_base::badbit);
     }
 
-    ~istream() {
+    ~istream() override {
       // do nothing.
       // This used to do:
       // if (this->good()) this->sync();
@@ -482,7 +508,7 @@ class streambuf : public std::basic_streambuf<char> {
       exceptions(std::ios_base::badbit);
     }
 
-    ~ostream() {
+    ~ostream() override {
       if (this->good()) this->flush();
     }
   };
@@ -502,7 +528,7 @@ struct ostream : private streambuf_capsule, streambuf::ostream {
       : streambuf_capsule(python_file_obj, buffer_size),
         streambuf::ostream(python_streambuf) {}
 
-  ~ostream() noexcept {
+  ~ostream() noexcept override {
     if (this->good()) {
       this->flush();
     }

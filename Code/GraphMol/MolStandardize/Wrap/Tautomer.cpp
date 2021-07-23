@@ -40,10 +40,10 @@ class PyTautomerEnumeratorResult {
     d_bndTuple = python::tuple(bndList);
   }
   inline const std::vector<ROMOL_SPTR> *tautomers() const {
-    return new std::vector<ROMOL_SPTR>(std::move(d_tr->tautomers()));
+    return new std::vector<ROMOL_SPTR>(d_tr->tautomers());
   }
   inline const std::vector<std::string> *smiles() const {
-    return new std::vector<std::string>(std::move(d_tr->smiles()));
+    return new std::vector<std::string>(d_tr->smiles());
   }
   inline const MolStandardize::SmilesTautomerMap &smilesTautomerMap() const {
     return d_tr->smilesTautomerMap();
@@ -96,8 +96,9 @@ class PyTautomerEnumeratorCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     PyTautomerEnumeratorResult pyRes(res);
     return getCallbackOverride()(boost::ref(mol), boost::ref(pyRes));
   }
@@ -207,7 +208,7 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   int operator()(const ROMol &m) {
     return python::extract<int>(dp_obj(boost::ref(m)));
   }

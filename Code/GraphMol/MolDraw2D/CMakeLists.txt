@@ -3,6 +3,24 @@ option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
 option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
+option(RDK_INSTALL_COMIC_FONTS "download and install comic-neue to maximize the \"utility\" of the comic mode in MolDraw2D" ON)
+
+if(RDK_BUILD_FREETYPE_SUPPORT AND RDK_INSTALL_COMIC_FONTS)
+  set(needDownload "TRUE")
+  if(EXISTS "${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf")
+    message("${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf already there, skipping the download")
+    set(needDownload "FALSE")
+  endif()
+  if(needDownload)
+    set(MD5Sum "23ed3f833c1ae0adb141a26b4a30d73e")
+    downloadAndCheckMD5("https://fonts.google.com/download?family=Comic%20Neue"
+          "${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip"
+          ${MD5Sum})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar x
+      ${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip --format=zip
+      WORKING_DIRECTORY ${RDKit_DataDir}/Fonts)
+  endif(needDownload)
+endif()
 
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
@@ -24,12 +42,9 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   SubstructMatch Subgraphs GraphMol EigenSolvers )
 target_compile_definitions(MolDraw2D PRIVATE RDKIT_MOLDRAW2D_BUILD)
 
+# if(RDK_BUILD_QT_DEMO && !RDK_BUILD_QT_SUPPORT) error
 if(RDK_BUILD_QT_SUPPORT)
-  find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-  target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp)
-  target_compile_options(MolDraw2D PRIVATE "-std=c++11")
-  target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
-  rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D)
+  add_subdirectory(Qt)
 endif(RDK_BUILD_QT_SUPPORT)
 
 if(RDK_BUILD_CAIRO_SUPPORT)
@@ -83,16 +98,12 @@ endif(RDK_BUILD_FREETYPE_SUPPORT)
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
-rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
+rdkit_catch_test(moldraw2DTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES
   MolDraw2D CIPLabeler )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
-if(RDK_BUILD_QT_DEMO)
-  add_subdirectory(QTDemo)
-endif(RDK_BUILD_QT_DEMO)
-
-if(RDK_BUILD_PYTHON_WRAPPERS)
+  if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()

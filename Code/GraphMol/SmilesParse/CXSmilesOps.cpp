@@ -9,7 +9,6 @@
 //
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -215,8 +214,9 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != 'C') {
+bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                            Bond::BondType typ) {
+  if (first >= last || (*first != 'C' && *first != 'H')) {
     return false;
   }
   ++first;
@@ -228,13 +228,22 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
-      Bond *bnd = mol.getBondWithIdx(bidx);
-      if (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx) {
+      Bond *bnd = nullptr;
+      for (auto bond : mol.bonds()) {
+        unsigned int smilesIdx;
+        if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
+            smilesIdx == bidx) {
+          bnd = bond;
+          break;
+        }
+      }
+      if (!bnd ||
+          (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx)) {
         BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
                                 << " involving atom " << aidx << std::endl;
         return false;
       }
-      bnd->setBondType(Bond::DATIVE);
+      bnd->setBondType(typ);
       if (bnd->getBeginAtomIdx() != aidx) {
         unsigned int tmp = bnd->getBeginAtomIdx();
         bnd->setBeginAtomIdx(aidx);
@@ -662,7 +671,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         return false;
       }
     } else if (*first == 'C') {
-      if (!parse_coordinate_bonds(first, last, mol)) {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE)) {
+        return false;
+      }
+    } else if (*first == 'H') {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::HYDROGEN)) {
         return false;
       }
     } else if (*first == '^') {
@@ -902,6 +915,12 @@ std::string get_radical_block(const ROMol &mol,
   }
   return res;
 }
+double zero_small_vals(double val) {
+  if (fabs(val) < 1e-4) {
+    return 0.0;
+  }
+  return val;
+}
 std::string get_coords_block(const ROMol &mol,
                              const std::vector<unsigned int> &atomOrder) {
   std::string res = "";
@@ -914,9 +933,10 @@ std::string get_coords_block(const ROMol &mol,
     } else {
       first = false;
     }
-    res += boost::str(boost::format("%g,%g,") % pt.x % pt.y);
+    res += boost::str(boost::format("%g,%g,") % zero_small_vals(pt.x) %
+                      zero_small_vals(pt.y));
     if (conf.is3D()) {
-      auto zc = boost::str(boost::format("%g") % pt.z);
+      auto zc = boost::str(boost::format("%g") % zero_small_vals(pt.z));
       if (zc != "0") {
         res += zc;
       }

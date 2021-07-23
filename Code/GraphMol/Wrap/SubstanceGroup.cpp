@@ -16,6 +16,7 @@
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <RDBoost/Wrap.h>
 #include "props.hpp"
 
 namespace python = boost::python;
@@ -23,6 +24,7 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
+
 SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (idx >= sgs.size()) {
@@ -67,7 +69,7 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
 
 python::tuple getCStatesHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto cs : self.getCStates()) {
+  for (const auto &cs : self.getCStates()) {
     res.append(cs);
   }
   return python::tuple(res);
@@ -75,7 +77,7 @@ python::tuple getCStatesHelper(const SubstanceGroup &self) {
 
 python::tuple getBracketsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto brk : self.getBrackets()) {
+  for (const auto &brk : self.getBrackets()) {
     res.append(python::make_tuple(brk[0], brk[1], brk[2]));
   }
   return python::tuple(res);
@@ -83,11 +85,31 @@ python::tuple getBracketsHelper(const SubstanceGroup &self) {
 
 python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto ap : self.getAttachPoints()) {
+  for (const auto &ap : self.getAttachPoints()) {
     res.append(ap);
   }
   return python::tuple(res);
 }
+
+void SetAtomsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> atoms;
+  pythonObjectToVect(iterable, atoms);
+  self.setAtoms(atoms);
+}
+
+void SetParentAtomsHelper(SubstanceGroup &self,
+                          const python::object &iterable) {
+  std::vector<unsigned int> patoms;
+  pythonObjectToVect(iterable, patoms);
+  self.setParentAtoms(patoms);
+}
+
+void SetBondsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> bonds;
+  pythonObjectToVect(iterable, bonds);
+  self.setBonds(bonds);
+}
+
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -133,6 +155,18 @@ struct sgroup_wrap {
              "returns a list of the indices of the bonds in this "
              "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
+        .def("SetAtoms", SetAtomsHelper,
+             "Set the list of the indices of the atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetParentAtoms", SetParentAtomsHelper,
+             "Set the list of the indices of the parent atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetBonds", SetBondsHelper,
+             "Set the list of the indices of the bonds in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
         .def("AddAtomWithIdx", &SubstanceGroup::addAtomWithIdx)
         .def("AddBondWithIdx", &SubstanceGroup::addBondWithIdx)
         .def("AddParentAtomWithIdx", &SubstanceGroup::addParentAtomWithIdx)
@@ -146,6 +180,9 @@ struct sgroup_wrap {
         .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
         .def("GetBrackets", getBracketsHelper)
+        .def("ClearBrackets", &SubstanceGroup::clearBrackets)
+        .def("ClearCStates", &SubstanceGroup::clearCStates)
+        .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints)
 
         .def("SetProp",
              (void (RDProps::*)(const std::string &, std::string, bool) const) &

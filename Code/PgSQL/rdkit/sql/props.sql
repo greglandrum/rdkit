@@ -25,6 +25,7 @@ SELECT mol_numspiroatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
 SELECT mol_numbridgeheadatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
 SELECT mol_numspiroatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
 SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+SELECT mol_phi('CC(C)(C)C(C)C'::mol) v;
 
 
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
@@ -52,10 +53,10 @@ SELECT mol_numrings('C1CC1'::mol) val;
 SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
 SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
 
-SELECT mol_to_svg('CCO'::mol) svg;
-SELECT mol_to_svg('CCO'::mol,'legend') svg;
+SELECT substring(mol_to_svg('CCO'::mol)::text,1,120) svg;
+SELECT substring(mol_to_svg('CCO'::mol,'legend')::text,1,120) svg;
 SELECT mol_to_svg('CCO'::mol,'legend',250,200,
-  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;
+  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}')::text like '%fill=''#7F7F7F''%' svg;
 
 -- GitHub Issue 2174 - mol_to_svg() should not change input mol.
 /**

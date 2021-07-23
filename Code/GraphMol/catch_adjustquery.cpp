@@ -11,6 +11,8 @@
 
 #include "catch.hpp"
 
+#include <utility>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -29,19 +31,21 @@ class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
   SubstructMatchParameters m_ps;
 
  public:
-  _IsSubstructOf(const ROMol &m, const std::string &description)
-      : m_query(&m), m_description(description) {}
+  _IsSubstructOf(const ROMol &m, std::string description)
+      : m_query(&m), m_description(std::move(description)) {}
 
-  _IsSubstructOf(const ROMol &m, const std::string &description,
+  _IsSubstructOf(const ROMol &m, std::string description,
                  SubstructMatchParameters ps)
-      : m_query(&m), m_description(description), m_ps(ps) {}
+      : m_query(&m),
+        m_description(std::move(description)),
+        m_ps(std::move(ps)) {}
 
-  virtual bool match(const std::string &smiles) const override {
+  bool match(const std::string &smiles) const override {
     std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
     return !SubstructMatch(*mol, *m_query, m_ps).empty();
   }
 
-  virtual std::string describe() const override {
+  std::string describe() const override {
     std::ostringstream ss;
     ss << "is not a substructure of " << m_description;
     return ss.str();
@@ -425,7 +429,7 @@ TEST_CASE("conjugated five-rings") {
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto fname = std::get<1>(tpl);
       std::string pathName = getenv("RDBASE");
       pathName += "/Code/GraphMol/test_data/";
@@ -508,7 +512,7 @@ TEST_CASE("single bonds to degree-one neighbors") {
       matchCase{"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
 
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
@@ -541,7 +545,7 @@ TEST_CASE("single bonds to aromatic neighbors") {
       matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
       matchCase{"C1CC2=C3C(C=CC4=NN=CC1=C34)=CC=N2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,true}, // was github #3325
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
