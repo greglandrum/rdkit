@@ -159,9 +159,7 @@ extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
   auto data = smiles_helper(pkl, pkl_sz, details_json, MolToSmiles);
   return str_to_c(data);
 }
-extern "C" char *get_smarts(const char *pkl, size_t pkl_sz,
-                            const char *details_json) {
-  RDUNUSED_PARAM(details_json);
+extern "C" char *get_smarts(const char *pkl, size_t pkl_sz, const char *) {
   if (!pkl || !pkl_sz) {
     return nullptr;
   }
@@ -184,9 +182,7 @@ extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
   auto data = molblock_helper(pkl, pkl_sz, details_json, true);
   return str_to_c(data);
 }
-extern "C" char *get_json(const char *pkl, size_t pkl_sz,
-                          const char *details_json) {
-  RDUNUSED_PARAM(details_json);
+extern "C" char *get_json(const char *pkl, size_t pkl_sz, const char *) {
   if (!pkl || !pkl_sz) {
     return nullptr;
   }
