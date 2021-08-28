@@ -49,7 +49,7 @@ const double ERROR_TOL = 0.00001;
 // filtered out, which slows down the whole conformation generation process
 const double MAX_MINIMIZED_E_PER_ATOM = 0.05;
 const double MAX_MINIMIZED_E_CONTRIB = 0.20;
-const double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
+const double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.20;
 const double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 }  // namespace
 
@@ -247,6 +247,9 @@ struct EmbedArgs {
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
+  if (verbose) {
+    std::cerr << std::endl;
+  }
   RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],
                      (*positions[chiralSet->d_idx0])[1],
                      (*positions[chiralSet->d_idx0])[2]);
@@ -493,8 +496,8 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
     // four points. That is also a fail.
     if (!_volumeTest(tetSet, *positions) ||
         !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
-#ifdef DEBUG_EMBEDDING
-      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: "  //<< iter
+#if 1  //#ifdef DEBUG_EMBEDDING
+      std::cerr << " fail2! (" << tetSet->d_idx0 << "):  "
                 << " vol: " << _volumeTest(tetSet, *positions, true)
                 << " center: "
                 << _centerInVolume(tetSet, *positions,
@@ -518,7 +521,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
     double ub = chiralSet->getUpperVolumeBound();
     if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
         (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
-#ifdef DEBUG_EMBEDDING
+#if 1  //#ifdef DEBUG_EMBEDDING
       std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
                 << " " << vol << " " << lb << "-" << ub << std::endl;
 #endif
@@ -720,6 +723,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
+    if (!gotCoords && embedParams.instrumentation) {
+      embedParams.instrumentation->failureCounts["generateInitialCoords"]++;
+    }
+
 #ifdef DEBUG_EMBEDDING
     if (!gotCoords) {
       std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
@@ -728,9 +735,17 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     if (gotCoords) {
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
+      if (!gotCoords && embedParams.instrumentation) {
+        embedParams.instrumentation->failureCounts["firstMinimization"]++;
+      }
+
       if (gotCoords) {
         gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
                                                           embedParams);
+        if (!gotCoords && embedParams.instrumentation) {
+          embedParams.instrumentation
+              ->failureCounts["checkTetrahedralCenters"]++;
+        }
       }
 
       // Check if any of our chiral centers are badly out of whack.
@@ -738,6 +753,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           eargs.chiralCenters->size() > 0) {
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
+        if (!gotCoords && embedParams.instrumentation) {
+          embedParams.instrumentation->failureCounts["checkChiralCenters"]++;
+        }
       }
       // redo the minimization if we have a chiral center
       // or have started from random coords.
@@ -745,6 +763,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
+        if (!gotCoords && embedParams.instrumentation) {
+          embedParams.instrumentation
+              ->failureCounts["minimizeFourthDimension"]++;
+        }
       }
 
       // (ET)(K)DG
@@ -752,22 +774,29 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                         embedParams.useBasicKnowledge)) {
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
+        if (!gotCoords && embedParams.instrumentation) {
+          embedParams.instrumentation
+              ->failureCounts["minimizeWithExpTorsions"]++;
+        }
       }
       // test if chirality is correct
       if (embedParams.enforceChirality && gotCoords &&
           (eargs.chiralCenters->size() > 0)) {
         gotCoords =
             EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+        if (!gotCoords && embedParams.instrumentation) {
+          embedParams.instrumentation->failureCounts["finalChiralChecks"]++;
+        }
       }
-    }  // if(gotCoords)
-  }    // while
+    }
+  }  // while
   if (seed > -1) {
     delete rng;
     delete generator;
     delete distrib;
   }
   return gotCoords;
-}
+}  // namespace EmbeddingOps
 
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
@@ -888,6 +917,9 @@ bool setupInitialBoundsMatrix(
   if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
+    if (params.instrumentation) {
+      params.instrumentation->failureCounts["triangle smoothing"]++;
+    }
     initBoundsMat(mmat);
     setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
                    params.forceTransAmides);
@@ -898,6 +930,9 @@ bool setupInitialBoundsMatrix(
 
     // try triangle smoothing again
     if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
+      if (params.instrumentation) {
+        params.instrumentation->failureCounts["triangle smoothing"]++;
+      }
       // ok, we're not going to be able to smooth this,
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
@@ -1172,6 +1207,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       initBoundsMat(mmat);
       if (!EmbeddingOps::setupInitialBoundsMatrix(piece.get(), mmat, coordMap,
                                                   params, etkdgDetails)) {
+        if (params.instrumentation) {
+          params.instrumentation->failureCounts["setupInitialBoundsMatrix"]++;
+        }
+
         // return if we couldn't setup the bounds matrix
         // possible causes include a triangle smoothing failure
         return;
@@ -1234,10 +1273,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
           _isConfFarFromRest(mol, *conf, params.pruneRmsThresh, selfMatches)) {
         int confId = (int)mol.addConformer(conf.release(), true);
         res.push_back(confId);
+      } else {
+        if (params.instrumentation) {
+          params.instrumentation->failureCounts["RmsPruning"]++;
+        }
       }
     }
   }
 }
 
-}  // end of namespace DGeomHelpers
+}  // namespace DGeomHelpers
 }  // end of namespace RDKit

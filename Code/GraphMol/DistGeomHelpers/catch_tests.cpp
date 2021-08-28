@@ -15,6 +15,9 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <ForceField/ForceField.h>
+#include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+
 #include "Embedder.h"
 #include <tuple>
 
@@ -203,4 +206,49 @@ TEST_CASE(
     CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
           Bond::BondStereo::STEREOZ);
   }
+}
+
+TEST_CASE("embedding instrumentation") {
+  auto m1 = "C1C[C@@]23C[C@]11C[C@@H]2CC[C@H]2[C@@H]3CCc3cccc1c23"_smiles;
+  MolOps::addHs(*m1);
+  SECTION("basics") {
+    auto params = DGeomHelpers::EmbedParameters();
+    params.useBasicKnowledge = false;
+    params.useExpTorsionAnglePrefs = false;
+    DGeomHelpers::EmbedInstrumentation instruments;
+    params.instrumentation = &instruments;
+    params.randomSeed = 0xf00d;
+    params.optimizerForceTol = 1e-4;
+    params.enforceChirality = false;
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
+    std::cerr << "failure counts:" << std::endl;
+    for (const auto tpl : instruments.failureCounts) {
+      std::cerr << tpl.first << " " << tpl.second << std::endl;
+    }
+    if (m1->getNumConformers()) {
+      std::cerr << MolToMolBlock(*m1) << std::endl;
+      std::unique_ptr<ForceFields::ForceField> globalFF(
+          RDKit::UFF::constructForceField(*m1));
+      TEST_ASSERT(globalFF);
+      globalFF->initialize();
+      globalFF->minimize(1000);
+      std::cerr << MolToMolBlock(*m1) << std::endl;
+    }
+  }
+#if 0
+  SECTION("random coords") {
+    auto params = DGeomHelpers::EmbedParameters();
+    params.useBasicKnowledge = false;
+    params.useExpTorsionAnglePrefs = false;
+    DGeomHelpers::EmbedInstrumentation instruments;
+    params.instrumentation = &instruments;
+    params.randomSeed = 0xf00d;
+    params.useRandomCoords = true;
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
+    std::cerr << "random coords failure counts:" << std::endl;
+    for (const auto tpl : instruments.failureCounts) {
+      std::cerr << tpl.first << " " << tpl.second << std::endl;
+    }
+  }
+#endif
 }
