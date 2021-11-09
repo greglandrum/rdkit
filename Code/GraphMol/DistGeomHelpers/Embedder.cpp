@@ -37,6 +37,7 @@
 
 #ifdef RDK_THREADSAFE_SSS
 #include <future>
+#include <mutex>
 #endif
 
 //#define DEBUG_EMBEDDING 1
@@ -232,6 +233,48 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
 );
 
 namespace detail {
+enum EMBED_FAILURE_REASONS {
+  fail_generateInitialCoords = 0,
+  fail_firstMinimzation = 1,
+  fail_checkTetrahedralCenters = 2,
+  fail_checkChiralCenters = 3,
+  fail_minimizeFourthDimension = 4,
+  fail_minimizeWithExpTorsions = 5,
+  fail_finalChiralChecks = 6,
+  fail_rmsPrune = 7,
+  fail_other = 8
+};
+class EmbedFailureLogger {
+ private:
+  std::vector<size_t> reasons;
+  mutable std::mutex reasonLock;
+
+ public:
+  EmbedFailureLogger() {
+    reasons.resize(static_cast<size_t>(EMBED_FAILURE_REASONS::fail_other), 0);
+  }
+  void update(size_t which) {
+#ifdef RDK_THREADSAFE_SSS
+    reasonLock.lock();
+#endif
+    reasons[which]++;
+#ifdef RDK_THREADSAFE_SSS
+    reasonLock.unlock();
+#endif
+  }
+  std::vector<size_t> results() const {
+    std::vector<size_t> res;
+#ifdef RDK_THREADSAFE_SSS
+    reasonLock.lock();
+#endif
+    res = reasons;
+#ifdef RDK_THREADSAFE_SSS
+    reasonLock.unlock();
+#endif
+    return res;
+  }
+};
+
 struct EmbedArgs {
   boost::dynamic_bitset<> *confsOk;
   bool fourD;
@@ -239,9 +282,10 @@ struct EmbedArgs {
   std::vector<std::unique_ptr<Conformer>> *confs;
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
-  DistGeom::VECT_CHIRALSET const *chiralCenters;
-  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
-  ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
+  DistGeom::VECT_CHIRALSET const *chiralCenters = nullptr;
+  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons = nullptr;
+  ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails = nullptr;
+  EmbedFailureLogger *failureLogger = nullptr;
 };
 }  // namespace detail
 
@@ -720,6 +764,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
+    if (!gotCoords && eargs.failureLogger) {
+      eargs.failureLogger->update(
+          DGeomHelpers::detail::fail_generateInitialCoords);
+    }
 #ifdef DEBUG_EMBEDDING
     if (!gotCoords) {
       std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
@@ -728,9 +776,17 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     if (gotCoords) {
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
+      if (!gotCoords && eargs.failureLogger) {
+        eargs.failureLogger->update(
+            DGeomHelpers::detail::fail_firstMinimzation);
+      }
       if (gotCoords) {
         gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
                                                           embedParams);
+        if (!gotCoords && eargs.failureLogger) {
+          eargs.failureLogger->update(
+              DGeomHelpers::detail::fail_checkTetrahedralCenters);
+        }
       }
 
       // Check if any of our chiral centers are badly out of whack.
@@ -738,6 +794,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           eargs.chiralCenters->size() > 0) {
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
+        if (!gotCoords && eargs.failureLogger) {
+          eargs.failureLogger->update(
+              DGeomHelpers::detail::fail_checkChiralCenters);
+        }
       }
       // redo the minimization if we have a chiral center
       // or have started from random coords.
@@ -745,6 +805,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
+        if (!gotCoords && eargs.failureLogger) {
+          eargs.failureLogger->update(
+              DGeomHelpers::detail::fail_minimizeFourthDimension);
+        }
       }
 
       // (ET)(K)DG
@@ -752,12 +816,20 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                         embedParams.useBasicKnowledge)) {
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
+        if (!gotCoords && eargs.failureLogger) {
+          eargs.failureLogger->update(
+              DGeomHelpers::detail::fail_minimizeWithExpTorsions);
+        }
       }
       // test if chirality is correct
       if (embedParams.enforceChirality && gotCoords &&
           (eargs.chiralCenters->size() > 0)) {
         gotCoords =
             EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+        if (!gotCoords && eargs.failureLogger) {
+          eargs.failureLogger->update(
+              DGeomHelpers::detail::fail_finalChiralChecks);
+        }
       }
     }  // if(gotCoords)
   }    // while
@@ -1158,6 +1230,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
   // we will generate conformations for each fragment in the molecule
   // separately, so loop over them:
+  std::unique_ptr<detail::EmbedFailureLogger> logger;
+  if (params.verbose) {
+    logger.reset(new detail::EmbedFailureLogger());
+  }
   for (unsigned int fragIdx = 0; fragIdx < molFrags.size(); ++fragIdx) {
     ROMOL_SPTR piece = molFrags[fragIdx];
     unsigned int nAtoms = piece->getNumAtoms();
@@ -1207,8 +1283,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {
-        &confsOk, fourD,          &fragMapping,        &confs,       fragIdx,
-        mmat,     &chiralCenters, &tetrahedralCarbons, &etkdgDetails};
+        &confsOk,      fourD,       &fragMapping,   &confs,
+        fragIdx,       mmat,        &chiralCenters, &tetrahedralCarbons,
+        &etkdgDetails, logger.get()};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
     }
@@ -1235,8 +1312,20 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
           _isConfFarFromRest(mol, *conf, params.pruneRmsThresh, selfMatches)) {
         int confId = (int)mol.addConformer(conf.release(), true);
         res.push_back(confId);
+      } else {
+        if (logger) {
+          logger->update(detail::fail_rmsPrune);
+        }
       }
     }
+  }
+  if (params.verbose && logger) {
+    auto tres = logger->results();
+    std::cerr << "Embedding failures: ";
+    for (unsigned int i = 0; i < detail::fail_other; ++i) {
+      std::cerr << i << ": " << tres[i] << " ";
+    }
+    std::cerr << std::endl;
   }
 }
 
