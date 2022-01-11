@@ -39,6 +39,7 @@ class JSMol {
   std::string get_morgan_fp_as_binary_text() const {
     return get_morgan_fp(2, 2048);
   }
+  std::string get_pattern_fp_as_binary_text(unsigned int len) const;
   std::string condense_abbreviations(double maxCoverage, bool useLinkers);
   std::string condense_abbreviations() {
     return condense_abbreviations(0.4, false);

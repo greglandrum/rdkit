@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -149,6 +150,14 @@ std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
                                                 unsigned int fplen) const {
   if (!d_mol) return "";
   auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
+  delete fp;
+  return res;
+}
+
+std::string JSMol::get_pattern_fp_as_binary_text(unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = PatternFingerprintMol(*d_mol, fplen);
   std::string res = BitVectToBinaryText(*fp);
   delete fp;
   return res;

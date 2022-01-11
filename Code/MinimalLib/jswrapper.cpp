@@ -102,6 +102,16 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
   return res;
 }
 
+emscripten::val get_pattern_fp_as_uint8array(const JSMol &self,
+                                             unsigned int fplen) {
+  std::string fp = self.get_pattern_fp_as_binary_text(fplen);
+  emscripten::val view(emscripten::typed_memory_view(
+      fp.size(), reinterpret_cast<const unsigned char *>(fp.c_str())));
+  auto res = emscripten::val::global("Uint8Array").new_(fp.size());
+  res.call<void>("set", view);
+  return res;
+}
+
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
   return get_morgan_fp_as_uint8array(self, 2, 2048);
 }
@@ -112,10 +122,20 @@ using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
-      .function("get_smiles", &JSMol::get_smiles)
-      .function("get_cxsmiles", &JSMol::get_cxsmiles)
-      .function("get_smarts", &JSMol::get_smarts)
-      .function("get_cxsmarts", &JSMol::get_cxsmarts)
+      // .function("get_smiles", &JSMol::get_smiles)
+      // .function("get_cxsmiles", &JSMol::get_cxsmiles)
+      // .function("get_smarts", &JSMol::get_smarts)
+      // .function("get_cxsmarts", &JSMol::get_cxsmarts)
+      .function("get_substruct_match", &JSMol::get_substruct_match)
+      // .function("get_morgan_fp_as_uint8array",
+      //           select_overload<emscripten::val(const JSMol &, unsigned int,
+      //                                           unsigned int)>(
+      //               get_morgan_fp_as_uint8array))
+      .function("get_pattern_fp_as_uint8array", &get_pattern_fp_as_uint8array)
+
+      ;
+#if 0
+      .function("get_descriptors", &JSMol::get_descriptors)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
       .function("get_inchi", &JSMol::get_inchi)
@@ -142,7 +162,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 #endif
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)
-      .function("get_descriptors", &JSMol::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMol::get_morgan_fp))
       .function("get_morgan_fp",
@@ -200,11 +219,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("count_matches",
                 select_overload<unsigned int(const JSMol &) const>(
                     &JSSubstructLibrary::count_matches));
-
+#endif
   function("version", &version);
-  function("prefer_coordgen", &prefer_coordgen);
-  function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
+  // function("prefer_coordgen", &prefer_coordgen);
+  // function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_mol", &get_mol, allow_raw_pointers());
-  function("get_mol", &get_mol_no_details, allow_raw_pointers());
+  // function("get_mol", &get_mol_no_details, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
 }

@@ -84,20 +84,20 @@ RWMol *mol_from_input(const std::string &input,
   }
   try {
     if (input.find("M  END") != std::string::npos) {
-      bool strictParsing = false;
-      LPT_OPT_GET(strictParsing);
-      res = MolBlockToMol(input, false, removeHs, strictParsing);
+      // bool strictParsing = false;
+      // LPT_OPT_GET(strictParsing);
+      // res = MolBlockToMol(input, false, removeHs, strictParsing);
     } else if (input.find("commonchem") != std::string::npos) {
-      auto ps = MolInterchange::defaultJSONParseParameters;
-      LPT_OPT_GET2(ps, setAromaticBonds);
-      LPT_OPT_GET2(ps, strictValenceCheck);
-      LPT_OPT_GET2(ps, parseProperties);
-      LPT_OPT_GET2(ps, parseConformers);
+      // auto ps = MolInterchange::defaultJSONParseParameters;
+      // LPT_OPT_GET2(ps, setAromaticBonds);
+      // LPT_OPT_GET2(ps, strictValenceCheck);
+      // LPT_OPT_GET2(ps, parseProperties);
+      // LPT_OPT_GET2(ps, parseConformers);
 
-      auto molVect = MolInterchange::JSONDataToMols(input, ps);
-      if (!molVect.empty()) {
-        res = new RWMol(*molVect[0]);
-      }
+      // auto molVect = MolInterchange::JSONDataToMols(input, ps);
+      // if (!molVect.empty()) {
+      //   res = new RWMol(*molVect[0]);
+      // }
     } else {
       SmilesParserParams ps;
       ps.sanitize = false;
@@ -151,21 +151,22 @@ RWMol *qmol_from_input(const std::string &input,
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(removeHs);
   }
-  if (input.find("M  END") != std::string::npos) {
-    bool strictParsing = false;
-    LPT_OPT_GET(strictParsing);
-    res = MolBlockToMol(input, false, removeHs, strictParsing);
-  } else if (input.find("commonchem") != std::string::npos) {
-    auto ps = MolInterchange::defaultJSONParseParameters;
-    LPT_OPT_GET2(ps, setAromaticBonds);
-    LPT_OPT_GET2(ps, strictValenceCheck);
-    LPT_OPT_GET2(ps, parseProperties);
-    LPT_OPT_GET2(ps, parseConformers);
+  // if (input.find("M  END") != std::string::npos) {
+  //   bool strictParsing = false;
+  //   LPT_OPT_GET(strictParsing);
+  //   res = MolBlockToMol(input, false, removeHs, strictParsing);
+  // } else
+  if (input.find("commonchem") != std::string::npos) {
+    // auto ps = MolInterchange::defaultJSONParseParameters;
+    // LPT_OPT_GET2(ps, setAromaticBonds);
+    // LPT_OPT_GET2(ps, strictValenceCheck);
+    // LPT_OPT_GET2(ps, parseProperties);
+    // LPT_OPT_GET2(ps, parseConformers);
 
-    auto molVect = MolInterchange::JSONDataToMols(input, ps);
-    if (!molVect.empty()) {
-      res = new RWMol(*molVect[0]);
-    }
+    // auto molVect = MolInterchange::JSONDataToMols(input, ps);
+    // if (!molVect.empty()) {
+    //   res = new RWMol(*molVect[0]);
+    // }
   } else {
     bool mergeHs = false;
     LPT_OPT_GET(mergeHs);
