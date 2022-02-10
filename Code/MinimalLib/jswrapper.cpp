@@ -127,14 +127,19 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       // .function("get_smarts", &JSMol::get_smarts)
       // .function("get_cxsmarts", &JSMol::get_cxsmarts)
       .function("get_substruct_match", &JSMol::get_substruct_match)
-      // .function("get_morgan_fp_as_uint8array",
-      //           select_overload<emscripten::val(const JSMol &, unsigned int,
-      //                                           unsigned int)>(
-      //               get_morgan_fp_as_uint8array))
+      .function("get_morgan_fp",
+                select_overload<std::string(unsigned int, unsigned int) const>(
+                    &JSMol::get_morgan_fp))
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<emscripten::val(const JSMol &, unsigned int,
+                                                unsigned int)>(
+                    get_morgan_fp_as_uint8array))
       .function("get_pattern_fp_as_uint8array", &get_pattern_fp_as_uint8array)
 
+      .function("get_descriptors", &JSMol::get_descriptors)
+
       ;
-#if 0
+#if 0 
       .function("get_descriptors", &JSMol::get_descriptors)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)

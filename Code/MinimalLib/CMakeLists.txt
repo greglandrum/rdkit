@@ -15,6 +15,7 @@ if(RDK_BUILD_MINIMAL_LIB)
     #    SubstructMatch_static SubstructLibrary_static FileParsers_static
     #    SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static)
     target_link_libraries(RDKit_minimal 
+        Descriptors_static
         SubstructMatch_static 
         # MolInterchange_static
         # FileParsers_static

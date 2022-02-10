@@ -61,34 +61,35 @@ function test_basics() {
     // assert.equal(mol3.is_valid(),1);
     // assert.equal(mol3.get_smiles(),"Oc1ccccc1");
     
-    // var descrs = JSON.parse(mol.get_descriptors());
-    // assert.equal(descrs.NumAromaticRings,1);
-    // assert.equal(descrs.NumRings,1);
-    // assert.equal(descrs.amw,94.11299);
+    var descrs = JSON.parse(mol.get_descriptors());
+    console.log(descrs);
+    assert.equal(descrs.NumAromaticRings,1);
+    assert.equal(descrs.NumRings,1);
+    assert.equal(descrs.amw,94.11299);
 
-    // var checkStringBinaryFpIdentity = (stringFp, binaryFp) => {
-    //     assert.equal(binaryFp.length, stringFp.length / 8);
-    //     for (var i = 0, c = 0; i < binaryFp.length; ++i) {
-    //         var byte = 0;
-    //         for (var j = 0; j < 8; ++j, ++c) {
-    //             if (stringFp[c] === "1") {
-    //                 byte |= (1 << j);
-    //             }
-    //         }
-    //         assert.equal(byte, binaryFp[i]);
-    //     }
-    // };
+    var checkStringBinaryFpIdentity = (stringFp, binaryFp) => {
+        assert.equal(binaryFp.length, stringFp.length / 8);
+        for (var i = 0, c = 0; i < binaryFp.length; ++i) {
+            var byte = 0;
+            for (var j = 0; j < 8; ++j, ++c) {
+                if (stringFp[c] === "1") {
+                    byte |= (1 << j);
+                }
+            }
+            assert.equal(byte, binaryFp[i]);
+        }
+    };
 
-    // var fp1 = mol.get_morgan_fp();
-    // assert.equal(fp1.length,2048);
-    // assert.equal((fp1.match(/1/g)||[]).length,11);
-    // var fp1Uint8Array = mol.get_morgan_fp_as_uint8array();
-    // checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-    // var fp2 = mol.get_morgan_fp(0,512);
-    // assert.equal(fp2.length,512);
-    // assert.equal((fp2.match(/1/g)||[]).length,3);
-    // var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
-    // checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+    var fp1 = mol.get_morgan_fp(2,2048);
+    assert.equal(fp1.length,2048);
+    assert.equal((fp1.match(/1/g)||[]).length,11);
+    var fp1Uint8Array = mol.get_morgan_fp_as_uint8array(2,2048);
+    checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+    var fp2 = mol.get_morgan_fp(0,512);
+    assert.equal(fp2.length,512);
+    assert.equal((fp2.match(/1/g)||[]).length,3);
+    var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
+    checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
     
     // var svg = mol.get_svg();
     // assert(svg.search("svg")>0);
