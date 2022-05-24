@@ -42,6 +42,18 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
+<<<<<<< HEAD
+=======
+void setAllowNontetrahedral(bool val) {
+  RDKit::Chirality::allowNontetrahedralChirality = val;
+}
+bool getAllowNontetrahedral() {
+  return RDKit::Chirality::allowNontetrahedralChirality;
+}
+void setLegacyStereo(bool val) { Chirality::useLegacyStereoPerception = val; }
+bool getLegacyStereo() { return Chirality::useLegacyStereoPerception; }
+
+>>>>>>> add getters for allowNontetrahedralChilrality and useLegacyStereoPerception
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
