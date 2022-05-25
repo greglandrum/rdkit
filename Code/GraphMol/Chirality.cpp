@@ -24,6 +24,10 @@
 #include "Chirality.h"
 
 #include <cstdlib>
+<<<<<<< HEAD
+=======
+#include <stdlib.h>
+>>>>>>> switch to using environment variables to store the values
 
 // #define VERBOSE_CANON 1
 
@@ -1117,7 +1121,7 @@ void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks) {
   buildCIPInvariants(mol, invars);
   iterateCIPRanks(mol, invars, ranks, false);
 #else
-  Canon::chiralRankMolAtoms(mol, ranks);
+    Canon::chiralRankMolAtoms(mol, ranks);
 #endif
 
   // copy the ranks onto the atoms:
