@@ -452,6 +452,21 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
+  SECTION("non-sanitized molecules") {
+    {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<RWMol> mol{SmilesToMol("CC(C)(O)[C@](Cl)(F)I", ps)};
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 4);
+      std::vector<unsigned> catoms = {1, 5, 6, 7};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
+    }
+  }
 }
 
 TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
