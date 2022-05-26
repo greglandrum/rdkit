@@ -2625,3 +2625,39 @@ M  END
   CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
         Atom::ChiralType::CHI_UNSPECIFIED);
 }
+
+TEST_CASE("assignStereochemistry sets bond stereo with new stereo perception") {
+  SECTION("basics") {
+    Chirality::setUseLegacyStereoPerception(false);
+    {
+      auto m = "C/C=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "C/C=C\\C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "C(/C)=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{1, 3});
+    }
+    {
+      auto m = "FC(/C)=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "FC(/C)=C(F)/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+  }
+}

@@ -1727,6 +1727,87 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
+void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
+  if (sinfo.type != StereoType::Bond_Double ||
+      sinfo.specified != StereoSpecified::Unspecified ||
+      sinfo.controllingAtoms.size() != 4) {
+    return;
+  }
+
+  auto dblBond = mol.getBondWithIdx(sinfo.centeredOn);
+
+  bool begFirstNeighbor = true;
+  auto begBond = mol.getBondBetweenAtoms(dblBond->getBeginAtomIdx(),
+                                         sinfo.controllingAtoms[0]);
+  CHECK_INVARIANT(begBond, "no initial bond found");
+  auto begDir = begBond->getBondDir();
+  if (begDir != Bond::BondDir::ENDDOWNRIGHT &&
+      begDir != Bond::BondDir::ENDUPRIGHT) {
+    begFirstNeighbor = false;
+    if (sinfo.controllingAtoms[1] != StereoInfo::NOATOM) {
+      begBond = mol.getBondBetweenAtoms(dblBond->getBeginAtomIdx(),
+                                        sinfo.controllingAtoms[1]);
+      CHECK_INVARIANT(begBond, "no initial bond found");
+      begDir = begBond->getBondDir();
+    }
+  }
+  // no direction found at beginning
+  if (begDir != Bond::BondDir::ENDDOWNRIGHT &&
+      begDir != Bond::BondDir::ENDUPRIGHT) {
+    return;
+  }
+  if (begBond->getBeginAtomIdx() != dblBond->getBeginAtomIdx()) {
+    begDir = begDir == Bond::BondDir::ENDDOWNRIGHT
+                 ? Bond::BondDir::ENDUPRIGHT
+                 : Bond::BondDir::ENDDOWNRIGHT;
+  }
+
+  bool endFirstNeighbor = true;
+  auto endBond = mol.getBondBetweenAtoms(dblBond->getEndAtomIdx(),
+                                         sinfo.controllingAtoms[2]);
+  CHECK_INVARIANT(endBond, "no final bond found");
+  auto endDir = endBond->getBondDir();
+  if (endDir != Bond::BondDir::ENDDOWNRIGHT &&
+      endDir != Bond::BondDir::ENDUPRIGHT) {
+    endFirstNeighbor = false;
+    if (sinfo.controllingAtoms[3] != StereoInfo::NOATOM) {
+      endBond = mol.getBondBetweenAtoms(dblBond->getEndAtomIdx(),
+                                        sinfo.controllingAtoms[3]);
+      CHECK_INVARIANT(endBond, "no final bond found");
+      endDir = endBond->getBondDir();
+    }
+  }
+  // no direction found at end
+  if (endDir != Bond::BondDir::ENDDOWNRIGHT &&
+      endDir != Bond::BondDir::ENDUPRIGHT) {
+    return;
+  }
+  if (endBond->getBeginAtomIdx() != dblBond->getEndAtomIdx()) {
+    endDir = endDir == Bond::BondDir::ENDDOWNRIGHT
+                 ? Bond::BondDir::ENDUPRIGHT
+                 : Bond::BondDir::ENDDOWNRIGHT;
+  }
+
+  // we've set up the bond directions here so that they correspond to having
+  // both single bonds START at the double bond. This means that if the single
+  // bonds point in the same direction, the bond is cis
+  bool sameDir = begDir == endDir;
+
+  // if either the direction bond at the beginning or the direction bond at the
+  // end wasn't to the first neighbor on that side (but not both), then we need
+  // to swap
+  if (begFirstNeighbor ^ endFirstNeighbor) {
+    sameDir = !sameDir;
+  }
+
+  dblBond->setStereoAtoms(sinfo.controllingAtoms[0], sinfo.controllingAtoms[2]);
+  if (sameDir) {
+    dblBond->setStereo(Bond::BondStereo::STEREOCIS);
+  } else {
+    dblBond->setStereo(Bond::BondStereo::STEREOTRANS);
+  }
+}
+
 // reassign atom ranks by supplementing the current ranks
 // with information about known chirality
 void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
@@ -1866,10 +1947,6 @@ void cleanupStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
-}  // namespace Chirality
-
-namespace MolOps {
-
 /*
     We're going to do this iteratively:
       1) assign atom stereochemistry
@@ -1877,17 +1954,8 @@ namespace MolOps {
       3) if there are still unresolved atoms or bonds
          repeat the above steps as necessary
  */
-void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
-                           bool flagPossibleStereoCenters) {
-  if (!force && mol.hasProp(common_properties::_StereochemDone)) {
-    return;
-  }
-
-  if (!Chirality::getUseLegacyStereoPerception()) {
-    Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
-    return;
-  }
-
+void legacyStereoPerception(ROMol &mol, bool cleanIt,
+                            bool flagPossibleStereoCenters) {
   // later we're going to need ring information, get it now if we don't
   // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
@@ -2085,13 +2153,56 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     }
     Chirality::cleanupStereoGroups(mol);
   }
-  mol.setProp(common_properties::_StereochemDone, 1, true);
+}
 
-#if 0
-  std::cerr << "---\n";
-  mol.debugMol(std::cerr);
-  std::cerr << "<<<<<<<<<<<<<<<<\n";
-#endif
+void stereoPerception(ROMol &mol, bool cleanIt,
+                      bool flagPossibleStereoCenters) {
+  auto sinfo =
+      Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
+  // populate double bond stereo info:
+  for (const auto &si : sinfo) {
+    if (si.type == Chirality::StereoType::Bond_Double) {
+      auto bond = mol.getBondWithIdx(si.centeredOn);
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      if (si.specified == Chirality::StereoSpecified::Specified) {
+        TEST_ASSERT(si.controllingAtoms.size() == 4);
+        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
+        switch (si.descriptor) {
+          case Chirality::StereoDescriptor::Bond_Cis:
+            bond->setStereo(Bond::BondStereo::STEREOCIS);
+            break;
+          case Chirality::StereoDescriptor::Bond_Trans:
+            bond->setStereo(Bond::BondStereo::STEREOTRANS);
+            break;
+          default:
+            BOOST_LOG(rdWarningLog)
+                << "unrecognized bond stereo type" << std::endl;
+        }
+      } else if (si.specified == Chirality::StereoSpecified::Unknown) {
+        bond->setStereo(Bond::BondStereo::STEREOANY);
+      } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
+        assignBondCisTrans(mol, si);
+      }
+    }
+    return;
+  }
+}
+}  // namespace Chirality
+
+namespace MolOps {
+
+void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
+                           bool flagPossibleStereoCenters) {
+  if (!force && mol.hasProp(common_properties::_StereochemDone)) {
+    return;
+  }
+
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    Chirality::stereoPerception(mol, cleanIt, flagPossibleStereoCenters);
+  } else {
+    Chirality::legacyStereoPerception(mol, cleanIt, flagPossibleStereoCenters);
+  }
+  mol.setProp(common_properties::_StereochemDone, 1, true);
 }
 
 // Find bonds than can be cis/trans in a molecule and mark them as
