@@ -642,11 +642,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   return res;
 }
 
-// const_casts are always ugly, but we know that findPotentialStereo() doesn't
-// modify the molecule if cleanIt is false:
 std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
+  ROMol cp(mol);
   bool cleanIt = false;
-  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
+  return findPotentialStereo(cp, cleanIt);
 }
 
 }  // namespace Chirality
