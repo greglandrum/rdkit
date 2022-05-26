@@ -609,6 +609,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     for (const auto bond : mol.bonds()) {
       auto bidx = bond->getIdx();
       if (possibleBonds[bidx]) {
+        bond->clearProp(Chirality::_stereoNotPossible);
+
         auto sinfo = detail::getStereoInfo(bond);
         ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                          "bad controlling atoms size");
@@ -631,17 +633,21 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           removedStereo = true;
           bondSymbols[bidx] = getBondSymbol(bond);
           possibleBonds[bidx] = 0;
+          bond->setProp(Chirality::_stereoNotPossible, 1, true);
           if (cleanIt &&
               sinfo.specified != Chirality::StereoSpecified::Unspecified) {
             bond->setStereo(Bond::BondStereo::STEREONONE);
           }
         }
+      } else {
+        bond->setProp(Chirality::_stereoNotPossible, 1, true);
       }
     }
     if (!removedStereo) {
       break;
     }
   }
+  mol.setProp("_potentialStereo", res, true);
   return res;
 }
 
