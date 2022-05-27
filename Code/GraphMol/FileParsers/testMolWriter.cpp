@@ -1,6 +1,5 @@
 //
-//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
-//
+//   Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -22,6 +21,8 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Chirality.h>
 
 using namespace RDKit;
 
@@ -560,6 +561,10 @@ void testIssue3525000() {
     RWMol *mol = MolFileToMol(fname);
     TEST_ASSERT(mol);
 
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+
     std::string cip;
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
@@ -580,9 +585,14 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    // FIX: Marvin disagrees about this one:
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+    } else {
+      // FIX: Marvin disagrees about this one:
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+    }
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
@@ -591,6 +601,11 @@ void testIssue3525000() {
     delete mol;
     mol = MolBlockToMol(mb);
     TEST_ASSERT(mol);
+
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
@@ -610,9 +625,14 @@ void testIssue3525000() {
     mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
     TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    // FIX: Marvin disagrees about this one:
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+    } else {
+      // FIX: Marvin disagrees about this one:
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+    }
     TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
@@ -626,6 +646,11 @@ void testIssue3525000() {
     TEST_ASSERT(mol);
     MolOps::assignChiralTypesFrom3D(*mol);
     MolOps::assignStereochemistry(*mol);
+
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+
     std::string cip;
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
@@ -647,6 +672,11 @@ void testIssue3525000() {
     delete mol;
     mol = MolBlockToMol(mb);
     TEST_ASSERT(mol);
+
+    if (!Chirality::getUseLegacyStereoPerception()) {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+
     TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
