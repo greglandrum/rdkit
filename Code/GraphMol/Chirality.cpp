@@ -1727,6 +1727,20 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
+void assignLegacyCIPLabels(ROMol &mol, bool flagPossibleStereoCenters) {
+  std::vector<unsigned int> atomRanks;
+  assignAtomChiralCodes(mol, atomRanks, flagPossibleStereoCenters);
+
+  // reset any already-specfied double bonds:
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::BondType::DOUBLE &&
+        bond->getStereo() > Bond::BondStereo::STEREOANY) {
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+    }
+  }
+  assignBondStereoCodes(mol, atomRanks);
+}
+
 void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (sinfo.type != StereoType::Bond_Double ||
       sinfo.specified != StereoSpecified::Unspecified ||
@@ -2157,8 +2171,28 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
 
 void stereoPerception(ROMol &mol, bool cleanIt,
                       bool flagPossibleStereoCenters) {
+  if (cleanIt) {
+    for (auto atom : mol.atoms()) {
+      atom->clearProp(common_properties::_CIPCode);
+      atom->clearProp(common_properties::_ChiralityPossible);
+    }
+  }
+
+  // do the actual perception
   auto sinfo =
       Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
+
+  if (flagPossibleStereoCenters) {
+    for (const auto &si : sinfo) {
+      if (si.type == Chirality::StereoType::Atom_Tetrahedral ||
+          si.type == Chirality::StereoType::Atom_SquarePlanar ||
+          si.type == Chirality::StereoType::Atom_TrigonalBipyramidal ||
+          si.type == Chirality::StereoType::Atom_Octahedral) {
+        mol.getAtomWithIdx(si.centeredOn)
+            ->setProp(common_properties::_ChiralityPossible, 1);
+      }
+    }
+  }
   // populate double bond stereo info:
   for (const auto &si : sinfo) {
     if (si.type == Chirality::StereoType::Bond_Double) {
@@ -2184,7 +2218,6 @@ void stereoPerception(ROMol &mol, bool cleanIt,
         assignBondCisTrans(mol, si);
       }
     }
-    return;
   }
 }
 }  // namespace Chirality
@@ -3095,4 +3128,4 @@ void removeStereochemistry(ROMol &mol) {
 }
 
 }  // end of namespace MolOps
-}  // end of namespace RDKit
+}  // namespace RDKit

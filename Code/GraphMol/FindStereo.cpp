@@ -156,6 +156,21 @@ StereoInfo getStereoInfo(const Bond *bond) {
     if (endAtom->getDegree() == 2) {
       sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
+
+    if (!seenSquiggleBond) {
+      // check to see if either the begin or end atoms has the _UnknownStereo
+      // property set. This happens if there was a squiggle bond to an H
+      int explicitUnknownStereo = 0;
+      if ((bond->getBeginAtom()->getPropIfPresent<int>(
+               common_properties::_UnknownStereo, explicitUnknownStereo) &&
+           explicitUnknownStereo) ||
+          (bond->getEndAtom()->getPropIfPresent<int>(
+               common_properties::_UnknownStereo, explicitUnknownStereo) &&
+           explicitUnknownStereo)) {
+        seenSquiggleBond = true;
+      }
+    }
+
     Bond::BondStereo stereo = bond->getStereo();
     if (stereo == Bond::BondStereo::STEREOANY ||
         bond->getBondDir() == Bond::BondDir::EITHERDOUBLE || seenSquiggleBond) {
