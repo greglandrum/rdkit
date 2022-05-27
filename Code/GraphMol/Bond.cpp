@@ -317,10 +317,51 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
   target << bond.getBeginAtomIdx() << "->" << bond.getEndAtomIdx();
   target << " order: " << bond.getBondType();
   if (bond.getBondDir()) {
-    target << " dir: " << bond.getBondDir();
+    target << " dir: ";
+    switch (bond.getBondDir()) {
+      case RDKit::Bond::BondDir::BEGINWEDGE:
+        target << "wedge";
+        break;
+      case RDKit::Bond::BondDir::BEGINDASH:
+        target << "dash";
+        break;
+      case RDKit::Bond::BondDir::ENDDOWNRIGHT:
+        target << "\\";
+        break;
+      case RDKit::Bond::BondDir::ENDUPRIGHT:
+        target << "/";
+        break;
+      case RDKit::Bond::BondDir::EITHERDOUBLE:
+        target << "crossed";
+        break;
+      case RDKit::Bond::BondDir::UNKNOWN:
+        target << "unknown";
+        break;
+      default:
+        target << bond.getBondDir();
+    }
   }
   if (bond.getStereo()) {
-    target << " stereo: " << bond.getStereo();
+    target << " stereo: ";
+    switch (bond.getStereo()) {
+      case RDKit::Bond::BondStereo::STEREOANY:
+        target << "any";
+        break;
+      case RDKit::Bond::BondStereo::STEREOZ:
+        target << "Z";
+        break;
+      case RDKit::Bond::BondStereo::STEREOE:
+        target << "E";
+        break;
+      case RDKit::Bond::BondStereo::STEREOCIS:
+        target << "cis";
+        break;
+      case RDKit::Bond::BondStereo::STEREOTRANS:
+        target << "trans";
+        break;
+      default:
+        target << bond.getStereo();
+    }
     if (bond.getStereoAtoms().size() == 2) {
       const auto &ats = bond.getStereoAtoms();
       target << " stereoAts: (" << ats[0] << " " << ats[1] << ")";
