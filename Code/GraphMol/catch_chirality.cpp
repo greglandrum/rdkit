@@ -53,6 +53,8 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
     }
   }
   SECTION("stereo") {
+    bool oval = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(true);
     {
       auto mol = "C/C=C(/C#C)C"_smiles;
       REQUIRE(mol);
@@ -128,6 +130,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unknown);
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None);
     }
+    Chirality::setUseLegacyStereoPerception(oval);
   }
 }
 TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
@@ -1392,8 +1395,15 @@ TEST_CASE("N Chirality in rings") {
       auto mol = "Cn1ncc([C@]23CC[C@](CC2)C3)n1"_smiles;
       REQUIRE(mol);
       CHECK(mol->getAtomWithIdx(8)->getAtomicNum() == 6);
-      CHECK(mol->getAtomWithIdx(8)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED);
+      if (Chirality::getUseLegacyStereoPerception()) {
+        // this is a difference between the old code and the new code
+        // I believe that the old code is wrong here.
+        CHECK(mol->getAtomWithIdx(8)->getChiralTag() !=
+              Atom::ChiralType::CHI_UNSPECIFIED);
+      } else {
+        CHECK(mol->getAtomWithIdx(8)->getChiralTag() ==
+              Atom::ChiralType::CHI_UNSPECIFIED);
+      }
     }
   }
 }
@@ -1595,8 +1605,13 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
     std::unique_ptr<RWMol> m{
         SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2", ps)};
     REQUIRE(m);
-    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    if (Chirality::getUseLegacyStereoPerception()) {
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    } else {
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+      CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    }
   }
   SECTION("original passing example") {
     std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)CC2", ps)};

@@ -2219,6 +2219,10 @@ void stereoPerception(ROMol &mol, bool cleanIt,
       }
     }
   }
+
+  if (cleanIt) {
+    Chirality::cleanupStereoGroups(mol);
+  }
 }
 }  // namespace Chirality
 

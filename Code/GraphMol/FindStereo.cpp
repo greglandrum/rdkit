@@ -618,6 +618,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
             }
           }
         }
+      } else {
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       }
     }
 
