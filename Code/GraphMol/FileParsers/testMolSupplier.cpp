@@ -186,15 +186,11 @@ int testMolSup() {
         Atom *at = nmol->getAtomWithIdx(1);
         TEST_ASSERT(at);
         TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                    "R");
       }
       {
         Atom *at = nmol->getAtomWithIdx(3);
         TEST_ASSERT(at);
         TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                    "S");
       }
     }
     {  // Pseudochiralities (no CIP codes)
@@ -204,13 +200,11 @@ int testMolSup() {
         Atom *at = nmol->getAtomWithIdx(2);
         TEST_ASSERT(at);
         TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
       }
       {
         Atom *at = nmol->getAtomWithIdx(5);
         TEST_ASSERT(at);
         TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
       }
     }
     {  // intentionally bad chirality label, intended to
@@ -2332,7 +2326,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 1663);
   }
-#if RDK_USE_BOOST_IOSTREAMS  
+#if RDK_USE_BOOST_IOSTREAMS
   {
     gzstream strm(maefname2);
 
