@@ -327,7 +327,7 @@ void testIssue114(std::string rdbase) {
       rdbase + "/Code/GraphMol/FileParsers/test_data/EZ_mol2_issue114.mol2";
   RWMol *mol = Mol2FileToMol(fName);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
   delete mol;
 
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
