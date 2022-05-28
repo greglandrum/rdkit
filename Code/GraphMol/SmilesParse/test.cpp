@@ -16,7 +16,9 @@
 #include "SmartsWrite.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Chirality.h>
+
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -397,6 +399,10 @@ void testStereochem() {
               Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
+
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -409,6 +415,9 @@ void testStereochem() {
               Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -429,6 +438,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -441,6 +453,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -453,6 +468,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -465,6 +483,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -477,6 +498,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -489,6 +513,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -501,6 +528,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -513,6 +543,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -525,6 +558,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -537,6 +573,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -549,6 +588,9 @@ void testStereochem() {
               Atom::CHI_TETRAHEDRAL_CCW);
   smi = MolToSmiles(*mol, 1);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -560,6 +602,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -572,6 +617,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -584,6 +632,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -596,6 +647,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -608,6 +662,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -620,6 +677,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -632,6 +692,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -644,6 +707,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -658,6 +724,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -666,6 +735,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -676,6 +748,9 @@ void testStereochem() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -693,6 +768,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -701,6 +779,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -710,6 +791,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -723,6 +807,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -736,6 +823,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -744,6 +834,9 @@ void testStereochem() {
   mol = SmilesToMol(smi);
   // TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
@@ -1052,6 +1145,9 @@ void testIssue153() {
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
   TEST_ASSERT(code == "S");
@@ -1074,6 +1170,9 @@ void testIssue153() {
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
   TEST_ASSERT(code == "R");
@@ -1111,6 +1210,9 @@ void testIssue157() {
               Atom::CHI_TETRAHEDRAL_CW);
 
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, code);
   TEST_ASSERT(code == "R");
@@ -1143,6 +1245,9 @@ void testIssue157() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, smi);
   TEST_ASSERT(smi == "S");
   refSmi = MolToSmiles(*mol, true);
@@ -1161,6 +1266,9 @@ void testIssue157() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, smi);
   TEST_ASSERT(smi == "R");
   mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, smi);
@@ -1193,7 +1301,7 @@ void testIssue159() {
   TEST_ASSERT(mol);
 
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
   refSmi = MolToSmiles(*mol, 1);
 
   delete mol;
@@ -1202,7 +1310,7 @@ void testIssue159() {
   TEST_ASSERT(mol);
 
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
@@ -1212,7 +1320,7 @@ void testIssue159() {
   TEST_ASSERT(mol);
 
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
@@ -1220,7 +1328,7 @@ void testIssue159() {
   smi = "C(=C/O)\\C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
 
@@ -1228,8 +1336,8 @@ void testIssue159() {
   smi = "C(\\C/C=C/Cl)=C/O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
 
   delete mol;
   smi = "O=C\\C=C/F";
@@ -1237,7 +1345,7 @@ void testIssue159() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
 
   delete mol;
   smi = "C(/C=O)=C/F";
@@ -1245,77 +1353,77 @@ void testIssue159() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
 
   delete mol;
   smi = "C(=C/F)/C=O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
   TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
 
   delete mol;
   smi = "C(=O)\\C=C/Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
 
   delete mol;
   smi = "CC(=O)\\C=C/Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOCIS);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
   delete mol;
   smi = "C(=O)\\N=C\\Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
   TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
 
   delete mol;
   smi = "CC(=O)\\N=C\\Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOTRANS);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
   delete mol;
   smi = "C(/Br)(=C/Cl)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
 
   delete mol;
   smi = "C(=C/Cl)(/Br)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
 
   delete mol;
   smi = "Cl\\C=C(\\Br)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
 
   delete mol;
   smi = "Cl\\C(=C\\Br)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
 
   delete mol;
   smi = "C(/C=C/C)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
   delete mol;
   smi = "C(/C)=C/C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
 
   // ---------
   // These next few molecules test propagation of bond flips:
@@ -1324,34 +1432,42 @@ void testIssue159() {
   smi = "Cl/C=C(/C=C/C)\\C=C\\Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
-
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>({0, 3})));
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
   delete mol;
+
   smi = "C(/C=C/C)(\\C=C\\Br)=C\\Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>({1, 8})));
 
   delete mol;
   smi = "Br/C=C/C(/C=C/C)=C\\Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>({2, 8})));
 
   delete mol;
   smi = "Cl/C=C(/C=C/C=C\\F)\\C=C\\Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>({0, 3})));
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREOTRANS);
   delete mol;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1368,19 +1484,21 @@ void testIssue175() {
   smi = "Cl\\C=C1.F/1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
   delete mol;
 
   smi = "Cl\\C=C1CN/1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>({0, 3})));
   delete mol;
 
   smi = "C/1=C/F.F1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
   delete mol;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1433,16 +1551,24 @@ void testIssue180() {
   smi = "Cl/C(=N\\O)/C(=N\\O)Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>({0, 3})));
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>({1, 6})));
   refSmi = MolToSmiles(*mol, 1);
 
   delete mol;
   smi = "Cl/C(/C(Br)=N\\O)=N\\O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(3)->getStereoAtoms() == std::vector<int>({1, 5})));
+  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(5)->getStereoAtoms() == std::vector<int>({0, 7})));
   smi = MolToSmiles(*mol, 1);
   TEST_ASSERT(refSmi == smi);
   delete mol;
@@ -1459,27 +1585,33 @@ void testIssue184() {
       << "Testing Issue 184: Cis/Trans incorrect on ring-closure bonds"
       << std::endl;
 
+  {
+    auto tm = "C/C(O)=C([C@H](F)Cl)/[C@H](F)Cl"_smiles;
+    tm->debugMol(std::cerr);
+    std::cerr << "------------" << std::endl;
+  }
+
   smi = "C1NC(Cl)C(=N\\O)/C1=N\\O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  // mol->debugMol(std::cout);
+  mol->debugMol(std::cerr);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>({2, 6})));
   TEST_ASSERT(mol->getBondWithIdx(7)->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(
+      (mol->getBondWithIdx(7)->getStereoAtoms() == std::vector<int>({4, 9})));
   refSmi = MolToSmiles(*mol, 1);
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
-
-  for (RWMol::BondIterator bondIt = mol->beginBonds();
-       bondIt != mol->endBonds(); bondIt++) {
-    if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-      TEST_ASSERT((*bondIt)->getStereo() == Bond::STEREOZ);
-    }
-  }
+  mol->debugMol(std::cerr);
 
   smi = MolToSmiles(*mol, 1);
+  std::cerr << refSmi << std::endl;
+  std::cerr << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
   delete mol;
 
@@ -1981,6 +2113,9 @@ void testBug1844617() {
   TEST_ASSERT(mol);
   // mol->debugMol(std::cout);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   // mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, label);
@@ -2015,6 +2150,9 @@ void testBug1844617() {
   TEST_ASSERT(mol);
   // mol->debugMol(std::cout);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   // mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, label);
@@ -2048,6 +2186,9 @@ void testBug1844617() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   MolOps::assignStereochemistry(*mol);
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    CIPLabeler::assignCIPLabels(*mol);
+  }
   // mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, label);
@@ -4386,8 +4527,9 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
-#if 1
+  // boost::logging::enable_logs("rdApp.debug");
+  testIssue184();
+#if 0
   testPass();
   testFail();
 
@@ -4461,6 +4603,6 @@ int main(int argc, char *argv[]) {
   testGithub1028();
   testGithub3139();
   testGithub3967();
-#endif
   testOSSFuzzFailures();
+#endif
 }

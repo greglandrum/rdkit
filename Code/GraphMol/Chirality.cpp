@@ -2178,6 +2178,9 @@ void stereoPerception(ROMol &mol, bool cleanIt,
     }
   }
 
+  // we need cis/trans markers on the double bonds... set those now:
+  MolOps::setBondStereoFromDirections(mol);
+
   // do the actual perception
   auto sinfo =
       Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);

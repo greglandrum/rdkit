@@ -65,7 +65,7 @@ rdkit_headers(primes.h
               SmilesParseOps.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse CIPLabeler)
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse )
 
