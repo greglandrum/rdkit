@@ -2209,8 +2209,10 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   MolOps::setBondStereoFromDirections(mol);
 
   // do the actual perception
-  auto sinfo =
-      Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
+  // auto sinfo =
+  //     Chirality::findPotentialStereo(mol, cleanIt,
+  //     flagPossibleStereoCenters);
+  auto sinfo = Chirality::cleanExistingStereo(mol, cleanIt);
 
   if (flagPossibleStereoCenters) {
     for (const auto &si : sinfo) {
