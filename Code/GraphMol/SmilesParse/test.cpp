@@ -1585,16 +1585,9 @@ void testIssue184() {
       << "Testing Issue 184: Cis/Trans incorrect on ring-closure bonds"
       << std::endl;
 
-  {
-    auto tm = "C/C(O)=C([C@H](F)Cl)/[C@H](F)Cl"_smiles;
-    tm->debugMol(std::cerr);
-    std::cerr << "------------" << std::endl;
-  }
-
   smi = "C1NC(Cl)C(=N\\O)/C1=N\\O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  mol->debugMol(std::cerr);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
   TEST_ASSERT(
@@ -1607,11 +1600,8 @@ void testIssue184() {
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
-  mol->debugMol(std::cerr);
 
   smi = MolToSmiles(*mol, 1);
-  std::cerr << refSmi << std::endl;
-  std::cerr << smi << std::endl;
   TEST_ASSERT(refSmi == smi);
   delete mol;
 

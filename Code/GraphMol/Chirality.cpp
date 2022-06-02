@@ -2169,6 +2169,33 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   }
 }
 
+void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo) {
+  for (const auto &si : sinfo) {
+    if (si.type == Chirality::StereoType::Bond_Double) {
+      auto bond = mol.getBondWithIdx(si.centeredOn);
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      if (si.specified == Chirality::StereoSpecified::Specified) {
+        TEST_ASSERT(si.controllingAtoms.size() == 4);
+        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
+        switch (si.descriptor) {
+          case Chirality::StereoDescriptor::Bond_Cis:
+            bond->setStereo(Bond::BondStereo::STEREOCIS);
+            break;
+          case Chirality::StereoDescriptor::Bond_Trans:
+            bond->setStereo(Bond::BondStereo::STEREOTRANS);
+            break;
+          default:
+            BOOST_LOG(rdWarningLog)
+                << "unrecognized bond stereo type" << std::endl;
+        }
+      } else if (si.specified == Chirality::StereoSpecified::Unknown) {
+        bond->setStereo(Bond::BondStereo::STEREOANY);
+      } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
+        assignBondCisTrans(mol, si);
+      }
+    }
+  }
+}
 void stereoPerception(ROMol &mol, bool cleanIt,
                       bool flagPossibleStereoCenters) {
   if (cleanIt) {
@@ -2197,32 +2224,7 @@ void stereoPerception(ROMol &mol, bool cleanIt,
     }
   }
   // populate double bond stereo info:
-  for (const auto &si : sinfo) {
-    if (si.type == Chirality::StereoType::Bond_Double) {
-      auto bond = mol.getBondWithIdx(si.centeredOn);
-      bond->setStereo(Bond::BondStereo::STEREONONE);
-      if (si.specified == Chirality::StereoSpecified::Specified) {
-        TEST_ASSERT(si.controllingAtoms.size() == 4);
-        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
-        switch (si.descriptor) {
-          case Chirality::StereoDescriptor::Bond_Cis:
-            bond->setStereo(Bond::BondStereo::STEREOCIS);
-            break;
-          case Chirality::StereoDescriptor::Bond_Trans:
-            bond->setStereo(Bond::BondStereo::STEREOTRANS);
-            break;
-          default:
-            BOOST_LOG(rdWarningLog)
-                << "unrecognized bond stereo type" << std::endl;
-        }
-      } else if (si.specified == Chirality::StereoSpecified::Unknown) {
-        bond->setStereo(Bond::BondStereo::STEREOANY);
-      } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
-        assignBondCisTrans(mol, si);
-      }
-    }
-  }
-
+  updateDoubleBondStereo(mol, sinfo);
   if (cleanIt) {
     Chirality::cleanupStereoGroups(mol);
   }

@@ -786,11 +786,10 @@ void testIssue180() {
   auto fName = rdbase + "test_data/Issue180.mol";
   auto m = MolFileToMol(fName);
   TEST_ASSERT(m);
-
   auto bond = m->getBondWithIdx(2);
   TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(bond->getStereo() == Bond::STEREOCIS);
-  TEST_ASSERT((bond->getStereoAtoms() == std::vector<int>{0, 3}));
+  TEST_ASSERT(bond->getStereo() == Bond::STEREOTRANS);
+  TEST_ASSERT((bond->getStereoAtoms() == std::vector<int>{4, 3}));
 
   bond = m->getBondWithIdx(5);
   TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
@@ -996,13 +995,15 @@ void testDblBondStereochem() {
     std::string fName = rdbase + "Issue3009836.3.mol";
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
-    TEST_ASSERT(m1->getBondBetweenAtoms(6, 7)->getStereo() == Bond::STEREOCIS);
-    TEST_ASSERT((m1->getBondBetweenAtoms(6, 7)->getStereoAtoms() ==
-                 std::vector<int>{5, 8}));
-    TEST_ASSERT(m1->getBondBetweenAtoms(10, 11)->getStereo() ==
+
+    TEST_ASSERT(m1->getBondBetweenAtoms(6, 7)->getStereo() ==
                 Bond::STEREOTRANS);
+    TEST_ASSERT((m1->getBondBetweenAtoms(6, 7)->getStereoAtoms() ==
+                 std::vector<int>{5, 24}));
+    TEST_ASSERT(m1->getBondBetweenAtoms(10, 11)->getStereo() ==
+                Bond::STEREOCIS);
     TEST_ASSERT((m1->getBondBetweenAtoms(10, 11)->getStereoAtoms() ==
-                 std::vector<int>{9, 12}));
+                 std::vector<int>{24, 12}));
 
     delete m1;
   }

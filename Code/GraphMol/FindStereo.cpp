@@ -530,11 +530,18 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       bondSymbols[bidx] = getBondSymbol(bond);
     }
   }
+  boost::dynamic_bitset<> fixedAtoms(mol.getNumAtoms());
   std::vector<StereoInfo> res;
   while (possibleAtoms.count() || possibleBonds.count()) {
     res.clear();
     bool needAnotherRound = false;
 
+    std::copy(atomSymbols.begin(), atomSymbols.end(),
+              std::ostream_iterator<std::string>(std::cerr, " "));
+    std::cerr << std::endl;
+    std::copy(bondSymbols.begin(), bondSymbols.end(),
+              std::ostream_iterator<std::string>(std::cerr, " "));
+    std::cerr << std::endl;
     // we will use the canonicalization code, pretending that each potential
     // stereo atom and bond is specified and different from all others. After
     // we've done that we can re-examine the potential stereo atoms and bonds
@@ -558,89 +565,99 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       }
       if (possibleAtoms[aidx]) {
         auto sinfo = detail::getStereoInfo(atom);
-        std::vector<unsigned int> nbrs;
-        nbrs.reserve(sinfo.controllingAtoms.size());
-        bool haveADupe = false;
-        if (sinfo.type == StereoType::Atom_Tetrahedral) {
-          for (auto nbrIdx : sinfo.controllingAtoms) {
-            auto rnk = aranks[nbrIdx];
-            if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
-              // ok, we just hit a duplicate rank. If the atom we're concerned
-              // about is a candidate for ring stereo and the bond to the atom
-              // with the duplicate rank is a ring bond
-              if (possibleRingStereoAtoms[aidx]) {
-                auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
-                if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
+        if (fixedAtoms[aidx]) {
+          res.push_back(std::move(sinfo));
+        } else {
+          std::vector<unsigned int> nbrs;
+          nbrs.reserve(sinfo.controllingAtoms.size());
+          bool haveADupe = false;
+          if (sinfo.type == StereoType::Atom_Tetrahedral) {
+            for (auto nbrIdx : sinfo.controllingAtoms) {
+              auto rnk = aranks[nbrIdx];
+              if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
+                // ok, we just hit a duplicate rank. If the atom we're concerned
+                // about is a candidate for ring stereo and the bond to the atom
+                // with the duplicate rank is a ring bond
+                if (possibleRingStereoAtoms[aidx]) {
+                  auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
+                  if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
+                    haveADupe = true;
+                    break;
+                  }
+                } else {
                   haveADupe = true;
                   break;
                 }
               } else {
-                haveADupe = true;
-                break;
-              }
-            } else {
-              nbrs.push_back(rnk);
-            }
-          }
-        }
-        if (!haveADupe) {
-          if (knownAtoms[aidx]) {
-            auto acs = getAtomCompareSymbol(*atom);
-            auto sortednbrs = nbrs;
-            std::sort(sortednbrs.begin(), sortednbrs.end());
-            // FIX: only works for tetrahedral at the moment
-            if (sinfo.type == Chirality::StereoType::Atom_Tetrahedral) {
-              auto nSwaps = countSwapsToInterconvert(nbrs, sortednbrs);
-              if (nSwaps % 2) {
-                sinfo.descriptor =
-                    sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW
-                        ? Chirality::StereoDescriptor::Tet_CW
-                        : Chirality::StereoDescriptor::Tet_CCW;
-              }
-              if (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW) {
-                acs += "CW";
-              } else if (sinfo.descriptor ==
-                         Chirality::StereoDescriptor::Tet_CCW) {
-                acs += "CCW";
+                nbrs.push_back(rnk);
               }
             }
-            if (atomSymbols[aidx] != acs) {
-              atomSymbols[aidx] = acs;
-              needAnotherRound = true;
+          }
+          if (!haveADupe) {
+            if (knownAtoms[aidx]) {
+              std::cerr << "NBRS from " << aidx << ": ";
+              std::copy(nbrs.begin(), nbrs.end(),
+                        std::ostream_iterator<int>(std::cerr, " "));
+              std::cerr << std::endl;
+
+              auto acs = getAtomCompareSymbol(*atom);
+              auto sortednbrs = nbrs;
+              std::sort(sortednbrs.begin(), sortednbrs.end());
+              // FIX: only works for tetrahedral at the moment
+              if (sinfo.type == Chirality::StereoType::Atom_Tetrahedral) {
+                auto nSwaps = countSwapsToInterconvert(nbrs, sortednbrs);
+                if (nSwaps % 2) {
+                  sinfo.descriptor =
+                      sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW
+                          ? Chirality::StereoDescriptor::Tet_CW
+                          : Chirality::StereoDescriptor::Tet_CCW;
+                }
+                if (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW) {
+                  acs += "CW";
+                } else if (sinfo.descriptor ==
+                           Chirality::StereoDescriptor::Tet_CCW) {
+                  acs += "CCW";
+                }
+              }
+              if (atomSymbols[aidx] != acs) {
+                atomSymbols[aidx] = acs;
+                needAnotherRound = true;
+                fixedAtoms.set(aidx);
+              }
             }
-          }
-          res.push_back(std::move(sinfo));
-        } else {
-          needAnotherRound = true;
-          atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-          possibleAtoms[aidx] = 0;
-          if (cleanIt &&
-              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
-            atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-          }
-          // if this was creating possible ring stereo, update that info now
-          if (possibleRingStereoAtoms[aidx]) {
-            --possibleRingStereoAtoms[aidx];
-            if (!possibleRingStereoAtoms[aidx]) {
-              // we're no longer in any ring with possible ring stereo. Go
-              // update all the other atoms/bonds in rings that we're in:
-              for (unsigned int ridx = 0;
-                   ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
-                const auto &aring = mol.getRingInfo()->atomRings()[ridx];
-                unsigned int nHere = 0;
-                for (auto raidx : aring) {
-                  if (possibleRingStereoAtoms[raidx]) {
-                    --possibleRingStereoAtoms[raidx];
+            res.push_back(std::move(sinfo));
+          } else {
+            needAnotherRound = true;
+            atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+            possibleAtoms[aidx] = 0;
+            if (cleanIt &&
+                sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+              atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+            }
+            // if this was creating possible ring stereo, update that info now
+            if (possibleRingStereoAtoms[aidx]) {
+              --possibleRingStereoAtoms[aidx];
+              if (!possibleRingStereoAtoms[aidx]) {
+                // we're no longer in any ring with possible ring stereo. Go
+                // update all the other atoms/bonds in rings that we're in:
+                for (unsigned int ridx = 0;
+                     ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
+                  const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+                  unsigned int nHere = 0;
+                  for (auto raidx : aring) {
                     if (possibleRingStereoAtoms[raidx]) {
-                      ++nHere;
+                      --possibleRingStereoAtoms[raidx];
+                      if (possibleRingStereoAtoms[raidx]) {
+                        ++nHere;
+                      }
                     }
                   }
-                }
-                if (nHere <= 1) {
-                  // update the bondstereo counts too
-                  for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
-                    if (possibleRingStereoBonds[rbidx]) {
-                      --possibleRingStereoBonds[rbidx];
+                  if (nHere <= 1) {
+                    // update the bondstereo counts too
+                    for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                      if (possibleRingStereoBonds[rbidx]) {
+                        --possibleRingStereoBonds[rbidx];
+                      }
                     }
                   }
                 }
@@ -652,6 +669,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
         atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       }
     }
+    boost::dynamic_bitset<> fixedBonds(mol.getNumBonds());
 
     for (const auto bond : mol.bonds()) {
       auto bidx = bond->getIdx();
@@ -661,52 +679,57 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
         auto sinfo = detail::getStereoInfo(bond);
         ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                          "bad controlling atoms size");
-        bool haveADupe = false;
-        bool needsSwap = false;
-        if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
-            sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM) {
-          if (aranks[sinfo.controllingAtoms[0]] ==
-              aranks[sinfo.controllingAtoms[1]]) {
-            haveADupe = true;
-          } else if (aranks[sinfo.controllingAtoms[0]] <
-                     aranks[sinfo.controllingAtoms[1]]) {
-            std::swap(sinfo.controllingAtoms[0], sinfo.controllingAtoms[1]);
-            needsSwap = !needsSwap;
-          }
-        }
-        if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
-            sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM) {
-          if (aranks[sinfo.controllingAtoms[2]] ==
-              aranks[sinfo.controllingAtoms[3]]) {
-            haveADupe = true;
-          } else if (aranks[sinfo.controllingAtoms[2]] <
-                     aranks[sinfo.controllingAtoms[3]]) {
-            std::swap(sinfo.controllingAtoms[2], sinfo.controllingAtoms[3]);
-            needsSwap = !needsSwap;
-          }
-        }
-        if (!haveADupe) {
-          if (knownBonds[bidx]) {
-            if (needsSwap) {
-              sinfo.descriptor = sinfo.descriptor == StereoDescriptor::Bond_Cis
-                                     ? StereoDescriptor::Bond_Trans
-                                     : StereoDescriptor::Bond_Cis;
-            }
-            auto gbs = getBondSymbol(bond);
-            if (bondSymbols[bidx] != gbs) {
-              bondSymbols[bidx] = gbs;
-              needAnotherRound = true;
-            }
-          }
+        if (fixedBonds[bidx]) {
           res.push_back(std::move(sinfo));
         } else {
-          needAnotherRound = true;
-          bondSymbols[bidx] = getBondSymbol(bond);
-          possibleBonds[bidx] = 0;
-          bond->setProp(Chirality::_stereoNotPossible, 1, true);
-          if (cleanIt &&
-              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
-            bond->setStereo(Bond::BondStereo::STEREONONE);
+          bool haveADupe = false;
+          bool needsSwap = false;
+          if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
+              sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM) {
+            if (aranks[sinfo.controllingAtoms[0]] ==
+                aranks[sinfo.controllingAtoms[1]]) {
+              haveADupe = true;
+            } else if (aranks[sinfo.controllingAtoms[0]] <
+                       aranks[sinfo.controllingAtoms[1]]) {
+              std::swap(sinfo.controllingAtoms[0], sinfo.controllingAtoms[1]);
+              needsSwap = !needsSwap;
+            }
+          }
+          if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
+              sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM) {
+            if (aranks[sinfo.controllingAtoms[2]] ==
+                aranks[sinfo.controllingAtoms[3]]) {
+              haveADupe = true;
+            } else if (aranks[sinfo.controllingAtoms[2]] <
+                       aranks[sinfo.controllingAtoms[3]]) {
+              std::swap(sinfo.controllingAtoms[2], sinfo.controllingAtoms[3]);
+              needsSwap = !needsSwap;
+            }
+          }
+          if (!haveADupe) {
+            if (knownBonds[bidx]) {
+              if (needsSwap) {
+                sinfo.descriptor =
+                    sinfo.descriptor == StereoDescriptor::Bond_Cis
+                        ? StereoDescriptor::Bond_Trans
+                        : StereoDescriptor::Bond_Cis;
+              }
+              auto gbs = getBondSymbol(bond);
+              if (bondSymbols[bidx] != gbs) {
+                bondSymbols[bidx] = gbs;
+                needAnotherRound = true;
+              }
+            }
+            res.push_back(std::move(sinfo));
+          } else {
+            needAnotherRound = true;
+            bondSymbols[bidx] = getBondSymbol(bond);
+            possibleBonds[bidx] = 0;
+            bond->setProp(Chirality::_stereoNotPossible, 1, true);
+            if (cleanIt &&
+                sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+              bond->setStereo(Bond::BondStereo::STEREONONE);
+            }
           }
         }
       } else {
@@ -727,7 +750,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   //   const bool breakTies = false;
   //   const bool includeChirality = false;
   //   const bool includeIsotopes = false;
-  //   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, nullptr,
+  //   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+  //   nullptr,
   //                            nullptr, breakTies, includeChirality,
   //                            includeIsotopes);
   //   std::cerr << "===============" << std::endl;
