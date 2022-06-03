@@ -2915,15 +2915,16 @@ void testIssue3228150() {
     fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3228150.sdf";
     m = MolFileToMol(fName);
     TEST_ASSERT(m);
+
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(0)->getStereoAtoms() == std::vector<int>{8, 3}));
+        (m->getBondWithIdx(0)->getStereoAtoms() == std::vector<int>{8, 6}));
 
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{7, 2}));
+        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{7, 6}));
     std::string smi1 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi1 << std::endl;
     m->clearComputedProps();
@@ -2941,43 +2942,42 @@ void testIssue3228150() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3228150.full.sdf";
     m = MolFileToMol(fName);
     TEST_ASSERT(m);
-
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{16, 7}));
+        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{16, 12}));
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>{17, 7}));
+        (m->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>{17, 13}));
     TEST_ASSERT(m->getBondWithIdx(6)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>{14, 6}));
+        (m->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>{14, 12}));
     TEST_ASSERT(m->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(8)->getStereoAtoms() == std::vector<int>{15, 6}));
+        (m->getBondWithIdx(8)->getStereoAtoms() == std::vector<int>{15, 13}));
 
     std::string smi1 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi1 << std::endl;
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{16, 7}));
+        (m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{16, 12}));
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>{17, 7}));
+        (m->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>{17, 13}));
     TEST_ASSERT(m->getBondWithIdx(6)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>{14, 6}));
+        (m->getBondWithIdx(6)->getStereoAtoms() == std::vector<int>{14, 12}));
     TEST_ASSERT(m->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
-    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOCIS);
     TEST_ASSERT(
-        (m->getBondWithIdx(8)->getStereoAtoms() == std::vector<int>{15, 6}));
+        (m->getBondWithIdx(8)->getStereoAtoms() == std::vector<int>{15, 13}));
 
     std::string smi2 = MolToSmiles(*m, true);
     smi2 = MolToSmiles(*m, true);

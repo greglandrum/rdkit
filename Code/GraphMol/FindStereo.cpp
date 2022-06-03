@@ -537,12 +537,13 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     res.clear();
     bool needAnotherRound = false;
 
-    std::copy(atomSymbols.begin(), atomSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
-    std::copy(bondSymbols.begin(), bondSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
+    // std::copy(atomSymbols.begin(), atomSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    // std::copy(bondSymbols.begin(), bondSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+
     // we will use the canonicalization code, pretending that each potential
     // stereo atom and bond is specified and different from all others. After
     // we've done that we can re-examine the potential stereo atoms and bonds
@@ -596,14 +597,14 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           }
           if (!haveADupe) {
             if (knownAtoms[aidx]) {
-              std::cerr << "NBRS from " << aidx << ": ";
-              std::copy(sinfo.controllingAtoms.begin(),
-                        sinfo.controllingAtoms.end(),
-                        std::ostream_iterator<int>(std::cerr, " "));
-              std::cerr << std::endl;
-              std::copy(nbrs.begin(), nbrs.end(),
-                        std::ostream_iterator<int>(std::cerr, " "));
-              std::cerr << std::endl;
+              // std::cerr << "NBRS from " << aidx << ": ";
+              // std::copy(sinfo.controllingAtoms.begin(),
+              //           sinfo.controllingAtoms.end(),
+              //           std::ostream_iterator<int>(std::cerr, " "));
+              // std::cerr << std::endl;
+              // std::copy(nbrs.begin(), nbrs.end(),
+              //           std::ostream_iterator<int>(std::cerr, " "));
+              // std::cerr << std::endl;
 
               auto acs = getAtomCompareSymbol(*atom);
               auto sortednbrs = nbrs;
@@ -805,7 +806,6 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
           throw ValueErrorException("bad StereoInfo.specified type");
       }
     } else if (cleanIt) {
-      std::cerr << "clean 1 " << atom->getIdx() << std::endl;
       atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
@@ -836,7 +836,8 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
       }
       if (!(aring.size() % 2) || mol.getRingInfo()->numAtomRings(aidx) > 1) {
         // find the index of the atom on the opposite side of the even-sized
-        // ring
+        // ring or the equivalent position for an odd-sized ring if the atom is
+        // in more than one ring
         auto oppositeidx = aring[(ai + sz / 2) % sz];
         if (knownAtoms[oppositeidx]) {
           nHere += 2;
@@ -863,17 +864,14 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
     // if the ring contains at least two atoms with possible stereo,
     // then each of those possibleAtoms should be included for ring stereo
     if (nHere > 1) {
-      std::cerr << "ring stereo: ";
       for (auto aidx : aring) {
         if (possibleAtomsInRing[aidx]) {
           ++possibleRingStereoAtoms[aidx];
-          std::cerr << aidx << " ";
         }
       }
       for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
         ++possibleRingStereoBonds[bidx];
       }
-      std::cerr << std::endl;
     }
   }
 
@@ -907,12 +905,12 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
     res.clear();
     needAnotherRound = false;
 
-    std::copy(atomSymbols.begin(), atomSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
-    std::copy(bondSymbols.begin(), bondSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
+    // std::copy(atomSymbols.begin(), atomSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    // std::copy(bondSymbols.begin(), bondSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
     // we will use the canonicalization code
     boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
     atomsInPlay.set();
@@ -960,14 +958,14 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
             }
           }
           if (!haveADupe) {
-            std::cerr << "NBRS from " << aidx << ": ";
-            std::copy(sinfo.controllingAtoms.begin(),
-                      sinfo.controllingAtoms.end(),
-                      std::ostream_iterator<int>(std::cerr, " "));
-            std::cerr << std::endl;
-            std::copy(nbrs.begin(), nbrs.end(),
-                      std::ostream_iterator<int>(std::cerr, " "));
-            std::cerr << std::endl;
+            // std::cerr << "NBRS from " << aidx << ": ";
+            // std::copy(sinfo.controllingAtoms.begin(),
+            //           sinfo.controllingAtoms.end(),
+            //           std::ostream_iterator<int>(std::cerr, " "));
+            // std::cerr << std::endl;
+            // std::copy(nbrs.begin(), nbrs.end(),
+            //           std::ostream_iterator<int>(std::cerr, " "));
+            // std::cerr << std::endl;
 
             auto acs = getAtomCompareSymbol(*atom);
             auto sortednbrs = nbrs;
@@ -1060,31 +1058,25 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
     }
   }
 
-  // {
-  //   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
-  //   atomsInPlay.set();
-  //   boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
-  //   bondsInPlay.set();
-  //   std::vector<unsigned int> aranks;
-  //   const bool breakTies = false;
-  //   const bool includeChirality = false;
-  //   const bool includeIsotopes = false;
-  //   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
-  //   nullptr,
-  //                            nullptr, breakTies, includeChirality,
-  //                            includeIsotopes);
-  //   std::cerr << "===============" << std::endl;
-  //   std::copy(aranks.begin(), aranks.end(),
-  //             std::ostream_iterator<int>(std::cerr, " "));
-  //   std::cerr << std::endl;
-  // }
-
   if (cleanIt) {
     for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
       if (!fixedAtoms[i] && knownAtoms[i]) {
-        // FIX only does tetrahedral
-        mol.getAtomWithIdx(i)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-        std::cerr << "clean 2 " << mol.getAtomWithIdx(i)->getIdx() << std::endl;
+        switch (mol.getAtomWithIdx(i)->getChiralTag()) {
+          case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+          case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+            mol.getAtomWithIdx(i)->setChiralTag(
+                Atom::ChiralType::CHI_UNSPECIFIED);
+            break;
+          case Atom::ChiralType::CHI_TETRAHEDRAL:
+          case Atom::ChiralType::CHI_SQUAREPLANAR:
+          case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+          case Atom::ChiralType::CHI_OCTAHEDRAL:
+            mol.getAtomWithIdx(i)->setProp(
+                common_properties::_chiralPermutation, 0);
+            break;
+          default:
+            break;
+        }
       }
     }
     for (auto i = 0u; i < mol.getNumBonds(); ++i) {

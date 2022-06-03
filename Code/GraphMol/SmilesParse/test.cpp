@@ -1589,9 +1589,9 @@ void testIssue184() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOCIS);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
   TEST_ASSERT(
-      (mol->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>({2, 6})));
+      (mol->getBondWithIdx(4)->getStereoAtoms() == std::vector<int>({7, 6})));
   TEST_ASSERT(mol->getBondWithIdx(7)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOCIS);
   TEST_ASSERT(

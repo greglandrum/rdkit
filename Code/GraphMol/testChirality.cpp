@@ -17,6 +17,7 @@
 //#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -37,6 +38,8 @@ void testMol1() {
   std::string fName, smi;
   std::string cip;
 
+  auto oval = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(true);
   // start with SMILES:
   BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> smiles 1 <<<<<<<<<<<<<< "
                        << std::endl;
@@ -113,6 +116,7 @@ void testMol1() {
   MolOps::removeStereochemistry(*m);
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   delete m;
+  Chirality::setUseLegacyStereoPerception(oval);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
@@ -345,9 +349,10 @@ void testMol2() {
 void testSmiles1() {
   ROMol *mol;
   std::string smi, cip;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "CIP codes from SMILES" << std::endl;
+  auto oval = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(true);
 
   smi = "F[C@](Cl)(Br)I";
   mol = SmilesToMol(smi);
@@ -601,6 +606,9 @@ void testSmiles1() {
   TEST_ASSERT(cip == "R");
 
   delete mol;
+
+  Chirality::setUseLegacyStereoPerception(oval);
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

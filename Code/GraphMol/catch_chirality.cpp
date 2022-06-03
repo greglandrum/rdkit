@@ -1403,7 +1403,6 @@ TEST_CASE("N Chirality in rings") {
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {  // CHEMBL79374
-      std::cerr << "-1-1-1-1-1" << std::endl;
       auto mol = "Cn1ncc([C@]23CC[N@](CC2)C3)n1"_smiles;
       REQUIRE(mol);
       CHECK(mol->getAtomWithIdx(8)->getAtomicNum() == 7);
@@ -2698,10 +2697,8 @@ TEST_CASE("assignStereochemistry sets bond stereo with new stereo perception") {
 
 TEST_CASE("chiral duplicates") {
   SECTION("atom basics") {
-    std::cerr << "1111-----------" << std::endl;
     auto mol = "C[C@](F)([C@H](F)Cl)[C@H](F)Cl"_smiles;
     REQUIRE(mol);
-    mol->debugMol(std::cerr);
     CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     CHECK(mol->getAtomWithIdx(6)->getChiralTag() ==
@@ -2710,7 +2707,6 @@ TEST_CASE("chiral duplicates") {
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
   SECTION("double bonds and atoms") {
-    std::cerr << "222222-----------" << std::endl;
     auto mol = "C/C(O)=C([C@H](F)Cl)/[C@H](F)Cl"_smiles;
     REQUIRE(mol);
     CHECK(mol->getAtomWithIdx(4)->getChiralTag() ==
@@ -2720,10 +2716,8 @@ TEST_CASE("chiral duplicates") {
     CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREONONE);
   }
   SECTION("double bonds and atoms 2") {
-    std::cerr << "33333-----------" << std::endl;
     auto mol = "C/C(O)=C([C@H](F)Cl)/[C@@H](F)Cl"_smiles;
     REQUIRE(mol);
-    mol->debugMol(std::cerr);
     CHECK(mol->getAtomWithIdx(4)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     CHECK(mol->getAtomWithIdx(7)->getChiralTag() ==
@@ -2738,10 +2732,8 @@ TEST_CASE("chiral duplicates") {
     CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREONONE);
   }
   SECTION("double bonds and double bonds 2") {
-    std::cerr << "44444-----------" << std::endl;
     auto mol = "C/C(O)=C(/C=C/C)/C=C\\C"_smiles;
     REQUIRE(mol);
-    mol->debugMol(std::cerr);
     CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOTRANS);
     CHECK(mol->getBondWithIdx(7)->getStereo() == Bond::BondStereo::STEREOCIS);
     CHECK(mol->getBondWithIdx(2)->getStereo() != Bond::BondStereo::STEREONONE);
