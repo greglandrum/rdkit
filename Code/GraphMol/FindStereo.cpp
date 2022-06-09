@@ -392,6 +392,7 @@ std::string getAtomCompareSymbol(const Atom &atom) {
 }
 }  // namespace
 
+#if 0
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool flagPossible) {
   std::map<int, Atom::ChiralType> ochiralTypes;
@@ -775,7 +776,283 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   bool cleanIt = false;
   return findPotentialStereo(cp, cleanIt);
 }
+#else
+std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
+                                            bool flagPossible) {
+  std::map<int, Atom::ChiralType> ochiralTypes;
 
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+
+  boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
+  std::vector<std::string> atomSymbols(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    auto aidx = atom->getIdx();
+    if (detail::isAtomPotentialStereoAtom(atom)) {
+      auto sinfo = detail::getStereoInfo(atom);
+      switch (sinfo.specified) {
+        case Chirality::StereoSpecified::Unknown:
+        case Chirality::StereoSpecified::Specified:
+          knownAtoms.set(aidx);
+          break;
+        case Chirality::StereoSpecified::Unspecified:
+          break;
+        default:
+          throw ValueErrorException("bad StereoInfo.specified type");
+      }
+      if (flagPossible ||
+          sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        possibleAtoms.set(aidx);
+        // set "fake stereo"
+        ochiralTypes[aidx] = atom->getChiralTag();
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        atomSymbols[aidx] = (boost::format("%d%s_%d") % atom->getIsotope() %
+                             atom->getSymbol() % aidx)
+                                .str();
+      } else {
+        atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+      }
+    } else {
+      atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+      if (cleanIt) {
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+  }
+
+  // flag possible ring stereo cases. The relevant cases here are:
+  //    1) even-sized rings with possible (or specified) atoms opposite each
+  //       other, like CC1CC(C)C1 or CC1CCC(C)CC1
+  //    2) atoms sharing a bond which fuses two or more rings, like the central
+  //       bond in C1CCC2CCCCC2C1
+
+  // tracks the number of rings with possible ring stereo that the atom is in
+  //  (only set for potential stereoatoms)
+  std::vector<unsigned int> possibleRingStereoAtoms(mol.getNumAtoms());
+  // tracks the number of rings with possible ring stereo that the bond is in
+  //  (set for all bonds)
+  std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
+  boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
+  for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
+       ++ridx) {
+    const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+    unsigned int nHere = 0;
+    auto sz = aring.size();
+    possibleAtomsInRing.reset();
+    for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+      auto aidx = aring[ai];
+      if (!(aring.size() % 2)) {
+        // find the index of the atom on the opposite side of the even-sized
+        // ring
+        auto oppositeidx = aring[(ai + sz / 2) % sz];
+        if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
+            (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
+          ++nHere;
+          possibleAtomsInRing.set(aidx);
+          continue;
+        }
+      }
+      // if the atom is in more than one bond, see if there's
+      // a possible neighbor on a fusion bond
+      if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
+        auto otheridx = aring[(ai + 1) % aring.size()];
+        if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
+          auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
+          CHECK_INVARIANT(bnd, "expected ring bond not found");
+          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
+            nHere += 2;
+            possibleAtomsInRing.set(aidx);
+            possibleAtomsInRing.set(otheridx);
+          }
+        }
+      }
+    }
+    // if the ring contains at least two atoms with possible stereo,
+    // then each of those possibleAtoms should be included for ring stereo
+    if (nHere > 1) {
+      for (auto aidx : aring) {
+        if (possibleAtomsInRing[aidx]) {
+          ++possibleRingStereoAtoms[aidx];
+        }
+      }
+      for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
+        ++possibleRingStereoBonds[bidx];
+      }
+    }
+  }
+
+  std::vector<std::string> bondSymbols(mol.getNumBonds());
+  boost::dynamic_bitset<> knownBonds(mol.getNumBonds());
+  boost::dynamic_bitset<> possibleBonds(mol.getNumBonds());
+  for (const auto bond : mol.bonds()) {
+    auto bidx = bond->getIdx();
+    if (detail::isBondPotentialStereoBond(bond)) {
+      auto sinfo = detail::getStereoInfo(bond);
+      switch (sinfo.specified) {
+        case Chirality::StereoSpecified::Unknown:
+        case Chirality::StereoSpecified::Specified:
+          knownBonds.set(bidx);
+          break;
+        case Chirality::StereoSpecified::Unspecified:
+          break;
+        default:
+          throw ValueErrorException("bad StereoInfo.specified type");
+      }
+      if (flagPossible ||
+          sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        possibleBonds.set(bidx);
+        bondSymbols[bidx] =
+            (boost::format("%s-%d") % getBondSymbol(bond) % bond->getIdx())
+                .str();
+      } else {
+        bondSymbols[bidx] = getBondSymbol(bond);
+      }
+    } else {
+      bondSymbols[bidx] = getBondSymbol(bond);
+    }
+  }
+  std::vector<StereoInfo> res;
+  while (possibleAtoms.count() || possibleBonds.count()) {
+    res.clear();
+    bool removedStereo = false;
+
+    // we will use the canonicalization code, pretending that each potential
+    // stereo atom and bond is specified and different from all others. After
+    // we've done that we can re-examine the potential stereo atoms and bonds
+    // and remove any where two controlling atoms have the same rank
+    boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
+    atomsInPlay.set();
+    boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
+    bondsInPlay.set();
+    std::vector<unsigned int> aranks;
+    const bool breakTies = false;
+    const bool includeChirality = false;
+    const bool includeIsotopes = false;
+    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                             &atomSymbols, &bondSymbols, breakTies,
+                             includeChirality, includeIsotopes);
+
+    for (const auto atom : mol.atoms()) {
+      auto aidx = atom->getIdx();
+      if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
+        atom->setChiralTag(ochiralTypes[aidx]);
+      }
+      if (possibleAtoms[aidx]) {
+        auto sinfo = detail::getStereoInfo(atom);
+        std::vector<unsigned int> nbrs;
+        nbrs.reserve(sinfo.controllingAtoms.size());
+        bool haveADupe = false;
+        for (auto nbrIdx : sinfo.controllingAtoms) {
+          auto rnk = aranks[nbrIdx];
+          if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
+            // ok, we just hit a duplicate rank. If the atom we're concerned
+            // about is a candidate for ring stereo and the bond to the atom
+            // with the duplicate rank is a ring bond
+            if (possibleRingStereoAtoms[aidx]) {
+              auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
+              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
+                haveADupe = true;
+                break;
+              }
+            } else {
+              haveADupe = true;
+              break;
+            }
+          } else {
+            nbrs.push_back(rnk);
+          }
+        }
+        if (!haveADupe) {
+          res.push_back(std::move(sinfo));
+        } else {
+          removedStereo = true;
+          atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+          possibleAtoms[aidx] = 0;
+          if (cleanIt &&
+              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+            atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+          }
+          // if this was creating possible ring stereo, update that info now
+          if (possibleRingStereoAtoms[aidx]) {
+            --possibleRingStereoAtoms[aidx];
+            if (!possibleRingStereoAtoms[aidx]) {
+              // we're no longer in any ring with possible ring stereo. Go
+              // update all the other atoms/bonds in rings that we're in:
+              for (unsigned int ridx = 0;
+                   ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
+                const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+                unsigned int nHere = 0;
+                for (auto raidx : aring) {
+                  if (possibleRingStereoAtoms[raidx]) {
+                    --possibleRingStereoAtoms[raidx];
+                    if (possibleRingStereoAtoms[raidx]) {
+                      ++nHere;
+                    }
+                  }
+                }
+                if (nHere <= 1) {
+                  // update the bondstereo counts too
+                  for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                    if (possibleRingStereoBonds[rbidx]) {
+                      --possibleRingStereoBonds[rbidx];
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (const auto bond : mol.bonds()) {
+      auto bidx = bond->getIdx();
+      if (possibleBonds[bidx]) {
+        auto sinfo = detail::getStereoInfo(bond);
+        ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
+                         "bad controlling atoms size");
+        bool haveADupe = false;
+        if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
+            sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM &&
+            aranks[sinfo.controllingAtoms[0]] ==
+                aranks[sinfo.controllingAtoms[1]]) {
+          haveADupe = true;
+        }
+        if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
+            sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM &&
+            aranks[sinfo.controllingAtoms[2]] ==
+                aranks[sinfo.controllingAtoms[3]]) {
+          haveADupe = true;
+        }
+        if (!haveADupe) {
+          res.push_back(std::move(sinfo));
+        } else {
+          removedStereo = true;
+          bondSymbols[bidx] = getBondSymbol(bond);
+          possibleBonds[bidx] = 0;
+          if (cleanIt &&
+              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+            bond->setStereo(Bond::BondStereo::STEREONONE);
+          }
+        }
+      }
+    }
+    if (!removedStereo) {
+      break;
+    }
+  }
+  return res;
+}
+
+// const_casts are always ugly, but we know that findPotentialStereo() doesn't
+// modify the molecule if cleanIt is false:
+std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
+  bool cleanIt = false;
+  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
+}
+#endif
 std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
   std::map<int, Atom::ChiralType> ochiralTypes;
 

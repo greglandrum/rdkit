@@ -522,7 +522,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 2);
-      std::vector<unsigned> catoms = {2, 0, 4, 5};
+      std::vector<unsigned> catoms = {0, 2, 4, 5};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
