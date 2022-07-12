@@ -35,6 +35,7 @@ void inorganicSanitize(RDKit::RWMol &mol) {
 }
 
 TEST_CASE("bulk parse test") {
+  Chirality::setAllowNontetrahedralChirality(true);
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/SmilesParse/test_data/inorganic_stereo.smi";
   std::ifstream ins(pathName);
@@ -67,6 +68,7 @@ TEST_CASE("bulk parse test") {
     if (!hasNontet) {
       std::cerr << tokens[0] << std::endl;
     }
+    INFO(tokens[0]);
     CHECK(hasNontet);
   }
 }

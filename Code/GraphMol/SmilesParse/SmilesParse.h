@@ -29,8 +29,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
       true; /**< throw an exception if the CXSMILES parsing fails */
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool removeHs = true;  /**< remove Hs after constructing the molecule */
-  bool useLegacyStereo =
-      true; /**< use the legacy stereochemistry perception code */
+  bool useLegacyStereo = false; /**< (DEPRECATED) force use of the legacy
+                                   stereochemistry perception code */
   bool skipCleanup =
       false; /**<  skip the final cleanup stage (for internal use) */
 };

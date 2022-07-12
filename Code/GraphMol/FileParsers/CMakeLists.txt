@@ -90,7 +90,7 @@ rdkit_test(testMultithreadedMolSupplier testMultithreadedMolSupplier.cpp
 					LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 endif(RDK_TEST_MULTITHREADED)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers CIPLabeler )
 
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers )
 

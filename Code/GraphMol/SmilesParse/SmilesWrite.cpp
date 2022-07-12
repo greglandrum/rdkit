@@ -349,9 +349,14 @@ std::string FragmentSmilesConstruct(
   }
   std::list<unsigned int> ringClosuresToErase;
 
+  std::cerr << "  PRE CANON" << std::endl;
+  mol.debugMol(std::cerr);
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
+  std::cerr << "  POST CANON" << std::endl;
+  mol.debugMol(std::cerr);
+
   Bond *bond = nullptr;
   for (auto &mSE : molStack) {
     switch (mSE.type) {

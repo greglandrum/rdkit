@@ -976,7 +976,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
     }
 
     res->updatePropertyCache(false);
-    MolOps::assignStereochemistry(*res, true, true);
+    MolOps::assignStereochemistry(*res, true, true, true);
   }
 
   return res;

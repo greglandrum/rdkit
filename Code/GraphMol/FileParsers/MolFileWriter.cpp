@@ -17,6 +17,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/Chirality.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -813,7 +814,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
         // look to see if one of the atoms has a bond with direction set
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
-        } else {
+        } else if (!bond->hasProp(Chirality::_stereoNotPossible)) {
           if ((bond->getBeginAtom()->getTotalValence() -
                bond->getBeginAtom()->getTotalDegree()) == 1 &&
               (bond->getEndAtom()->getTotalValence() -
