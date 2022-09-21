@@ -363,10 +363,34 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
   return result;
 }
 
+namespace {
+std::string finishTautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
+                               int hcount, int charge) {
+  PRECONDITION(mol, "bad molecule pointer");
+  MolOps::assignRadicals(*mol);
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+  auto result = MolToSmiles(*mol);
+  char buffer[32];
+  if (!proto) {
+    sprintf(buffer, "_%d_%d", hcount, charge);
+  } else {
+    sprintf(buffer, "_%d", hcount - charge);
+  }
+  result += buffer;
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
+  return result;
+}
+}  // namespace
+
 std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  char buffer[32];
   int hcount = 0;
   int charge = 0;
 
@@ -391,22 +415,64 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
     }
   }
 
-  MolOps::assignRadicals(*mol);
-  // we may have just destroyed some stereocenters/bonds
-  // clean that up:
-  bool cleanIt = true;
-  bool force = true;
-  MolOps::assignStereochemistry(*mol, cleanIt, force);
-  result = MolToSmiles(*mol);
-  if (!proto) {
-    sprintf(buffer, "_%d_%d", hcount, charge);
-  } else {
-    sprintf(buffer, "_%d", hcount - charge);
+  result = finishTautomerHash(mol, proto, useCXSmiles, hcount, charge);
+
+  return result;
+}
+
+std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
+  PRECONDITION(mol, "bad molecule");
+  std::string result;
+  int hcount = 0;
+  int charge = 0;
+
+  boost::dynamic_bitset<> conjugatedAtoms(mol->getNumAtoms());
+
+  for (auto aptr : mol->atoms()) {
+    charge += aptr->getFormalCharge();
+    aptr->setIsAromatic(false);
+    aptr->setFormalCharge(0);
+    if (aptr->getAtomicNum() != 6) {
+      hcount += aptr->getTotalNumHs(false);
+      aptr->setNoImplicit(true);
+      aptr->setNumExplicitHs(0);
+    }
+    for (auto bptr : mol->atomBonds(aptr)) {
+      if (bptr->getIsConjugated()) {
+        conjugatedAtoms.set(aptr->getIdx());
+        break;
+      }
+    }
   }
-  result += buffer;
-  if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  bool changed = false;
+  do {
+    for (auto aptr : mol->atoms()) {
+      if (conjugatedAtoms[aptr->getIdx()]) {
+        continue;
+      }
+      if (aptr->getTotalNumHs()) {
+        for (const auto nbr : mol->atomNeighbors(aptr)) {
+          if (conjugatedAtoms[nbr->getIdx()]) {
+            conjugatedAtoms.set(aptr->getIdx());
+            changed = true;
+            break;
+          }
+        }
+      }
+    }
+  } while (changed);
+
+  for (auto bptr : mol->bonds()) {
+    if (bptr->getBondType() != Bond::SINGLE &&
+        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
+         bptr->getEndAtom()->getAtomicNum() != 6)) {
+      bptr->setIsAromatic(false);
+      bptr->setBondType(Bond::SINGLE);
+      bptr->setStereo(Bond::BondStereo::STEREONONE);
+    }
   }
+
+  result = finishTautomerHash(mol, proto, useCXSmiles, hcount, charge);
 
   return result;
 }
@@ -890,6 +956,9 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
       break;
     case HashFunction::RedoxPair:
       result = MesomerHash(mol, false, useCXSmiles);
+      break;
+    case HashFunction::HetAtomTautomerv2:
+      result = TautomerHashv2(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomTautomer:
       result = TautomerHash(mol, false, useCXSmiles);
