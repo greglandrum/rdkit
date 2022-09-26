@@ -446,6 +446,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
   }
   bool changed = false;
   do {
+    changed = false;
     for (auto aptr : mol->atoms()) {
       if (conjugatedAtoms[aptr->getIdx()]) {
         continue;
@@ -461,6 +462,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles) {
       }
     }
   } while (changed);
+
+  std::cerr << "  CONJUGATED: " << conjugatedAtoms << std::endl;
 
   for (auto bptr : mol->bonds()) {
     if (bptr->getBondType() != Bond::SINGLE &&

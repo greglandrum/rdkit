@@ -403,3 +403,33 @@ M  END
     }
   }
 }
+
+TEST_CASE("HetAtomTautomerv2", "[molhash]") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"C/C=C/C=C/CCC", "C/C=C/C=C/CCC_0_0"},
+        {"C/C=C/C=C/O", "C[CH][CH][CH][CH][O]_1_0"},
+        {"C/C=C/C=C/CC(=O)C", "[CH2][C]([O])C[CH][CH][CH][CH]C_1_0"},
+        {"C/C=C/C=C/CCCCC=CO", "C/C=C/C=C/CCCC[CH][CH][O]_1_0"},
+
+    };
+    for (const auto &pr : data) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m(SmilesToMol(pr.first));
+      REQUIRE(m);
+      std::cerr << "-------------" << std::endl;
+      std::cerr << pr.first << std::endl;
+      m->debugMol(std::cerr);
+      {
+        RWMol tm(*m);
+        std::cerr << "v1: "
+                  << MolHash::MolHash(&tm,
+                                      MolHash::HashFunction::HetAtomTautomer)
+                  << std::endl;
+      }
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == pr.second);
+    }
+  }
+}
