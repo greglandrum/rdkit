@@ -21,19 +21,18 @@
 
 namespace RDKit {
 namespace DGeomHelpers {
+constexpr double defaultOptimizerForceTol = 0.0135;
 
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
   numThreads     Sets the number of threads to use (more than one thread
                  will only be used if the RDKit was build with multithread
-                 support) If set to zero, the max supported by the system will
-                 be used.
-  maxIterations  Max. number of times the embedding will be tried if
-                 coordinates are not obtained successfully. The default
-                 value is 10x the number of atoms.
-  randomSeed     provides a seed for the random number generator (so that
-                 the same coordinates can be obtained for a
+                 support) If set to zero, the max supported by the system
+  will be used. maxIterations  Max. number of times the embedding will be
+  tried if coordinates are not obtained successfully. The default value is
+  10x the number of atoms. randomSeed     provides a seed for the random
+  number generator (so that the same coordinates can be obtained for a
                  molecule on multiple runs) If -1, the
                  RNG will not be seeded.
   clearConfs     Clear all existing conformations on the molecule
@@ -43,26 +42,21 @@ namespace DGeomHelpers {
                  random coordinates. If this is a positive number, the
                  side length will equal the largest element of the distance
                  matrix times \c boxSizeMult. If this is a negative number,
-                 the side length will equal \c -boxSizeMult (i.e. independent
-                 of the elements of the distance matrix).
-  randNegEig     Picks coordinates at random when a embedding process produces
-                 negative eigenvalues
-  numZeroFail    Fail embedding if we find this many or more zero eigenvalues
-                 (within a tolerance)
-  pruneRmsThresh Retain only the conformations out of 'numConfs' after
-                 embedding that are at least this far apart from each other.
-                 RMSD is computed on the heavy atoms.
-                 Prunining is greedy; i.e. the first embedded conformation is
-                 retained and from then on only those that are at least
-                 \c pruneRmsThresh away from already
-                 retained conformations are kept. The pruning is done
-                 after embedding and bounds violation minimization.
-                 No pruning by default.
-  coordMap       a map of int to Point3D, between atom IDs and their locations
-                 their locations.  If this container is provided, the
-                 coordinates are used to set distance constraints on the
-                 embedding. The resulting conformer(s) should have distances
-                 between the specified atoms that reproduce those between the
+                 the side length will equal \c -boxSizeMult (i.e.
+  independent of the elements of the distance matrix). randNegEig     Picks
+  coordinates at random when a embedding process produces negative
+  eigenvalues numZeroFail    Fail embedding if we find this many or more
+  zero eigenvalues (within a tolerance) pruneRmsThresh Retain only the
+  conformations out of 'numConfs' after embedding that are at least this far
+  apart from each other. RMSD is computed on the heavy atoms. Prunining is
+  greedy; i.e. the first embedded conformation is retained and from then on
+  only those that are at least \c pruneRmsThresh away from already retained
+  conformations are kept. The pruning is done after embedding and bounds
+  violation minimization. No pruning by default. coordMap       a map of int
+  to Point3D, between atom IDs and their locations their locations.  If this
+  container is provided, the coordinates are used to set distance
+  constraints on the embedding. The resulting conformer(s) should have
+  distances between the specified atoms that reproduce those between the
                  points in \c coordMap. Because the embedding produces a
                  molecule in an arbitrary reference frame, an alignment step
                  is required to actually reproduce the provided coordinates.
@@ -70,24 +64,21 @@ namespace DGeomHelpers {
                     (this shouldn't normally be altered in client code).
   ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
                            smoothing fails
-  enforceChirality  enforce the correct chirality if chiral centers are present
-  useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
-  useBasicKnowledge  impose "basic knowledge" terms such as flat
+  enforceChirality  enforce the correct chirality if chiral centers are
+  present useExpTorsionAnglePrefs  impose experimental torsion-angle
+  preferences useBasicKnowledge  impose "basic knowledge" terms such as flat
                      aromatic rings, ketones, etc.
   ETversion      version of the experimental torsion-angle preferences
   verbose        print output of experimental torsion-angle preferences
   basinThresh    set the basin threshold for the DGeom force field,
                  (this shouldn't normally be altered in client code).
   onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
-  boundsMat      custom bound matrix to specify upper and lower bounds of atom
-                 pairs
-  embedFragmentsSeparately	embed each fragment of molecule in turn
-  useSmallRingTorsions	optional torsions to improve small ring conformer
-                sampling
-  useMacrocycleTorsions	optional torsions to improve macrocycle conformer
-                sampling
-  useMacrocycle14config  If 1-4 distances bound heuristics for
-                macrocycles is used
+  boundsMat      custom bound matrix to specify upper and lower bounds of
+  atom pairs embedFragmentsSeparately	embed each fragment of molecule
+  in turn useSmallRingTorsions	optional torsions to improve small ring
+  conformer sampling useMacrocycleTorsions	optional torsions to improve
+  macrocycle conformer sampling useMacrocycle14config  If 1-4 distances
+  bound heuristics for macrocycles is used
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
@@ -109,7 +100,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool randNegEig{true};
   unsigned int numZeroFail{1};
   const std::map<int, RDGeom::Point3D> *coordMap{nullptr};
-  double optimizerForceTol{1e-3};
+  double optimizerForceTol{defaultOptimizerForceTol};
   bool ignoreSmoothingFailures{false};
   bool enforceChirality{true};
   bool useExpTorsionAnglePrefs{false};
@@ -278,12 +269,13 @@ inline int EmbedMolecule(
     double boxSizeMult = 2.0, bool randNegEig = true,
     unsigned int numZeroFail = 1,
     const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
-    double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
-    bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    double optimizerForceTol = defaultOptimizerForceTol,
+    bool ignoreSmoothingFailures = false, bool enforceChirality = true,
+    bool useExpTorsionAnglePrefs = false, bool useBasicKnowledge = false,
+    bool verbose = false, double basinThresh = 5.0,
+    bool onlyHeavyAtomsForRMS = false, unsigned int ETversion = 1,
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
+    bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -377,12 +369,13 @@ inline void EmbedMultipleConfs(
     bool randNegEig = true, unsigned int numZeroFail = 1,
     double pruneRmsThresh = -1.0,
     const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
-    double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
-    bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    double optimizerForceTol = defaultOptimizerForceTol,
+    bool ignoreSmoothingFailures = false, bool enforceChirality = true,
+    bool useExpTorsionAnglePrefs = false, bool useBasicKnowledge = false,
+    bool verbose = false, double basinThresh = 5.0,
+    bool onlyHeavyAtomsForRMS = false, unsigned int ETversion = 1,
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
+    bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -399,12 +392,13 @@ inline INT_VECT EmbedMultipleConfs(
     double boxSizeMult = 2.0, bool randNegEig = true,
     unsigned int numZeroFail = 1, double pruneRmsThresh = -1.0,
     const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
-    double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
-    bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    double optimizerForceTol = defaultOptimizerForceTol,
+    bool ignoreSmoothingFailures = false, bool enforceChirality = true,
+    bool useExpTorsionAnglePrefs = false, bool useBasicKnowledge = false,
+    bool verbose = false, double basinThresh = 5.0,
+    bool onlyHeavyAtomsForRMS = false, unsigned int ETversion = 1,
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
+    bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
