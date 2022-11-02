@@ -3405,6 +3405,7 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
   >>> pass_ro5 = conditions.count(True) >= 3
   >>> print(pass_ro5)
+  True
 
 Filtering Unwanted Substructures
 ================================
@@ -3415,50 +3416,58 @@ The Brenk filter [#brenk]_ removes molecules containing substructures with undes
 The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with undesirable properties. These are split into those with reactive functionalities (including Michael acceptors, aldehydes, epoxides, alkyl halides, metals, 2-halo pyridines, phosphorus nitrogen bonds, α-chloroketones and β-lactams) and medicinal chemistry exclusions (including oximes, crown ethers, hydrazines, flavanoids, polyphenols, primary halide sulfates and multiple nitro groups).
 
 .. doctest::
+
   >>> from rdkit import Chem
   >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
-  
+
   >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
-  <BLANKLINE>
-  >>> # PAINS flag
+
+  # PAINS flag
   >>> params_pains = FilterCatalogParams()
   >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+  True
   >>> catalog_pains = FilterCatalog(params_pains)
-  
   >>> flag = catalog_pains.HasMatch(mol)  # Checks if there is a matching PAINS
   >>> print("PAINs: ", flag)
-  <BLANKLINE>
-  >>> # Brenk Flag
+  PAINs:  True
+
+  # Brenk flag
   >>> params_unwanted = FilterCatalogParams()
   >>> params_unwanted.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+  True
   >>> catalog_unwanted = FilterCatalog(params_unwanted)
-
   >>> flag = catalog_unwanted.HasMatch(mol)  # Checks if there is a matching unwanted substructure
   >>> print("Brenk: ", flag)
-  <BLANKLINE>
-  >>> # NIH Flag
+  Brenk:  True
+  
+  # NIH flag
   >>> params_nih = FilterCatalogParams()
   >>> params_nih.AddCatalog(FilterCatalogParams.FilterCatalogs.NIH)
+  True
   >>> catalog_nih = FilterCatalog(params_nih)
-
   >>> flag = catalog_nih.HasMatch(mol)  # Checks if there is a matching NIH
   >>> print("NIH: ", flag)
+  NIH:  True
 
 All of the available filters can also be considered at once. Additional information such as the class and description of the unwanted substructures can be obtained using the FilterCatalogEntry object:
 
 .. doctest::
+
   >>> from rdkit import Chem
   >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
   
   >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
-  <BLANKLINE>
-  >>> # ALL Filters
+  
+  # ALL Filters
   >>> params_all = FilterCatalogParams()
   >>> params_all.AddCatalog(FilterCatalogParams.FilterCatalogs.ALL)
+  True
   >>> catalog_all = FilterCatalog(params_all)
   
   >>> print([entry.GetProp('FilterSet') for entry in catalog_all.GetMatches(mol)])
+  ['PAINS_A', 'Brenk', 'NIH']
   >>> print([entry.GetDescription() for entry in catalog_all.GetMatches(mol)])
+  ['azo_A(324)', 'diazo_group', 'azo_aryl']
   
   
 .. rubric:: Footnotes
