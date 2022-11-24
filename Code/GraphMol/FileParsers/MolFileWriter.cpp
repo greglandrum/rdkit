@@ -527,19 +527,17 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
 }  // namespace
 
 bool hasNonDefaultValence(const Atom *atom) {
-  if (atom->getNumRadicalElectrons() != 0) {
-    return true;
-  }
   if (atom->hasQuery()) {
     return false;
   }
-  if (atom->getAtomicNum() == 1 ||
-      SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
+  if ( atom->getAtomicNum() == 1 ||
+      SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
-    return atom->getNoImplicit() &&
-           (atom->getExplicitValence() !=
-            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
+    auto ev = atom->getExplicitValence();
+    auto dv = PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum());
+    return atom->getNoImplicit() && !atom->getNumRadicalElectrons() && 
+           (ev != dv);
   }
   return true;
 }

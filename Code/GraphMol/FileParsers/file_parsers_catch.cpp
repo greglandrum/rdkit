@@ -5214,3 +5214,16 @@ M  END)CTAB"_ctab;
     CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
   }
 }
+
+TEST_CASE("redundant valence information in CTABs") {
+  SECTION("organics"){
+    auto m = "O[CH]"_smiles;
+    REQUIRE(m);
+    auto mb = MolToMolBlock(*m);
+    CHECK(mb.find(" C   0  0  0  0  0  2") == std::string::npos);
+    CHECK(mb.find(" C   0  0  0  0  0  0") != std::string::npos);
+
+    mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("RAD=3 VAL=") == std::string::npos);   
+  }
+}
