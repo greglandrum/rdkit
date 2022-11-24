@@ -530,14 +530,17 @@ bool hasNonDefaultValence(const Atom *atom) {
   if (atom->hasQuery()) {
     return false;
   }
-  if ( atom->getAtomicNum() == 1 ||
+  if (atom->getAtomicNum() == 1 ||
       SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
-    auto ev = atom->getExplicitValence();
-    auto dv = PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum());
-    return atom->getNoImplicit() && !atom->getNumRadicalElectrons() && 
-           (ev != dv);
+    int ev = atom->getExplicitValence() + atom->getNumRadicalElectrons();
+    int dv = PeriodicTable::getTable()->getDefaultValence(
+        atom->getAtomicNum() - atom->getFormalCharge());
+    // having more than two radical electrons (CTAB can only represent triplets)
+    // is an edge case where the valence + radicals + charge aren't enough
+    return atom->getNoImplicit() &&
+           (ev != dv || atom->getNumRadicalElectrons() > 2);
   }
   return true;
 }

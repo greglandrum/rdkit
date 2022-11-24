@@ -2491,8 +2491,7 @@ void test3V3K() {
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
 
     delete m;

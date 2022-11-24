@@ -5216,14 +5216,32 @@ M  END)CTAB"_ctab;
 }
 
 TEST_CASE("redundant valence information in CTABs") {
-  SECTION("organics"){
+  SECTION("organics") {
     auto m = "O[CH]"_smiles;
     REQUIRE(m);
     auto mb = MolToMolBlock(*m);
-    CHECK(mb.find(" C   0  0  0  0  0  2") == std::string::npos);
     CHECK(mb.find(" C   0  0  0  0  0  0") != std::string::npos);
 
     mb = MolToV3KMolBlock(*m);
-    CHECK(mb.find("RAD=3 VAL=") == std::string::npos);   
+    CHECK(mb.find("RAD=3 VAL=") == std::string::npos);
+  }
+  SECTION("lots of radicals") {
+    auto m = "[CH]"_smiles;
+    REQUIRE(m);
+    auto mb = MolToMolBlock(*m);
+    CHECK(mb.find(" C   0  0  0  0  0  1") != std::string::npos);
+
+    mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("RAD=3 VAL=") == std::string::npos);
+  }
+  SECTION("organics and charges") {
+    auto m = "O[CH2+]"_smiles;
+    REQUIRE(m);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    CHECK(mb.find(" C   0  0  0  0  0  0") != std::string::npos);
+
+    mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("RAD=3 VAL=") == std::string::npos);
   }
 }
