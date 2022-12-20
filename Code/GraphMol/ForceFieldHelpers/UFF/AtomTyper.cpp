@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrun and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -30,10 +29,110 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
                         bool tolerateChargeMismatch) {
   PRECONDITION(atom, "bad atom");
   int totalValence = atom->getTotalValence();
-  atom->getFormalCharge();
-
+  int fc = atom->getFormalCharge();
   // FIX: come up with some way of handling metals here
   switch (atom->getAtomicNum()) {
+    // Atoms only +1 in default UFF params
+    case 29:  // Cu
+    case 47:  // Ag
+      if (totalValence == 1 || fc == 1 || tolerateChargeMismatch) {
+        atomKey += "+1";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +2 in default UFF params
+    case 4:   // Be
+    case 20:  // Ca
+    case 25:  // Mn
+    case 26:  // Fe
+    case 28:  // Ni
+              //  case 30:  // Zn
+    case 46:  // Pd
+              //  case 48:  // Cd
+    case 78:  // Pt
+      if (totalValence == 2 || fc == 2 || tolerateChargeMismatch) {
+        atomKey += "+2";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +3 in default UFF params
+    case 21:   // Sc
+    case 24:   // Cr
+    case 27:   // Co
+               //  case 49:  // In
+    case 79:   // Au
+    case 89:   // Ac
+    case 96:   // Cm
+    case 97:   // Bk
+    case 98:   // Cf
+    case 99:   // Es
+    case 100:  // Fm
+    case 101:  // Md
+    case 102:  // No
+    case 103:  // Lr/Lw
+      if (totalValence == 3 || fc == 3 || tolerateChargeMismatch) {
+        atomKey += "+3";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +4 in default UFF params
+    case 2:   // He
+    case 18:  // Ar
+    case 22:  // Ti
+    case 36:  // Kr
+    case 54:  // Xe
+    case 90:  // Th
+    case 91:  // Pa
+    case 92:  // U
+    case 93:  // Np
+    case 94:  // Pu
+    case 95:  // Am
+      if (totalValence == 4 || fc == 4 || tolerateChargeMismatch) {
+        atomKey += "+4";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +5 in default UFF params
+    case 23:  // V
+    case 41:  // Nb
+    case 43:  // Tc
+    case 73:  // Ta
+      if (totalValence == 5 || fc == 5 || tolerateChargeMismatch) {
+        atomKey += "+5";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +6 in default UFF params
+    case 42:  // Mo
+      if (totalValence == 6 || fc == 6 || tolerateChargeMismatch) {
+        atomKey += "+6";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
     case 12:  // Mg
       switch (totalValence) {
         case 2:
@@ -213,6 +312,18 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
               << atom->getIdx() << std::endl;
       }
       break;
+    case 75:  // Re
+      if (tolerateChargeMismatch) {
+        if (atomKey == "Re6") {
+          atomKey = "Re6+5";
+        } else if (atomKey == "Re3") {
+          atomKey = "Re3+7";
+        }
+      }
+      BOOST_LOG(rdErrorLog)
+          << "UFFTYPER: Unrecognized charge state for atom: " << atom->getIdx()
+          << std::endl;
+      break;
     case 80:  // Hg
       switch (totalValence) {
         case 2:
@@ -367,6 +478,10 @@ std::string getAtomLabel(const Atom *atom) {
               atomKey += '3';
               break;
 
+            case Atom::SP2D:
+              atomKey += '4';
+              break;
+
             case Atom::SP3D:
               atomKey += '5';
               break;
@@ -391,10 +506,9 @@ std::string getAtomLabel(const Atom *atom) {
 
 // ---------------------------------------------------------------
 std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
-                                              const std::string &paramData) {
-  RDUNUSED_PARAM(paramData);
+                                              const std::string &) {
   bool foundAll = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
 
   AtomicParamVect paramVect;
   paramVect.resize(mol.getNumAtoms());
@@ -421,17 +535,17 @@ std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
 
 bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
                              unsigned int idx2, UFFBond &uffBondStretchParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;
   const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
-  bool res = (bond ? true : false);
+  bool res = bond != nullptr;
   for (i = 0; res && (i < 2); ++i) {
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
     double bondOrder = bond->getBondTypeAsDouble();
@@ -446,7 +560,7 @@ bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
 bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3,
                            UFFAngle &uffAngleBendParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[3] = {idx1, idx2, idx3};
   AtomicParamVect paramVect(3);
   unsigned int i;
@@ -455,13 +569,13 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
   for (i = 0; res && (i < 3); ++i) {
     if (i < 2) {
       bond[i] = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
-      res = (bond[i] ? true : false);
+      res = bond[i] != nullptr;
     }
     if (res) {
       const Atom *atom = mol.getAtomWithIdx(idx[i]);
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[i] = (*params)(atomKey);
-      res = (paramVect[i] ? true : false);
+      res = paramVect[i] != nullptr;
     }
   }
   if (res) {
@@ -478,7 +592,7 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
 bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                          unsigned int idx3, unsigned int idx4,
                          UFFTor &uffTorsionParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[4] = {idx1, idx2, idx3, idx4};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -489,7 +603,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
   bool hasSP2 = false;
   for (i = 0; res && (i < 4); ++i) {
     if (i < 3) {
-      res = (mol.getBondBetweenAtoms(idx[i], idx[i + 1]) ? true : false);
+      res = mol.getBondBetweenAtoms(idx[i], idx[i + 1]) != nullptr;
     }
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     if ((i == 1) || (i == 2)) {
@@ -498,7 +612,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
       hyb[j] = atom->getHybridization();
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[j] = (*params)(atomKey);
-      res = (paramVect[j] ? true : false);
+      res = paramVect[j] != nullptr;
     } else if (atom->getHybridization() == Atom::SP2) {
       hasSP2 = true;
     }
@@ -589,10 +703,10 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
   }
   if (res) {
     isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
-    boost::tuple<double, double, double, double> invCoeffForceCon =
+    auto invCoeffForceCon =
         UFF::Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
-                                                         isBoundToSP2O);
-    uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
+                                                              isBoundToSP2O);
+    uffInversionParams.K = std::get<0>(invCoeffForceCon);
   }
   return res;
 }
@@ -600,7 +714,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
 bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                      UFFVdW &uffVdWParams) {
   bool res = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -608,13 +722,15 @@ bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
-    uffVdWParams.x_ij = UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
-    uffVdWParams.D_ij = UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
+    uffVdWParams.x_ij =
+        UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
+    uffVdWParams.D_ij =
+        UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
   }
   return res;
 }
-}
-}
+}  // namespace UFF
+}  // namespace RDKit

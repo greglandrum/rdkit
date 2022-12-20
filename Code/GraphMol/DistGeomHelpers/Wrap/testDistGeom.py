@@ -13,6 +13,7 @@ from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign
 import rdkit.DistanceGeometry as DG
 from rdkit import RDConfig, rdBase
 from rdkit.Geometry import rdGeometry as geom
+from rdkit.Geometry import ComputeSignedDihedralAngle
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -214,10 +215,28 @@ class TestCase(unittest.TestCase):
 
         nconfs = []
         expected = [4, 5, 5, 4, 5, 4]
+        expected = [3, 3, 5, 4, 4, 4]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
             cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
                                                  pruneRmsThresh=1.5)
+            nconfs.append(len(cids))
+
+        d = [abs(x - y) for x, y in zip(expected, nconfs)]
+        # print(nconfs)
+        self.assertTrue(max(d) <= 1)
+
+        # previous settings
+        params = rdDistGeom.ETKDG()
+        params.randomSeed = 100
+        params.maxIterations = 30
+        params.pruneRmsThresh = 1.5
+        params.useSymmetryForPruning = False
+        nconfs = []
+        expected = [4, 5, 5, 4, 5, 4]
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
             nconfs.append(len(cids))
 
         d = [abs(x - y) for x, y in zip(expected, nconfs)]
@@ -582,7 +601,68 @@ class TestCase(unittest.TestCase):
             conf2 = m2.GetConformer()
             self.assertTrue((conf2.GetAtomPosition(3)-conf2.GetAtomPosition(0)).Length() > (conf1.GetAtomPosition(3)-conf1.GetAtomPosition(0)).Length())
 
+    def testScaleBoundsMatForce(self):
+        """
+        for pentane, set a target distance for the 1-5 distance, and generate conformers with changing weights for (all) the atom pair distance restraints,
+        the conformer with the stronger weight for the atom pairs will always have a 1-5 distance closer to the target value than that with the weaker weight.
+        """
+        target = 4
+        for i in range(5):
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useBasicKnowledge = True
+            ps.useRandomCoords = False
+            m1 = Chem.MolFromSmiles("CCCCC")
+            bm1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
+            bm1[0,4] = target
+            bm1[4,0] = target
+            DG.DoTriangleSmoothing(bm1)
+            ps.boundsMatForceScaling = 0.1
+            ps.SetBoundsMat(bm1)
+            self.assertEqual(rdDistGeom.EmbedMolecule(m1,ps),0)
+
+            m2 = Chem.MolFromSmiles("CCCCC")
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useBasicKnowledge = True
+            ps.useRandomCoords = False
+            ps.boundsMatForceScaling = 10
+            ps.SetBoundsMat(bm1)
+            self.assertEqual(rdDistGeom.EmbedMolecule(m2,ps),0)
+
+            conf1 = m1.GetConformer()
+            conf2 = m2.GetConformer()
+            self.assertTrue(abs((conf2.GetAtomPosition(4)-conf2.GetAtomPosition(0)).Length() - target) < abs((conf1.GetAtomPosition(4)-conf1.GetAtomPosition(0)).Length() - target))
+
         
+    def testETKDGv3amide(self):
+        """
+        test for a macrocycle molecule, ETKDGv3 samples trans amide
+        """
+        def get_atom_mapping(mol, smirks = "[O:1]=[C:2]@;-[NX3:3]-[H:4]"):
+            qmol = Chem.MolFromSmarts(smirks)
+            ind_map = {}
+            for atom in qmol.GetAtoms():
+                map_num = atom.GetAtomMapNum()
+                if map_num:
+                    ind_map[map_num - 1] = atom.GetIdx()
+            map_list = [ind_map[x] for x in sorted(ind_map)]
+            matches = list()
+            for match in mol.GetSubstructMatches(qmol, uniquify = False) :
+                mas = [match[x] for x in map_list]
+                matches.append(tuple(mas))
+            return matches
+
+        smiles = "C1CCC(=O)NCCCCCC(=O)NC1"
+        smiles_mol = Chem.MolFromSmiles(smiles)
+        mol = Chem.AddHs(smiles_mol)
+        params = AllChem.ETKDGv3()
+        params.seed = 42
+        AllChem.EmbedMolecule(mol, params)
+        conf = mol.GetConformer(0)
+        for torsion in get_atom_mapping(mol):
+            a1,a2,a3,a4 = [conf.GetAtomPosition(i) for i in torsion]
+            self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1,a2,a3,a4)), 3.14, delta = 0.1)
 
 
 if __name__ == '__main__':

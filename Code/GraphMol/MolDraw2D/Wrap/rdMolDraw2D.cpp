@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2019 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit Contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -53,7 +53,11 @@ void pyDictToColourMap(python::object pyo, ColourPalette &res) {
     float r = python::extract<float>(tpl[0]);
     float g = python::extract<float>(tpl[1]);
     float b = python::extract<float>(tpl[2]);
-    DrawColour clr(r, g, b);
+    float a = 1.0;
+    if (python::len(tpl) > 3) {
+      a = python::extract<float>(tpl[3]);
+    }
+    DrawColour clr(r, g, b, a);
     res[python::extract<int>(tDict.keys()[i])] = clr;
   }
 }
@@ -112,7 +116,7 @@ DrawColour pyTupleToDrawColour(const python::tuple tpl) {
     throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float a = 1;
-  if (python::extract<unsigned int>(tpl.attr("__len__")()) > 3) {
+  if (python::len(tpl) > 3) {
     a = python::extract<float>(tpl[3]);
     if (a > 1 || a < 0) {
       throw ValueErrorException(
@@ -144,6 +148,7 @@ void pyDictToMapColourVec(python::object pyo,
     res[python::extract<int>(tDict.keys()[i])] = v;
   }
 }
+
 std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(
     python::object pyo) {
   std::map<int, std::vector<DrawColour>> *res = nullptr;
@@ -234,7 +239,7 @@ void prepareAndDrawMoleculeHelper(
     MolDraw2D &drawer, const ROMol &mol, std::string legend,
     python::object highlight_atoms, python::object highlight_bonds,
     python::object highlight_atom_map, python::object highlight_bond_map,
-    python::object highlight_atom_radii, int confId) {
+    python::object highlight_atom_radii, int confId, bool kekulize) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -245,11 +250,28 @@ void prepareAndDrawMoleculeHelper(
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
   MolDraw2DUtils::prepareAndDrawMolecule(
       drawer, mol, legend, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
-      har, confId);
+      har, confId, kekulize);
 
   delete ham;
   delete hbm;
   delete har;
+}
+void drawMoleculeACS1996Helper(
+    MolDraw2D &drawer, const ROMol &mol, std::string legend,
+    python::object highlight_atoms, python::object highlight_bonds,
+    python::object highlight_atom_map, python::object highlight_bond_map,
+    python::object highlight_atom_radii, int confId) {
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
+  std::unique_ptr<std::vector<int>> highlightBonds =
+      pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
+  std::unique_ptr<ColourPalette> ham{pyDictToColourMap(highlight_atom_map)};
+  std::unique_ptr<ColourPalette> hbm{pyDictToColourMap(highlight_bond_map)};
+  std::unique_ptr<std::map<int, double>> har{
+      pyDictToDoubleMap(highlight_atom_radii)};
+  MolDraw2DUtils::drawMolACS1996(drawer, mol, legend, highlightAtoms.get(),
+                                 highlightBonds.get(), ham.get(), hbm.get(),
+                                 har.get(), confId);
 }
 
 void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
@@ -376,12 +398,12 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   return retval;
 }
 #endif
-ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
-                         bool addChiralHs = true, bool wedgeBonds = true,
-                         bool forceCoords = false) {
+ROMol *prepMolForDrawing(const ROMol *m, bool kekulize, bool addChiralHs,
+                         bool wedgeBonds, bool forceCoords, bool wavyBonds) {
+  PRECONDITION(m, "molecule must not be None");
   auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
-                                       forceCoords);
+                                       forceCoords, wavyBonds);
   return static_cast<ROMol *>(res);
 }
 
@@ -412,11 +434,37 @@ python::object getSymbolColour(const RDKit::MolDrawOptions &self) {
 void setSymbolColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
+python::object getLegendColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.legendColour);
+}
+void setLegendColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.legendColour = pyTupleToDrawColour(tpl);
+}
+python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.annotationColour);
+}
+void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.annotationColour = pyTupleToDrawColour(tpl);
+}
+
+python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.variableAttachmentColour);
+}
+void setVariableAttachmentColour(RDKit::MolDrawOptions &self,
+                                 python::tuple tpl) {
+  self.variableAttachmentColour = pyTupleToDrawColour(tpl);
+}
 void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
   assignDefaultPalette(self.atomColourPalette);
 }
 void useBWAtomPalette(RDKit::MolDrawOptions &self) {
   assignBWPalette(self.atomColourPalette);
+}
+void useAvalonAtomPalette(RDKit::MolDrawOptions &self) {
+  assignAvalonPalette(self.atomColourPalette);
+}
+void useCDKAtomPalette(RDKit::MolDrawOptions &self) {
+  assignCDKPalette(self.atomColourPalette);
 }
 void updateAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   pyDictToColourMap(cmap, self.atomColourPalette);
@@ -426,16 +474,39 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   updateAtomPalette(self, cmap);
 }
 
+void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, python::tuple fg,
+                               python::tuple bg) {
+  auto fgc = pyTupleToDrawColour(fg);
+  auto bgc = pyTupleToDrawColour(bg);
+  RDKit::setMonochromeMode(options, fgc, bgc);
+}
+
+void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, python::tuple fg,
+                               python::tuple bg) {
+  auto fgc = pyTupleToDrawColour(fg);
+  auto bgc = pyTupleToDrawColour(bg);
+  RDKit::setMonochromeMode(d2d, fgc, bgc);
+}
+
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
     const MolDraw2DUtils::ContourParams &params, python::object mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
+  if (!locs) {
+    throw_value_error("locs argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> heights =
       pythonObjectToVect<double>(pyheights);
+  if (!heights) {
+    throw_value_error("heights argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> widths =
       pythonObjectToVect<double>(pywidths);
+  if (!widths) {
+    throw_value_error("widths argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
@@ -467,8 +538,14 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
 
   std::unique_ptr<std::vector<double>> xcoords =
       pythonObjectToVect<double>(pyxcoords);
+  if (!xcoords) {
+    throw_value_error("xcoords argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> ycoords =
       pythonObjectToVect<double>(pyycoords);
+  if (!ycoords) {
+    throw_value_error("ycoords argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
@@ -512,33 +589,124 @@ void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
                       python::tuple tpl) {
   params.contourColour = pyTupleToDrawColour(tpl);
 }
-void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds) {
+void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds,
+                       bool rawCoords) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> cds =
       pythonObjectToVect<RDGeom::Point2D>(py_cds);
+  if (!cds) {
+    throw_value_error("cds argument must be non-empty");
+  }
 
-  self.drawPolygon(*cds);
+  self.drawPolygon(*cds, rawCoords);
 }
 
 void drawAttachmentLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
                               const Point2D &cds2, python::tuple &pycol,
-                              double len, unsigned int nSegments) {
+                              double len, unsigned int nSegments,
+                              bool rawCoords) {
   auto col = pyTupleToDrawColour(pycol);
-  self.drawAttachmentLine(cds1, cds2, col, len, nSegments);
+  self.drawAttachmentLine(cds1, cds2, col, len, nSegments, rawCoords);
 }
 
 void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
                         const Point2D &cds2, python::tuple &pycol1,
                         python::tuple &pycol2, unsigned int nSegments,
-                        double vertOffset) {
+                        double vertOffset, bool rawCoords) {
   auto col1 = pyTupleToDrawColour(pycol1);
   auto col2 = pyTupleToDrawColour(pycol2);
-  self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset);
+  self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset, rawCoords);
+}
+
+void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
+                     const Point2D &cds2, bool asPolygon, double frac,
+                     double angle, python::object pycol, bool rawCoords) {
+  DrawColour col{0.0, 0.0, 0.0};
+  if (pycol) {
+    python::tuple pytup = python::extract<python::tuple>(pycol);
+    col = pyTupleToDrawColour(pytup);
+  }
+  self.drawArrow(cds1, cds2, asPolygon, frac, angle, col, rawCoords);
 }
 
 void setDrawOptions(RDKit::MolDraw2D &self, const MolDrawOptions &opts) {
   self.drawOptions() = opts;
 }
 
+void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
+  self.setColour(pyTupleToDrawColour(tpl));
+}
+
+void updateMolDrawOptionsHelper(RDKit::MolDrawOptions &obj, std::string json) {
+  MolDraw2DUtils::updateMolDrawOptionsFromJSON(obj, json);
+}
+
+void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, std::string json) {
+  MolDraw2DUtils::updateDrawerParamsFromJSON(obj, json);
+}
+
+std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
+                     python::object pyHighlightAtoms, bool kekulize,
+                     unsigned int lineWidthMult, bool includeAtomCircles,
+                     int confId) {
+  // FIX: we really should be using kekulize here
+  RDUNUSED_PARAM(kekulize);
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
+  std::stringstream outs;
+  MolDraw2DSVG drawer(width, height, outs);
+  drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
+  drawer.drawOptions().circleAtoms = includeAtomCircles;
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
+  drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
+  drawer.finishDrawing();
+  return outs.str();
+}
+std::string molToACS1996SVG(const ROMol &mol, std::string legend,
+                            python::object highlight_atoms,
+                            python::object highlight_bonds,
+                            python::object highlight_atom_map,
+                            python::object highlight_bond_map,
+                            python::object highlight_atom_radii, int confId) {
+  std::stringstream outs;
+  MolDraw2DSVG drawer(-1, -1, outs);
+  drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,
+                            highlight_bonds, highlight_atom_map,
+                            highlight_bond_map, highlight_atom_radii, confId);
+  drawer.finishDrawing();
+  return outs.str();
+}
+void setACS1996ModeHelper(MolDrawOptions &drawOptions, double meanBondLen) {
+  MolDraw2DUtils::setACS1996Options(drawOptions, meanBondLen);
+}
+
+void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
+                      int align, bool rawCoords) {
+  MolDraw2D_detail::TextAlignType talign =
+      MolDraw2D_detail::TextAlignType::MIDDLE;
+  switch (align) {
+    case 0:
+      talign = MolDraw2D_detail::TextAlignType::MIDDLE;
+      break;
+    case 1:
+      talign = MolDraw2D_detail::TextAlignType::START;
+      break;
+    case 2:
+      talign = MolDraw2D_detail::TextAlignType::END;
+      break;
+    default:
+      throw_value_error("align must be 0, 1, or 2");
+  }
+  self.drawString(text, loc, talign, rawCoords);
+}
+
+void setScaleHelper(MolDraw2D &self, int width, int height, const Point2D &minv,
+                    const Point2D &maxv, python::object mol) {
+  ROMol *mol_p = nullptr;
+  if (mol) {
+    mol_p = python::extract<RDKit::ROMol *>(mol);
+  }
+  self.setScale(width, height, minv, maxv, mol_p);
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -547,8 +715,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   rdkit_import_array();
 
-  python::class_<std::map<int, std::string>>("IntStringMap")
-      .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  if (!is_python_converter_registered<std::map<int, std::string>>()) {
+    python::class_<std::map<int, std::string>>("IntStringMap")
+        .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  }
 
   std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",
@@ -556,6 +726,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
+      .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
@@ -568,10 +739,23 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method returning the symbol colour")
       .def("setSymbolColour", &RDKit::setSymbolColour,
            "method for setting the symbol colour")
+      .def("getAnnotationColour", &RDKit::getAnnotationColour,
+           "method returning the annotation colour")
+      .def("setAnnotationColour", &RDKit::setAnnotationColour,
+           "method for setting the annotation colour")
+      .def("getLegendColour", &RDKit::getLegendColour,
+           "method returning the legend colour")
+      .def("setLegendColour", &RDKit::setLegendColour,
+           "method for setting the legend colour")
+
       .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
            "use the default colour palette for atoms and bonds")
       .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
-           "use the black & white palette for atoms and bonds")
+           "use a black and white palette for atoms and bonds")
+      .def("useAvalonAtomPalette", &RDKit::useAvalonAtomPalette,
+           "use the Avalon renderer palette for atoms and bonds")
+      .def("useCDKAtomPalette", &RDKit::useCDKAtomPalette,
+           "use the CDK palette for atoms and bonds")
       .def("updateAtomPalette", &RDKit::updateAtomPalette,
            "updates the palette for atoms and bonds from a dictionary mapping "
            "ints to 3-tuples")
@@ -599,6 +783,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "clear the background before drawing a molecule")
       .def_readwrite("legendFontSize", &RDKit::MolDrawOptions::legendFontSize,
                      "font size in pixels of the legend (if drawn)")
+      .def_readwrite(
+          "legendFraction", &RDKit::MolDrawOptions::legendFraction,
+          "fraction of the draw panel to be used for the legend if present")
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
@@ -606,19 +793,35 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "minimum font size in pixels. default=12, -1 means no"
                      " minimum.")
       .def_readwrite(
+          "fixedFontSize", &RDKit::MolDrawOptions::fixedFontSize,
+          "font size in pixels. default=-1 means not fixed.  If set,"
+          " always used irrespective of scale, minFontSize and maxFontSize.")
+      .def_readwrite(
+          "baseFontSize", &RDKit::MolDrawOptions::baseFontSize,
+          "relative size of font.  Defaults to 0.6.  -1 means use default.")
+      .def_readwrite(
           "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
-      .def_readwrite("fontFile", &RDKit::MolDrawOptions::fontFile,
-                     "Font file for use with FreeType text drawer.")
+      .def_readwrite(
+          "fontFile", &RDKit::MolDrawOptions::fontFile,
+          "Font file for use with FreeType text drawer.  Can also be"
+          " BuiltinTelexRegular (the default) or BuiltinRobotoRegular.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
-          "offset (in Angstroms) for the extra lines in a multiple bond")
+          "offset for the extra lines in a multiple bond as a fraction of mean"
+          " bond length")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
                      "fraction of empty space to leave around molecule")
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
+      .def_readwrite("scaleBondWidth", &RDKit::MolDrawOptions::scaleBondWidth,
+                     "Scales the width of drawn bonds using image scaling.")
+      .def_readwrite("scaleHighlightBondWidth",
+                     &RDKit::MolDrawOptions::scaleHighlightBondWidth,
+                     "Scales the width of drawn highlighted bonds using"
+                     " image scaling.")
       .def_readwrite("highlightBondWidthMultiplier",
                      &RDKit::MolDrawOptions::highlightBondWidthMultiplier,
                      "What to multiply default bond width by for highlighting "
@@ -644,9 +847,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::addStereoAnnotation,
                      "adds R/S and E/Z to drawings. Default False.")
       .def_readwrite("addAtomIndices", &RDKit::MolDrawOptions::addAtomIndices,
-                     "adds atom indices drawings. Default False.")
+                     "adds atom indices to drawings. Default False.")
       .def_readwrite("addBondIndices", &RDKit::MolDrawOptions::addBondIndices,
-                     "adds bond indices drawings. Default False.")
+                     "adds bond indices to drawings. Default False.")
+      .def_readwrite("isotopeLabels", &RDKit::MolDrawOptions::isotopeLabels,
+                     "adds isotope labels on non-dummy atoms. Default True.")
+      .def_readwrite("dummyIsotopeLabels",
+                     &RDKit::MolDrawOptions::dummyIsotopeLabels,
+                     "adds isotope labels on dummy atoms. Default True.")
       .def_readwrite("atomHighlightsAreCircles",
                      &RDKit::MolDrawOptions::atomHighlightsAreCircles,
                      "forces atom highlights always to be circles."
@@ -660,12 +868,66 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
                      "Expressed as a fraction of the font size.")
+      .def_readwrite("noAtomLabels", &RDKit::MolDrawOptions::noAtomLabels,
+                     "disables inclusion of atom labels in the rendering")
       .def_readwrite("explicitMethyl", &RDKit::MolDrawOptions::explicitMethyl,
                      "Draw terminal methyls explictly.  Default is false.")
       .def_readwrite(
           "includeMetadata", &RDKit::MolDrawOptions::includeMetadata,
           "When possible, include metadata about molecules and reactions to "
-          "allow them to be reconstructed. Default is true.");
+          "allow them to be reconstructed. Default is true.")
+      .def_readwrite(
+          "includeRadicals", &RDKit::MolDrawOptions::includeRadicals,
+          "include radicals in the drawing (it can be useful to turn this off "
+          "for reactions and queries). Default is true.")
+      .def_readwrite("comicMode", &RDKit::MolDrawOptions::comicMode,
+                     "simulate hand-drawn lines for bonds. When combined with "
+                     "a font like Comic-Sans or Comic-Neue, this gives "
+                     "xkcd-like drawings. Default is false.")
+      .def_readwrite("variableBondWidthMultiplier",
+                     &RDKit::MolDrawOptions::variableBondWidthMultiplier,
+                     "what to multiply standard bond width by for variable "
+                     "attachment points.")
+      .def_readwrite("variableAtomRadius",
+                     &RDKit::MolDrawOptions::variableAtomRadius,
+                     "radius value to use for atoms involved in variable "
+                     "attachment points.")
+      .def_readwrite("includeChiralFlagLabel",
+                     &RDKit::MolDrawOptions::includeChiralFlagLabel,
+                     "add a molecule annotation with \"ABS\" if the chiral "
+                     "flag is set. Default is false.")
+      .def_readwrite("simplifiedStereoGroupLabel",
+                     &RDKit::MolDrawOptions::simplifiedStereoGroupLabel,
+                     "if all specified stereocenters are in a single "
+                     "StereoGroup, show a molecule-level annotation instead of "
+                     "the individual labels. Default is false.")
+      .def_readwrite("unspecifiedStereoIsUnknown",
+                     &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
+                     "if true, double bonds with unspecified stereo are drawn"
+                     " crossed, potential stereocenters with unspecified stereo"
+                     " are drawn with a wavy bond. Default is false.")
+      .def_readwrite(
+          "singleColourWedgeBonds",
+          &RDKit::MolDrawOptions::singleColourWedgeBonds,
+          "if true wedged and dashed bonds are drawn using symbolColour "
+          "rather than inheriting their colour from the atoms. "
+          "Default is false.")
+      .def_readwrite("useMolBlockWedging",
+                     &RDKit::MolDrawOptions::useMolBlockWedging,
+                     "If the molecule came from a MolBlock, prefer the wedging"
+                     " information that provides.  If false, use RDKit rules."
+                     "  Default false")
+      .def_readwrite("scalingFactor", &RDKit::MolDrawOptions::scalingFactor,
+                     "scaling factor for pixels->angstrom when auto scaling"
+                     "being used.  Default is 20.")
+      .def_readwrite("drawMolsSameScale",
+                     &RDKit::MolDrawOptions::drawMolsSameScale,
+                     "when drawing multiple molecules with DrawMolecules,"
+                     " forces them to use the same scale.  Default is true.")
+      .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
+           "method for getting the colour of variable attachment points")
+      .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
+           "method for setting the colour of variable attachment points");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -722,10 +984,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "set the offset (in drawing coordinates) for the drawing")
       .def("Offset", &RDKit::MolDraw2D::offset,
            "returns the offset (in drawing coordinates) for the drawing")
-      .def("SetScale", &RDKit::MolDraw2D::setScale,
+      .def("SetScale", &RDKit::setScaleHelper,
+           (python::arg("self"), python::arg("width"), python::arg("height"),
+            python::arg("minv"), python::arg("maxv"),
+            python::arg("mol") = python::object()),
            "uses the values provided to set the drawing scaling")
       .def("SetLineWidth", &RDKit::MolDraw2D::setLineWidth,
            "set the line width being used")
+      .def("SetColour", &RDKit::setDrawerColour,
+           "set the color being used fr drawing and filling")
       .def("LineWidth", &RDKit::MolDraw2D::lineWidth,
            "returns the line width being used")
       .def("SetFillPolys", &RDKit::MolDraw2D::setFillPolys,
@@ -733,63 +1000,78 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys,
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &)) &
+           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &, bool)) &
                RDKit::MolDraw2D::drawLine,
-           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
            "are in the molecule frame")
-      .def("DrawArrow", &RDKit::MolDraw2D::drawArrow,
+      .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("asPolygon") = false, python::arg("frac") = 0.05,
-            python::arg("angle") = M_PI / 6),
+            python::arg("angle") = M_PI / 6,
+            python::arg("color") = python::object(),
+            python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
            "are in the molecule frame. If asPolygon is true the head of the "
            "arrow will be drawn as a triangle, otherwise two lines are used.")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("cds3")),
+            python::arg("cds3"), python::arg("rawCoords") = false),
            "draws a triangle with the current drawing style. The coordinates "
            "are in the molecule frame")
       .def("DrawPolygon", RDKit::drawPolygonHelper,
-           (python::arg("self"), python::arg("cds")),
+           (python::arg("self"), python::arg("cds"),
+            python::arg("rawCoords") = false),
            "draws a polygon with the current drawing style. The coordinates "
            "are in the molecule frame")
       .def("DrawEllipse", &RDKit::MolDraw2D::drawEllipse,
-           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("rawCoords") = false),
            "draws a triangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
            "are in the molecule frame")
       .def("DrawRect", &RDKit::MolDraw2D::drawRect,
-           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("rawCoords") = false),
            "draws a rectangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
            "are in the molecule frame")
+      .def("DrawArc",
+           (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
+                                      bool)) &
+               RDKit::MolDraw2D::drawArc,
+           (python::arg("self"), python::arg("center"), python::arg("radius"),
+            python::arg("angle1"), python::arg("angle2"),
+            python::arg("rawCoords") = false),
+           "draws an arc with the current drawing style. "
+           "The coordinates are in the molecule frame, the angles are in "
+           "degrees, angle2 should be > angle1.")
       .def("DrawAttachmentLine", &RDKit::drawAttachmentLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color"), python::arg("len") = 1.0,
-            python::arg("nSegments") = 16),
+            python::arg("nSegments") = 16, python::arg("rawCoords") = false),
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
       .def("DrawWavyLine", &RDKit::drawWavyLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color1"), python::arg("color2"),
-            python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05),
+            python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05,
+            python::arg("rawCoords") = false),
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
       .def("DrawString",
-           (void (RDKit::MolDraw2D::*)(const std::string &,
-                                       const RDGeom::Point2D &)) &
-               RDKit::MolDraw2D::drawString,
-           (python::arg("self"), python::arg("string"), python::arg("pos")),
-           "add text to the canvas")
-      .def("DrawString",
-           (void (RDKit::MolDraw2D::*)(const std::string &,
-                                       const RDGeom::Point2D &,
-                                       RDKit::TextAlignType)) &
+           (void(RDKit::MolDraw2D::*)(const std::string &,
+                                      const RDGeom::Point2D &, bool)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
-            python::arg("align")),
-           "add aligned text to the canvas")
+            python::arg("rawCoords") = false),
+           "add text to the canvas")
+      .def("DrawString", RDKit::drawStringHelper,
+           (python::arg("self"), python::arg("string"), python::arg("pos"),
+            python::arg("align"), python::arg("rawCoords") = false),
+           "add aligned text to the canvas. The align argument can be 0 "
+           "(=MIDDLE), 1 (=START), or 2 (=END)")
       .def("GetDrawCoords",
            (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
@@ -816,14 +1098,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   docString = "SVG molecule drawer";
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
-      .def(python::init<int, int, int, int, bool>())
+                 boost::noncopyable>(
+      "MolDraw2DSVG", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
@@ -837,9 +1121,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   docString = "Cairo molecule drawer";
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DCairo", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
+                 boost::noncopyable>(
+      "MolDraw2DCairo", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DCairo::finishDrawing,
            "add the last bits to finish the drawing")
       .def("GetDrawingText", &RDKit::getCairoDrawingText,
@@ -850,9 +1137,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "
       "nicely.\n"
-      "The operations include: kekulization, addition of chiral Hs (so that we "
+      "The operations include: kekulization, addition of chiral Hs (so "
+      "that we "
       "can draw\n"
-      "wedges to them), wedging of bonds at chiral centers, and generation of "
+      "wedges to them), wedging of bonds at chiral centers, and generation "
+      "of "
       "a 2D\n"
       "conformation if the molecule does not already have a conformation\n"
       "\nReturns a modified copy of the molecule.\n";
@@ -860,7 +1149,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
       (python::arg("mol"), python::arg("kekulize") = true,
        python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
-       python::arg("forceCoords") = false),
+       python::arg("forceCoords") = false, python::arg("wavyBonds") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::def(
@@ -871,8 +1160,18 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightAtomColors") = python::object(),
        python::arg("highlightBondColors") = python::object(),
        python::arg("highlightAtomRadii") = python::object(),
-       python::arg("confId") = -1),
+       python::arg("confId") = -1, python::arg("kekulize") = true),
       "Preps a molecule for drawing and actually draws it\n");
+  python::def(
+      "DrawMoleculeACS1996", &RDKit::drawMoleculeACS1996Helper,
+      (python::arg("drawer"), python::arg("mol"), python::arg("legend") = "",
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("highlightBonds") = python::object(),
+       python::arg("highlightAtomColors") = python::object(),
+       python::arg("highlightBondColors") = python::object(),
+       python::arg("highlightAtomRadii") = python::object(),
+       python::arg("confId") = -1),
+      "Draws molecule in ACS 1996 mode.");
   docString = "Parameters for drawing contours";
   python::class_<RDKit::MolDraw2DUtils::ContourParams>(
       "ContourParams", docString.c_str(), python::init<>())
@@ -967,4 +1266,78 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
        python::arg("mol") = python::object()),
       docString.c_str());
+
+  python::def("UpdateMolDrawOptionsFromJSON", RDKit::updateMolDrawOptionsHelper,
+              (python::arg("opts"), python::arg("json")));
+  python::def("UpdateDrawerParamsFromJSON", RDKit::updateDrawerParamsHelper,
+              (python::arg("drawer"), python::arg("json")));
+
+  // ------------------------------------------------------------------------
+  docString = "Returns svg for a molecule";
+  python::def(
+      "MolToSVG", &RDKit::molToSVG,
+      (python::arg("mol"), python::arg("width") = 300,
+       python::arg("height") = 300,
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
+       python::arg("fontSize") = 12, python::arg("includeAtomCircles") = true),
+      docString.c_str());
+  docString = "Returns ACS 1996 mode svg for a molecule";
+  python::def("MolToACS1996SVG", &RDKit::molToACS1996SVG,
+              (python::arg("mol"), python::arg("legend") = "",
+               python::arg("highlightAtoms") = python::object(),
+               python::arg("highlightBonds") = python::object(),
+               python::arg("highlightAtomColors") = python::object(),
+               python::arg("highlightBondColors") = python::object(),
+               python::arg("highlightAtomRadii") = python::object(),
+               python::arg("confId") = -1),
+              docString.c_str());
+
+  docString =
+      R"DOC(Set the draw options to produce something as close as possible to
+the ACS 1996 guidelines as described at
+https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+
+ - MolDrawOptions opt - the options what will be changed
+ - float meanBondLength - mean bond length of the molecule
+
+ Works best if the MolDraw2D object is created with width and height -1 (a
+ flexiCanvas).
+ The mean bond length may be calculated with MeanBondLength.
+ It is used to calculate the offset for the lines in multiple bonds.
+
+ Options changed are:
+   bondLineWidth = 0.6
+   scaleBondWidth = false
+   scalingFactor = 14.4 / meanBondLen
+   multipleBondOffset = 0.18
+   highlightBondWidthMultiplier = 32
+   setMonochromeMode - black and white
+   fixedFontSize = 10
+   additionalAtomLabelPadding = 0.066
+   fontFile - if it isn't set already, then if RDBASE is set and the file
+              exists, uses $RDBASE/Data/Fonts/FreeSans.ttf.  Otherwise uses
+              BuiltinRobotoRegular.
+ */
+)DOC";
+  python::def("SetACS1996Mode", &RDKit::MolDraw2DUtils::setACS1996Options,
+              (python::arg("drawOptions"), python::arg("meanBondLength")),
+              docString.c_str());
+  python::def("MeanBondLength", &RDKit::MolDraw2DUtils::meanBondLength,
+              (python::arg("mol"), python::arg("confId") = -1),
+              "Calculate the mean bond length for the molecule.");
+  python::def("SetDarkMode",
+              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
+              "set dark mode for a MolDrawOptions object");
+  python::def("SetDarkMode",
+              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
+              "set dark mode for a MolDraw2D object");
+  python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
+              (python::arg("options"), python::arg("fgColour"),
+               python::arg("bgColour")),
+              "set monochrome mode for a MolDrawOptions object");
+  python::def(
+      "SetMonochromeMode", RDKit::setMonochromeMode_helper2,
+      (python::arg("drawer"), python::arg("fgColour"), python::arg("bgColour")),
+      "set monochrome mode for a MolDraw2D object");
 }

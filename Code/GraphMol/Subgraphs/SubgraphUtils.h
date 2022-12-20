@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,11 +8,14 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_SUBGRAPHUTILS_H_
-#define _RD_SUBGRAPHUTILS_H_
+#ifndef RD_SUBGRAPHUTILS_H
+#define RD_SUBGRAPHUTILS_H
 
 #include "Subgraphs.h"
-#include <boost/tuple/tuple.hpp>
+#include <RDGeneral/BoostStartInclude.h>
+#include <tuple>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <cstdint>
 
 namespace RDKit {
@@ -20,8 +23,7 @@ class ROMol;
 
 namespace Subgraphs {
 //! used to return path discriminators (three unsigned ints):
-typedef boost::tuples::tuple<std::uint32_t, std::uint32_t, std::uint32_t>
-    DiscrimTuple;
+typedef std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> DiscrimTuple;
 
 RDKIT_SUBGRAPHS_EXPORT DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,

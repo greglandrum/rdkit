@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
-
 #include <bitset>
 #include <list>
 #include <string>
@@ -20,6 +17,8 @@
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+
 
 #include "CIPLabeler.h"
 #include "Digraph.h"
@@ -334,8 +333,7 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
   CIPLabeler::assignCIPLabels(*mol);
 
   std::string chirality;
-  CHECK(chiral_atom->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-        true);
+  CHECK(chiral_atom->getPropIfPresent(common_properties::_CIPCode, chirality));
   CHECK(chirality == "S");
 }
 
@@ -353,12 +351,10 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
   CIPLabeler::assignCIPLabels(*mol);
 
   std::string chirality;
-  CHECK(bond_1->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-        true);
+  CHECK(bond_1->getPropIfPresent(common_properties::_CIPCode, chirality));
   CHECK(chirality == "E");
 
-  CHECK(bond_2->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-        true);
+  CHECK(bond_2->getPropIfPresent(common_properties::_CIPCode, chirality));
   CHECK(chirality == "Z");
 }
 
@@ -376,7 +372,7 @@ TEST_CASE("phosphine and arsine chirality", "[accurateCIP]") {
 
     std::string chirality;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == ref.second);
   }
 }
@@ -389,8 +385,8 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     auto atom1 = mol->getAtomWithIdx(1);
     auto atom5 = mol->getAtomWithIdx(5);
 
-    REQUIRE(atom1->hasProp(common_properties::_CIPCode) == true);
-    REQUIRE(atom5->hasProp(common_properties::_CIPCode) == true);
+    REQUIRE(atom1->hasProp(common_properties::_CIPCode));
+    REQUIRE(atom5->hasProp(common_properties::_CIPCode));
 
     atom1->clearProp(common_properties::_CIPCode);
     atom5->clearProp(common_properties::_CIPCode);
@@ -401,10 +397,9 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
     std::string chirality;
-    CHECK(atom1->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-          true);
+    CHECK(atom1->getPropIfPresent(common_properties::_CIPCode, chirality));
     CHECK(chirality == "S");
-    CHECK(atom5->hasProp(common_properties::_CIPCode) == false);
+    CHECK(!atom5->hasProp(common_properties::_CIPCode));
   }
   SECTION("Assign bonds") {
     auto mol = R"(C\C=C\C=C/C)"_smiles;
@@ -416,8 +411,8 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     REQUIRE(bond1->getBondType() == Bond::DOUBLE);
     REQUIRE(bond3->getBondType() == Bond::DOUBLE);
 
-    REQUIRE(bond1->hasProp(common_properties::_CIPCode) == false);
-    REQUIRE(bond3->hasProp(common_properties::_CIPCode) == false);
+    REQUIRE(!bond1->hasProp(common_properties::_CIPCode));
+    REQUIRE(!bond3->hasProp(common_properties::_CIPCode));
 
     boost::dynamic_bitset<> atoms;
     boost::dynamic_bitset<> bonds(mol->getNumBonds());
@@ -425,8 +420,8 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
     std::string stereo;
-    CHECK(bond1->hasProp(common_properties::_CIPCode) == false);
-    CHECK(bond3->getPropIfPresent(common_properties::_CIPCode, stereo) == true);
+    CHECK(!bond1->hasProp(common_properties::_CIPCode));
+    CHECK(bond3->getPropIfPresent(common_properties::_CIPCode, stereo));
     CHECK(stereo == "Z");
   }
 }
@@ -440,13 +435,13 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
 
     std::string chirality;
     CHECK(mol->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "R");
     CHECK(mol->getAtomWithIdx(7)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "r");
     CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "S");
   }
   SECTION("example 2") {
@@ -457,13 +452,215 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
 
     std::string chirality;
     CHECK(mol->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "R");
     CHECK(mol->getAtomWithIdx(7)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "r");
     CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
-                                                   chirality) == true);
+                                                   chirality));
     CHECK(chirality == "S");
   }
+}
+
+TEST_CASE(
+    "Github #4996: Bad handling of dummy atoms in the CIP assignment code",
+    "[accurateCIP]") {
+  SECTION("case 1") {
+    auto m = "*[C@](F)(Cl)Br"_smiles;
+    REQUIRE(m);
+    bool cleanit = true;
+    bool force = true;
+    // original assignment:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    CIPLabeler::assignCIPLabels(*m);
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("dummies can match dummies") {
+    auto m = "*[C@](*)(Cl)Br"_smiles;
+    REQUIRE(m);
+    bool cleanit = true;
+    bool force = true;
+    // original assignment:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+
+    CIPLabeler::assignCIPLabels(*m);
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  }
+  SECTION("case 2") {
+    auto m = "C1CC[C@](*)2CCCC[C@H]2C1"_smiles;
+    REQUIRE(m);
+
+    bool cleanit = true;
+    bool force = true;
+    // original assignment doesn't work for these:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    CHECK(!m->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    CHECK(!m->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
+    cip = "";
+    CHECK(m->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
+  }
+}
+
+TEST_CASE("CIP code errors on fragments which cannot be kekulized",
+          "[accurateCIP]") {
+  SECTION("fragment not affecting the stereochem") {
+    auto m = "F[C@H](CNC)CCc(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("fragment, unique bits") {
+    auto m = "F[C@H](C(N)C)c(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+  }
+  SECTION("fragment, non-unique bits") {
+    auto m = "F[C@H]([C]([NH])[CH2])c(:n):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(!m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                  cip));
+  }
+}
+
+TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
+  auto mol = "*C1C[C@H](CCC)[C@@H](C)[C@H](C)C1"_smiles;
+  REQUIRE(mol);
+  CIPLabeler::assignCIPLabels(*mol);
+}
+
+TEST_CASE("CIP timeout test", "[accurateCIP]") {
+std::string molBlock = R"(
+  Mrv2117 11112217353D          
+
+ 40 50  0  0  0  0            999 V2000
+    7.5483   -7.7451   -3.3419 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3984   -5.8792   -3.4318 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3399   -6.5425   -1.9898 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.6820   -3.9425   -1.6474 H   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8163   -7.1034   -1.6635 H   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5722   -4.7343   -0.6304 H   0  0  0  0  0  0  0  0  0  0  0  0
+    7.1701   -7.2380   -0.8890 C   0  0  1  0  0  0  0  0  0  0  0  0
+   11.8300   -6.9765   -2.5544 H   0  0  0  0  0  0  0  0  0  0  0  0
+   10.6631   -7.1690   -1.5375 C   0  0  1  0  0  0  0  0  0  0  0  0
+   11.4077   -9.5239   -2.1472 H   0  0  0  0  0  0  0  0  0  0  0  0
+   11.9006  -10.0139    0.4722 H   0  0  0  0  0  0  0  0  0  0  0  0
+   10.6600   -8.8749    0.2914 C   0  0  2  0  0  0  0  0  0  0  0  0
+   12.5136   -5.9115   -0.4190 H   0  0  0  0  0  0  0  0  0  0  0  0
+   12.5338   -7.8406    1.4379 H   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6981   -8.8654    3.4177 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.4046  -10.6907    1.7143 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3185   -9.3106    0.9700 C   0  0  1  0  0  0  0  0  0  0  0  0
+    7.4958  -10.8075   -0.1783 H   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5552   -7.8780    2.6983 H   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8522   -9.1147    0.4514 H   0  0  0  0  0  0  0  0  0  0  0  0
+    7.1601   -8.2997    0.2353 C   0  0  2  0  0  0  0  0  0  0  0  0
+    7.5774   -7.5989    1.5700 C   0  0  1  0  0  0  0  0  0  0  0  0
+   10.6577   -4.0099    0.1683 H   0  0  0  0  0  0  0  0  0  0  0  0
+   11.0808   -6.4894   -0.1982 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.9123   -5.4699   -0.9424 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.9155   -8.2329    2.0184 C   0  0  2  0  0  0  0  0  0  0  0  0
+   11.0766   -7.5513    0.9147 C   0  0  1  0  0  0  0  0  0  0  0  0
+   10.6780   -6.9857    3.3021 H   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5861   -5.8939   -0.2667 C   0  0  2  0  0  0  0  0  0  0  0  0
+    6.9973   -5.0597    1.9875 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3193   -5.8429    1.5048 C   0  0  2  0  0  0  0  0  0  0  0  0
+    9.4740   -4.7173    2.5743 H   0  0  0  0  0  0  0  0  0  0  0  0
+    9.9809   -7.1457    1.9811 C   0  0  1  0  0  0  0  0  0  0  0  0
+    7.8270   -6.1245    1.2483 C   0  0  2  0  0  0  0  0  0  0  0  0
+   10.0023   -5.4308    0.1366 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.9125   -8.9385   -1.4737 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.2374   -9.3522   -0.1173 C   0  0  1  0  0  0  0  0  0  0  0  0
+   10.4116   -8.6461   -1.2148 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.7726   -9.9758   -2.5047 H   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2577   -7.6250   -1.9478 C   0  0  2  0  0  0  0  0  0  0  0  0
+  1 40  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  9  1  0  0  0  0
+  3 25  1  0  0  0  0
+  3 40  1  0  0  0  0
+  4 25  1  0  0  0  0
+  5  7  1  0  0  0  0
+  6 29  1  0  0  0  0
+  7 21  1  0  0  0  0
+  7 29  1  0  0  0  0
+  7 40  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 24  1  0  0  0  0
+  9 38  1  0  0  0  0
+ 10 38  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 17  1  0  0  0  0
+ 12 27  1  0  0  0  0
+ 12 38  1  0  0  0  0
+ 13 24  1  0  0  0  0
+ 14 27  1  0  0  0  0
+ 15 26  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 26  1  0  0  0  0
+ 17 37  1  0  0  0  0
+ 18 37  1  0  0  0  0
+ 19 22  1  0  0  0  0
+ 20 21  1  0  0  0  0
+ 21 22  1  0  0  0  0
+ 21 37  1  0  0  0  0
+ 22 26  1  0  0  0  0
+ 22 34  1  0  0  0  0
+ 23 35  1  0  0  0  0
+ 24 27  1  0  0  0  0
+ 24 35  1  0  0  0  0
+ 25 29  1  0  0  0  0
+ 25 35  1  0  0  0  0
+ 26 33  1  0  0  0  0
+ 27 33  1  0  0  0  0
+ 28 33  1  0  0  0  0
+ 29 34  1  0  0  0  0
+ 30 34  1  0  0  0  0
+ 31 32  1  0  0  0  0
+ 31 33  1  0  0  0  0
+ 31 35  1  0  0  0  0
+ 31 34  1  0  0  0  0
+ 36 37  1  0  0  0  0
+ 36 38  1  0  0  0  0
+ 36 39  1  0  0  0  0
+ 36 40  1  0  0  0  0
+M  END
+
+  )";
+  
+  auto mol = std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock,true, false));
+  REQUIRE(mol);
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
+
+  // try a second call to test that the timer is reset
+
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
 }

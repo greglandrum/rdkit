@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-
 #include "Subgraphs.h"
 #include "SubgraphUtils.h"
 
@@ -43,7 +42,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
       ROMol::OEDGE_ITER bIt1, end;
       boost::tie(bIt1, end) = mol.getAtomBonds(atom);
       while (bIt1 != end) {
-        const Bond* bond1 = mol[*bIt1];
+        const Bond *bond1 = mol[*bIt1];
         // if this bond connect to a hydrogen and we are not interested
         // in it ignore
         if (useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1) {
@@ -54,7 +53,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
           }
           ROMol::OEDGE_ITER bIt2 = mol.getAtomBonds(atom).first;
           while (bIt2 != end) {
-            const Bond* bond2 = mol[*bIt2];
+            const Bond *bond2 = mol[*bIt2];
             int bid2 = bond2->getIdx();
             if (bid1 != bid2 &&
                 (useHs || bond2->getOtherAtom(atom)->getAtomicNum() != 1)) {
@@ -81,7 +80,7 @@ void recurseWalk(
     // it gets altered through the processand we want
     // fresh start every time we buble back up to "FindAllSubGraphs"
     PATH_LIST &res  // the final list of subgraphs
-    ) {
+) {
   // end case for recursion
   if (spath.size() == targetLen) {
     res.push_back(spath);
@@ -132,7 +131,7 @@ void recurseWalkRange(
     // it gets altered through the processand we want
     // fresh start every time we buble back up to "FindAllSubGraphs"
     INT_PATH_LIST_MAP &res  // the final list of subgraphs
-    ) {
+) {
   unsigned int nsize = spath.size();
   if ((nsize >= lowerLen) && (nsize <= upperLen)) {
     // if (res.find(nsize) == res.end()) {
@@ -279,7 +278,7 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
 
   return res;
 }
-}  // end of Subgraphs namespace
+}  // namespace Subgraphs
 
 PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
                                     bool useHs, int rootedAtAtom) {
@@ -288,10 +287,9 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
     - pathListType is defined as a container of "pathType", should it be a
   container
     of "pointers to pathtype"
-    - to make few things clear it might be useful to typedef a "subgraphListType"
-    even if it is exactly same as the "pathListType", just to not confuse
-  between
-    path vs. subgraph definitions
+    - to make few things clear it might be useful to typedef a
+  "subgraphListType" even if it is exactly same as the "pathListType", just to
+  not confuse between path vs. subgraph definitions
     - To make it consistent with the python version of this function in
   "subgraph.py"
     it return a "list of paths" instead of a "list of list of paths" (see
@@ -507,7 +505,7 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
         continue;
       }
 
-      std::vector<boost::dynamic_bitset<> > invars;
+      std::vector<boost::dynamic_bitset<>> invars;
 
       for (PATH_LIST::const_iterator vivI = atomPaths[i].begin();
            vivI != atomPaths[i].end(); ++vivI) {
@@ -540,21 +538,31 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
                                    rootedAtAtom)[targetLen];
 }
 
-PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                                       unsigned int rootedAtAtom, bool useHs) {
+PATH_TYPE findAtomEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs, bool enforceSize,
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
-
+  if (atomMap) {
+    atomMap->clear();
+  }
   PATH_TYPE res;
-  std::list<std::pair<int, int> > nbrStack;
+  if (atomMap) {
+    (*atomMap)[rootedAtAtom] = 0;
+  }
+  if (radius == 0) {
+    return res;
+  }  // Return empty path if radius=0
+
+  std::list<std::pair<int, int>> nbrStack;
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
   while (beg != end) {
-    const Bond* bond = mol[*beg];
-    if (useHs ||
-        mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
-                ->getAtomicNum() != 1) {
+    const Bond *bond = mol[*beg];
+    if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
+                         ->getAtomicNum() != 1) {
       nbrStack.emplace_back(rootedAtAtom, bond->getIdx());
     }
     ++beg;
@@ -566,7 +574,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
       break;
     }
 
-    std::list<std::pair<int, int> > nextLayer;
+    std::list<std::pair<int, int>> nextLayer;
     while (!nbrStack.empty()) {
       int bondIdx, startAtom;
       boost::tie(startAtom, bondIdx) = nbrStack.front();
@@ -577,30 +585,42 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        while (beg != end) {
-          const Bond* bond = mol[*beg];
-          if (!bondsIn.test(bond->getIdx())) {
-            if (useHs ||
-                mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
-                        ->getAtomicNum() != 1) {
-              nextLayer.emplace_back(oAtom, bond->getIdx());
+        if (atomMap) {
+          if (atomMap->find(oAtom) == atomMap->end()) {
+            (*atomMap)[oAtom] = i + 1;
+          } else {
+            (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), i + 1);
+          }
+        }
+        // if we're going to do another iteration, then push the neighbors from
+        // this round onto the stack
+        if (i < radius - 1) {
+          for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
+            if (!bondsIn.test(bond->getIdx())) {
+              if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
+                                   ->getAtomicNum() != 1) {
+                nextLayer.emplace_back(oAtom, bond->getIdx());
+              }
             }
           }
-          ++beg;
         }
       }
     }
-    nbrStack = nextLayer;
+    nbrStack = std::move(nextLayer);
   }
-  if (i != radius) {
-    // this happens when there are no paths with the requested radius.
-    // return nothing in this case:
+  if (i != radius && enforceSize) {
+    // If there are no paths found with the requested radius, user can choose
+    // whether or not to return nothing in this case. If enforceSize=true, this
+    // is similar to the previous bahviour (return an empty path/vector).
+    // Otherwise, it collect every path within the requested radius. This is
+    // similar to maxPath(mol, res) <= radius.
     res.clear();
     res.resize(0);
+    if (atomMap) {
+      atomMap->clear();
+    }
   }
-
   return res;
 }
 
-}  // end of RDKit namespace
+}  // namespace RDKit

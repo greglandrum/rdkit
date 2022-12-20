@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2020 Greg Landrum
+//  Copyright (C) 2006-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -31,7 +32,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 namespace RDKit {
-namespace {
+namespace details {
 void updateSubMolConfs(const ROMol &mol, RWMol &res,
                        boost::dynamic_bitset<> &removedAtoms) {
   // update conformer information:
@@ -51,6 +52,20 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+}  // namespace details
+
+namespace {
+struct SideChainMapping {
+  int molIndex;
+  int coreIndex;
+  bool useMatch;
+
+  SideChainMapping(int molIndex)
+      : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+  SideChainMapping(int molIndex, int coreIndex, bool useMatch)
+      : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
+};
+
 }  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
@@ -114,20 +129,16 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   }
 
   // now loop over the union list and delete the atoms
-  // Will do this in the decreasing order of the atomIds
-  // this is so that the AtomIds ids in the "delList" are
-  // not invalidated by a previous removal (removing atom number i changes
-  // the atom indices only atoms with indices >i )
-  std::sort(delList.begin(), delList.end());
-
+  res->beginBatchEdit();
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (auto dri = delList.rbegin(); dri != delList.rend(); dri++) {
-    removedAtoms.set(*dri);
-    res->removeAtom(*dri);
+  for (auto idx : delList) {
+    removedAtoms.set(idx);
+    res->removeAtom(idx);
   }
+  res->commitBatchEdit();
   // if we removed any atoms, clear the computed properties:
   if (delList.size()) {
-    updateSubMolConfs(mol, *res, removedAtoms);
+    details::updateSubMolConfs(mol, *res, removedAtoms);
 
     res->clearComputedProps(true);
     // update our properties, but allow unhappiness:
@@ -209,28 +220,31 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
       delList = tmp;
     } else {
       // just delete the atoms now:
-      for (auto dri = sortMatch.rbegin(); dri != sortMatch.rend(); dri++) {
-        removedAtoms.set(*dri);
-        newMol->removeAtom(*dri);
+      newMol->beginBatchEdit();
+      for (auto idx : sortMatch) {
+        removedAtoms.set(idx);
+        newMol->removeAtom(idx);
       }
+      newMol->commitBatchEdit();
     }
   }
 
   if (delList.size()) {
     if (replaceAll) {
       // remove the atoms from the delList:
-      std::sort(delList.begin(), delList.end());
       auto *newMol = static_cast<RWMol *>(res[0].get());
-      for (auto dri = delList.rbegin(); dri != delList.rend(); dri++) {
-        removedAtoms.set(*dri);
-        newMol->removeAtom(*dri);
+      newMol->beginBatchEdit();
+      for (auto idx : delList) {
+        removedAtoms.set(idx);
+        newMol->removeAtom(idx);
       }
+      newMol->commitBatchEdit();
     }
 
     // clear conformers and computed props and do basic updates
     // on the resulting molecules, but allow unhappiness:
     for (auto &re : res) {
-      updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
+      details::updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
       re->clearComputedProps(true);
       re->updatePropertyCache(false);
     }
@@ -255,16 +269,16 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
 
   boost::dynamic_bitset<> matchingIndices(mol.getNumAtoms());
   for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); mvit++) {
+       mvit != matchV.end(); ++mvit) {
     matchingIndices[mvit->second] = 1;
   }
-  std::vector<Atom *> keepList;
 
   auto *newMol = new RWMol(mol);
-  unsigned int nDummies = 0;
+  boost::dynamic_bitset<> keepSet(newMol->getNumAtoms());
+  std::vector<unsigned int> dummyIndices;
   for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); mvit++) {
-    keepList.push_back(newMol->getAtomWithIdx(mvit->second));
+       mvit != matchV.end(); ++mvit) {
+    keepSet.set(mvit->second);
     // if the atom in the molecule has higher degree than the atom in the
     // core, we have an attachment point:
     if (newMol->getAtomWithIdx(mvit->second)->getDegree() >
@@ -276,32 +290,46 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
         if (!matchingIndices[*nbrIdx]) {
           // this neighbor isn't in the match, convert it to a dummy atom and
           // save it
+          keepSet.set(*nbrIdx);
+          dummyIndices.push_back(*nbrIdx);
           Atom *at = newMol->getAtomWithIdx(*nbrIdx);
+          Bond *b = newMol->getBondBetweenAtoms(mvit->second, *nbrIdx);
+          if (b) {
+            b->setIsAromatic(false);
+            b->setBondType(Bond::SINGLE);
+          }
           at->setAtomicNum(0);
-          ++nDummies;
-          at->setIsotope(nDummies);
-          keepList.push_back(at);
+          at->setNumExplicitHs(0);
+          at->setIsAromatic(false);
+          at->setIsotope(dummyIndices.size());
         }
-        nbrIdx++;
+        ++nbrIdx;
       }
     }
   }
-  std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (RWMol::AtomIterator atIt = newMol->beginAtoms();
-       atIt != newMol->endAtoms(); atIt++) {
-    Atom *tmp = *atIt;
-    if (std::find(keepList.begin(), keepList.end(), tmp) == keepList.end()) {
-      delList.push_back(tmp);
-      removedAtoms.set(tmp->getIdx());
+  newMol->beginBatchEdit();
+  for (const auto at : newMol->atoms()) {
+    if (!keepSet.test(at->getIdx())) {
+      newMol->removeAtom(at);
+      removedAtoms.set(at->getIdx());
     }
   }
-  for (std::vector<Atom *>::const_iterator delIt = delList.begin();
-       delIt != delList.end(); delIt++) {
-    newMol->removeAtom(*delIt);
+  // Remove bonds between newly added dummies (if any)
+  if (dummyIndices.size() > 1) {
+    for (size_t i = 0; i < dummyIndices.size() - 1; ++i) {
+      for (size_t j = i + 1; j < dummyIndices.size(); ++j) {
+        const auto b =
+            newMol->getBondBetweenAtoms(dummyIndices.at(i), dummyIndices.at(j));
+        if (b) {
+          newMol->removeBond(dummyIndices.at(i), dummyIndices.at(j));
+        }
+      }
+    }
   }
+  newMol->commitBatchEdit();
 
-  updateSubMolConfs(mol, *newMol, removedAtoms);
+  details::updateSubMolConfs(mol, *newMol, removedAtoms);
 
   // clear computed props and do basic updates on the
   // the resulting molecule, but allow unhappiness:
@@ -330,12 +358,81 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
                      requireDummyMatch);
 }
 
+namespace {
+const std::string replaceCoreDummyBond = "_replaceCoreDummyBond";
+
+int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
+                const boost::dynamic_bitset<> &removedAtoms) {
+  int res = -1;
+  for (const auto nbrBond : mol.atomBonds(bondAtom)) {
+    if (nbrBond != bond &&
+        (nbrBond->hasProp(replaceCoreDummyBond) ||
+         (!removedAtoms[nbrBond->getOtherAtomIdx(bondAtom->getIdx())] &&
+          std::find(bring.begin(), bring.end(), nbrBond->getIdx()) !=
+              bring.end()))) {
+      res = nbrBond->getOtherAtomIdx(bondAtom->getIdx());
+      break;
+    }
+  }
+  return res;
+}
+
+void setSubMolBrokenRingStereo(RWMol &mol,
+                               const boost::dynamic_bitset<> &removedAtoms) {
+  PRECONDITION(mol.getRingInfo() && mol.getRingInfo()->isInitialized(),
+               "bad ringinfo");
+
+  for (const auto &bring : mol.getRingInfo()->bondRings()) {
+    // check whether or not this bond ring is affected by the removal
+    if (std::find_if(bring.begin(), bring.end(),
+                     [&mol, &removedAtoms](auto idx) {
+                       const auto bond = mol.getBondWithIdx(idx);
+                       return removedAtoms[bond->getBeginAtomIdx()] ||
+                              removedAtoms[bond->getEndAtomIdx()];
+                     }) != bring.end()) {
+      for (auto bidx : bring) {
+        const auto bond = mol.getBondWithIdx(bidx);
+        // is this a bond we can reasonably set cis/trans for and where neither
+        // atom is being removed?
+        if ((bond->getIsAromatic() ||
+             bond->getBondType() == Bond::BondType::DOUBLE) &&
+            bond->getStereo() == Bond::BondStereo::STEREONONE &&
+            mol.getRingInfo()->minBondRingSize(bond->getIdx()) <
+                Chirality::minRingSizeForDoubleBondStereo &&
+            !removedAtoms[bond->getBeginAtomIdx()] &&
+            !removedAtoms[bond->getEndAtomIdx()]) {
+          // find the two neighboring bonds which are in the ring or to the
+          // newly added dummy atoms. Make sure they aren't affected by the atom
+          // removal
+          int beginAtomNbrIdx =
+              findNbrBond(mol, bond, bond->getBeginAtom(), bring, removedAtoms);
+          if (beginAtomNbrIdx >= 0) {
+            int endAtomNbrIdx =
+                findNbrBond(mol, bond, bond->getEndAtom(), bring, removedAtoms);
+            if (endAtomNbrIdx >= 0) {
+              // we can set stereo on the bond
+              bond->setStereoAtoms(beginAtomNbrIdx, endAtomNbrIdx);
+              bond->setStereo(Bond::BondStereo::STEREOCIS);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
 ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                    const MatchVectType &matchV, bool replaceDummies,
                    bool labelByIndex, bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
+  std::vector<std::pair<int, SideChainMapping>> matches;
+  matches.reserve(origNumAtoms);
+
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
+  boost::dynamic_bitset<> molAtomsMapped(origNumAtoms);
+  boost::dynamic_bitset<> multipleMappedMolAtoms(origNumAtoms);
   for (const auto &mvit : matchV) {
     if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
@@ -345,41 +442,81 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       throw ValueErrorException(
           "Supplied MatchVect indices out of bounds of the target molecule");
     }
-
+    bool useMatch = false;
     if (replaceDummies || core.getAtomWithIdx(mvit.first)->getAtomicNum() > 0) {
       matchingIndices[mvit.second] = mvit.first;
+      useMatch = true;
     }
     allIndices[mvit.second] = mvit.first;
+    SideChainMapping mapping(mvit.second, mvit.first, useMatch);
+    matches.emplace_back(mvit.second, mapping);
+    if (molAtomsMapped[mvit.second]) {
+      multipleMappedMolAtoms.set(mvit.second);
+    }
+    molAtomsMapped.set(mvit.second);
+  }
+
+  boost::dynamic_bitset<> multipleOwnedBonds(mol.getNumBonds());
+  if (multipleMappedMolAtoms.any()) {
+    for (const auto &match : matches) {
+      const auto &mappingInfo = match.second;
+      if (multipleMappedMolAtoms[mappingInfo.molIndex]) {
+        auto coreAtom = core.getAtomWithIdx(mappingInfo.coreIndex);
+        CHECK_INVARIANT(
+            coreAtom->getDegree() == 1,
+            "Multiple core atoms match a mol atom, but one of the core "
+            "atoms has degree > 1 ");
+        auto coreNeighborIdx =
+            core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
+        auto molNeighborIdx =
+            std::find_if(matchV.cbegin(), matchV.cend(),
+                         [coreNeighborIdx](std::pair<int, int> p) {
+                           return p.first == static_cast<int>(coreNeighborIdx);
+                         })
+                ->second;
+        if (molNeighborIdx > -1) {
+          auto connectingBond =
+              mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
+          CHECK_INVARIANT(connectingBond,
+                          "expected bond in molecule not found");
+          multipleOwnedBonds.set(connectingBond->getIdx());
+        }
+      }
+    }
   }
 
   auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
-  std::map<int, Atom *> dummyAtomMap;
+  std::map<Atom *, int> dummyAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
-  std::vector<std::pair<int, int>> matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
-    int queryatom = allIndices[i];
-    matchorder_atomidx.emplace_back(queryatom, i);
+    if (!molAtomsMapped[i]) {
+      SideChainMapping mapping(i);
+      matches.emplace_back(i, mapping);
+    }
   }
 
-  std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
+  std::sort(matches.begin(), matches.end(),
+            [](const std::pair<int, SideChainMapping> &p1,
+               const std::pair<int, SideChainMapping> &p2) {
+              if (p1.second.coreIndex == p2.second.coreIndex) {
+                return p1.first < p2.first;
+              }
+              return p1.second.coreIndex < p2.second.coreIndex;
+            });
   std::vector<std::pair<int, Atom *>> dummies;
 
-  for (unsigned int j = 0; j < origNumAtoms; ++j) {
-    auto i = (unsigned)matchorder_atomidx[j].second;
+  std::list<Bond *> allNewBonds;
+  for (const auto &match : matches) {
+    const auto &mappingInfo = match.second;
 
-    if (matchingIndices[i] == -1) {
-      Atom *sidechainAtom = newMol->getAtomWithIdx(i);
+    if (!mappingInfo.useMatch) {
+      Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
-      int mapping = -1;
-      // if we were not in the matching list, still keep
-      //  the original indices (replaceDummies=False)
-      if (allIndices[i] != -1) {
-        mapping = allIndices[i];
-      }
+
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
       ROMol::ADJ_ITER nbrIter, endNbrs;
@@ -396,8 +533,25 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       for (std::list<unsigned int>::const_iterator lIter = nbrList.begin();
            lIter != nbrList.end(); ++lIter) {
         unsigned int nbrIdx = *lIter;
-        Bond *connectingBond = newMol->getBondBetweenAtoms(i, nbrIdx);
-        if (matchingIndices[nbrIdx] > -1) {
+        Bond *connectingBond =
+            newMol->getBondBetweenAtoms(mappingInfo.molIndex, nbrIdx);
+        bool bondToCore = matchingIndices[nbrIdx] > -1;
+        auto coreBond =
+            bondToCore && allIndices[nbrIdx] > -1 && mappingInfo.coreIndex > -1
+                ? core.getBondBetweenAtoms(mappingInfo.coreIndex,
+                                           allIndices[nbrIdx])
+                : nullptr;
+        if (bondToCore && multipleMappedMolAtoms[mappingInfo.molIndex] &&
+            mappingInfo.coreIndex > -1) {
+          // The core has multiple atoms that map onto this mol atom - check we
+          // have matched correct core bond.
+          // Otherwise we can use this bond only if nobody else owns it.
+          if (coreBond == nullptr &&
+              multipleOwnedBonds[connectingBond->getIdx()]) {
+            bondToCore = false;
+          }
+        }
+        if (bondToCore) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
               core.getAtomWithIdx(matchingIndices[nbrIdx])->getAtomicNum() !=
@@ -407,7 +561,15 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
           auto *newAt = new Atom(0);
 
-          // we want to order the dummies int the same orders as
+          // if we were not in the matching list, still keep
+          //  the original indices (replaceDummies=False)
+          int mapping = mappingInfo.coreIndex;
+          // If we don't have a core bond, the label belongs to the neighbor
+          if (coreBond == nullptr) {
+            mapping = allIndices[nbrIdx];
+          }
+
+          // we want to order the dummies in the same orders as
           //  the mappings, if not labelling by Index they are in arbitrary
           //  order
           //  right now so save and sort later.
@@ -418,15 +580,17 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
 
           newMol->addAtom(newAt, false, true);
-          dummyAtomMap[nbrIdx] = newAt;
+          dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          if (bnd->getBeginAtomIdx() == i) {
+          if (bnd->getBeginAtomIdx() ==
+              static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
           } else {
             bnd->setBeginAtomIdx(newAt->getIdx());
           }
           newBonds.push_back(bnd);
+          allNewBonds.push_back(bnd);
 
           // we may be changing the bond ordering at the atom.
           // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of
@@ -466,12 +630,17 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             if (switchIt) {
               sidechainAtom->invertChirality();
             }
+            // the neighbor count needs to be decremented, in case an additional
+            // bond to the core is present at this chiral center (unlikely!),
+            // because this bond will now be at the end of the neighbor list.
+            --whichNbr;
           }
         }
         ++whichNbr;
       }
       // add the bonds now, after we've finished the loop over neighbors:
       for (auto &newBond : newBonds) {
+        newBond->setProp(replaceCoreDummyBond, 1);
         newMol->addBond(newBond, true);
       }
     }
@@ -492,36 +661,63 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (RWMol::AtomIterator atIt = newMol->beginAtoms();
-       atIt != newMol->endAtoms(); atIt++) {
-    Atom *tmp = *atIt;
-    if (std::find(keepList.begin(), keepList.end(), tmp) == keepList.end()) {
-      delList.push_back(tmp);
-      removedAtoms.set(tmp->getIdx());
+  bool removedRingAtom = false;
+  newMol->beginBatchEdit();
+  for (const auto at : newMol->atoms()) {
+    if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
+      newMol->removeAtom(at);
+      removedAtoms.set(at->getIdx());
+      if (!removedRingAtom && mol.getRingInfo() &&
+          mol.getRingInfo()->isInitialized() &&
+          mol.getRingInfo()->numAtomRings(at->getIdx())) {
+        removedRingAtom = true;
+      }
     }
   }
-  for (std::vector<Atom *>::const_iterator delIt = delList.begin();
-       delIt != delList.end(); delIt++) {
-    newMol->removeAtom(*delIt);
-  }
-
-  updateSubMolConfs(mol, *newMol, removedAtoms);
-
-  // make a guess at the position of the dummy atoms showing the attachment
-  // point:
-  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-       ++citer) {
-    Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (std::map<int, Atom *>::const_iterator iter = dummyAtomMap.begin();
-         iter != dummyAtomMap.end(); ++iter) {
-      newConf.setAtomPos(iter->second->getIdx(),
-                         (*citer)->getAtomPos(iter->first));
+  if (removedRingAtom) {
+    setSubMolBrokenRingStereo(*newMol, removedAtoms);
+    for (auto bond : newMol->bonds()) {
+      bond->clearProp(replaceCoreDummyBond);
     }
   }
-  // clear computed props and do basic updates on
-  // the resulting molecule, but allow unhappiness:
-  newMol->clearComputedProps(true);
-  newMol->updatePropertyCache(false);
+  newMol->commitBatchEdit();
+
+  details::updateSubMolConfs(mol, *newMol, removedAtoms);
+
+  // Update any terminal dummy atom coordinates after removing atoms not in the
+  // keeplist and calling updateSubMolConfs
+  for (auto &newBond : allNewBonds) {
+    auto beginAtom = newBond->getBeginAtom();
+    auto endAtom = newBond->getEndAtom();
+    CHECK_INVARIANT(beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
+                    "neither atom has degree one");
+    if (newMol->getNumConformers()) {
+      if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
+        MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
+                                      beginAtom->getIdx());
+      } else {
+        MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
+                                      endAtom->getIdx());
+      }
+    }
+
+    // make a guess at the position of the dummy atoms showing the attachment
+    // point:
+    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+         ++citer) {
+      Conformer &newConf = newMol->getConformer((*citer)->getId());
+      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
+           ++iter) {
+        newConf.setAtomPos(iter->first->getIdx(),
+                           (*citer)->getAtomPos(iter->second));
+      }
+    }
+
+    // clear computed props and do basic updates on
+    // the resulting molecule, but allow unhappiness:
+    newMol->clearComputedProps(true);
+    newMol->updatePropertyCache(false);
+  }
 
   return static_cast<ROMol *>(newMol);
 }
@@ -568,17 +764,14 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   }
 
   boost::dynamic_bitset<> removedAtoms(nAtoms);
-  std::vector<Atom *> atomsToRemove;
+  res->beginBatchEdit();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (!keepAtoms[i]) {
       Atom *atom = res->getAtomWithIdx(i);
       bool removeIt = true;
 
       // check if the atom has a neighboring keeper:
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = res->getAtomNeighbors(atom);
-      while (nbrIdx != endNbrs) {
-        Atom *nbr = (*res)[*nbrIdx];
+      for (auto nbr : res->atomNeighbors(atom)) {
         if (keepAtoms[nbr->getIdx()]) {
           if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
                   ->getBondType() == Bond::DOUBLE) {
@@ -598,21 +791,17 @@ ROMol *MurckoDecompose(const ROMol &mol) {
             nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
           }
         }
-        ++nbrIdx;
       }
 
       if (removeIt) {
-        atomsToRemove.push_back(atom);
+        res->removeAtom(atom);
         removedAtoms.set(atom->getIdx());
       }
     }
   }
+  res->commitBatchEdit();
 
-  for (std::vector<Atom *>::const_iterator atomIt = atomsToRemove.begin();
-       atomIt != atomsToRemove.end(); ++atomIt) {
-    res->removeAtom(*atomIt);
-  }
-  updateSubMolConfs(mol, *res, removedAtoms);
+  details::updateSubMolConfs(mol, *res, removedAtoms);
   res->clearComputedProps();
 
   return (ROMol *)res;

@@ -207,7 +207,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT ROMol *combineMols(
     RDGeom::Point3D offset = RDGeom::Point3D(0, 0, 0));
 
 //! \brief Adds named recursive queries to a molecule's atoms based on atom
-// labels
+/// labels
 //!
 /*!
 
@@ -259,12 +259,18 @@ RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefFile(
     const std::string &comment = "//", unsigned int nameColumn = 0,
     unsigned int smartsColumn = 1);
 //! \brief equivalent to parseQueryDefFile() but the query definitions are
-// explicitly passed in
+/// explicitly passed in
 RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefText(
     const std::string &queryDefText,
     std::map<std::string, ROMOL_SPTR> &queryDefs, bool standardize = true,
     const std::string &delimiter = "\t", const std::string &comment = "//",
     unsigned int nameColumn = 0, unsigned int smartsColumn = 1);
-}  // namespace RDKit
 
+namespace details {
+//! not recommended for use in other code
+RDKIT_CHEMTRANSFORMS_EXPORT void updateSubMolConfs(
+    const ROMol &mol, RWMol &res, boost::dynamic_bitset<> &removedAtoms);
+}  // namespace details
+
+}  // namespace RDKit
 #endif

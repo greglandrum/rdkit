@@ -65,12 +65,8 @@ static bool IsBlacklistedAtom(Atom *atom) {
   // blacklist metals, noble gasses and halogens
   int elem = atom->getAtomicNum();
   // make an inverse query (non-metals and metaloids)
-  if ((5 <= elem && elem <= 8) || (14 <= elem && elem <= 16) ||
-      (32 <= elem && elem <= 34) || (51 <= elem && elem <= 52)) {
-    return false;
-  } else {
-    return true;
-  }
+  return !((5 <= elem && elem <= 8) || (14 <= elem && elem <= 16) ||
+           (32 <= elem && elem <= 34) || (51 <= elem && elem <= 52));
 }
 
 bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom) {
@@ -263,8 +259,10 @@ void ConnectTheDots(RWMol *mol, unsigned int flags) {
 }
 
 // These are macros to allow their use in C++ constants
-constexpr int BCNAM(char A, char B, char C) { return (A << 16) | (B << 8) | C; }
-constexpr int BCATM(char A, char B, char C, char D) {
+constexpr unsigned BCNAM(char A, char B, char C) {
+  return (A << 16) | (B << 8) | C;
+}
+constexpr unsigned BCATM(char A, char B, char C, char D) {
   return (A << 24) | (B << 16) | (C << 8) | D;
 }
 
@@ -277,6 +275,7 @@ static bool StandardPDBDoubleBond(unsigned int rescode, unsigned int atm1,
   }
 
   switch (rescode) {
+    case BCNAM('A', 'C', 'E'):
     case BCNAM('A', 'L', 'A'):
     case BCNAM('C', 'Y', 'S'):
     case BCNAM('G', 'L', 'Y'):

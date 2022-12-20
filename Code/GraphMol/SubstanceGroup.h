@@ -17,6 +17,8 @@
 #ifndef _RD_SGROUP_H
 #define _RD_SGROUP_H
 
+#include <iostream>
+#include <utility>
 #include <unordered_map>
 
 #include <Geometry/point.h>
@@ -35,9 +37,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroupException
     : public std::runtime_error {
  public:
   //! construct with an error message
-  SubstanceGroupException(const char *msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const char *msg) : std::runtime_error(msg) {}
   //! construct with an error message
-  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 //! The class for representing SubstanceGroups
@@ -82,11 +84,12 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     }
   };
 
-  //! No default constructor
-  #ifndef SWIG
-   // Unfortunately, SWIG generated wrapper code uses temporary variables that require a default ctor not be deleted.
-   SubstanceGroup() = delete;
-  #endif // !SWIG
+//! No default constructor
+#ifndef SWIG
+  // Unfortunately, SWIG generated wrapper code uses temporary variables that
+  // require a default ctor not be deleted.
+  SubstanceGroup() = delete;
+#endif  // !SWIG
 
   //! Main Constructor. Ownership is only set on this side of the relationship:
   //! mol->addSubstanceGroup(sgroup) still needs to be called to get ownership
@@ -94,16 +97,38 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup(ROMol *owning_mol, const std::string &type);
 
   SubstanceGroup(const SubstanceGroup &other) = default;
-  SubstanceGroup(SubstanceGroup &&other) = default;
-
   SubstanceGroup &operator=(const SubstanceGroup &other) = default;
-  SubstanceGroup &operator=(SubstanceGroup &&other) = default;
+
+  SubstanceGroup(SubstanceGroup &&other) noexcept : RDProps(std::move(other)) {
+    dp_mol = std::exchange(other.dp_mol, nullptr);
+    d_atoms = std::move(other.d_atoms);
+    d_patoms = std::move(other.d_patoms);
+    d_bonds = std::move(other.d_bonds);
+    d_brackets = std::move(other.d_brackets);
+    d_cstates = std::move(other.d_cstates);
+    d_saps = std::move(other.d_saps);
+  }
+
+  SubstanceGroup &operator=(SubstanceGroup &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    RDProps::operator=(std::move(other));
+    dp_mol = std::exchange(other.dp_mol, nullptr);
+    d_atoms = std::move(other.d_atoms);
+    d_patoms = std::move(other.d_patoms);
+    d_bonds = std::move(other.d_bonds);
+    d_brackets = std::move(other.d_brackets);
+    d_cstates = std::move(other.d_cstates);
+    d_saps = std::move(other.d_saps);
+    return *this;
+  }
 
   //! Destructor
-  ~SubstanceGroup(){};
+  ~SubstanceGroup() = default;
 
   //! returns whether or not this belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; };
+  bool hasOwningMol() const { return dp_mol != nullptr; }
 
   //! Get the molecule that owns this instance
   ROMol &getOwningMol() const {
@@ -111,8 +136,15 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     return *dp_mol;
   }
 
+  //! returns whether or not this group is valid; invalid groups must be
+  //! ignored.
+  bool getIsValid() const { return d_isValid; }
+
+  //! set whether or not this group is valid; invalid groups must be ignored.
+  void setIsValid(bool isValid) { d_isValid = isValid; }
+
   //! get the index of this sgroup in dp_mol's sgroups vector
-  //! (do not mistake this by the ID!)00
+  //! (do not mistake this by the ID!)
   unsigned int getIndexInMol() const;
 
   /* Atom and Bond methods */
@@ -122,6 +154,12 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   void addAtomWithBookmark(int mark);
   void addParentAtomWithBookmark(int mark);
   void addBondWithBookmark(int mark);
+
+  // These methods should be handled with care, since they can leave
+  // Attachment points and CStates in an invalid state!
+  void removeAtomWithIdx(unsigned int idx);
+  void removeParentAtomWithIdx(unsigned int idx);
+  void removeBondWithIdx(unsigned int idx);
 
   void addBracket(const Bracket &bracket);
   void addCState(unsigned int bondIdx, const RDGeom::Point3D &vector);
@@ -133,9 +171,23 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
+  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
+  void setParentAtoms(std::vector<unsigned int> patoms) {
+    d_patoms = std::move(patoms);
+  }
+  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
+
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
+
+  std::vector<Bracket> &getBrackets() { return d_brackets; }
+  std::vector<CState> &getCStates() { return d_cstates; }
+  std::vector<AttachPoint> &getAttachPoints() { return d_saps; }
+
+  void clearBrackets() { d_brackets.clear(); }
+  void clearCStates() { d_cstates.clear(); }
+  void clearAttachPoints() { d_saps.clear(); }
 
   //! adjusts our atom IDs to reflect that an atom has been removed from the
   //! parent molecule
@@ -177,6 +229,8 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
  private:
   ROMol *dp_mol = nullptr;  // owning molecule
 
+  bool d_isValid = true;
+
   std::vector<unsigned int> d_atoms;
   std::vector<unsigned int> d_patoms;
   std::vector<unsigned int> d_bonds;
@@ -184,7 +238,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   std::vector<Bracket> d_brackets;
   std::vector<CState> d_cstates;
   std::vector<AttachPoint> d_saps;
-};
+};  // namespace RDKit
 
 namespace SubstanceGroupChecks {
 
@@ -211,7 +265,7 @@ RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
 }  // namespace SubstanceGroupChecks
 
 //! \name SubstanceGroups and molecules
-//@{
+//! @{
 
 RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
     ROMol &mol);
@@ -240,7 +294,7 @@ RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
     RWMol &mol, unsigned int idx);
-//@}
+//! @}
 
 }  // namespace RDKit
 

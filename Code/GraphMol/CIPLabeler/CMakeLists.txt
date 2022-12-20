@@ -25,23 +25,22 @@ rdkit_library(CIPLabeler
 target_compile_definitions(CIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
 
 rdkit_headers(CIPLabeler.h
+              TooManyNodesException.h
               DEST CIPLabeler)
 
-rdkit_catch_test(testCIPLabeler catch_tests.cpp
+rdkit_catch_test(testCIPLabeler catch_tests.cpp 
                  CIPMol.cpp CIPLabeler.cpp
                  Mancude.cpp Digraph.cpp Node.cpp Edge.cpp Sort.cpp
                  ${configs_src} ${rules_src}
-                 LINK_LIBRARIES SmilesParse GraphMol)
+                 LINK_LIBRARIES SmilesParse GraphMol FileParsers)
+
+# Set the BUILD macro to keep dll linkage consistency, since, in order
+# to test private, unexported functions, we are building the test from
+# sources, and NOT linking to the lib.
+if(RDK_BUILD_CPP_TESTS)
+    target_compile_definitions(testCIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
+endif()
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
-
-
-
-
-
-
-
-
-

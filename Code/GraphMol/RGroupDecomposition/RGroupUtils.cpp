@@ -8,9 +8,11 @@
 //  of the RDKit source tree.
 //
 #include "RGroupUtils.h"
+#include <boost/format.hpp>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
-namespace RDKit
-{
+namespace RDKit {
 std::string labellingToString(Labelling type) {
   switch (type) {
     case Labelling::RGROUP_LABELS:
@@ -75,9 +77,9 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
     if (labels.find(label) != labels.end()) {
       if (relabel) {
         if (type == Labelling::INTERNAL_LABELS) {
-          std::cerr << "WARNING:  relabelling existing label" << std::endl;
+          BOOST_LOG(rdWarningLog) << "Relabelling existing label" << std::endl;
         }
-        label = maxLabel + 1;
+        label = maxLabel;
       } else {
         // XXX FIX me - get label id
         throw ValueErrorException(
@@ -87,11 +89,41 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
     }
 
     atom->setProp<int>(RLABEL, label);
+    atom->setProp<int>(RLABEL_TYPE, static_cast<int>(type));
     labels.insert(label);
-    maxLabel = label + 1;
+    maxLabel = (std::max)(maxLabel, label + 1);
     return true;
   }
   return false;
+}
+
+bool isUserRLabel(const Atom &atom) {
+  return atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
+         static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=
+             Labelling::INDEX_LABELS;
+}
+
+bool isDummyRGroupAttachment(const Atom &atom) {
+  if (atom.getAtomicNum() != 0 || atom.getDegree() != 1) {
+    return false;
+  }
+  if (isUserRLabel(atom)) {
+    return true;
+  }
+  bool unlabeled_core_attachment = false;
+  if (atom.getPropIfPresent(UNLABELED_CORE_ATTACHMENT,
+                            unlabeled_core_attachment) &&
+      unlabeled_core_attachment) {
+    return true;
+  }
+  return false;
+}
+
+bool isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(const Atom &atom) {
+  if (atom.getDegree() > 1) {
+    return true;
+  }
+  return !isDummyRGroupAttachment(atom);
 }
 
 bool hasDummy(const RWMol &core) {
@@ -103,5 +135,77 @@ bool hasDummy(const RWMol &core) {
   }
   return false;
 }
+
+namespace {
+std::string MolToText(const ROMol &mol) {
+  bool hasQuery = false;
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasQuery() && atom->getQuery()->getDescription() != "AtomNull") {
+      hasQuery = true;
+      break;
+    }
+  }
+  if (!hasQuery) {
+    for (const auto bond : mol.bonds()) {
+      if (bond->hasQuery()) {
+        hasQuery = true;
+        break;
+      }
+    }
+  }
+  if (!hasQuery) {
+    return MolToSmiles(mol);
+  } else {
+    return MolToSmarts(mol);
+  }
+}
 }  // namespace
 
+std::string toJSON(const RGroupRow &rgr, const std::string &prefix) {
+  std::string res = prefix + "{\n";
+  for (const auto &elem : rgr) {
+    auto fmt = boost::format{"  \"%1%\":\"%2%\""} % (elem.first) %
+               (MolToText(*elem.second));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "}";
+  return res;
+}
+
+std::string toJSON(const RGroupRows &rows, const std::string &prefix) {
+  std::string res = prefix + "[\n";
+  auto rowPrefix = prefix + "  ";
+  for (const auto &row : rows) {
+    res += toJSON(row, rowPrefix) + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+std::string toJSON(const RGroupColumn &rgr, const std::string &prefix) {
+  std::string res = "[\n";
+  for (const auto &elem : rgr) {
+    auto fmt = boost::format{"  \"%1%\""} % (MolToText(*elem));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+std::string toJSON(const RGroupColumns &cols, const std::string &prefix) {
+  std::string res = prefix + "[\n";
+  auto colPrefix = prefix + "  ";
+  for (const auto &col : cols) {
+    auto fmt = boost::format{"  \"%1%\": %2%"} % (col.first) %
+               (toJSON(col.second, colPrefix));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+}  // namespace RDKit

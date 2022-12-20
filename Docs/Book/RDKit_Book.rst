@@ -22,6 +22,15 @@ An aromatic bond must be between aromatic atoms, but a bond between aromatic ato
 
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
+
 .. image:: images/picture_9.png
 
 .. doctest::
@@ -224,10 +233,16 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
-CXSMILES extensions
--------------------
+Quadruple bonds
+---------------
 
-The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_.
+The token ``$`` can be used to represent quadruple bonds in SMILES and SMARTS.
+
+
+CXSMILES/CXSMARTS extensions
+----------------------------
+
+The RDKit supports parsing and writing a subset of the extended SMILES/SMARTS functionality introduced by ChemAxon [#cxsmiles]_.
 
 The features which are parsed include:
 
@@ -240,13 +255,20 @@ The features which are parsed include:
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
-- multi-center attachments ``m``
+- variable/multi-center attachments ``m``
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- wedged bonds (only when atomic coordinates are present): ``wU``, ``wD``
+- wiggly bonds ``w``
+- double bond stereo (only for ring bonds) ``c``, ``t``, ``ctu``
+- SGroup Data ``SgD``
+- polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
-The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
-(note the specialized writer function) include:
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
+:py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
+(note the specialized writer functions) include:
 
 - atomic coordinates
 - atomic values
@@ -254,6 +276,13 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
+- linknodes
+- wedged bonds (only when atomic coordinates are also written) 
+- wiggly bonds
+- double bond stereo (only for ring bonds)
+- SGroup Data
+- polymer SGroups
+- SGroup Hierarchy
 
 .. doctest::
 
@@ -266,6 +295,60 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> Chem.MolToCXSmiles(m)
   'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
+Reading molecule names
+----------------------
+
+If the SMILES/SMARTS and the optional CXSMILES extensions are followed by whitespace and another string, the SMILES/SMARTS parsers will interpret this as the molecule name:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO carbon monoxide')
+  >>> m.GetProp('_Name')
+  'carbon monoxide'
+  >>> m2 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide')
+  >>> m2.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+  >>> m2.GetProp('_Name')
+  'carbon monoxide'
+
+This can be disabled while still parsing the CXSMILES:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.parseName = False
+  >>> m3 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m3.HasProp('_Name')
+  0
+  >>> m3.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+
+
+Note that if you disable CXSMILES parsing but pass in a string which includes CXSMILES it will be interpreted as (part of) the name:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> m4 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m4.GetProp('_Name')
+  '|$C2;O1$| carbon monoxide'
+
+
+Finally, if you disable parsing of both CXSMILES and names, then extra text in the SMILES/SMARTS string will result in errors:
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> ps.parseName = False
+  >>> m5 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m5 is None
+  True
+  >>> m5 = Chem.MolFromSmiles('CO carbon monoxide',ps)
+  >>> m5 is None
+  True
+
+The examples in this sectin all used the SMILES parser, but the SMARTS parser behaves the same way.
 
 SMARTS Support and Extensions
 =============================
@@ -454,14 +537,15 @@ Stereochemistry
 Types of stereochemistry supported
 ----------------------------------
 
-The RDKit currently supports tetrahedral atomic stereochemistry and cis/trans
-stereochemistry at double bonds. We plan to add support for additional types of
-stereochemistry in the future.
+The RDKit currently fully supports tetrahedral atomic stereochemistry and
+cis/trans stereochemistry at double bonds. There is partial support for
+non-tetrahedral stereochemistry, see the section :ref:`Non-tetrahedral-stereo`.
 
 Identification of potential stereoatoms/stereobonds
 ---------------------------------------------------
 
-As of the 2020.09 release the RDKit has two different ways of identifying potential stereoatoms/stereobonds:
+As of the 2020.09 release the RDKit has two different ways of identifying
+potential stereoatoms/stereobonds:
 
    1. The legacy approach: ``AssignStereochemistry()``.
       This approach does a reasonable job of recognizing potential
@@ -518,7 +602,8 @@ The definitions of potential stereogenic atoms or bonds is inspired by the InChI
 Stereogenic bonds
 ^^^^^^^^^^^^^^^^^
 
-A double bond is potentially stereogenic if both atoms have at least two heavy atom neighbors.
+A double bond is potentially stereogenic if both atoms have at least two heavy
+atom neighbors and it's not present in a ring with less than eight atoms.
 
 .. |psdb1| image:: images/potential_stereo_double_bond1.png
    :align: middle
@@ -544,8 +629,10 @@ The following atom types are potential tetrahedral stereogenic atoms:
   - atoms with degree 4
   - atoms with degree 3 and one implicit H
   - P or As with degree 3 or 4
-  - N with degree 3 which is in a ring of size 3
-  - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a net charge of +1.
+  - N with degree 3 which is in a ring of size 3 or which is shared between at
+    least 3 rings (this last condition is an extension to the InChI rules) 
+  - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a
+    net charge of +1.
 
 
 Brief description of the ``findPotentialStereo()`` algorithm
@@ -571,10 +658,325 @@ Brief description of the ``findPotentialStereo()`` algorithm
    7. If steps 5 and 6 modfied any atoms or bonds, loop back to step 4. 
    8. Add any potential stereogenic atom which does not have to identically 
       ranked neighbors to the results 
-   9. Add any potential stereogenic atom which does not have to identically
+   9. Add any potential stereogenic atom which does not have two identically
       ranked atoms attached to either end [#eitherend]_ to the results
    10. Return the results
 
+Sources of information about stereochemistry
+--------------------------------------------
+
+From SMILES
+^^^^^^^^^^^
+
+Atomic stereochemistry can be specified using ``@``, ``@@``, ``@SP``, etc.
+Potential stereocenters with no information provided are
+``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is specfied using ``/`` and ``\`` to indicate the
+directionality of the neighboring single bonds. Double bonds with no stereo
+information provided are ``BondStereo::STEREONONE``. 
+
+
+From Mol
+^^^^^^^^
+
+Atomic stereochemistry can be specified using wedged bonds if 2D coordinates are
+present. If 3D coordinates are present, they are used to set the stereochemistry
+for stereogenic atoms. Wiggly bonds (``CFG=2`` in V3000 mol blocks) set the
+chiral tag of stereogenic start atom to ``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is automatically set using the atomic coordinates;
+this is true for both 2D and 3D coordinates. If a stereogenic double bound is
+crossed (``CFG=2`` in V3000 mol blocks) or has an adjacent wiggly single bond
+(``CFG=2`` in V3000 mol blocks), then it will be ``BondStereo::STEREOANY``.
+
+
+From CXSMILES
+^^^^^^^^^^^^^
+
+An initial stereochemistry assignment is done following the SMILES rules (see above).
+
+A ``w:`` (wiggly bond) specification will set the stereochemistry of the start
+atom to ``ChiralType::CHI_UNSPECIFIED`` and double bonds to
+``BondStereo::STEREOANY``. Stereochemistry of ring bonds can be set using ``t``,
+``c``, or ``ctu``.
+
+If 2D coordinates are present in the CXSMILES, atomic stereo can be set using
+```wU``` or ```wD``` to create wedged bonds.
+
+If 3D coordinates are present in the CXSMILES, they are used to set the
+stereochemistry for stereogenic atoms and bonds. This supersedes other
+specifications in the CXSMILES except for ``ctu`` and ``w``.
+
+
+.. _Non-tetrahedral-stereo:
+
+Support for non-tetrahedral atomic stereochemistry
+==================================================
+
+Starting with the 2022.09 release, the RDKit has partial, but evolving, support
+for non-tetrahedral stereochemistry. The status of this work is being tracked in
+this github issue: https://github.com/rdkit/rdkit/issues/4851
+
+This code is being released in a preliminary state in order to get feedback as
+soon as we can and to start to gather experience working with these systems.
+
+
+Status as of 2022.09.1 release
+------------------------------
+
+"Complete"
+^^^^^^^^^^
+(Note that since is new territory, the term "complete" should be taken with a
+grain of salt.)
+
+- The basic representation
+- Parsing SMILES and SMARTS
+- Generation of 2D coordinates
+- Assignment of non-tetrahedral stereo from 3D structures
+
+Partial
+^^^^^^^
+- Writing SMILES. The SMILES generated should be correct, but they are not
+  canonical.
+- Generation of 3D coordinates. The basics here work but the "chirality" of TBP
+  and OH structures is not correct.
+- Writing mol files. Need wedged bonds for these to actually be done
+
+Totally missing
+^^^^^^^^^^^^^^^
+- Wedging bonds
+- Writing SMARTS
+- Substructure search integration
+- CIP assignment
+- Canonicalization
+- Stereochemistry cleanup: recognizing incorrect stereochemistry specifications
+- Assignment of non-tetrahedral stereo from 2D structures
+
+
+SMILES notation
+---------------
+
+This discussion of the SMILES notation is drawn heavily from the OpenSMILES
+documentation: http://opensmiles.org/opensmiles.html Many thanks to the team
+which put that document together and to John Mayfield for his excellent CDK
+Depict tool, which I used double check my work on this.
+
+
+The representation has a tag for what the stereo is, e.g. ``@SP``, and a permutation number.
+
+Square planar
+^^^^^^^^^^^^^
+
+
+.. |nts_sp1| image:: images/nontetstereo_sp1.png
+   :align: middle
+.. |nts_sp2| image:: images/nontetstereo_sp2.png
+   :align: middle
+.. |nts_sp3| image:: images/nontetstereo_sp3.png
+   :align: middle
+
++-----------+-----------+-----------+
+|   @SP1    |   @SP2    |   @SP3    |
++===========+===========+===========+
+| |nts_sp1| | |nts_sp2| | |nts_sp3| |
++-----------+-----------+-----------+
+|     U     |     4     |     Z     |
++-----------+-----------+-----------+
+
+
+.. |nts_sp4| image:: images/nontetstereo_sp4.png
+   :align: middle
+
+|nts_sp4|
+
+
+Here are the ligand numberings for the 3 possible permutations of the sample molecule:
+
+======= === === === === ========
+ Label   A   B   C   D   SMILES
+======= === === === === ========
+@SP1     0   1   2   3  ``C[Pt@SP1](F)(Cl)[H]``
+@SP2     0   2   1   3  ``C[Pt@SP2](Cl)(F)[H]``
+@SP3     0   1   3   2  ``C[Pt@SP3](F)([H])Cl``
+======= === === === === ========
+
+
+Trigonal bipyramidal
+^^^^^^^^^^^^^^^^^^^^
+
+
+Here's a specific example (from the OpenSMILES docs):
+
+.. |nts_tb2| image:: images/nontetstereo_tb2.png
+   :align: middle
+
+|nts_tb2|
+
+Here are the ligand labels and the ligand numbering for ``@TB1``:
+
+.. |nts_tb1| image:: images/nontetstereo_tb1.png
+   :align: middle
+
+|nts_tb1|
+
+And then the ligand numberings for the 20 possible permutations of the sample molecule:
+
+======= === === === === === ========
+ Label   A   B   C   D   E   SMILES
+======= === === === === === ========
+@TB1     0   4   1   2   3   ``S[As@TB1](F)(Cl)(Br)N``
+@TB2     0   4   1   3   2   ``S[As@TB2](F)(Br)(Cl)N``
+
+@TB3     0   3   1   2   4   ``S[As@TB3](F)(Cl)(N)Br``
+@TB4     0   3   1   4   2   ``S[As@TB4](F)(Br)(N)Cl``
+
+@TB5     0   2   1   3   4   ``S[As@TB5](F)(N)(Cl)Br``
+@TB6     0   2   1   4   3   ``S[As@TB6](F)(N)(Br)Cl``
+
+@TB7     0   1   2   3   4   ``S[As@TB7](N)(F)(Cl)Br``
+@TB8     0   1   2   4   3   ``S[As@TB8](N)(F)(Br)Cl``
+
+@TB9     1   4   0   2   3   ``F[As@TB9](S)(Cl)(Br)N``
+@TB11    1   4   0   3   2   ``F[As@TB11](S)(Br)(Cl)N``
+
+@TB10    1   3   0   2   4   ``F[As@TB10](S)(Cl)(N)Br``
+@TB12    1   3   0   4   2   ``F[As@TB12](S)(Br)(N)Cl``
+
+@TB13    1   2   0   3   4   ``F[As@TB13](S)(N)(Cl)Br``
+@TB14    1   2   0   4   3   ``F[As@TB14](S)(N)(Br)Cl``
+
+@TB15    2   4   0   1   3   ``F[As@TB15](Cl)(S)(Br)N``
+@TB20    2   4   0   3   1   ``F[As@TB20](Br)(S)(Cl)N``
+
+@TB16    2   3   0   1   4   ``F[As@TB16](Cl)(S)(N)Br``
+@TB19    2   3   0   4   1   ``F[As@TB19](Br)(S)(N)Cl``
+
+@TB17    3   4   0   1   2   ``F[As@TB17](Cl)(Br)(S)N``
+@TB18    3   4   0   2   1   ``F[As@TB18](Br)(Cl)(S)N``
+
+======= === === === === === ========
+
+
+Octahedral
+^^^^^^^^^^
+
+Here's a specific example (an invented molecule):
+
+.. |nts_oh2| image:: images/nontetstereo_oh2.png
+   :align: middle
+
+|nts_oh2|
+
+Here are the ligand labels and the ligand numbering for ``@OH1``:
+
+.. |nts_oh1| image:: images/nontetstereo_oh1.png
+   :align: middle
+
+|nts_oh1|
+
+
+And then the square planar shape and ligand numberings for the 30 possible permutations of the sample molecule:
+
+======= ==== === === === === === === ========
+ Label   SP   A   B   C   D   E   F   SMILES
+======= ==== === === === === === === ========
+@OH1     U    0   5   1   2   3   4   ``O[Co@OH1](Cl)(C)(N)(F)P``
+@OH2     U    0   5   1   4   3   2   ``O[Co@OH2](Cl)(F)(N)(C)P``
+
+@OH3     U    0   4   1   2   3   5   ``O[Co@OH3](Cl)(C)(N)(P)F``
+@OH16    U    0   4   1   5   3   2   ``O[Co@OH16](Cl)(F)(N)(P)C``
+
+@OH6     U    0   3   1   2   4   5   ``O[Co@OH6](Cl)(C)(P)(N)F``
+@OH18    U    0   3   1   5   4   2   ``O[Co@OH18](Cl)(F)(P)(N)C``
+
+@OH19    U    0   2   1   3   4   5   ``O[Co@OH19](Cl)(P)(C)(N)F``
+@OH24    U    0   2   1   5   4   3   ``O[Co@OH24](Cl)(P)(F)(N)C``
+
+@OH25    U    0   1   2   3   4   5   ``O[Co@OH25](P)(Cl)(C)(N)F``
+@OH30    U    0   1   2   5   4   3   ``O[Co@OH30](P)(Cl)(F)(N)C``
+
+@OH4     Z    0   5   1   2   4   3   ``O[Co@OH4](Cl)(C)(F)(N)P``
+@OH14    Z    0   5   1   3   4   2   ``O[Co@OH14](Cl)(F)(C)(N)P``
+
+@OH5     Z    0   4   1   2   5   3   ``O[Co@OH5](Cl)(C)(F)(P)N``
+@OH15    Z    0   4   1   3   5   2   ``O[Co@OH15](Cl)(F)(C)(P)N``
+
+@OH7     Z    0   3   1   2   5   4   ``O[Co@OH7](Cl)(C)(P)(F)N``
+@OH17    Z    0   3   1   4   5   2   ``O[Co@OH17](Cl)(F)(P)(C)N``
+
+@OH20    Z    0   2   1   3   5   4   ``O[Co@OH20](Cl)(P)(C)(F)N``
+@OH23    Z    0   2   1   4   5   3   ``O[Co@OH23](Cl)(P)(F)(C)N``
+
+@OH26    Z    0   1   2   3   5   4   ``O[Co@OH26](P)(Cl)(C)(F)N``
+@OH29    Z    0   1   2   4   5   3   ``O[Co@OH29](P)(Cl)(F)(C)N``
+
+@OH10    4    0   5   1   4   2   3   ``O[Co@OH10](Cl)(N)(F)(C)P``
+@OH8     4    0   5   1   3   2   4   ``O[Co@OH8](Cl)(N)(C)(F)P``
+
+@OH11    4    0   4   1   5   2   3   ``O[Co@OH11](Cl)(N)(F)(P)C``
+@OH9     4    0   4   1   3   2   5   ``O[Co@OH9](Cl)(N)(C)(P)F``
+
+@OH13    4    0   3   1   4   2   4   ``O[Co@OH13](Cl)(N)(P)(F)C``
+@OH12    4    0   3   1   4   2   5   ``O[Co@OH12](Cl)(N)(P)(C)F``
+
+@OH22    4    0   2   1   5   3   4   ``O[Co@OH22](Cl)(P)(N)(F)C``
+@OH21    4    0   2   1   4   3   5   ``O[Co@OH21](Cl)(P)(N)(C)F``
+
+@OH28    4    0   1   2   5   3   4   ``O[Co@OH28](P)(Cl)(N)(F)C``
+@OH27    4    0   1   2   4   3   5   ``O[Co@OH27](P)(Cl)(N)(C)F``
+======= ==== === === === === === === ========
+
+
+Duplicate ligands
+^^^^^^^^^^^^^^^^^
+
+One of the major differences between non-tetrahedral stereochemistry and the
+tetrahedral variant is that it's possible to have non-tetrahedral stereo with
+central atoms which have duplicate ligands.
+
+The classic example of this is cis-platin - ``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]`` - vs trans-platin  - ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]`` - 
+
+.. |nts_ex1| image:: images/nontetstereo_ex1.png
+   :align: middle
+.. |nts_ex2| image:: images/nontetstereo_ex2.png
+   :align: middle
+
+
+=================================== ====================================
+ |nts_ex1|                           |nts_ex2| 
+=================================== ====================================
+``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]``   ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]``
+=================================== ====================================
+
+
+
+
+
+
+
+Treatment of implicit Hs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Implicit Hs are treated the same as in tetrahedral stereo: as if they are the
+first neighbors after the central atom. So the two smiles ``C[Pt@SP1H](Cl)F``
+and ``C[Pt@SP1]([H])(Cl)F`` corresponds to the same structure.
+
+This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H])([H])Cl`` are equivalent.
+
+
+Missing ligands
+^^^^^^^^^^^^^^^
+
+Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+
+.. |nts_missing1| image:: images/nontetstereo_missing1.png
+   :align: middle
+
+|nts_missing1|
+
+Compare this to the SMILES for the related complex shown above in the discussion of ``@OH`` stereo.
 
 
 Chemical Reaction Handling
@@ -738,7 +1140,7 @@ chirality:
   >>> Chem.MolToSmiles(ps[0][0],True)
   'CC(=O)O[C@H](C)CCN'
 
-Note that this doesn't make sense without including a bit more
+This doesn't make sense without including a bit more
 context around the stereocenter in the reaction definition:
 
 .. doctest::
@@ -784,9 +1186,47 @@ In this case, there's just not sufficient information present to allow
 the information to be preserved. You can help by providing mapping
 information:
 
+**Some caveats** We made this code as robust as we can, but this is a
+non-trivial problem and it's certainly possible to get surprising results.
 
-Rules and caveats
------------------
+Things get tricky if atom ordering around a chiral center changes in the reaction SMARTS. 
+Here are some of the situations that are currently handled correctly.
+
+Reordering of the neighbors, but the number and atom mappings of neighbors
+remains constant. In this case there is no inversion of chirality even though
+the chiral tag on the chiral atom changes between the reactants and products:
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@:2]([F:3])[Br:4]>>[C:1][C@@:2]([S:4])[F:3]')
+  >>> mol = Chem.MolFromSmiles('C[C@@H](F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@@H](F)S'
+
+Adding a neighbor to a chiral atom.
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@H:2]([F:3])[Br:4]>>[C:1][C@@:2](O)([F:3])[Br:4]')
+  >>> mol = Chem.MolFromSmiles('C[C@@H](F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@](O)(F)Br'
+
+Removing a neighbor from a chiral atom.
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@:2](O)([F:3])[Br:4]>>[C:1][C@@H:2]([F:3])[Br:4]')
+  >>> mol = Chem.MolFromSmiles('C[C@@](O)(F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@H](F)Br'
+
+
+Rules and warnings
+------------------
 
 1. Include atom map information at the end of an atom query.
    So do [C,N,O:1] or [C;R:1].
@@ -1061,6 +1501,72 @@ Demonstrated here:
   >>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
   False
 
+Generic ("Markush") queries in substructure matching
+****************************************************
+
+*Note* This section describes functionality added in the `2022.03.1` release of the RDKit.
+
+The RDKit supports a set of generic queries used as part of the Beilstein and
+Reaxys systems. Here's an example:
+
+.. _ary_group_figure :
+
+.. figure:: images/ary_group.png
+  :scale: 50 %
+
+
+Information about generic queries can be read in from CXSMILES or V3000 Mol
+blocks (as `SUP` SGroups) and then calling the function
+`Chem.SetGenericQueriesFromProperties()` with the molecule to be modified as an
+argument. These features are not used by default when doing substructure
+queries, but can be enabled by setting the option
+`SubstructMatchParameters.useGenericMatchers` to `True`
+
+
+Here's an example of using the features:
+
+.. doctest::
+
+  >>> q = Chem.MolFromSmarts('OC* |$;;ARY$|')
+  >>> Chem.SetGenericQueriesFromProperties(q)
+  >>> Chem.MolFromSmiles('C1CCCCC1CO').HasSubstructMatch(q)
+  True
+  >>> Chem.MolFromSmiles('c1ccccc1CO').HasSubstructMatch(q)
+  True
+  >>> ps = Chem.SubstructMatchParameters()
+  >>> ps.useGenericMatchers = True
+  >>> Chem.MolFromSmiles('C1CCCCC1CO').HasSubstructMatch(q,ps)
+  False
+  >>> Chem.MolFromSmiles('c1ccccc1CO').HasSubstructMatch(q,ps)
+  True
+
+
+
+
+Here are the supported groups and a brief description of what they mean:
+
+ ========================   =========
+  Alkyl (ALK)               alkyl side chains
+  Alkenyl (AEL)             alkenyl side chains                
+  Alkynyl (AYL)             alkynyl side chains               
+  Alkoxy (AOX)              alkoxy side chains                
+  Carbocyclic (CBC)         carbocyclic side chains                
+  Carbocycloalkyl (CAL)     cycloalkyl side chains
+  Carbocycloalkenyl (CEL)   cycloalkenyl side chains
+  Carboaryl (ARY)           all-carbon aryl side chains
+  Cyclic (CYC)              cyclic side chains
+  Acyclic(ACY)              acyclic side chains
+  Carboacyclic (ABC)        all-carbon acyclic side chains
+  Heteroacyclic (AHC)       acyclic side chains with at least one heteroatom
+  Heterocyclic (CHC)        cyclic side chains with at least one heteroatom
+  Heteroaryl (HAR)          aryl side chains with at least one heteroatom
+  NoCarbonRing (CXX)        ring containing no carbon atoms
+ ========================   =========
+ 
+For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
+
+
+
 
 Molecular Sanitization
 **********************
@@ -1155,6 +1661,8 @@ ROMol  (Mol in Python)
 +------------------------+---------------------------------------------------+
 | _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
 +------------------------+---------------------------------------------------+
+| _smilesBondOutputOrder |   The order in which bonds were written to SMILES |
++------------------------+---------------------------------------------------+
 
 Atom
 ----
@@ -1213,7 +1721,7 @@ What has been tested
 --------------------
 
   - Reading molecules from SMILES/SMARTS/Mol blocks
-  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks (see below)
   - Generating 2D coordinates
   - Generating 3D conformations with the distance geometry code
   - Optimizing molecules with UFF or MMFF
@@ -1227,16 +1735,11 @@ What has been tested
   - The chemical reactions code
   - The Open3DAlign code
   - The MolDraw2D drawing code
+  - The InChI code, with InChI IUPAC v1.06
 
 Known Problems
 --------------
 
-  - InChI generation and (probably) parsing. This seems to be a
-    limitation of the IUPAC InChI code. In order to allow the code to
-    be used in a multi-threaded environment, a mutex is used to ensure
-    that only one thread is using the IUPAC code at a time. This is
-    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
-    option enabled.
   - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
     their internal state when a molecule is read. It is not safe to
     use one supplier on more than one thread.
@@ -1247,6 +1750,8 @@ Known Problems
     ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
     we provide), a mutex is used to ensure that only one thread is
     using a given recursive query at a time.
+  - Calling MolToSmiles() on the same molecule from multiple threads can lead to
+    data races with the calculated properties on the molecule.
 
 Implementation of the TPSA Descriptor
 =====================================
@@ -1526,13 +2031,13 @@ Enhanced Stereochemistry may optionally be honored in substructure searches. The
 +=================+=================+=================+=================+=================+=================+=================+=================+
 | |EnhancedSSS_A| |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
-| |EnhancedSSS_B| |       N         |       Y         |       N         |       N         |       Y         |       Y         |       Y         |
+| |EnhancedSSS_B| |       N         |       Y         |       N         |       N         |       N         |       Y         |       Y         |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 | |EnhancedSSS_C| |       N         |       N         |       Y         |       N         |       N         |       Y         |       Y         |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 | |EnhancedSSS_D| |       N         |       N         |       N         |       Y         |       N         |       N         |       N         |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
-| |EnhancedSSS_E| |       N         |       Y         |       N         |       N         |       N         |       Y         |       Y         |
+| |EnhancedSSS_E| |       N         |       Y         |       N         |       N         |       Y         |       Y         |       Y         |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 | |EnhancedSSS_F| |       N         |       N         |       N         |       N         |       N         |       Y         |       Y         |
 |       OR        |                 |                 |                 |                 |                 |                 |                 |
@@ -1547,12 +2052,12 @@ Substructure search using molecules with enhanced stereochemistry follows these 
 * chiral < AND, because AND includes both the chiral molecule and another one
 * chiral < OR, because OR includes either the chiral molecule or another one
 * OR < AND, because AND includes both molecules that OR could actually mean.
-* one group of two atoms < two groups of one atom, because the latter is 4 different
-diastereomers, and the former only two of the four.
+* one group of two atoms < two groups of one atom, because the latter is 4 different diastereomers, and the former only two of the four.
 
 Some concrete examples of this:
 
 .. doctest ::
+
   >>> ps = Chem.SubstructMatchParameters()
   >>> ps.useChirality = True
   >>> ps.useEnhancedStereo = True
@@ -1567,6 +2072,127 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+
+Query Features in Molecule Drawings
+***********************************
+
+Compactly and clearly including information about query features in molecule
+drawings is a challenging problem. This is definitely a work in progress, but
+this section describes what is currently supported.
+
+Query Bonds
+===========
+
+Here is an example image showing how different bond and query-bond types are rendered.
+
+.. image:: images/query_bonds.png
+
+There's clearly some room for improvement here, for example, it's not trivial to
+distinguish "Any" bonds from query bonds where no special handling has been
+implemented ("other" query types):
+
+.. image:: images/query_bonds.2.png
+
+Query Atoms
+===========
+
+At the moment the only real support for atomic query features is rendering of
+atom lists (and "NOT" atom lists); other atomic queries are rendered with a simple `?`:
+
+.. image:: images/query_atoms.png
+
+
+Conformer Generation
+********************
+
+Introduction
+============
+
+The RDKit can generate conformers for molecules using two different
+methods.  The original method used distance geometry. [#blaney]_
+The default algorithm followed is:
+
+1. The molecule's distance bounds matrix is calculated based on the connection table and a set of rules.
+
+2. The bounds matrix is smoothed using a triangle-bounds smoothing algorithm.
+
+3. A random distance matrix that satisfies the bounds matrix is generated.
+
+4. This distance matrix is embedded in 3D dimensions (producing coordinates for each atom).
+
+5. The resulting coordinates are cleaned up somewhat using the "distance geometry force field", based on distance constraints from the bounds matrix.
+
+The RDKit also has an implementation of the ETKDG method of Riniker and Landrum
+[#riniker2]_ which modifies step 5 above to also use torsion angle preferences
+from the Cambridge Structural Database (CSD) to correct the conformers after
+distance geometry has been used to generate them. The ETDKDG approach can be
+extended to include additional torsion terms for small rings and/or macrocycles [#wangETKDG3]_.
+
+When using the ETKDG approaches the quality of the conformers generated is
+generally good enough to allow them to be used "as is" (i.e. without a
+subsequent minimization step with another force field) for many applications.
+
+
+Parameters Controlling Conformer Generation
+===========================================
+
+A large number of parameters which allow control over the conformer generation
+process are available in the ``EmbedParameters`` class. A subset of particularly
+useful parameters are described here:
+
+- ``randomSeed``: (default -1) allows you to set a random seed to allow reproducible results
+
+- ``numThreads``: (default 1) sets the number of compute threads to be used when 
+  generating multiple conformers. If set to 0 this will use the maximum number
+  of threads allowed on your system.
+
+- ``useRandomCoords``: (default False) if set to True then random-coordinate embedding will be
+  done: instead of steps 3. and 4. above, the atoms will be randomly placed in a
+  box and then their positions will be minimized with the "distance geometry force
+  field" in step 5. This approach was described in reference [#spellmeyerDG]_
+
+- ``enforceChirality``: (default True) ensures that the chirality of specified
+  stereocenters in the molecule is preserved in the conformers.
+
+- ``embedFragsSeparately``: (default True) for molecules made up of multiple
+  disconnected fragments, this cause conformers of the fragments to be generated
+  independently of each other.
+
+- ``coordMap``: (default empty) can be used to provide 3D coordinates which will
+  be used to constrain the positions of some of the atoms in the molecule.
+
+- ``boundsMat``: (default empty) can be used to provide the distance bounds matrix
+  for the molecule.
+
+- ``useExpTorsionAnglePrefs``: (default False) use the ET part of ETKDG [#riniker2]_
+
+- ``useBasicKnowledge``: (default False) use the K part of ETKDG [#riniker2]_
+
+- ``ETVersion``: (default 1) specify the version of the standard torsion
+  definitions to use. NOTE for both ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the
+  ETKDGv2 definitions for standard torsions (apologies for the confusing numbering)
+
+- ``useSmallRingTorsions``: (default False) use the sr part of srETDKGv3 [#wangETKDG3]_
+
+- ``useMacrocycleTorsions``: (default False) use the macrocycle torsions from ETKDGv3 [#wangETKDG3]_
+
+- ``useMacrocycle14config``: (default False) use the 1-4 distance bounds from ETKDGv3 [#wangETKDG3]_
+
+- ``forceTransAmides``: (default True) constrain amide bonds to be trans
+
+- ``pruneRMsThresh``: (default -1.0) if >0.0 this turns on RMSD pruning of the conformers
+
+- ``onlyHeavyAtomsForRMS``: (default: False) toggles ignoring H atoms when doing RMSD pruning
+
+- ``useSymmetryForPruning``: (default True) uses symmetry to calculate the minimum
+  RMSD between two conformers when doing RMSD pruning. Note that enabling this
+  causes the RMSD computation to act as if `onlyHeavyAtomsForRMS` is set to true
+  (even if the parameter itself is set to False).
+
+
+Note that there are pre-configured parameter objects for the available ETKDG
+versions: ``ETKDG``, ``ETKDGv2``, ``ETKDGv3``, and ``srETKDGv3``
 
 
 
@@ -1682,12 +2308,51 @@ been generated, it is used to set multiple bits based on different atom and bond
 type definitions.
 
 
+Feature Flags: global variables affecting RDKit behavior
+********************************************************
+
+The RDKit uses a number of "feature flags": global variables which affect its
+behavior. These have generally been added to maintain backwards compatibility
+when introducing new algorithms which yield different results.
+
+Here's are the current feature flags:
+
+  - ``preferCoordGen``: when this is ``true`` Schrodinger's open-source Coordgen
+    library will be used to generate 2D coordinates of molecules. The default
+    value is ``false``. This can be set from C++ using the variable
+    ``RDKit::RDDepict::preferCoordGen`` or from Python using the function
+    ``rdDepictor.SetPreferCoordGen()``. Added in the 2018.03 release.
+
+  - ``allowNontetrahedralChirality``: when this is ``true`` non-tetrahedral
+    chirality will be perceived from 3D coordinates. The default value is
+    ``true`` unless the environment variable
+    ``RDK_ENABLE_NONTETRAHEDRAL_STEREO`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setAllowNontetrahedralChirality()`` /
+    ``RDKit::Chirality::getAllowNontetrahedralChirality()`` or from Python using
+    the functions ``Chem.SetAllowNontetrahedralChirality()`` /
+    ``Chem.GetAllowNontetrahedralChirality()``. Added in the 2022.09 release.
+
+  - ``useLegacyStereoPerception``: when this is ``true`` the legacy
+    implementation for perceiving stereochemistry will be used. 
+    The default value is ``true`` unless the environment variable
+    ``RDK_USE_LEGACY_STEREO_PERCEPTION`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setUseLegacyStereoPerception()`` /
+    ``RDKit::Chirality::getUseLegacyStereoPerception()`` or from Python using
+    the functions ``Chem.SetUseLegacyStereoPerception()`` /
+    ``Chem.GetUseLegacyStereoPerception()``. Added in the 2022.09 release.
+
+
+
+
+
 .. rubric:: Footnotes
 
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
-.. [#cxsmiles] https://docs.chemaxon.com/display/docs/ChemAxon+Extended+SMILES+and+SMARTS+-+CXSMILES+and+CXSMARTS
+.. [#cxsmiles] https://docs.chemaxon.com/display/docs/chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.md
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 .. [#daylightFP] http://www.daylight.com/dayhtml/doc/theory/theory.finger.html
@@ -1696,16 +2361,21 @@ type definitions.
 .. [#morganFP] http://pubs.acs.org/doi/abs/10.1021/ci100050t
 .. [#gobbiFeats] https://doi.org/10.1002/(SICI)1097-0290(199824)61:1%3C47::AID-BIT9%3E3.0.CO;2-Z
 .. [#labutecip] Labute, P. "An Efficient Algorithm for the Determination of Topological RS Chirality" Journal of the Chemical Computing Group (1996)
-.. [#newcip]  Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. "Algorithmic Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation." J. Chem. Inf. Model. 2018, 58, 1755-1765.
+.. [#newcip]  Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. "Algorithmic Analysis of Cahn--Ingold--Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation." J. Chem. Inf. Model. 2018, 58, 1755-1765.
 .. [#nadinecanon] Schneider, N., Sayle, R. A. & Landrum, G. A. Get Your Atoms in Order-An Open-Source Implementation of a Novel and Robust Molecular Canonicalization Algorithm. J. Chem. Inf. Model. 2015, 55, 2111-2120.
 .. [#eitherend] It's ok to have two identically ranked atoms on the two ends of the bond, but having two identically ranked atoms on the same end indicates that it's not a potential stereobond.
+.. [#blaney] Blaney, J. M.; Dixon, J. S. "Distance Geometry in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH: New York, 1994.
+.. [#riniker2] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation"  *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) https://doi.org/10.1021/acs.jcim.5b00654
+.. [#wangETKDG3] Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. "Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences." *J. Chem. Inf. Model.* **60**, 2044–58 (2020). https://doi.org/10.1021/acs.jcim.0c00025
+.. [#spellmeyerDG] Spellmeyer, D. C.; Wong, A. K.; Bower, M. J.; Blaney, J. M. "Conformational analysis using distance geometry methods." *J. Mol. Graph. Modell.* **15**, 18–36 (1997). https://doi.org/10.1016/s1093-3263(97)00014-4
+
 
 License
 *******
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2019 by Greg Landrum
+This document is copyright (C) 2007-2021 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

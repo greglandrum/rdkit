@@ -57,9 +57,8 @@ struct FPBReader_impl;
 */
 class RDKIT_DATASTRUCTS_EXPORT FPBReader {
  public:
-  FPBReader()
-      
-        {};
+  FPBReader() {}
+
   //! ctor for reading from a named file
   /*!
   \param fname the name of the file to reads
@@ -68,11 +67,11 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   */
   FPBReader(const char *fname, bool lazyRead = false) {
     _initFromFilename(fname, lazyRead);
-  };
+  }
   //! \overload
   FPBReader(const std::string &fname, bool lazyRead = false) {
     _initFromFilename(fname.c_str(), lazyRead);
-  };
+  }
   //! ctor for reading from an open istream
   /*!
   \param inStream the stream to read from
@@ -91,13 +90,15 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
         dp_impl(nullptr),
         df_owner(takeOwnership),
         df_init(false),
-        df_lazyRead(lazyRead){};
+        df_lazyRead(lazyRead) {}
   ~FPBReader() {
     destroy();
-    if (df_owner) delete dp_istrm;
+    if (df_owner) {
+      delete dp_istrm;
+    }
     dp_istrm = nullptr;
     df_init = false;
-  };
+  }
 
   //! Read the data from the file and initialize internal data structures
   /*!
@@ -116,10 +117,12 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   Cleans up whatever memory was allocated during init()
   */
   void cleanup() {
-    if (!df_init) return;
+    if (!df_init) {
+      return;
+    }
     destroy();
     df_init = false;
-  };
+  }
   //! returns the requested fingerprint as an \c ExplicitBitVect
   boost::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
   //! returns the requested fingerprint as an array of bytes
@@ -131,7 +134,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> operator[](
       unsigned int idx) const {
     return std::make_pair(getFP(idx), getId(idx));
-  };
+  }
 
   //! returns beginning and end indices of fingerprints having on-bit counts
   //! within the range (including end points)
@@ -150,7 +153,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   double getTanimoto(unsigned int idx,
                      boost::shared_array<std::uint8_t> bv) const {
     return getTanimoto(idx, bv.get());
-  };
+  }
   //! \overload
   double getTanimoto(unsigned int idx, const ExplicitBitVect &ebv) const;
 
@@ -174,7 +177,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
       boost::shared_array<std::uint8_t> bv, double threshold = 0.7,
       bool usePopcountScreen = true) const {
     return getTanimotoNeighbors(bv.get(), threshold, usePopcountScreen);
-  };
+  }
   //! \overload
   std::vector<std::pair<double, unsigned int>> getTanimotoNeighbors(
       const ExplicitBitVect &ebv, double threshold = 0.7,
@@ -196,7 +199,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   double getTversky(unsigned int idx, boost::shared_array<std::uint8_t> bv,
                     double ca, double cb) const {
     return getTversky(idx, bv.get(), ca, cb);
-  };
+  }
   //! \overload
   double getTversky(unsigned int idx, const ExplicitBitVect &ebv, double ca,
                     double cb) const;
@@ -223,7 +226,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
       boost::shared_array<std::uint8_t> bv, double ca, double cb,
       double threshold = 0.7, bool usePopcountScreen = true) const {
     return getTverskyNeighbors(bv.get(), ca, cb, threshold, usePopcountScreen);
-  };
+  }
   //! \overload
   std::vector<std::pair<double, unsigned int>> getTverskyNeighbors(
       const ExplicitBitVect &ebv, double ca, double cb, double threshold = 0.7,
@@ -239,7 +242,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   std::vector<unsigned int> getContainingNeighbors(
       boost::shared_array<std::uint8_t> bv) const {
     return getContainingNeighbors(bv.get());
-  };
+  }
   //! \overload
   std::vector<unsigned int> getContainingNeighbors(
       const ExplicitBitVect &ebv) const;

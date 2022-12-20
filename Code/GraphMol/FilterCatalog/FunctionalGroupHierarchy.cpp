@@ -38,7 +38,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -235,10 +235,10 @@ void hierarchy_create() {
         fd->getName(), boost::shared_ptr<FilterMatcherBase>(fd)));
   }
 }
-}
+}  // namespace
 
 const FilterCatalog &GetFunctionalGroupHierarchy() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag flag;
   std::call_once(flag, &hierarchy_create);
 #else
@@ -259,4 +259,4 @@ const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
   }
   return flatten_get();
 }
-}
+}  // namespace RDKit

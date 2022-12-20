@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 #ifndef RD_StereoGroup_092018
 #define RD_StereoGroup_092018
 
+#include <iostream>
 #include <vector>
 
 namespace RDKit {
@@ -44,20 +45,25 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   std::vector<Atom*> d_atoms;
 
  public:
-  StereoGroup() :  d_atoms(0u){};
+  StereoGroup() : d_atoms(0u) {}
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
+  StereoGroup(const StereoGroup& other) = default;
+  StereoGroup& operator=(const StereoGroup& other) = default;
+  StereoGroup(StereoGroup&& other) = default;
+  StereoGroup& operator=(StereoGroup&& other) = default;
+
   StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
   // Seems odd to have to define these, but otherwise the SWIG wrappers
   // won't build
   bool operator==(const StereoGroup& other) const {
     return (d_grouptype == other.d_grouptype) && (d_atoms == other.d_atoms);
-  };
+  }
   bool operator!=(const StereoGroup& other) const {
     return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms);
-  };
+  }
 };
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
     const Atom* atom, std::vector<StereoGroup>& groups);
@@ -65,5 +71,9 @@ RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
     const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
 
 }  // namespace RDKit
+
+//! allows StereoGroup objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream& operator<<(std::ostream& target,
+                                               const RDKit::StereoGroup& stg);
 
 #endif

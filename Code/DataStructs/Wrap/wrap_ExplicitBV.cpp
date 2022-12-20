@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +24,25 @@ struct ebv_pickle_suite : python::pickle_suite {
   };
 };
 
+python::list ExplicitToList(const ExplicitBitVect &sv) {
+  python::list l;
+  if (!sv.dp_bits) {
+    return l;
+  }
+
+  auto count = sv.getNumBits();
+  if (count) {
+    l.append(0);
+    l *= count;
+    auto pos = sv.dp_bits->find_first();
+    while (pos != boost::dynamic_bitset<>::npos) {
+      l[pos] = 1;
+      pos = sv.dp_bits->find_next(pos);
+    }
+  }
+  return l;
+}
+
 std::string ebvClassDoc =
     "A class to store explicit bit vectors.\n\
 \n\
@@ -46,25 +64,25 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).\n\
 
 struct EBV_wrapper {
   static void wrap() {
-    python::class_<ExplicitBitVect, boost::shared_ptr<ExplicitBitVect> >(
+    python::class_<ExplicitBitVect, boost::shared_ptr<ExplicitBitVect>>(
         "ExplicitBitVect", ebvClassDoc.c_str(), python::init<unsigned int>())
         .def(python::init<std::string>())
-        .def(python::init<unsigned int, bool>())
-        .def("SetBit", (bool (EBV::*)(unsigned int)) & EBV::setBit,
+        .def(python::init<unsigned int, bool>(python::args("size", "bitsSet")))
+        .def("SetBit", (bool(EBV::*)(unsigned int)) & EBV::setBit,
              "Turns on a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("SetBitsFromList",
              (void (*)(EBV *, python::object))SetBitsFromList,
              "Turns on a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("UnSetBit", (bool (EBV::*)(unsigned int)) & EBV::unsetBit,
+        .def("UnSetBit", (bool(EBV::*)(unsigned int)) & EBV::unsetBit,
              "Turns off a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("UnSetBitsFromList",
              (void (*)(EBV *, python::object))UnSetBitsFromList,
              "Turns off a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("GetBit", (bool (EBV::*)(unsigned int) const) & EBV::getBit,
+        .def("GetBit", (bool(EBV::*)(unsigned int) const) & EBV::getBit,
              "Returns the value of a bit.\n")
         .def("GetNumBits", &EBV::getNumBits,
              "Returns the number of bits in the vector (the vector's size).\n")
@@ -75,15 +93,17 @@ struct EBV_wrapper {
              "Returns the number of off bits.\n")
         .def("__getitem__", (int (*)(const EBV &, int))get_VectItem)
         .def("__setitem__", (int (*)(EBV &, int, int))set_VectItem)
-        .def("GetOnBits", (IntVect (*)(const EBV &))GetOnBits,
+        .def("GetOnBits", (IntVect(*)(const EBV &))GetOnBits,
              "Returns a tuple containing IDs of the on bits.\n")
-        .def("ToBinary", (python::object (*)(const EBV &))BVToBinary,
+        .def("ToBinary", (python::object(*)(const EBV &))BVToBinary,
              "Returns an internal binary representation of the vector.\n")
         .def("FromBase64", (void (*)(EBV &, const std::string &))InitFromBase64,
              "Initializes the vector from a base64 encoded binary string.\n")
-        .def("ToBase64", (std::string (*)(EBV &))ToBase64,
+        .def("ToBase64", (std::string(*)(EBV &))ToBase64,
              "Converts the vector to a base64 string (the base64 encoded "
              "version of the results of ToString()).\n")
+        .def("ToList", (python::list(*)(const EBV &))ExplicitToList,
+             "Return the Bitvector as a python list (faster than list(vect))")
         .def(python::self & python::self)
         .def(python::self | python::self)
         .def(python::self ^ python::self)

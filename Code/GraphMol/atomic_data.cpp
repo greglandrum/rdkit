@@ -48,15 +48,15 @@ const std::string periodicTableAtomData =
 9	F	0.64	0.611	1.5	18.998	7	19	18.99840322	1 \n \
 10	Ne	1.12	0.7	1.54	20.18	8	20	19.99244018	0 \n \
 11	Na	0.97	1.54	2.4	22.99	1	23	22.98976928	1 \n \
-12	Mg	1.1	1.36	2.2	24.305	2	24	23.9850417	2 \n \
+12	Mg	1.1	1.36	2.2	24.305	2	24	23.9850417	2	-1 \n \
 13	Al	1.35	1.18	2.1	26.982	3	27	26.98153863	3	6 \n \
 14	Si	1.2	0.937	2.1	28.086	4	28	27.97692653	4	6 \n \
 15	P	0.75	0.89	1.95	30.974	5	31	30.97376163	3	5	7 \n \
 16	S	1.02	1.04	1.8	32.067	6	32	31.972071	2	4	6 \n \
-17	Cl	0.99	0.997	1.8	35.453	7	35	34.96885268	1 \n \
+17	Cl	0.99	0.997	1.8	35.453	7	35	34.96885268	1\n \
 18	Ar	1.57	1.74	1.88	39.948	8	40	39.96238312	0 \n \
 19	K	1.33	2.03	2.8	39.098	1	39	38.96370668	1 \n \
-20	Ca	0.99	1.74	2.4	40.078	2	40	39.96259098	2 \n"
+20	Ca	0.99	1.74	2.4	40.078	2	40	39.96259098	2	-1 \n"
     "21	Sc	1.44	1.44	2.3	44.956	3	45	44.9559119	-1 \n \
 22	Ti	1.47	1.32	2.15	47.867	4	48	47.9479463	-1 \n \
 23	V	1.33	1.22	2.05	50.942	5	50	49.9471585	-1 \n \
@@ -71,10 +71,10 @@ const std::string periodicTableAtomData =
 32	Ge	1.17	1.188	2.1	72.61	4	74	73.9211778	4	   \n \
 33	As	1.21	1.2	2.05	74.922	5	75	74.9215965	3	5	7 \n \
 34	Se	1.22	1.17	1.9	78.96	6	80	79.9165213	2	4	6 \n \
-35	Br	1.21	1.167	1.9	79.904	7	79	78.9183371	1 \n \
+35	Br	1.21	1.167	1.9	79.904	7	79	78.9183371	1\n \
 36	Kr	1.91	1.91	2.02	83.8	8	84	83.911507	0 \n \
 37	Rb	1.47	2.16	2.9	85.468	1	85	84.91178974	1 \n \
-38	Sr	1.12	1.91	2.55	87.62	2	88	87.9056121	2 \n \
+38	Sr	1.12	1.91	2.55	87.62	2	88	87.9056121	2	-1 \n \
 39	Y	1.78	1.62	2.4	88.906	3	89	88.9058483	-1 \n \
 40	Zr	1.56	1.45	2.3	91.224	4	90	89.9047044	-1 \n"
     "41	Nb	1.48	1.34	2.15	92.906	5	93	92.9063781	-1 \n \
@@ -89,10 +89,10 @@ const std::string periodicTableAtomData =
 50	Sn	1.46	1.385	2.25	118.711	4	120	119.9021947	2	4 \n \
 51	Sb	1.46	1.4	2.2	121.76	5	121	120.9038157	3	5	7 \n \
 52	Te	1.47	1.378	2.1	127.6	6	130	129.9062244	2 4 6\n \
-53	I	1.4	1.387	2.1	126.904	7	127	126.904473	1	2	5 \n \
-54	Xe	1.98	1.98	2.16	131.29	8	132	131.9041535	0 	2 \n \
+53	I	1.4	1.387	2.1	126.904	7	127	126.904473	1	3	5\n \
+54	Xe	1.98	1.98	2.16	131.29	8	132	131.9041535	0	2	4	6\n \
 55	Cs	1.67	2.35	3.0	132.905	1	133	132.9054519	1 \n \
-56	Ba	1.34	1.98	2.7	137.328	2	138	137.9052472	2 \n \
+56	Ba	1.34	1.98	2.7	137.328	2	138	137.9052472	2	-1 \n \
 57	La	1.87	1.69	2.5	138.906	3	139	138.9063533	-1 \n \
 58	Ce	1.83	1.83	2.48	140.116	4	140	139.9054387	-1 \n \
 59	Pr	1.82	1.82	2.47	140.908	3	141	140.9076528	-1 \n \
@@ -120,11 +120,11 @@ const std::string periodicTableAtomData =
     "81	Tl	1.55	1.48	2.2	204.383	3	205	204.9744275	3 \n \
 82	Pb	1.54	1.48	2.3	207.2	4	208	207.9766521	2	4 \n \
 83	Bi	1.54	1.45	2.3	208.98	5	209	208.9803987	3	5	7 \n \
-84	Po	1.68	1.46	2.0	209	6	209	208.9824304	2 \n \
-85	At	1.7	1.45	2.0	210	7	210	209.987148	1 \n \
+84	Po	1.68	1.46	2.0	209	6	209	208.9824304	2	4	6\n \
+85	At	1.7	1.45	2.0	210	7	210	209.987148	1	3	5\n \
 86	Rn	2.4	2.4	2.0	222	8	211	210.990601	0 \n \
 87	Fr	2	2	2.0	223	1	223	223.0197359	1 \n \
-88	Ra	1.9	1.9	2.0	226	2	223	223.0185022	2 \n \
+88	Ra	1.9	1.9	2.0	226	2	223	223.0185022	2	-1 \n \
 89	Ac	1.88	1.88	2.0	227	3	227	227.0277521	-1 \n \
 90	Th	1.79	1.79	2.4	232.038	4	232	232.0380553	-1 \n \
 91	Pa	1.61	1.61	2.0	231.036	3	231	231.035884	-1 \n \
@@ -170,6 +170,39 @@ const std::string periodicTableAtomData =
 118	Og	1.57	0	2.0	294	2	294	294.21392	-1 \n \
 ";
 
+// Names of elements ordered by atomic number
+const std::vector<std::string> elementNames = {
+    "Dummy",         "Hydrogen",    "Helium",       "Lithium",
+    "Beryllium",     "Boron",       "Carbon",       "Nitrogen",
+    "Oxygen",        "Fluorine",    "Neon",         "Sodium",
+    "Magnesium",     "Aluminium",   "Silicon",      "Phosphorus",
+    "Sulfur",        "Chlorine",    "Argon",        "Potassium",
+    "Calcium",       "Scandium",    "Titanium",     "Vanadium",
+    "Chromium",      "Manganese",   "Iron",         "Cobalt",
+    "Nickel",        "Copper",      "Zinc",         "Gallium",
+    "Germanium",     "Arsenic",     "Selenium",     "Bromine",
+    "Krypton",       "Rubidium",    "Strontium",    "Yttrium",
+    "Zirconium",     "Niobium",     "Molybdenum",   "Technetium",
+    "Ruthenium",     "Rhodium",     "Palladium",    "Silver",
+    "Cadmium",       "Indium",      "Tin",          "Antimony",
+    "Tellurium",     "Iodine",      "Xenon",        "Caesium",
+    "Barium",        "Lanthanum",   "Cerium",       "Praseodymium",
+    "Neodymium",     "Promethium",  "Samarium",     "Europium",
+    "Gadolinium",    "Terbium",     "Dysprosium",   "Holmium",
+    "Erbium",        "Thulium",     "Ytterbium",    "Lutetium",
+    "Hafnium",       "Tantalum",    "Tungsten",     "Rhenium",
+    "Osmium",        "Iridium",     "Platinum",     "Gold",
+    "Mercury",       "Thallium",    "Lead",         "Bismuth",
+    "Polonium",      "Astatine",    "Radon",        "Francium",
+    "Radium",        "Actinium",    "Thorium",      "Protactinium",
+    "Uranium",       "Neptunium",   "Plutonium",    "Americium",
+    "Curium",        "Berkelium",   "Californium",  "Einsteinium",
+    "Fermium",       "Mendelevium", "Nobelium",     "Lawrencium",
+    "Rutherfordium", "Dubnium",     "Seaborgium",   "Bohrium",
+    "Hassium",       "Meitnerium",  "Darmstadtium", "Roentgenium",
+    "Copernicium",   "Nihonium",    "Flerovium",    "Moscovium",
+    "Livermorium",   "Tennessine",  "Oganesson"};
+
 atomicData::atomicData(const std::string &dataLine) {
   boost::char_separator<char> spaceSep(" \t");
   tokenizer tokens(dataLine, spaceSep);
@@ -182,6 +215,9 @@ atomicData::atomicData(const std::string &dataLine) {
   istr.str(*token);
   istr >> anum;
   ++token;
+
+  // use atomic number to set element name
+  name = elementNames[anum];
 
   // element symbol
   symb = *token;

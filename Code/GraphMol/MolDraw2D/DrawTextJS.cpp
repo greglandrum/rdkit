@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -21,10 +23,11 @@ namespace RDKit {
 
 std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextJS::DrawTextJS(double max_fnt_sz, double min_fnt_sz,
                        emscripten::val &context)
-    : DrawText(max_fnt_sz, min_fnt_sz), context_(context) {}
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz), context_(context) {}
 
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
@@ -34,7 +37,7 @@ void DrawTextJS::drawChar(char c, const Point2D &cds) {
   std::string col = DrawColourToSVG(colour());
   context_.set("font", font);
   context_.set("fillStyle", col);
-  context_.call<void>("fillText", txt, std::round(cds.x), std::round(cds.y));
+  context_.call<void>("fillText", txt, cds.x, cds.y);
 }
 
 // ****************************************************************************
@@ -101,5 +104,6 @@ void DrawTextJS::getStringRects(const std::string &text,
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 #endif  // __EMSCRIPTEN__

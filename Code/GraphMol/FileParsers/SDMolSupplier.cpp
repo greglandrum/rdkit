@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -267,6 +266,7 @@ unsigned int SDMolSupplier::length() {
     // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
+    df_end = false;
     return d_len;
   }
 }

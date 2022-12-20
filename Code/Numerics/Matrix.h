@@ -36,7 +36,7 @@ class Matrix {
     TYPE *data = new TYPE[d_dataSize];
     memset(static_cast<void *>(data), 0, d_dataSize * sizeof(TYPE));
     d_data.reset(data);
-  };
+  }
 
   //! Initialize with a size and default value.
   Matrix(unsigned int nRows, unsigned int nCols, TYPE val)
@@ -229,7 +229,7 @@ class Matrix {
   }
 
  protected:
-  Matrix() :  d_data(){};
+  Matrix() : d_data() {}
   unsigned int d_nRows{0};
   unsigned int d_nCols{0};
   unsigned int d_dataSize{0};
@@ -337,7 +337,8 @@ std::ostream &operator<<(std::ostream &target,
   unsigned int i, j;
   for (i = 0; i < nr; i++) {
     for (j = 0; j < nc; j++) {
-      target << std::setw(7) << std::setprecision(3) << mat.getVal(i, j);
+      target << std::setfill(' ') << std::setw(7) << std::setprecision(3)
+             << mat.getVal(i, j) << " ";
     }
     target << "\n";
   }

@@ -1,4 +1,5 @@
-#  Copyright (c) 2018, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2018-2021, Novartis Institutes for BioMedical Research Inc.
+#   and other RDKit contributors
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,11 +37,14 @@ import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecomposition, RGroupDecompositionParameters
+from rdkit.Chem.rdRGroupDecomposition import (RGroupDecompose, RGroupDecomposition,
+                                              RGroupDecompositionParameters, RGroupLabels,
+                                              RGroupCoreAlignment)
 from collections import OrderedDict
 
 # the RGD code can generate a lot of warnings. disable them
 from rdkit import RDLogger
+
 RDLogger.DisableLog("rdApp.warning")
 
 
@@ -50,40 +54,40 @@ class TestCase(unittest.TestCase):
     cores_smi_easy = OrderedDict()
     cores_smi_hard = OrderedDict()
 
-    #cores_smi_easy['cephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
+    # cores_smi_easy['cephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
     cores_smi_easy['cephem'] = Chem.MolFromSmarts('O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CS2')
     cores_smi_hard['cephem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CS2')
 
-    #cores_smi_easy['carbacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
+    # cores_smi_easy['carbacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
     cores_smi_easy['carbacephem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])CC2')
     cores_smi_hard['carbacephem'] = Chem.MolFromSmarts(
       'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CC2')
 
-    #cores_smi_easy['oxacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
+    # cores_smi_easy['oxacephem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
     cores_smi_easy['oxacephem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])CO2')
     cores_smi_hard['oxacephem'] = Chem.MolFromSmarts(
       'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])CO2')
 
-    #cores_smi_easy['carbapenem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
+    # cores_smi_easy['carbapenem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
     cores_smi_easy['carbapenem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])C2')
     cores_smi_hard['carbapenem'] = Chem.MolFromSmarts(
       'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])C2')
 
-    #cores_smi_easy['carbapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
+    # cores_smi_easy['carbapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
     cores_smi_easy['carbapenam'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)C([3*])([4*])C2')
     cores_smi_hard['carbapenam'] = Chem.MolFromSmarts(
       'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])C2')
 
-    #cores_smi_easy['penem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
+    # cores_smi_easy['penem'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
     cores_smi_easy['penem'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)=C([3*])S2')
     cores_smi_hard['penem'] = Chem.MolFromSmarts('O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)=C([3*])S2')
 
-    #cores_smi_easy['penam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])S2')
+    # cores_smi_easy['penam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])S2')
     cores_smi_easy['penam'] = Chem.MolFromSmarts('O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])S2')
     cores_smi_hard['penam'] = Chem.MolFromSmarts(
       'O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2')
 
-    #cores_smi_easy['oxapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
+    # cores_smi_easy['oxapenam'] = Chem.MolFromSmiles('O=C1C([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
     cores_smi_easy['oxapenam'] = Chem.MolFromSmarts('O=C1C([1*])C2N1C(C(O)=O)C([3*])([4*])O2')
     cores_smi_hard['oxapenam'] = Chem.MolFromSmarts(
       'O=C1C([2*])([1*])[C@@H]2N1C(C(O)=O)C([3*])([4*])O2')
@@ -207,7 +211,7 @@ C1CCO[C@@](S)(P)1
     })
 
   def test_match_only_at_rgroups(self):
-    smiles = ['c1ccccc1']  #, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
+    smiles = ['c1ccccc1']  # , 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
     mols = [Chem.MolFromSmiles(smi) for smi in smiles]
 
     core1 = Chem.MolFromSmiles("c1([*:5])cc([*:6])ccc1")
@@ -227,48 +231,48 @@ C1CCO[C@@](S)(P)1
     scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1", )]
     groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
 
-    self.assertEqual(groups, {'Core': ['C1CNC([*:1])C1'], 'R1': ['Cl[*:1].[H][*:1]']})
+    self.assertEqual(groups, {'Core': ['C1CNC([*:1])C1'], 'R1': ['Cl[*:1]']})
 
     scaffolds = [Chem.MolFromSmarts(x) for x in ("C1OCCC1", )]
     groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
     self.assertEqual(groups, {
       'Core': ['C1COC([*:1])C1', 'C1COC([*:1])C1'],
-      'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']
+      'R1': ['Cl[*:1]', 'Cl[*:1]']
     })
     scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1", "C1OCCC1")]
     groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
     self.assertEqual(
       groups, {
         'Core': ['C1CNC([*:1])C1', 'C1COC([*:1])C1', 'C1COC([*:1])C1'],
-        'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']
+        'R1': ['Cl[*:1]', 'Cl[*:1]', 'Cl[*:1]']
       })
 
   def test_aligned_cores(self):
     scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NC1OC", "C1NC1NC")]
     mols = [Chem.MolFromSmiles(smi) for smi in ("C1NC1OCCC", "C1NC1NCCC")]
     groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=True)
-    #print("test_aligned_Cores")
-    #print("groups:", groups)
+    # print("test_aligned_Cores")
+    # print("groups:", groups)
     self.assertEqual(groups, [{
       'Core': 'C1NC1OC[*:1]',
-      'R1': 'CC[*:1].[H][*:1].[H][*:1]'
+      'R1': 'CC[*:1]'
     }, {
       'Core': 'C1NC1NC[*:2]',
-      'R2': 'CC[*:2].[H][*:2].[H][*:2]'
+      'R2': 'CC[*:2]'
     }])
 
   def test_aligned_cores2(self):
     scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCC1", "C1SCC1")]
     mols = [Chem.MolFromSmiles(smi) for smi in ("C1N(P)CC1", "C1S(P)CC1")]
-    #print("test_aligned_Cores2")
+    # print("test_aligned_Cores2")
     groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=True)
-    #print("groups: ", groups)
+    # print("groups: ", groups)
     self.assertEqual(groups, [{
       'Core': 'C1CN([*:1])C1',
       'R1': 'P[*:1]'
     }, {
       'Core': 'C1C[SH]([*:2])C1',
-      'R2': 'P[*:2].[H][*:2]'
+      'R2': 'P[*:2]'
     }])
 
   def test_getrgrouplabels(self):
@@ -387,23 +391,271 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
 
     core = Chem.MolFromSmarts('O=C(NS(=O)(=O)c1ccccc1)c1ccccc1Oc1ccccc1')
     ps = RGroupDecompositionParameters()
-    ps.timeout = 1.0
+    ps.timeout = 0.1
+    res = None
     with self.assertRaises(RuntimeError):
       rg = RGroupDecomposition(core, ps)
       for m in mols:
-        rg.Add(m)
+        res = rg.Add(m)
+    self.assertIsNotNone(res)
+    self.assertGreater(res, 0)
 
     with self.assertRaises(RuntimeError):
       columns2, unmatched = RGroupDecompose([core], mols, asRows=False, options=ps)
-
 
   def test_github3402(self):
     core1 = "[$(C-!@[a])](=O)(Cl)"
     sma = Chem.MolFromSmarts(core1)
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
-    self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True),
-                     ([{'Core': 'O=[*:1]Cl', 'R1': 'c1ccc(C([*:1])=[*:1])cc1'}], []))
-    
-    
+    self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True), ([{
+      'Core': 'O=C(Cl)[*:1]',
+      'R1': 'c1ccc([*:1])cc1'
+    }], []))
+
+  def test_multicore_prelabelled(self):
+
+    def multicorergd_test(cores, params, expected_rows, expected_items):
+      mols = [Chem.MolFromSmiles(smi) for smi in ("CNC(=O)C1=CN=CN1CC", "Fc1ccc2ccc(Br)nc2n1")]
+      params.removeHydrogensPostMatch = True
+      params.onlyMatchAtRGroups = True
+      decomp = RGroupDecomposition(cores, params)
+      i = 0
+      for i, m in enumerate(mols):
+        res = decomp.Add(m)
+        self.assertEqual(res, i)
+      self.assertTrue(decomp.Process())
+      rows = decomp.GetRGroupsAsRows(asSmiles=True)
+      self.assertEqual(rows, expected_rows)
+      items = decomp.GetRGroupsAsColumns(asSmiles=True)
+      self.assertEqual(items, expected_items)
+
+    sdcores = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    1.1100   -1.3431    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5225   -0.6286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9705   -0.0156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2168   -0.3511    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3029   -1.1716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1419    0.7914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5289    1.3431    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9266    1.0463    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4976    0.0613    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  1  0
+  1  5  2  0
+  3  6  1  0
+  6  7  2  0
+  6  8  1  0
+  4  9  1  0
+M  RGP  2   8   1   9   2
+V    8 *
+V    9 *
+M  END
+$$$$
+
+     RDKit          2D
+
+ 12 13  0  0  0  0  0  0  0  0999 V2000
+   -6.5623    0.3977    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333    0.3977    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044    0.3977    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.8397    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2754    0.3978    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  2  3  2  0
+  2  7  1  0
+  9 10  2  0
+ 10 11  1  0
+  8 11  2  0
+  8  5  1  0
+  4  9  1  0
+ 10 12  1  0
+  1  2  1  0
+M  RGP  2   1   2  12   1
+V    1 *
+V   12 *
+M  END
+$$$$
+"""
+    sdsup = Chem.SDMolSupplier()
+    sdsup.SetData(sdcores)
+    cores = [c for c in sdsup]
+
+    expected_rows = [{
+      'Core': 'O=C(c1cncn1[*:2])[*:1]',
+      'R1': 'CN[*:1]',
+      'R2': 'CC[*:2]'
+    }, {
+      'Core': 'c1cc2ccc([*:2])nc2nc1[*:1]',
+      'R1': 'F[*:1]',
+      'R2': 'Br[*:2]'
+    }]
+
+    expected_items = {
+      'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:2])nc2nc1[*:1]'],
+      'R1': ['CN[*:1]', 'F[*:1]'],
+      'R2': ['CC[*:2]', 'Br[*:2]']
+    }
+
+    params = RGroupDecompositionParameters()
+
+    # test pre-labelled with MDL R-group labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with MDL R-group labels, no autodetect
+    params.labels = RGroupLabels.MDLRGroupLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows, expected_items)
+
+    # Reading from a MDL molblock also sets isotopic labels, so no need
+    # to set them again; we only clear MDL R-group labels
+    for core in cores:
+      for a in core.GetAtoms():
+        if a.HasProp("_MolFileRLabel"):
+          a.ClearProp("_MolFileRLabel")
+    # test pre-labelled with isotopic labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with isotopic labels, no autodetect
+    params.labels = RGroupLabels.IsotopeLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with isotopic labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows, expected_items)
+
+    for core in cores:
+      for a in core.GetAtoms():
+        iso = a.GetIsotope()
+        if iso:
+          a.SetAtomMapNum(iso)
+          a.SetIsotope(0)
+    # test pre-labelled with atom map labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with atom map labels, no autodetect
+    params.labels = RGroupLabels.AtomMapLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with atom map labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows, expected_items)
+
+    for core in cores:
+      for a in core.GetAtoms():
+        if a.GetAtomMapNum():
+          a.SetAtomMapNum(0)
+    # test pre-labelled with dummy atom labels, autodetect
+
+    expected_rows = [{
+      'Core': 'O=C(c1cncn1[*:2])[*:1]',
+      'R1': 'CN[*:1]',
+      'R2': 'CC[*:2]'
+    }, {
+      'Core': 'c1cc2ccc([*:2])nc2nc1[*:1]',
+      'R1': 'Br[*:1]',
+      'R2': 'F[*:2]'
+    }]
+
+    expected_items = {
+      'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:2])nc2nc1[*:1]'],
+      'R1': ['CN[*:1]', 'Br[*:1]'],
+      'R2': ['CC[*:2]', 'F[*:2]']
+    }
+
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+    # test pre-labelled with dummy atom labels, no autodetect
+    # in this case there is no difference from autodetect as the RGD code
+    # cannot tell the difference between query atoms and dummy R-groups
+    params.labels = RGroupLabels.DummyAtomLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows, expected_items)
+
+  def testRemoveAllHydrogenFlags(self):
+    core = Chem.MolFromSmiles("[1*]c1ccc([2*])cn1")
+    mol = Chem.MolFromSmiles("Fc1ccccn1")
+
+    params = RGroupDecompositionParameters()
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol), 0)
+    self.assertTrue(rgd.Process())
+    res = rgd.GetRGroupsAsColumns(asSmiles=True)
+    self.assertEqual(res, {'Core': ['c1ccc([*:1])nc1'], 'R1': ['F[*:1]']})
+
+    # no change, as removeAllHydrogenRGroupsAndLabels is True
+    params = RGroupDecompositionParameters()
+    params.removeAllHydrogenRGroups = False
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol), 0)
+    self.assertTrue(rgd.Process())
+    res = rgd.GetRGroupsAsColumns(asSmiles=True)
+    self.assertEqual(res, {'Core': ['c1ccc([*:1])nc1'], 'R1': ['F[*:1]']})
+
+    # Unused user-defined labels retained on core
+    # R groups still retained as removeAllHydrogenRGroups is True
+    params = RGroupDecompositionParameters()
+    params.removeAllHydrogenRGroupsAndLabels = False
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol), 0)
+    self.assertTrue(rgd.Process())
+    res = rgd.GetRGroupsAsColumns(asSmiles=True)
+    self.assertEqual(res, {'Core': ['c1cc([*:1])ncc1[*:2]'], 'R1': ['F[*:1]']})
+
+    # Unused user-defined labels retained on core and in R groups
+    params = RGroupDecompositionParameters()
+    params.removeAllHydrogenRGroups = False
+    params.removeAllHydrogenRGroupsAndLabels = False
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol), 0)
+    self.assertTrue(rgd.Process())
+    res = rgd.GetRGroupsAsColumns(asSmiles=True)
+    self.assertEqual(res, {'Core': ['c1cc([*:1])ncc1[*:2]'], 'R1': ['F[*:1]'], 'R2': ['[H][*:2]']})
+
+  def testSubstructMatchParameters(self):
+    mols = [
+      Chem.MolFromSmiles(x) for x in ("C1CN[C@H]1F", "C1CN[C@]1(O)F", "C1CN[C@@H]1F", "C1CN[CH]1F")
+    ]
+    cores = [Chem.MolFromSmiles('C1CNC1[*:1]')]
+    chiral_cores = [Chem.MolFromSmiles('C1CN[C@H]1[*:1]')]
+
+    rgroups, unmatched = RGroupDecompose(cores, mols)
+    self.assertEqual(unmatched, [])
+    rgroups, unmatched = RGroupDecompose(chiral_cores, mols)
+    self.assertEqual(unmatched, [3])
+
+    params = RGroupDecompositionParameters()
+    params.substructMatchParams.useChirality = False
+    rgroups, unmatched = RGroupDecompose(cores, mols, options=params)
+    self.assertEqual(unmatched, [])
+    rgroups, unmatched = RGroupDecompose(chiral_cores, mols, options=params)
+    self.assertEqual(unmatched, [])
+
+
 if __name__ == '__main__':
+  rdBase.DisableLog("rdApp.debug")
   unittest.main()

@@ -1,18 +1,28 @@
+if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
+    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
+else()
+    message("== Making SubstructLibrary without boost Serialization support")
+    set(RDKit_SERIALIZATION_LIBS )
+endif()
 
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
               atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
-              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
+              ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp
+              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
+              NontetrahedralStereo.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral  )
+              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
+  if(NOT WIN32 AND RDK_INSTALL_STATIC_LIBS)
+    target_link_libraries(GraphMol_static PUBLIC ${RDK_URF_LIBS}_static)
+  endif()
 endif()
 
 rdkit_headers(Atom.h
@@ -50,6 +60,7 @@ add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)
 add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
+add_subdirectory(GenericGroups)
 add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
 add_subdirectory(TautomerQuery)
@@ -90,12 +101,16 @@ add_subdirectory(Trajectory)
 add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
+if(RDK_BUILD_XYZ2MOL_SUPPORT)
+  add_subdirectory(DetermineBonds)
+endif()
+
 if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 add_subdirectory(MolInterchange)
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
-  if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION GREATER 4.8)
+  if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS_EQUAL 4.8)
     message("Skipping SLN build with gcc version <= 4.8")
   else()
     add_subdirectory(SLNParse)
@@ -109,6 +124,7 @@ endif()
 add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)
+add_subdirectory(Abbreviations)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
@@ -150,15 +166,20 @@ rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol )
 
-rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
+rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp 
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
 
-rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
+rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  
            LINK_LIBRARIES SmilesParse FileParsers GraphMol )
 
-rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
+rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp 
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
            
-rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp 
            LINK_LIBRARIES FileParsers SmilesParse GraphMol )
 
+rdkit_catch_test(canonTestsCatch catch_canon.cpp 
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+
+rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp 
+           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )

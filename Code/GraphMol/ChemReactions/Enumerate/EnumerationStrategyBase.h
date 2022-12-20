@@ -35,6 +35,7 @@
 
 #include "EnumerateTypes.h"
 #include "../Reaction.h"
+#include <utility>
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
@@ -56,10 +57,10 @@ namespace RDKit {
 class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
     : public std::exception {
  public:
-  EnumerationStrategyException(const char *msg) : _msg(msg){};
-  EnumerationStrategyException(const std::string &msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~EnumerationStrategyException() noexcept {};
+  EnumerationStrategyException(const char *msg) : _msg(msg) {}
+  EnumerationStrategyException(std::string msg) : _msg(std::move(msg)) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~EnumerationStrategyException() noexcept override = default;
 
  private:
   std::string _msg;
@@ -74,7 +75,9 @@ template <class T>
 EnumerationTypes::RGROUPS getSizesFromBBs(
     const std::vector<std::vector<T>> &bbs) {
   EnumerationTypes::RGROUPS sizes;
-  for (size_t i = 0; i < bbs.size(); ++i) sizes.push_back(bbs[i].size());
+  for (size_t i = 0; i < bbs.size(); ++i) {
+    sizes.push_back(bbs[i].size());
+  }
   return sizes;
 }
 
@@ -124,12 +127,11 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
       m_permutationSizes;  // m_permutationSizes num bbs per group
   boost::uint64_t
       m_numPermutations{};  // total number of permutations for this group
-                          //  -1 if > ssize_t::max
+                            //  -1 if > ssize_t::max
  public:
   static const boost::uint64_t EnumerationOverflow =
       static_cast<boost::uint64_t>(-1);
-  EnumerationStrategyBase()
-      : m_permutation(), m_permutationSizes() {}
+  EnumerationStrategyBase() : m_permutation(), m_permutationSizes() {}
 
   virtual ~EnumerationStrategyBase() {}
 
@@ -138,7 +140,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   //! Initialize the enumerator based on the reaction and the
   //! supplied building blocks
   //!  This is the standard API point.
-  //!  This calls the derived class's initializeStrategy method which must be implemented
+  //!  This calls the derived class's initializeStrategy method which must be
+  //!  implemented
   void initialize(const ChemicalReaction &reaction,
                   const EnumerationTypes::BBS &building_blocks) {
     // default initialization, may be overridden (sets the # reactants
@@ -155,8 +158,10 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   // ! Initialize derived class. Must exist.
   // ! EnumerationStrategyBase structures are already initialized:
   // !  m_permutationSizes - [ length of building blocks for each reactant set ]
-  // !  m_numPermutations - number of possible permutations ( -1 if not computable )
-  // !  m_permutation - the first permutation, always the first supplied reactants
+  // !  m_numPermutations - number of possible permutations
+  // !  ( -1 if not computable )
+  // !  m_permutation - the first permutation, always the first supplied
+  // !  reactants
   virtual void initializeStrategy(
       const ChemicalReaction &reaction,
       const EnumerationTypes::BBS &building_blocks) = 0;
@@ -185,7 +190,9 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
   bool skip(boost::uint64_t skipCount) {
-    for (boost::uint64_t i = 0; i < skipCount; ++i) next();
+    for (boost::uint64_t i = 0; i < skipCount; ++i) {
+      next();
+    }
     return true;
   }
 

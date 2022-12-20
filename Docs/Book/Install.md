@@ -2,9 +2,9 @@
 
 Below a number of installation recipes is presented, with varying degree of complexity.
 
-## Cross-platform under anaconda python (fastest install)
+## Cross-platform using Conda
 
-### Introduction to anaconda
+### Introduction to Conda
 
 Conda is an open-source, cross-platform, software package manager. It supports the packaging and distribution of software components, and manages their installation inside isolated execution environments. It has several analogies with pip and virtualenv, but it is designed to be more "python-agnostic" and more suitable for the distribution of binary packages and their dependencies.
 
@@ -16,19 +16,19 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
-```shellsession
-$ conda create -c rdkit -n my-rdkit-env rdkit
+```shell-session
+$ conda create -c conda-forge -n my-rdkit-env rdkit
 ```
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
-```shellsession
+```shell-session
 $ conda activate my-rdkit-env
 ```
 
 If for some reason this does not work, try:
 
-```shellsession
+```shell-session
 $ cd [anaconda folder]/bin
 $ source activate my-rdkit-env
 ```
@@ -37,14 +37,6 @@ Windows users will use a slightly different command:
 
 ```
 C:\> activate my-rdkit-env
-```
-
-#### conda-forge package
-
-A [conda-forge](https://conda-forge.org/#about) RDKit package is also available, which may offer an easier installation for users already using other conda-forge packages. This package can be installed with:
-
-```shellsession
-$ conda install -c conda-forge rdkit
 ```
 
 ### How to build from source with Conda
@@ -169,6 +161,18 @@ psql my_rdkit_db
 
 If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
 
+## Cross-platform using PIP
+
+Linux, Windows, and macOS RDKit platform wheels are available at the [rdkit ](https://pypi.org/project/rdkit/) PyPi repository for all major Python versions. You can install RDKit using pip.
+
+```sh
+pip install rdkit
+```
+
+Build information and details can be found at the [https://github.com/kuelumbus/rdkit-pypi](https://github.com/kuelumbus/rdkit-pypi) GitHub page. Please open an issue directly at this Github page if you find something not working as expected.
+
+Note: Older versions of RDKit might be available at the [`rdkit-pypi`](https://pypi.org/project/rdkit-pypi/) PyPi repository. `rdkit-pypi` is the old name of RDKit at PyPi.
+
 ## Linux and OS X
 
 ### Installation from repositories
@@ -177,7 +181,7 @@ If you are trying to use multiple installations of PostgreSQL in different envir
 
 Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
 
-```shellsession
+```shell-session
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
 
@@ -235,7 +239,7 @@ If you have any problems with this step, check the boost [installation instructi
 
 Fetch the source, here as tar.gz but you could use git as well:
 
-```shellsession
+```shell-session
 $ wget https://github.com/rdkit/rdkit/archive/Release_XXXX_XX_X.tar.gz
 ```
 
@@ -265,7 +269,7 @@ See below for a list of FAQ and solutions.
 
 ##### Specifying install location
 
-You need to turn `RDK_INSTALL_INTRE` off:
+You need to turn `RDK_INSTALL_INTREE` off:
 
 ```
 cmake -DRDK_INSTALL_INTREE=OFF -DCMAKE_INSTALL_PREFIX=/path/as/you/like ..

@@ -33,10 +33,10 @@
 #include <fmgr.h>
 #include <access/gist.h>
 #include <access/skey.h>
-#include <access/tuptoaster.h>
 #include <utils/memutils.h>
 
 #include "rdkit.h"
+#include "cache.h"
 
 #define GETENTRY(vec,pos) ((bytea *) DatumGetPointer((vec)->vector[(pos)].key))
 

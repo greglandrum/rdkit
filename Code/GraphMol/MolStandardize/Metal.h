@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,8 +13,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_METAL_H__
-#define __RD_METAL_H__
+#ifndef RD_METAL_H
+#define RD_METAL_H
 
 #include <GraphMol/ROMol.h>
 
@@ -55,10 +55,15 @@ accordingly.
   */
   ROMol *disconnect(const ROMol &mol);
   //! overload
-  // modifies the molecule in place
+  /// modifies the molecule in place
   void disconnect(RWMol &mol);
 
  private:
+  struct NonMetal {
+    int cutBonds{0};
+    std::vector<int> boundMetalIndices;
+  };
+  int chargeAdjustment(const Atom *a, int order);
   ROMOL_SPTR metal_nof;
   ROMOL_SPTR metal_non;
 

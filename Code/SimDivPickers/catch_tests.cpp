@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 #include <RDGeneral/types.h>
 #include <RDGeneral/test.h>
@@ -24,7 +22,7 @@ template <typename T>
 class BVFunctor {
  public:
   BVFunctor(const T &obj) : d_obj(obj) {}
-  ~BVFunctor() {}
+  ~BVFunctor() = default;
   double operator()(unsigned int i, unsigned int j) {
     double res = 1. - TanimotoSimilarity(*d_obj[i], *d_obj[j]);
     return res;
@@ -70,7 +68,7 @@ TEST_CASE(
       }
     }
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   SECTION("basics multithreaded") {
     double threshold = 0.8;
     RDKit::INT_VECT firstPicks;

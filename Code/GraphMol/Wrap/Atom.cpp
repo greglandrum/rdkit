@@ -62,25 +62,16 @@ void AtomClearProp(const Atom *atom, const char *key) {
 
 python::tuple AtomGetNeighbors(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::ADJ_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomNeighbors(atom);
-  while (begin != end) {
-    res.append(python::ptr(parent->getAtomWithIdx(*begin)));
-    begin++;
+  for (auto nbr : atom->getOwningMol().atomNeighbors(atom)) {
+    res.append(python::ptr(nbr));
   }
   return python::tuple(res);
 }
 
 python::tuple AtomGetBonds(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::OEDGE_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomBonds(atom);
-  while (begin != end) {
-    const Bond *tmpB = (*parent)[*begin];
-    res.append(python::ptr(tmpB));
-    begin++;
+  for (auto bond : atom->getOwningMol().atomBonds(atom)) {
+    res.append(python::ptr(bond));
   }
   return python::tuple(res);
 }
@@ -119,6 +110,14 @@ void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
 AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
   return atom->getMonomerInfo();
 }
+
+void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
+  if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+    throw_value_error("MonomerInfo is not a PDB Residue");
+  }
+  atom->setMonomerInfo(info->copy());
+}
+
 AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   AtomMonomerInfo *res = atom->getMonomerInfo();
   if (!res) {
@@ -216,6 +215,7 @@ struct atom_wrapper {
         .def("GetIsotope", &Atom::getIsotope)
         .def("SetNumRadicalElectrons", &Atom::setNumRadicalElectrons)
         .def("GetNumRadicalElectrons", &Atom::getNumRadicalElectrons)
+        .def("GetQueryType", &Atom::getQueryType)
 
         .def("SetChiralTag", &Atom::setChiralTag)
         .def("InvertChirality", &Atom::invertChirality)
@@ -239,7 +239,7 @@ struct atom_wrapper {
         .def("GetBonds", AtomGetBonds,
              "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"
              "  used for this type of matching.\n\n"
@@ -412,6 +412,8 @@ struct atom_wrapper {
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
              "Sets the atom's MonomerInfo object.\n\n")
+        .def("SetPDBResidueInfo", AtomSetPDBResidueInfo,
+             "Sets the atom's MonomerInfo object.\n\n")
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")
         .def("SetAtomMapNum", &Atom::setAtomMapNum,
@@ -425,6 +427,7 @@ struct atom_wrapper {
         .value("SP", Atom::SP)
         .value("SP2", Atom::SP2)
         .value("SP3", Atom::SP3)
+        .value("SP2D", Atom::SP2D)
         .value("SP3D", Atom::SP3D)
         .value("SP3D2", Atom::SP3D2)
         .value("OTHER", Atom::OTHER);
@@ -433,6 +436,11 @@ struct atom_wrapper {
         .value("CHI_TETRAHEDRAL_CW", Atom::CHI_TETRAHEDRAL_CW)
         .value("CHI_TETRAHEDRAL_CCW", Atom::CHI_TETRAHEDRAL_CCW)
         .value("CHI_OTHER", Atom::CHI_OTHER)
+        .value("CHI_TETRAHEDRAL", Atom::CHI_TETRAHEDRAL)
+        .value("CHI_ALLENE", Atom::CHI_ALLENE)
+        .value("CHI_SQUAREPLANAR", Atom::CHI_SQUAREPLANAR)
+        .value("CHI_TRIGONALBIPYRAMIDAL", Atom::CHI_TRIGONALBIPYRAMIDAL)
+        .value("CHI_OCTAHEDRAL", Atom::CHI_OCTAHEDRAL)
         .export_values();
     ;
 

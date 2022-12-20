@@ -58,7 +58,8 @@ python::tuple multiTaniNbrHelper(const MultiFPBReader *self,
       self->getTanimotoNeighbors(bv, threshold, numThreads);
   python::list result;
   for (auto &nbr : nbrs) {
-    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
+    result.append(python::make_tuple(std::get<0>(nbr), std::get<1>(nbr),
+                                     std::get<2>(nbr)));
   }
   return python::tuple(result);
 }
@@ -71,7 +72,8 @@ python::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
   python::list result;
   for (auto &nbr : nbrs) {
-    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
+    result.append(python::make_tuple(std::get<0>(nbr), std::get<1>(nbr),
+                                     std::get<2>(nbr)));
   }
   return python::tuple(result);
 }
@@ -110,7 +112,7 @@ double getTverskyHelper(const FPBReader *self, unsigned int which,
   const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTversky(which, bv, ca, cb);
 }
-}
+}  // namespace
 
 struct FPB_wrapper {
   static void wrap() {

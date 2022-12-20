@@ -4,7 +4,7 @@
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="Author" content="greg Landrum">
+  <meta name="Author" content="Greg Landrum">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
 
   <style>
@@ -16,16 +16,17 @@
     }
   </style>
 </head>
+<script src="./RDKit_minimal.js"></script>
 <script>
-  var Module = {
-    onRuntimeInitialized: function () {
-      console.log('version: ' + Module.version());
-      var m1 = Module.get_mol("c1ccccc1O");
-      console.log('smiles: ' + m1.get_smiles());
-      m1.delete();
-      callback("CC(=O)Oc1ccccc1C(=O)O");
-    }
-  };
+  onRuntimeInitialized: initRDKitModule().then(function(instance) {
+    RDKitModule = instance;
+    console.log('version: ' + RDKitModule.version());
+    var m1 = RDKitModule.get_mol("c1ccccc1O");
+    console.log('smiles: ' + m1.get_smiles());
+    m1.delete();
+    callback("CC(=O)Oc1ccccc1C(=O)O");
+    rxn_callback("[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]");
+  });
   function form_to_details(details) {
     var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation"];
     for (i in controls) {
@@ -61,7 +62,7 @@
     mol.draw_to_canvas(canvas, -1, -1);
   }
   function callback(text, update_descrs) {
-    var mol = Module.get_mol(text);
+    var mol = RDKitModule.get_mol(text);
     if (mol.is_valid()) {
       draw(mol);
       var ob = document.getElementById("can_smiles");
@@ -72,15 +73,15 @@
         db.outerHTML = "<div id='descrs'>" +
           "<b>AMW:</b> " + descrs.amw +
           "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
-          "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
+          "<br /><b>MFP2:</b> " + mol.get_morgan_fp(JSON.stringify({ radius: 2, nBits: 128 })) +
           "</div>";
       }
     }
     mol.delete();
   }
   function sma_callback(text) {
-    var qmol = Module.get_qmol(text);
-    var mol = Module.get_mol(document.getElementById("smiles_input").value);
+    var qmol = RDKitModule.get_qmol(text);
+    var mol = RDKitModule.get_mol(document.getElementById("smiles_input").value);
     if (mol.is_valid() && qmol.is_valid()) {
       var mdetails = mol.get_substruct_match(qmol);
       var match = JSON.parse(mdetails);
@@ -88,6 +89,37 @@
     }
     mol.delete();
     qmol.delete();
+  }
+  function template_callback(text) {
+    if(text==""){
+      text = document.getElementById("template_input").value;
+    }
+    var qmol = RDKitModule.get_mol(text);
+    var mol = RDKitModule.get_mol(document.getElementById("smiles_input").value);
+    if (mol.is_valid() && qmol.is_valid()) {
+      var mdetails = mol.get_substruct_match(qmol);
+      var match = JSON.parse(mdetails);
+      var useCoordgen = document.getElementById("useCoordgen").checked;
+      mol.generate_aligned_coords(qmol,useCoordgen);
+      if (match.atoms && match.atoms.length) draw_with_highlights(mol, match);
+    }
+    mol.delete();
+    qmol.delete();
+  }
+  function rxn_callback(text, details) {
+    details = details || {};
+    var rxn = RDKitModule.get_rxn(text, JSON.stringify(details));
+    var svg = "";
+    try {
+      svg = rxn.get_svg(798, 198);
+    } catch {}
+    if (svg == "") {
+      return;
+    }
+    var ob = document.getElementById("drawing_reaction");
+    ob.innerHTML = svg;
+    var canvas = document.getElementById("rdkit-rxn-canvas");
+    rxn.draw_to_canvas(canvas, -1, -1);
   }
   function option_changed(cb) {
     var smi = document.getElementById('smiles_input').value;
@@ -98,8 +130,17 @@
       callback(smi, false);
     }
   }
+  function abbreviation_option_changed(cb) {
+    var smi = document.getElementById('smiles_input').value;
+    var mol = RDKitModule.get_mol(smi);
+    if(document.getElementById('useAbbreviations').checked){
+      var useLinkers = document.getElementById('useLinkers').checked;
+      var maxCoverage = +(document.getElementById('maxCoverage').value);
+      mol.condense_abbreviations(maxCoverage,useLinkers);
+    }
+    draw(mol);
+  }
 </script>
-<script src="./RDKit_minimal.js"></script>
 
 <body>
   <div class="container-fluid col-md-8">
@@ -111,6 +152,7 @@
     <br>
     SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value,true)">
     SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
+
     <br>
     <h2>Computed values</h2>
 
@@ -138,9 +180,33 @@
         for="bondLineWidth">bondLineWidth</label>
 
     </div>
-
+    <div id="abbrev-div">
+      <h1>Abbreviations</h1>
+      <input type="checkbox" id="useAbbreviations" name="useAbbreviations" onclick="abbreviation_option_changed(this);" />
+      <label for="useAbbreviations">Use Abbreviations</label>
+      <input type="checkbox" id="useLinkers" name="useLinkers" onclick="abbreviation_option_changed(this);" />
+      <label for="useLinkers">Use Linkers</label>
+      <input type="text" id="maxCoverage" value="0.4" name="maxCoverage" onclick="abbreviation_option_changed(this);" />
+      <label for="maxCoverage">Max Coverage</label>
+      </div>
+      <div id="template-div">
+    <h1>Template Mol Block</h1>
+    <input type="checkbox" id="useCoordgen" name="use_coordgen" onclick="template_callback('');">
+    <label for="useCoordgen">useCoordgen</label>
+    <br>
+    <textarea id="template_input" cols="80" rows="20" value="" onkeyup="template_callback(this.value)"></textarea>
+    </div>
+    <h1>Reactions</h1>
+    SMARTS: <input id="reaction_smarts_input" type="text" value="[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]" onkeyup="rxn_callback(this.value)">
+    SMILES: <input id="reaction_smiles_input" type="text" value="[CH:1](=[O:2])-[OH].[NH3:3]>>[O:2]=[CH:1]-[NH2:3]" onkeyup="rxn_callback(this.value, { useSmiles: true })">
+    <br>
+    <h3>SVG render</h3>
+    <div id="drawing_reaction" style="width:800px; height:200px; border:1px solid #000000;"></div>
+    <br>
+    <h3>Canvas render</h3>
+    <canvas id="rdkit-rxn-canvas" width="800" height="200" style="border:1px solid #000000;">
+    </canvas>
   </div>
-
 </body>
 
 </html>

@@ -524,7 +524,7 @@ translate
       self.code.append('%s %s %s setrgbcolor' % (r, g, b))
 
   def _updateLineWidth(self, width):
-    if width == None:
+    if width is None:
       width = self.defaultLineWidth
     if width != self._currentWidth:
       self._currentWidth = width
@@ -564,8 +564,8 @@ translate
     # Have not handled characters that are converted normally in python strings
     # i.e. \n -> newline
     str = s.replace(chr(0x5C), r'\\')
-    str = str.replace('(', '\(')
-    str = str.replace(')', '\)')
+    str = str.replace('(', r'\(')
+    str = str.replace(')', r'\)')
     return str
 
   # ??? check to see if \n response is handled correctly (should move cursor down)
@@ -861,7 +861,7 @@ translate
     # series of lines of the right overall size can follow
     # piddlePDF again
 
-    rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
+    rawimage = myimage.tobytes()
     assert len(rawimage) == imgwidth * imgheight, 'Wrong amount of data for image'
     #compressed = zlib.compress(rawimage) # no zlib at moment
     hex_encoded = self._AsciiHexEncode(rawimage)
@@ -950,7 +950,7 @@ translate
                       '/DataSource currentfile /ASCIIHexDecode filter', '>> % End image dictionary',
                       'image'])
     # after image operator just need to dump image dat to file as hexstring
-    rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
+    rawimage = myimage.tobytes()
     assert len(rawimage) == imwidth * imheight, 'Wrong amount of data for image'
     #compressed = zlib.compress(rawimage) # no zlib at moment
     hex_encoded = self._AsciiHexEncode(rawimage)

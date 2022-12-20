@@ -15,7 +15,6 @@
 #include <GraphMol/RingInfo.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
-#include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
@@ -24,58 +23,79 @@
 #include <cstring>
 #include <vector>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 namespace Canon {
+class canon_atom;
 
 struct RDKIT_GRAPHMOL_EXPORT bondholder {
-  Bond::BondType bondType{Bond::UNSPECIFIED};
-  unsigned int bondStereo;
+  Bond::BondType bondType{Bond::BondType::UNSPECIFIED};
+  unsigned int bondStereo{
+      static_cast<unsigned int>(Bond::BondStereo::STEREONONE)};
   unsigned int nbrSymClass{0};
   unsigned int nbrIdx{0};
+  Bond::BondStereo stype{Bond::BondStereo::STEREONONE};
+  const canon_atom *controllingAtoms[4]{nullptr, nullptr, nullptr, nullptr};
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order bonds
-  bondholder() : bondStereo(static_cast<unsigned int>(Bond::STEREONONE)){};
+  unsigned int bondIdx{0};
+
+  bondholder(){};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
-             unsigned int nsc)
+             unsigned int nsc, unsigned int bidx)
       : bondType(bt),
         bondStereo(static_cast<unsigned int>(bs)),
         nbrSymClass(nsc),
-        nbrIdx(ni){};
+        nbrIdx(ni),
+        bondIdx(bidx) {}
   bondholder(Bond::BondType bt, unsigned int bs, unsigned int ni,
-             unsigned int nsc)
-      : bondType(bt), bondStereo(bs), nbrSymClass(nsc), nbrIdx(ni){};
-  bool operator<(const bondholder &o) const {
-    if (p_symbol && o.p_symbol) return (*p_symbol) < (*o.p_symbol);
-    if (bondType != o.bondType) return bondType < o.bondType;
-    if (bondStereo != o.bondStereo) return bondStereo < o.bondStereo;
-    return nbrSymClass < o.nbrSymClass;
-  }
+             unsigned int nsc, unsigned int bidx)
+      : bondType(bt),
+        bondStereo(bs),
+        nbrSymClass(nsc),
+        nbrIdx(ni),
+        bondIdx(bidx) {}
+
+  int compareStereo(const bondholder &o) const;
+
+  bool operator<(const bondholder &o) const { return compare(*this, o) < 0; }
   static bool greater(const bondholder &lhs, const bondholder &rhs) {
-    if (lhs.p_symbol && rhs.p_symbol && (*lhs.p_symbol) != (*rhs.p_symbol))
-      return (*lhs.p_symbol) > (*rhs.p_symbol);
-    if (lhs.bondType != rhs.bondType) return lhs.bondType > rhs.bondType;
-    if (lhs.bondStereo != rhs.bondStereo)
-      return lhs.bondStereo > rhs.bondStereo;
-    return lhs.nbrSymClass > rhs.nbrSymClass;
+    return compare(lhs, rhs) > 0;
   }
 
   static int compare(const bondholder &x, const bondholder &y,
                      unsigned int div = 1) {
-    if (x.p_symbol && y.p_symbol && (*x.p_symbol) < (*y.p_symbol)) return -1;
-    if (x.bondType < y.bondType)
+    if (x.p_symbol && y.p_symbol) {
+      if ((*x.p_symbol) < (*y.p_symbol)) {
+        return -1;
+      } else if ((*x.p_symbol) > (*y.p_symbol)) {
+        return 1;
+      }
+    }
+    if (x.bondType < y.bondType) {
       return -1;
-    else if (x.bondType > y.bondType)
+    } else if (x.bondType > y.bondType) {
       return 1;
-    if (x.bondStereo < y.bondStereo)
+    }
+    if (x.bondStereo < y.bondStereo) {
       return -1;
-    else if (x.bondStereo > y.bondStereo)
+    } else if (x.bondStereo > y.bondStereo) {
       return 1;
-    return x.nbrSymClass / div - y.nbrSymClass / div;
+    }
+    auto scdiv = x.nbrSymClass / div - y.nbrSymClass / div;
+    if (scdiv) {
+      return scdiv;
+    }
+    if (x.bondStereo && y.bondStereo) {
+      auto cs = x.compareStereo(y);
+      if (cs) {
+        return cs;
+      }
+    }
+    return 0;
   }
 };
-
 class RDKIT_GRAPHMOL_EXPORT canon_atom {
  public:
   const Atom *atom{nullptr};
@@ -91,9 +111,7 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
   std::vector<int> revistedNeighbors;
   std::vector<bondholder> bonds;
 
-  canon_atom()
-
-      {};
+  canon_atom() {}
 
   ~canon_atom() { free(nbrIds); }
 };
@@ -123,9 +141,7 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
   const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr},
       *dp_bondsInPlay{nullptr};
 
-  SpecialChiralityAtomCompareFunctor()
-
-      {};
+  SpecialChiralityAtomCompareFunctor() {}
   SpecialChiralityAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
       const boost::dynamic_bitset<> *atomsInPlay = nullptr,
@@ -133,7 +149,7 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
-        dp_bondsInPlay(bondsInPlay){};
+        dp_bondsInPlay(bondsInPlay) {}
   int operator()(int i, int j) const {
     PRECONDITION(dp_atoms, "no atoms");
     PRECONDITION(dp_mol, "no molecule");
@@ -152,7 +168,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
          ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size(); ++ii) {
       int cmp =
           bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
 
     std::vector<std::pair<unsigned int, unsigned int>> swapsi;
@@ -165,7 +183,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
     }
     for (unsigned int ii = 0; ii < swapsi.size() && ii < swapsj.size(); ++ii) {
       int cmp = swapsi[ii].second - swapsj[ii].second;
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
     return 0;
   }
@@ -178,9 +198,7 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
   const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr},
       *dp_bondsInPlay{nullptr};
 
-  SpecialSymmetryAtomCompareFunctor()
-
-      {};
+  SpecialSymmetryAtomCompareFunctor() {}
   SpecialSymmetryAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
       const boost::dynamic_bitset<> *atomsInPlay = nullptr,
@@ -188,7 +206,7 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
-        dp_bondsInPlay(bondsInPlay){};
+        dp_bondsInPlay(bondsInPlay) {}
   int operator()(int i, int j) const {
     PRECONDITION(dp_atoms, "no atoms");
     PRECONDITION(dp_mol, "no molecule");
@@ -219,7 +237,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
          ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size(); ++ii) {
       int cmp =
           bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
 
     if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
@@ -231,9 +251,42 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
   }
 };
 
+namespace {
+unsigned int getChiralRank(const ROMol *dp_mol, canon_atom *dp_atoms,
+                           unsigned int i) {
+  unsigned int res = 0;
+  std::vector<unsigned int> perm;
+  perm.reserve(dp_atoms[i].atom->getDegree());
+  for (const auto nbr : dp_mol->atomNeighbors(dp_atoms[i].atom)) {
+    auto rnk = dp_atoms[nbr->getIdx()].index;
+    // make sure we don't have duplicate ranks
+    if (std::find(perm.begin(), perm.end(), rnk) != perm.end()) {
+      break;
+    } else {
+      perm.push_back(rnk);
+    }
+  }
+  if (perm.size() == dp_atoms[i].atom->getDegree()) {
+    auto ctag = dp_atoms[i].atom->getChiralTag();
+    if (ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ||
+        ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
+      auto sortedPerm = perm;
+      std::sort(sortedPerm.begin(), sortedPerm.end());
+      auto nswaps = countSwapsToInterconvert(perm, sortedPerm);
+      res = ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ? 2 : 1;
+      if (nswaps % 2) {
+        res = res == 2 ? 1 : 2;
+      }
+    }
+  }
+  return res;
+}
+}  // namespace
 class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   unsigned int getAtomRingNbrCode(unsigned int i) const {
-    if (!dp_atoms[i].hasRingNbr) return 0;
+    if (!dp_atoms[i].hasRingNbr) {
+      return 0;
+    }
 
     int *nbrs = dp_atoms[i].nbrIds;
     unsigned int code = 0;
@@ -246,17 +299,16 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   }
 
   int basecomp(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
     unsigned int ivi, ivj;
 
     // always start with the current class:
     ivi = dp_atoms[i].index;
     ivj = dp_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // use the atom-mapping numbers if they were assigned
     /* boost::any_cast FILED here:
             std::string molAtomMapNumber_i="";
@@ -268,99 +320,102 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
                                        molAtomMapNumber_i);
     dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
                                        molAtomMapNumber_j);
-    if (molAtomMapNumber_i < molAtomMapNumber_j)
+    if (molAtomMapNumber_i < molAtomMapNumber_j) {
       return -1;
-    else if (molAtomMapNumber_i > molAtomMapNumber_j)
+    } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
       return 1;
-
+    }
     // start by comparing degree
     ivi = dp_atoms[i].degree;
     ivj = dp_atoms[j].degree;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol))
+      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol)) {
         return -1;
-      else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol))
+      } else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol)) {
         return 1;
-      else
+      } else {
         return 0;
+      }
     }
 
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // isotopes if we're using them
     if (df_useIsotopes) {
       ivi = dp_atoms[i].atom->getIsotope();
       ivj = dp_atoms[j].atom->getIsotope();
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
+      }
     }
 
     // nHs
     ivi = dp_atoms[i].totalNumHs;
     ivj = dp_atoms[j].totalNumHs;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // charge
     ivi = dp_atoms[i].atom->getFormalCharge();
     ivj = dp_atoms[j].atom->getFormalCharge();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // chirality if we're using it
     if (df_useChirality) {
       // first atom stereochem:
       ivi = 0;
       ivj = 0;
-      std::string cipCode;
-      if (dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,
-                                             cipCode)) {
-        ivi = cipCode == "R" ? 2 : 1;
-      }
-      if (dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,
-                                             cipCode)) {
-        ivj = cipCode == "R" ? 2 : 1;
-      }
-      if (ivi < ivj)
-        return -1;
-      else if (ivi > ivj)
-        return 1;
-
       // can't actually use values here, because they are arbitrary
       ivi = dp_atoms[i].atom->getChiralTag() != 0;
       ivj = dp_atoms[j].atom->getChiralTag() != 0;
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
+      }
+      // stereo set
+      if (ivi && ivj) {
+        if (ivi) {
+          ivi = getChiralRank(dp_mol, dp_atoms, i);
+        }
+        if (ivj) {
+          ivj = getChiralRank(dp_mol, dp_atoms, j);
+        }
+        if (ivi < ivj) {
+          return -1;
+        } else if (ivi > ivj) {
+          return 1;
+        }
+      }
     }
 
     if (df_useChiralityRings) {
       // ring stereochemistry
       ivi = getAtomRingNbrCode(i);
       ivj = getAtomRingNbrCode(j);
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
-      // bond stereo is taken care of in the neighborhood comparison
+      }  // bond stereo is taken care of in the neighborhood comparison
     }
     return 0;
   }
@@ -375,9 +430,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   bool df_useChirality{true};
   bool df_useChiralityRings{true};
 
-  AtomCompareFunctor()
-
-      {};
+  AtomCompareFunctor() {}
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
                      const boost::dynamic_bitset<> *bondsInPlay = nullptr)
@@ -388,15 +441,11 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         df_useNbrs(false),
         df_useIsotopes(true),
         df_useChirality(true),
-        df_useChiralityRings(true){};
+        df_useChiralityRings(true) {}
   int operator()(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
-    PRECONDITION(dp_mol, "no molecule");
-    PRECONDITION(i != j, "bad call");
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
     }
-
     int v = basecomp(i, j);
     if (v) {
       return v;
@@ -415,7 +464,9 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
            ++ii) {
         int cmp =
             bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
 
       if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
@@ -457,26 +508,29 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     // always start with the current class:
     ivi = dp_atoms[i].index;
     ivj = dp_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // isotopes:
     ivi = dp_atoms[i].atom->getIsotope();
     ivj = dp_atoms[j].atom->getIsotope();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // atom stereochem:
     ivi = 0;
@@ -490,10 +544,11 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
                                            cipCode)) {
       ivj = cipCode == "R" ? 2 : 1;
     }
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // bond stereo is taken care of in the neighborhood comparison
     return 0;
@@ -503,15 +558,17 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
   Canon::canon_atom *dp_atoms{nullptr};
   const ROMol *dp_mol{nullptr};
   bool df_useNbrs{false};
-  ChiralAtomCompareFunctor(){};
+  ChiralAtomCompareFunctor() {}
   ChiralAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m)
-      : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
+      : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false) {}
   int operator()(int i, int j) const {
     PRECONDITION(dp_atoms, "no atoms");
     PRECONDITION(dp_mol, "no molecule");
     PRECONDITION(i != j, "bad call");
     int v = basecomp(i, j);
-    if (v) return v;
+    if (v) {
+      return v;
+    }
 
     if (df_useNbrs) {
       getAtomNeighborhood(dp_atoms[i].bonds);
@@ -525,14 +582,18 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
            ++ii) {
         int cmp = bondholder::compare(
             dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii], ATNUM_CLASS_OFFSET);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
       for (unsigned int ii = 0;
            ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size();
            ++ii) {
         int cmp =
             bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
       if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
         return -1;
@@ -609,7 +670,9 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     // count:"<<count[index]<<std::endl;
     for (i = count[index]; i < len; i++) {
       index = start[i];
-      if (count[index]) symclass = offset + i;
+      if (count[index]) {
+        symclass = offset + i;
+      }
       atoms[index].index = symclass;
       // std::cerr<<" "<<index+1<<"("<<symclass<<")";
       // if(mode && (activeset<0 || count[index]>count[activeset]) ){
@@ -735,6 +798,24 @@ RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
                                           std::vector<Canon::canon_atom> &atoms,
                                           bool includeChirality = true);
+
+namespace detail {
+void initFragmentCanonAtoms(const ROMol &mol,
+                            std::vector<Canon::canon_atom> &atoms,
+                            bool includeChirality,
+                            const std::vector<std::string> *atomSymbols,
+                            const std::vector<std::string> *bondSymbols,
+                            const boost::dynamic_bitset<> &atomsInPlay,
+                            const boost::dynamic_bitset<> &bondsInPlay,
+                            bool needsInit);
+void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms);
+template <typename T>
+void rankWithFunctor(T &ftor, bool breakTies, int *order,
+                     bool useSpecial = false, bool useChirality = false,
+                     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+                     const boost::dynamic_bitset<> *bondsInPlay = nullptr);
+
+}  // namespace detail
 
 }  // namespace Canon
 }  // namespace RDKit

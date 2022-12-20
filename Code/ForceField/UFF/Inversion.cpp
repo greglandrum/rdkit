@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -38,7 +35,7 @@ double calculateCosY(const RDGeom::Point3D &iPoint,
   return n.dotProduct(rJL);
 }
 
-boost::tuple<double, double, double, double>
+std::tuple<double, double, double, double>
 calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO) {
   double res = 0.0;
   double C0 = 0.0;
@@ -82,14 +79,15 @@ calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO) {
   }
   res /= 3.0;
 
-  return boost::make_tuple(res, C0, C1, C2);
+  return std::make_tuple(res, C0, C1, C2);
 }
 }  // end of namespace Utils
 
 InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
                                    unsigned int idx2, unsigned int idx3,
                                    unsigned int idx4, int at2AtomicNum,
-                                   bool isCBoundToO, double oobForceScalingFactor) {
+                                   bool isCBoundToO,
+                                   double oobForceScalingFactor) {
   PRECONDITION(owner, "bad owner");
   URANGE_CHECK(idx1, owner->positions().size());
   URANGE_CHECK(idx2, owner->positions().size());
@@ -102,13 +100,12 @@ InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
   d_at3Idx = idx3;
   d_at4Idx = idx4;
 
-  boost::tuple<double, double, double, double> invCoeffForceCon =
-      Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
-                                                       isCBoundToO);
-  d_forceConstant = oobForceScalingFactor * boost::tuples::get<0>(invCoeffForceCon);
-  d_C0 = boost::tuples::get<1>(invCoeffForceCon);
-  d_C1 = boost::tuples::get<2>(invCoeffForceCon);
-  d_C2 = boost::tuples::get<3>(invCoeffForceCon);
+  auto invCoeffForceCon = Utils::calcInversionCoefficientsAndForceConstant(
+      at2AtomicNum, isCBoundToO);
+  d_forceConstant = oobForceScalingFactor * std::get<0>(invCoeffForceCon);
+  d_C0 = std::get<1>(invCoeffForceCon);
+  d_C1 = std::get<2>(invCoeffForceCon);
+  d_C2 = std::get<3>(invCoeffForceCon);
 }
 
 double InversionContrib::getEnergy(double *pos) const {
@@ -200,5 +197,5 @@ void InversionContrib::getGrad(double *pos, double *grad) const {
     g4[i] += dE_dW * tg4[i];
   }
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

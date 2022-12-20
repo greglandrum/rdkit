@@ -22,10 +22,15 @@ class RDProps {
   RDProps() : d_props() {}
   RDProps(const RDProps &rhs) : d_props(rhs.d_props) {}
   RDProps &operator=(const RDProps &rhs) {
-    if (this == &rhs) return *this;
+    if (this == &rhs) {
+      return *this;
+    }
     d_props = rhs.d_props;
     return *this;
   }
+  RDProps(RDProps &&o) noexcept = default;
+  RDProps &operator=(RDProps &&rhs) noexcept = default;
+
   void clear() { d_props.reset(); }
   //! gets the underlying Dictionary
   const Dict &getDict() const { return d_props; }
@@ -118,7 +123,7 @@ class RDProps {
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const { return d_props.hasVal(key); };
+  bool hasProp(const std::string &key) const { return d_props.hasVal(key); }
 
   //! clears the value of a \c property
   /*!
@@ -139,7 +144,7 @@ class RDProps {
       }
     }
     d_props.clearVal(key);
-  };
+  }
 
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {
@@ -156,8 +161,8 @@ class RDProps {
   //! update the properties from another
   /*
     \param source    Source to update the properties from
-    \param preserve  Existing If true keep existing data, else override from the
-    source
+    \param preserve  Existing If true keep existing data, else override from
+    the source
   */
   void updateProps(const RDProps &source, bool preserveExisting = false) {
     d_props.update(source.getDict(), preserveExisting);

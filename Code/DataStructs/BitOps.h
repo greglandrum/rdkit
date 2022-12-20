@@ -43,7 +43,9 @@ double SimilarityWrapper(const T& bv1, const T& bv2,
   } else {
     res = metric(bv1, bv2);
   }
-  if (returnDistance) res = 1.0 - res;
+  if (returnDistance) {
+    res = 1.0 - res;
+  }
   return res;
 }
 //! \overload
@@ -63,7 +65,9 @@ double SimilarityWrapper(const T& bv1, const T& bv2, double a, double b,
   } else {
     res = metric(bv1, bv2, a, b);
   }
-  if (returnDistance) res = 1.0 - res;
+  if (returnDistance) {
+    res = 1.0 - res;
+  }
   return res;
 }
 
@@ -213,12 +217,12 @@ template <typename T1, typename T2>
 RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all on bits in common between two bit
-// vects
+/// vects
 template <typename T1, typename T2>
 RDKIT_DATASTRUCTS_EXPORT IntVect OnBitsInCommon(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all off bits in common between two bit
-// vects
+/// vects
 template <typename T1, typename T2>
 RDKIT_DATASTRUCTS_EXPORT IntVect OffBitsInCommon(const T1& bv1, const T2& bv2);
 
@@ -270,7 +274,7 @@ template <typename T1>
 RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(const T1& bv1);
 
 //! returns a hex representation of a bit vector compatible with Andrew Dalke's
-// FPS format
+/// FPS format
 /*!
   \param bv1    the vector to use
 
@@ -302,7 +306,7 @@ RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(T1& bv1,
                                                        const std::string& fps);
 
 //! updates a bit vector from a binary string representation of a bit vector (an
-// array of bytes)
+/// array of bytes)
 /*!
   \param bv1    the vector to use
   \param fps    the binary string

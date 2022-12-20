@@ -121,7 +121,8 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
                              bool scaleVDW = false,
-                             bool doTriangleSmoothing = true) {
+                             bool doTriangleSmoothing = true,
+                             bool useMacrocycle14config = false) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -129,7 +130,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
+  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
+                               useMacrocycle14config);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -308,26 +310,26 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - pruneRmsThresh : Retain only the conformations out of 'numConfs' \n\
                     after embedding that are at least \n\
                     this far apart from each other. \n\
-          RMSD is computed on the heavy atoms. \n\
-          Pruning is greedy; i.e. the first embedded conformation\n\
-          is retained and from then on only those that are at\n\
-          least pruneRmsThresh away from all retained conformations\n\
-          are kept. The pruning is done after embedding and \n\
-          bounds violation minimization. No pruning by default.\n\
-    - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
-                 require some atoms to have fixed coordinates in the resulting \n\
-                 conformation.\n\
-    - forceTol : tolerance to be used during the force-field minimization with \n\
-                 the distance geometry force field.\n\
-    - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
-                 of the bounds matrix fails.\n\
-    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
-    - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
-                 was built with multi-thread support.\n\
-                If set to zero, the max supported by the system will be used.\n\
-    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
-    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
-    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
+                    RMSD is computed on the heavy atoms. \n\
+                    Pruning is greedy; i.e. the first embedded conformation\n\
+                    is retained and from then on only those that are at\n\
+                    least pruneRmsThresh away from all retained conformations\n\
+                    are kept. The pruning is done after embedding and \n\
+                    bounds violation minimization. No pruning by default.\n\
+  - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
+               require some atoms to have fixed coordinates in the resulting \n\
+               conformation.\n\
+  - forceTol : tolerance to be used during the force-field minimization with \n\
+               the distance geometry force field.\n\
+  - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
+               of the bounds matrix fails.\n\
+  - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
+  - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
+               was built with multi-thread support.\n\
+              If set to zero, the max supported by the system will be used.\n\
+  - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+  - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+  - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -423,12 +425,25 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "useMacrocycleTorsions",
           &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
           "impose macrocycle torsion angle preferences")
+      .def_readwrite(
+          "boundsMatForceScaling",
+          &RDKit::DGeomHelpers::EmbedParameters::boundsMatForceScaling,
+          "scale the weights of the atom pair distance restraints relative to "
+          "the other types of restraints")
+      .def_readwrite(
+          "useSymmetryForPruning",
+          &RDKit::DGeomHelpers::EmbedParameters::useSymmetryForPruning,
+          "use molecule symmetry when doing the RMSD pruning. Note that this "
+          "option automatically also sets onlyHeavyAtomsForRMS to true.")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array")
       .def("SetCPCI", &RDKit::setCPCI,
            "set the customised pairwise Columb-like interaction to atom pairs."
-           "used during structural minimisation stage");
+           "used during structural minimisation stage")
+      .def_readwrite("forceTransAmides",
+                     &RDKit::DGeomHelpers::EmbedParameters::forceTransAmides,
+                     "constrain amide bonds to be trans");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
@@ -499,6 +514,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds") = true,
                python::arg("scaleVDW") = false,
-               python::arg("doTriangleSmoothing") = true),
+               python::arg("doTriangleSmoothing") = true,
+               python::arg("useMacrocycle14config") = false),
               docString.c_str());
 }

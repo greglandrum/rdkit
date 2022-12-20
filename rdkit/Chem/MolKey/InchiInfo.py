@@ -33,10 +33,10 @@
 # Original author: Thomas Muellerk muelleth
 import logging
 import re
-import unittest
-from rdkit import Chem
 
+from rdkit import Chem
 from rdkit.Chem import inchi
+
 if not inchi.INCHI_AVAILABLE:
   raise ImportError("This code requires the RDKit to be built with InChI support")
 
@@ -44,15 +44,13 @@ if not inchi.INCHI_AVAILABLE:
 def _is_achiral_by_symmetry(INCHI):
   mol = Chem.MolFromInchi(INCHI)
   if not mol:
-    mol = Chem.MolFromInchi('InChI=1/{0}'.format(INCHI))
-
+    mol = Chem.MolFromInchi(f'InChI=1/{INCHI}')
   try:
-    list_chiral = Chem.FindMolChiralCenters(mol, True, True)
+    # is there any real chiral centre?
+    return len(Chem.FindMolChiralCenters(mol, True, True)) == 0
   except Exception:
     return False
-
-#   is there any real chiral centre?
-  return len(list_chiral) == 0
+  
 
 console = logging.StreamHandler()
 UPD_APP = logging.getLogger('inchiinfo.application')  # application runtime information
@@ -62,36 +60,34 @@ reconnected_re = re.compile('(.*?)/r(.*)')  # reconnected layer?
 fixed_h_re = re.compile('(.*?)/f(.*)')  # fixed-H layer?
 isotope_re = re.compile('(.*?)/i(.*)')  # isotope layer?
 
-stereo_re = re.compile('.*\/t(.*?)\/.*')
-stereo_all_re = re.compile('.*\/t([^\/]+)')
-undef_stereo_re = re.compile('(\d+)\?')
-all_stereo_re = re.compile('(\d+)[?+-]')
-defined_stereo_re = re.compile('(\d+)[+-]')
-h_layer_re = re.compile('.*\/h(.*)\/?')
-mobile_h_group_re = re.compile('(\(H.+?\))')
-mobile_h_atoms_re = re.compile(',(\d+)')
+stereo_re = re.compile(r'.*/t(.*?)/.*')
+stereo_all_re = re.compile(r'.*/t([^/]+)')
+undef_stereo_re = re.compile(r'(\d+)\?')
+all_stereo_re = re.compile(r'(\d+)[?+-]')
+defined_stereo_re = re.compile(r'(\d+)[+-]')
+h_layer_re = re.compile(r'.*/h(.*)/?')
+mobile_h_group_re = re.compile(r'(\(H.+?\))')
+mobile_h_atoms_re = re.compile(r',(\d+)')
 
 
 class InchiInfo(object):
 
   def __init__(self, inchi_str):
-    (version, rest) = version_re.match(inchi_str).groups()
+    _, rest = version_re.match(inchi_str).groups()
     reconn_match = reconnected_re.match(rest)
 
     connection_layers = {}
     if reconn_match:
-      (connection_layers['id_disconnected'],
-       connection_layers['id_reconnected']) = reconn_match.groups()
+      connection_layers['id_disconnected'], connection_layers['id_reconnected'] = reconn_match.groups()
     else:
-      (connection_layers['id']) = rest
+      connection_layers['id'] = rest
 
     fixed_h_layers = {}
     for conn_layer in connection_layers:
       fixed_h_layers[conn_layer] = {}
       fixed_match = fixed_h_re.match(connection_layers[conn_layer])
       if fixed_match:
-        (fixed_h_layers[conn_layer]['main'],
-         fixed_h_layers[conn_layer]['fixed_h']) = fixed_match.groups()
+        fixed_h_layers[conn_layer]['main'], fixed_h_layers[conn_layer]['fixed_h'] = fixed_match.groups()
       else:
         fixed_h_layers[conn_layer]['main'] = connection_layers[conn_layer]
 
@@ -102,8 +98,7 @@ class InchiInfo(object):
         inchi[i0_layer][i1_layer] = {}
         iso_match = isotope_re.match(fixed_h_layers[i0_layer][i1_layer])
         if iso_match:
-          (inchi[i0_layer][i1_layer]['non-isotopic'],
-           inchi[i0_layer][i1_layer]['isotopic']) = iso_match.groups()
+          inchi[i0_layer][i1_layer]['non-isotopic'], inchi[i0_layer][i1_layer]['isotopic'] = iso_match.groups()
         else:
           inchi[i0_layer][i1_layer]['non-isotopic'] = fixed_h_layers[i0_layer][i1_layer]
 
@@ -118,21 +113,18 @@ class InchiInfo(object):
         4) Comma-separated list of internal atom numbers with sp3 stereochemistry
         '''
     sp3_stereo = {}
-
     for con_layer in self.parsed_inchi:
       for fixed_layer in self.parsed_inchi[con_layer]:
         sp3_stereo[fixed_layer] = {}
         for iso_layer in self.parsed_inchi[con_layer][fixed_layer]:
           sp3_stereo[fixed_layer][iso_layer] = {}
           stereo_match = stereo_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
-          stereo_all_match = stereo_all_re.match(self.parsed_inchi[con_layer][fixed_layer][
-            iso_layer])
+          stereo_all_match = stereo_all_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
+          
           num_stereo = 0
           num_undef_stereo = 0
           is_meso = False
           stereo = ''
-          stereo_centers = []
-          undef_stereo_centers = []
           #    match patterns with defined and undefined stereo
           if stereo_match:
             stereo = stereo_match.group(1)
@@ -140,11 +132,11 @@ class InchiInfo(object):
           elif stereo_all_match:
             stereo = stereo_all_match.group(1)
             is_meso = len(defined_stereo_re.findall(stereo)) > 1
+            
           #    Number of ALL stereo centres
-          stereo_centers = all_stereo_re.findall(stereo)
-          num_stereo = len(stereo_centers)
-          undef_stereo_centers = undef_stereo_re.findall(stereo)
-          num_undef_stereo = len(undef_stereo_centers)
+          num_stereo = len(all_stereo_re.findall(stereo))
+          num_undef_stereo = len(undef_stereo_re.findall(stereo))
+          
           #    Meso centres    --    VT     --    2011.12.08
           inchi_layer = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
           is_meso = is_meso or (num_undef_stereo > 1 and _is_achiral_by_symmetry(inchi_layer))

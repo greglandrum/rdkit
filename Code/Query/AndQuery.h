@@ -18,13 +18,13 @@ namespace Queries {
 //! a Query implementing AND: requires all children to be \c true
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class AndQuery
+class RDKIT_QUERY_EXPORT AndQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
-  AndQuery() { this->df_negate = false; };
+  AndQuery() { this->df_negate = false; }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     bool res = true;
     typename BASE::CHILD_VECT_CI it1;
     for (it1 = this->beginChildren(); it1 != this->endChildren(); ++it1) {
@@ -34,10 +34,13 @@ class AndQuery
         break;
       }
     }
-    if (this->getNegation()) res = !res;
+    if (this->getNegation()) {
+      res = !res;
+    }
     return res;
-  };
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  }
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     AndQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new AndQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     typename BASE::CHILD_VECT_CI i;
@@ -48,7 +51,7 @@ class AndQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 };
 }  // namespace Queries
 #endif

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolPickler.h>
 #include "FileParsers.h"
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
@@ -1738,25 +1739,23 @@ void testAtomParity() {
     m->getAtomWithIdx(1)->getProp(common_properties::molParity, parity);
     TEST_ASSERT(parity == 1);
 
-    // if we don't perceive the stereochem first, no parity
-    // flags end up in the output:
-    std::string molBlock = MolToMolBlock(*m);
-    RWMol *m2 = MolBlockToMol(molBlock);
-    TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
-    delete m2;
-
-    // now perceive stereochem, then look for the parity
-    // flags:
-    MolOps::assignChiralTypesFrom3D(*m);
-    molBlock = MolToMolBlock(*m);
-    m2 = MolBlockToMol(molBlock);
+    // look for the parity flags on output:
+    auto molBlock = MolToMolBlock(*m);
+    auto m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
     TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     m2->getAtomWithIdx(1)->getProp(common_properties::molParity, parity);
     TEST_ASSERT(parity == 1);
+    delete m2;
+
+    // if we clear the stereo, no parity flags end up in the output:
+    m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    molBlock = MolToMolBlock(*m);
+    m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     delete m2;
 
     delete m;
@@ -2064,7 +2063,7 @@ void testMolFileAtomQueries() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol",
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.v3k.mol",
     };
-    for (const auto fName : fNames) {
+    for (const auto &fName : fNames) {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
       TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
@@ -2098,7 +2097,7 @@ void testMolFileAtomQueries() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol",
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.v3k.mol",
     };
-    for (const auto fName : fNames) {
+    for (const auto &fName : fNames) {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
 
@@ -3743,6 +3742,26 @@ void testPDBFile() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 17.047));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 14.099));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
+
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    RWMol m2(pkl);
+    for (const auto atom : m->atoms()) {
+      const auto atom2 = m2.getAtomWithIdx(atom->getIdx());
+      auto info1 = static_cast<AtomPDBResidueInfo *>(atom->getMonomerInfo());
+      auto info2 = static_cast<AtomPDBResidueInfo *>(atom2->getMonomerInfo());
+      // this is awkward because operator== isn't defined for AtomPDBResidueInfo
+      // yet
+      TEST_ASSERT(info1->getName() == info2->getName());
+      TEST_ASSERT(info1->getChainId() == info2->getChainId());
+      TEST_ASSERT(info1->getInsertionCode() == info2->getInsertionCode());
+      TEST_ASSERT(info1->getTempFactor() == info2->getTempFactor());
+      TEST_ASSERT(info1->getMonomerType() == info2->getMonomerType());
+      TEST_ASSERT(info1->getResidueName() == info2->getResidueName());
+      TEST_ASSERT(info1->getResidueNumber() == info2->getResidueNumber());
+      TEST_ASSERT(info1->getSerialNumber() == info2->getSerialNumber());
+      TEST_ASSERT(info1->getOccupancy() == info2->getOccupancy());
+    }
 
     std::string mb = MolToPDBBlock(*m);
     delete m;

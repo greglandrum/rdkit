@@ -101,18 +101,32 @@ unsigned int Compute2DCoordsMimicDistmat(
   return res;
 }
 
-void GenerateDepictionMatching2DStructure(RDKit::ROMol &mol,
-                                          RDKit::ROMol &reference, int confId,
-                                          python::object refPatt,
-                                          bool acceptFailure,
-                                          bool forceRDKit = false) {
+python::tuple GenerateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, RDKit::ROMol &reference, int confId,
+    python::object refPatt, bool acceptFailure, bool forceRDKit,
+    bool allowRGroups) {
   RDKit::ROMol *referencePattern = nullptr;
   if (refPatt != python::object()) {
     referencePattern = python::extract<RDKit::ROMol *>(refPatt);
   }
+  auto matchVect = RDDepict::generateDepictionMatching2DStructure(
+      mol, reference, confId, referencePattern, acceptFailure, forceRDKit,
+      allowRGroups);
+  python::list atomMap;
+  for (const auto &pair : matchVect) {
+    atomMap.append(python::make_tuple(pair.first, pair.second));
+  }
+  return python::tuple(atomMap);
+}
 
-  RDDepict::generateDepictionMatching2DStructure(
-      mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
+void GenerateDepictionMatching2DStructureAtomMap(RDKit::ROMol &mol,
+                                                 RDKit::ROMol &reference,
+                                                 python::object atomMap,
+                                                 int confId, bool forceRDKit) {
+  std::unique_ptr<RDKit::MatchVectType> matchVect(translateAtomMap(atomMap));
+
+  RDDepict::generateDepictionMatching2DStructure(mol, reference, *matchVect,
+                                                 confId, forceRDKit);
 }
 
 void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
@@ -128,11 +142,50 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::generateDepictionMatching3DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
+
+bool isCoordGenSupportAvailable() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return true;
+#else
+  return false;
+#endif
+}
+
 void setPreferCoordGen(bool value) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = value;
 #endif
 }
+bool getPreferCoordGen() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return RDDepict::preferCoordGen;
+#else
+  return false;
+#endif
+}
+
+class UsingCoordGen : public boost::noncopyable {
+ public:
+  UsingCoordGen() = delete;
+  UsingCoordGen(bool temp_state)
+      : m_initial_state{getPreferCoordGen()}, m_temp_state(temp_state) {}
+  ~UsingCoordGen() = default;
+
+  void enter() { setPreferCoordGen(m_temp_state); }
+
+  void exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_type);
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    setPreferCoordGen(m_initial_state);
+  }
+
+ private:
+  bool m_initial_state;
+  bool m_temp_state;
+};
+
 }  // namespace RDDepict
 
 BOOST_PYTHON_MODULE(rdDepictor) {
@@ -144,6 +197,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 
   rdkit_import_array();
 
+  python::def("IsCoordGenSupportAvailable", isCoordGenSupportAvailable,
+              "Returns whether RDKit was built with CoordGen support.");
+
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
               "Sets whether or not the CoordGen library should be preferred to "
@@ -152,6 +208,23 @@ BOOST_PYTHON_MODULE(rdDepictor) {
               "Has no effect (CoordGen support not enabled)"
 #endif
   );
+  python::def(
+      "GetPreferCoordGen", getPreferCoordGen,
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+      "Return whether or not the CoordGen library is used for coordinate "
+      "generation in the RDKit depiction library."
+#else
+      "Always returns False (CoordGen support not enabled)"
+#endif
+  );
+
+  python::class_<UsingCoordGen, boost::noncopyable>(
+      "UsingCoordGen",
+      "Context manager to temporarily set CoordGen library preference in RDKit depiction.",
+      python::init<bool>("Constructor"))
+      .def("__enter__", &UsingCoordGen::enter)
+      .def("__exit__", &UsingCoordGen::exit);
+
   std::string docString;
   docString =
       "Compute 2D coordinates for a molecule. \n\
@@ -170,7 +243,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
                  node during the sampling process \n\
-     bondLength - change the default bond length for depiction \n\n\
+     bondLength - change the default bond length for depiction \n\
+     forceRDKit - use RDKit to generate coordinates even if \n\
+                  preferCoordGen is set to true\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -206,7 +281,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
                  node during the sampling process \n\
-     bondLength - change the default bond length for depiction \n\n\
+     bondLength - change the default bond length for depiction \n\
+     forceRDKit - use RDKit to generate coordinates even if \n\
+                  preferCoordGen is set to true\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -230,18 +307,50 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   reference -    a molecule with the reference atoms to align to; \n\
                  this should have a depiction. \n\
   confId -       (optional) the id of the reference conformation to use \n\
-  referencePattern -  (optional) a query molecule to be used to \n\
-                      generate the atom mapping between the molecule \n\
-                      and the reference. \n\
+  refPatt -      (optional) a query molecule to be used to generate \n\
+                 the atom mapping between the molecule and the reference \n\
   acceptFailure - (optional) if True, standard depictions will be generated \n\
                   for molecules that don't have a substructure match to the \n\
-                  reference; if False, throws a DepictException.\n";
+                  reference; if False, throws a DepictException.\n\
+  forceRDKit -    (optional) use RDKit to generate coordinates even if \n\
+                  preferCoordGen is set to true\n\
+  allowRGroups -  (optional) if True, terminal dummy atoms in the \n\
+                  reference are ignored if they match an implicit \n\
+                  hydrogen in the molecule, and a constrained \n\
+                  depiction is still attempted\n\n\
+  RETURNS: a tuple of (refIdx, molIdx) tuples corresponding to the atom \n\
+           indices in mol constrained to have the same coordinates as atom \n\
+           indices in reference.\n";
   python::def(
       "GenerateDepictionMatching2DStructure",
       RDDepict::GenerateDepictionMatching2DStructure,
       (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
        python::arg("refPatt") = python::object(),
-       python::arg("acceptFailure") = false, python::arg("forceRDKit") = false),
+       python::arg("acceptFailure") = false, python::arg("forceRDKit") = false,
+       python::arg("allowRGroups") = false),
+      docString.c_str());
+
+  docString =
+      "Generate a depiction for a molecule where a piece of the \n\
+  molecule is constrained to have the same coordinates as a reference. \n\n\
+  This is useful for, for example, generating depictions of SAR data \n\
+  sets so that the cores of the molecules are all oriented the same way. \n\
+  ARGUMENTS: \n\n\
+  mol -    the molecule to be aligned, this will come back \n\
+           with a single conformer. \n\
+  reference -    a molecule with the reference atoms to align to; \n\
+                 this should have a depiction. \n\
+  atomMap -      a sequence of (queryAtomIdx, molAtomIdx) pairs that will \n\
+                 be used to generate the atom mapping between the molecule \n\
+                 and the reference. \n\
+  confId -       (optional) the id of the reference conformation to use \n\
+  forceRDKit -   (optional) use RDKit to generate coordinates even if \n\
+                 preferCoordGen is set to true\n";
+  python::def(
+      "GenerateDepictionMatching2DStructure",
+      RDDepict::GenerateDepictionMatching2DStructureAtomMap,
+      (python::arg("mol"), python::arg("reference"), python::arg("atomMap"),
+       python::arg("confId") = -1, python::arg("forceRDKit") = false),
       docString.c_str());
 
   docString =
@@ -260,7 +369,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                       atoms are aligned. \n\
   acceptFailure - (optional) if True, standard depictions will be generated \n\
                   for molecules that don't match the reference or the\n\
-                  referencePattern; if False, throws a DepictException.\n";
+                  referencePattern; if False, throws a DepictException.\n\
+  forceRDKit -    (optional) use RDKit to generate coordinates even if \n\
+                  preferCoordGen is set to true";
 
   python::def(
       "GenerateDepictionMatching3DStructure",
@@ -268,5 +379,51 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
        python::arg("refPatt") = python::object(),
        python::arg("acceptFailure") = false, python::arg("forceRDKit") = false),
+      docString.c_str());
+
+  docString =
+      "Rotate the 2D depiction such that the majority of bonds have a\n\
+  30-degree angle with the X axis.\n\
+  ARGUMENTS:\n\n\
+  mol              - the molecule to be rotated.\n\
+  confId           - (optional) the id of the reference conformation to use.\n\
+  minimizeRotation - (optional) if False (the default), the molecule\n\
+                     is rotated such that the majority of bonds have an angle\n\
+                     with the X axis of 30 or 90 degrees. If True, the minimum\n\
+                     rotation is applied such that the majority of bonds have\n\
+                     an angle with the X axis of 0, 30, 60, or 90 degrees,\n\
+                     with the goal of altering the initial orientation as\n\
+                     little as possible .";
+
+  python::def("StraightenDepiction", RDDepict::straightenDepiction,
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("minimizeRotation") = false),
+              docString.c_str());
+
+  docString =
+      "Normalizes the 2D depiction.\n\
+If canonicalize is != 0, the depiction is subjected to a canonical\n\
+transformation such that its main axis is aligned along the X axis\n\
+(canonicalize >0, the default) or the Y axis (canonicalize <0).\n\
+If canonicalize is 0, no canonicalization takes place.\n\
+If scaleFactor is <0.0 (the default) the depiction is scaled such\n\
+that bond lengths conform to RDKit standards. The applied scaling\n\
+factor is returned.\n\n\
+ARGUMENTS:\n\n\
+mol          - the molecule to be normalized\n\
+confId       - (optional) the id of the reference conformation to use\n\
+canonicalize - (optional) if != 0, a canonical transformation is\n\
+               applied: if >0 (the default), the main molecule axis is\n\
+               aligned to the X axis, if <0 to the Y axis.\n\
+               If 0, no canonical transformation is applied.\n\
+scaleFactor  - (optional) if >0.0, the scaling factor to apply. The default\n\
+               (-1.0) means that the depiction is automatically scaled\n\
+               such that bond lengths are the standard RDKit ones.\n\n\
+RETURNS: the applied scaling factor.";
+
+  python::def(
+      "NormalizeDepiction", RDDepict::normalizeDepiction,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("canonicalize") = 1, python::arg("scaleFactor") = -1.),
       docString.c_str());
 }

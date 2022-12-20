@@ -18,7 +18,6 @@
 
 #include <cairo.h>
 
-#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 // ****************************************************************************
@@ -32,19 +31,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
                  int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
-    initDrawing();
+    df_noFreetype = noFreetype;
     initTextDrawer(noFreetype);
-  };
+  }
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
                  int panelHeight = -1, bool noFreetype = false)
-      : MolDraw2D(width, height, panelWidth, panelHeight) {
-    cairo_surface_t *surf =
-        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
-    dp_cr = cairo_create(surf);
-    cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
-    initDrawing();
+      : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(nullptr) {
     initTextDrawer(noFreetype);
-  };
+    df_noFreetype = noFreetype;
+  }
+  MolDraw2DCairo(const MolDraw2DCairo &) = delete;
+  MolDraw2DCairo(MolDraw2DCairo &&) = delete;
+  MolDraw2DCairo &operator=(const MolDraw2DCairo &) = delete;
+  MolDraw2DCairo &operator=(MolDraw2DCairo &&) = delete;
   ~MolDraw2DCairo() {
     if (dp_cr) {
       if (cairo_get_reference_count(dp_cr) > 0) {
@@ -61,15 +60,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   // but we'll start here
   void finishDrawing();
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
+  void drawLine(const Point2D &cds1, const Point2D &cds2,
+                bool rawCoords = false) override;
   // void drawString( const std::string &str, const Point2D &cds );
-  void drawPolygon(const std::vector<Point2D> &cds) override;
+  void drawPolygon(const std::vector<Point2D> &cds,
+                   bool rawCoords = false) override;
   void clearDrawing() override;
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16,
-                    double vertOffset = 0.05) override;
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;
@@ -77,11 +78,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   void writeDrawingText(const std::string &fName) const;
 
 #if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT)
-  bool supportsAnnotations() override { return false; }
+  bool supportsAnnotations() const override { return false; }
 #endif
 
  private:
-  cairo_t *dp_cr;
+  cairo_t *dp_cr = nullptr;
+  bool df_noFreetype = false;
 
   void updateMetadata(const ROMol &mol, int confId) override;
   void updateMetadata(const ChemicalReaction &rxn) override;

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -111,6 +111,16 @@ void testPass() {
     "Ts']['Og']",  // a biovia pathology
     "[#6]",        // feature borrowed from SMARTS
     "[12#6]",
+    "C$C",  // quadruple bonds
+    // extended chirality
+    "C[Fe@TH](O)(Cl)F",
+    "C[Fe@TH1](O)(Cl)F",
+    "C[Fe@SP](O)(Cl)F",
+    "C[Fe@SP1](O)(Cl)F",
+    "C[Fe@TB](O)(Cl)(Br)F",
+    "C[Fe@TB10](O)(Cl)(Br)F",
+    "C[Fe@OH](O)(Cl)(Br)(N)F",
+    "C[Fe@OH20](O)(Cl)(Br)(N)F",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -145,7 +155,8 @@ void testFail() {
   // parsing
   // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",  "C1CC1", "Ccc",   "CCC",
+      "CC=(CO)C",    "CC(=CO)C", "C1CC",
+      "C1CC1",       "Ccc",      "CCC",
       "fff",  // tests the situation where the parser cannot do anything at all
       "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
@@ -157,8 +168,15 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", 
-      "[555555555555555555C]", "C1CC1",
+      "C1CC1",       "[H2H]",    "C1CC1",
+      "[HH2]",       "C1CC1",    "[555555555555555555C]",
+      "C1CC1",             //
+      "[Fe@TD]",     "C",  //
+      "[Fe@TH3]",    "C",  //
+      "[Fe@SP4]",    "C",  //
+      "[Fe@AL3]",    "C",  //
+      "[Fe@TB21]",   "C",  //
+      "[Fe@OH31]",   "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
@@ -4013,22 +4031,24 @@ void testSmilesParseParams() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     delete m;
-    {  // it's ignored
+    {  // it's parsed:
       SmilesParserParams params;
+      params.allowCXSMILES = false;
       m = SmilesToMol(smiles, params);
       TEST_ASSERT(m);
-      TEST_ASSERT(!m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                  "the_name");
       delete m;
     }
     {
       SmilesParserParams params;
-      params.parseName = true;
+      params.strictCXSMILES = false;
+      params.parseName = false;
       m = SmilesToMol(smiles, params);
       TEST_ASSERT(m);
       TEST_ASSERT(m->getNumAtoms() == 4);
-      TEST_ASSERT(m->hasProp(common_properties::_Name));
-      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
-                  "the_name");
+      TEST_ASSERT(!m->hasProp(common_properties::_Name));
       delete m;
     }
   }
@@ -4275,24 +4295,29 @@ void testGithub1028() {
   BOOST_LOG(rdInfoLog) << "Testing github issue #1028: Alternating canonical "
                           "SMILES for ring with chiral N"
                        << std::endl;
-
+  // note that due to the changes made for #3631, the N's originally used in
+  // these tests are no longer considered to be chiral. I switched to using P
+  // (and verified that P was also a problem before #1028 was fixed)
   {
-    const std::string smi = "O[C@H]1CC2CCC(C1)[N@@]2C";
-    const std::string ref = "C[N@]1C2CCC1C[C@H](O)C2";
+    std::string smi = "O[C@H]1CC2CCC(C1)[P@@]2C";
+    const std::string ref = "C[P@]1C2CCC1C[C@H](O)C2";
     for (int i = 0; i < 3; ++i) {
       const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
       TEST_ASSERT(mol);
       const std::string out = MolToSmiles(*mol);
       TEST_ASSERT(out == ref);
+      smi = out;
     }
 
     {
-      const std::string smi = "C[N@]1C[C@@H](O)C1";
+      std::string smi = "C[P@]1C[C@@H](O)C1";
+      const std::string ref = smi;
       for (int i = 0; i < 3; ++i) {
         const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
         TEST_ASSERT(mol);
         const std::string out = MolToSmiles(*mol);
-        TEST_ASSERT(out == smi);
+        TEST_ASSERT(out == ref);
+        smi = out;
       }
     }
   }
@@ -4332,6 +4357,29 @@ void testOSSFuzzFailures() {
     }
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub3967() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github Issue 3967: Double bond stereo gets "
+                          "flipped by SMILES reader/writer"
+                       << std::endl;
+
+  {
+    auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+  }
+  {
+    auto mol = R"SMI(C1=C\C/C=C2C3=C/C/C=C\C=C/C\3C\2\C=C/1)SMI"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == R"SMI(C1=C\C/C=C2C3=C\C/C=C\C=C/C/3C\2\C=C/1)SMI");
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -4412,6 +4460,7 @@ int main(int argc, char *argv[]) {
   testdoRandomSmileGeneration();
   testGithub1028();
   testGithub3139();
+  testGithub3967();
 #endif
   testOSSFuzzFailures();
 }

@@ -47,7 +47,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   ~PeriodicTable() {
     byanum.clear();
     byname.clear();
-  };
+  }
 
   //! returns the atomic weight
   double getAtomicWeight(UINT atomicNumber) const {
@@ -78,15 +78,17 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     // this little optimization actually makes a measurable difference
     // in molecule-construction time
     int anum = -1;
-    if (elementSymbol == "C")
+    if (elementSymbol == "C") {
       anum = 6;
-    else if (elementSymbol == "N")
+    } else if (elementSymbol == "N") {
       anum = 7;
-    else if (elementSymbol == "O")
+    } else if (elementSymbol == "O") {
       anum = 8;
-    else {
+    } else {
       STR_UINT_MAP::const_iterator iter = byname.find(elementSymbol);
-      if (iter != byname.end()) anum = iter->second;
+      if (iter != byname.end()) {
+        anum = iter->second;
+      }
     }
     POSTCONDITION(anum > -1, "Element '" + elementSymbol + "' not found");
     return anum;
@@ -96,6 +98,12 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   std::string getElementSymbol(UINT atomicNumber) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
     return byanum[atomicNumber].Symbol();
+  }
+
+  //! returns the full element name
+  std::string getElementName(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Name();
   }
 
   //! returns the atom's van der Waals radius

@@ -15,11 +15,6 @@
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
 
-#ifdef RDK_THREADSAFE_SSS
-// Thread local storage for output buffer for RDKit Logging
-#include <thread>
-#endif
-
 #include <sstream>
 #include <utility>
 
@@ -31,8 +26,7 @@ namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
 }  // namespace RDKit
 
-void rdExceptionTranslator(RDKit::ConformerException const &x) {
-  RDUNUSED_PARAM(x);
+void rdExceptionTranslator(RDKit::ConformerException const &) {
   PyErr_SetString(PyExc_ValueError, "Bad Conformer Id");
 }
 
@@ -49,74 +43,6 @@ void wrap_resmolsupplier();
 void wrap_molbundle();
 void wrap_sgroup();
 void wrap_chirality();
-
-struct PySysErrWrite : std::ostream, std::streambuf {
-  std::string prefix;
-
-  PySysErrWrite(std::string prefix)
-      : std::ostream(this), prefix(std::move(prefix)) {}
-
-  int overflow(int c) override {
-    write(c);
-    return 0;
-  }
-
-#ifdef RDK_THREADSAFE_SSS
-  void write(char c) {  // enable thread safe logging
-    static thread_local std::string buffer = "";
-    buffer += c;
-    if (c == '\n') {
-      // Python IO is not thread safe, so grab the GIL
-      {
-        PyGILStateHolder h;
-        PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      }
-      buffer.clear();
-    }
-  }
-#else
-  std::string buffer;  // unlimited! flushes in endl
-  void write(char c) {
-    buffer += c;
-    if (c == '\n') {
-      PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      buffer.clear();
-    }
-  }
-#endif
-};
-
-void RDLogError(const std::string &msg) {
-  NOGIL gil;
-  BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
-}
-
-void RDLogWarning(const std::string &msg) {
-  NOGIL gil;
-  BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
-}
-
-void WrapLogs() {
-  static PySysErrWrite debug("RDKit DEBUG: ");
-  static PySysErrWrite error("RDKit ERROR: ");
-  static PySysErrWrite info("RDKit INFO: ");
-  static PySysErrWrite warning("RDKit WARNING: ");
-  if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
-    RDLog::InitLogs();
-  }
-  if (rdDebugLog != nullptr) {
-    rdDebugLog->SetTee(debug);
-  }
-  if (rdInfoLog != nullptr) {
-    rdInfoLog->SetTee(info);
-  }
-  if (rdErrorLog != nullptr) {
-    rdErrorLog->SetTee(error);
-  }
-  if (rdWarningLog != nullptr) {
-    rdWarningLog->SetTee(warning);
-  }
-}
 
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
   python::list res;
@@ -159,11 +85,22 @@ PyObject *createExceptionClass(const char *name,
   return typeObj;
 }
 
+template <typename O, typename T>
+T *get_item_ptr(O &self, int i) {
+  return self.get_item(i).get();
+}
+
+template <typename O, typename T>
+T *next_ptr(O &self) {
+  return self.next().get();
+}
+
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
+  RegisterListConverter<RDKit::CONFORMER_SPTR>();
   rdkit_import_array();
 
   // this is one of those parts where I think I wish that I knew how to do
@@ -226,14 +163,6 @@ BOOST_PYTHON_MODULE(rdchem) {
         sanitExceptionTranslator(exc, kekulizeExceptionType);
       });
 
-  python::def("WrapLogs", WrapLogs,
-              "Wrap the internal RDKit streams so they go to python's "
-              "SysStdErr");
-  python::def("LogWarningMsg", RDLogWarning,
-              "Log a warning message to the RDKit warning logs");
-  python::def("LogErrorMsg", RDLogError,
-              "Log a warning message to the RDKit error logs");
-
   //*********************************************
   //
   //  Utility Classes
@@ -241,37 +170,62 @@ BOOST_PYTHON_MODULE(rdchem) {
   //*********************************************
   python::class_<AtomIterSeq>(
       "_ROAtomSeq",
-      "Read-only sequence of atoms, not constructable from Python.",
+      "Read-only sequence of atoms, not constructible from Python.",
       python::no_init)
       .def("__iter__", &AtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def("__next__", &AtomIterSeq::next,
-           python::return_value_policy<python::reference_existing_object>())
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
 
       .def("__len__", &AtomIterSeq::len)
       .def("__getitem__", &AtomIterSeq::get_item,
-           python::return_value_policy<python::reference_existing_object>());
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>());
   python::class_<QueryAtomIterSeq>("_ROQAtomSeq",
                                    "Read-only sequence of atoms matching a "
-                                   "query, not constructable from Python.",
+                                   "query, not constructible from Python.",
                                    python::no_init)
       .def("__iter__", &QueryAtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def("__next__", &QueryAtomIterSeq::next,
-           python::return_value_policy<python::reference_existing_object>())
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def("__len__", &QueryAtomIterSeq::len)
       .def("__getitem__", &QueryAtomIterSeq::get_item,
-           python::return_value_policy<python::reference_existing_object>());
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>());
   python::class_<BondIterSeq>(
       "_ROBondSeq",
-      "Read-only sequence of bonds, not constructable from Python.",
+      "Read-only sequence of bonds, not constructible from Python.",
       python::no_init)
-      // FIX: we ought to be able to expose an iteration interface
+      .def("__iter__", &BondIterSeq::__iter__,
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
+      .def("__next__", &BondIterSeq::next,
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def("__len__", &BondIterSeq::len)
       .def("__getitem__", &BondIterSeq::get_item,
-           python::return_value_policy<python::reference_existing_object>());
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>());
+  python::class_<ConformerIterSeq>(
+      "_ROConformerSeq",
+      "Read-only sequence of conformers, not constructible from Python.",
+      python::no_init)
+      .def("__iter__", &ConformerIterSeq::__iter__,
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
+      .def("__next__", next_ptr<ConformerIterSeq, Conformer>,
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
+
+      .def("__len__", &ConformerIterSeq::len)
+      .def("__getitem__", get_item_ptr<ConformerIterSeq, Conformer>,
+           python::return_internal_reference<
+               1, python::with_custodian_and_ward_postcall<0, 1>>());
 
   //*********************************************
   //

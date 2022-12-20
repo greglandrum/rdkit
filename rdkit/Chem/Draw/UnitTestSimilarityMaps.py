@@ -1,5 +1,6 @@
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2021, Greg Landrum
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,28 +35,16 @@
 
 import sys
 import unittest
-import os
+import sys
 from rdkit import Chem
 from rdkit.RDLogger import logger
-import platform
 try:
   import matplotlib
-  if platform.system() == "Linux":
-    if not os.environ.get("DISPLAY", None):
-      # Force matplotlib to not use any Xwindows backend.
-      print("Forcing use of Agg renderer", file=sys.stderr)
-      matplotlib.use('Agg')
 except ImportError:
   matplotlib = None
 
 from rdkit.Chem import Draw
 from rdkit.Chem.Draw import SimilarityMaps as sm
-try:
-  from rdkit.Chem.Draw.mplCanvas import Canvas
-except RuntimeError:
-  Canvas = None
-except ImportError:
-  Canvas = None
 
 logger = logger()
 
@@ -66,7 +55,7 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
-  @unittest.skipUnless(Canvas, 'Matplotlib required')
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
@@ -89,8 +78,8 @@ class TestCase(unittest.TestCase):
       self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='count'))
     self.assertTrue(weights[3] < 0)
     weights = sm.GetAtomicWeightsForFingerprint(
-      self.mol1,
-      self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
+      self.mol1, self.mol2,
+      lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
     self.assertTrue(weights[3] < 0)
 
     # hashed AP BV
@@ -110,8 +99,8 @@ class TestCase(unittest.TestCase):
     # hashed TT BV
     refWeights = [0.5, 0.5, -0.16666, -0.5, -0.16666, 0.5]
     weights = sm.GetAtomicWeightsForFingerprint(
-      self.mol1,
-      self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
+      self.mol1, self.mol2,
+      lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
@@ -129,7 +118,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
-  @unittest.skipUnless(Canvas, 'Matplotlib required')
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
     m1 = Chem.MolFromSmiles('CC[C@](F)(Cl)c1ccccc1')
@@ -178,14 +167,47 @@ class TestCase(unittest.TestCase):
     with open('similarityMap1_out.svg', 'w+') as outf:
       outf.write(d.GetDrawingText())
 
+    # Github #2904: make sure we can provide our own colormap as a list:
+    colors = [(0, 1, 0, 0.5), (1, 1, 1), (0, 0, 1, 0.5)]
+    d = Draw.MolDraw2DSVG(400, 400)
+    d.ClearDrawing()
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d,
+      colorMap=colors)
+    d.FinishDrawing()
+    with open('similarityMap1_out2.svg', 'w+') as outf:
+      outf.write(d.GetDrawingText())
+
+    # Github #2904: make sure we can provide our own colormap as a matplotlib colormap:
+    try:
+      from matplotlib import cm
+      d = Draw.MolDraw2DSVG(400, 400)
+      d.ClearDrawing()
+      _, maxWeight = sm.GetSimilarityMapForFingerprint(
+        refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d,
+        colorMap=cm.PiYG)
+      d.FinishDrawing()
+      with open('similarityMap1_out3.svg', 'w+') as outf:
+        outf.write(d.GetDrawingText())
+    except ImportError:
+      pass
+
+
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
+  def testGithub4763(self):
+    mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+    refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+    d = Draw.MolDraw2DSVG(400, 400)
+    d.ClearDrawing()
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d, colorMap="coolwarm")
+    d.FinishDrawing()
+    svg = d.GetDrawingText()
+    with open('github4763.svg', 'w+') as outf:
+      outf.write(svg)
+    self.assertFalse('fill:#FBFCFB7F' in svg)
+    self.assertTrue('fill:#DDDCDB' in svg)
+
 
 if __name__ == '__main__':
-  try:
-    import matplotlib
-    from rdkit.Chem.Draw.mplCanvas import Canvas
-  except ImportError:
-    pass
-  except RuntimeError:  # happens with GTK can't initialize
-    pass
-  else:
-    unittest.main()
+  unittest.main()

@@ -100,6 +100,11 @@ class TestCase(unittest.TestCase):
     tfd = TorsionFingerprints.GetTFDBetweenMolecules(mol, mol2)
     self.assertAlmostEqual(tfd, 0.0691, 4)
 
+    # exactly equivalent to the above since the mols each only have one conformer
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
+    self.assertAlmostEqual(tfd,0.0691,4)
+
+
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     tfd = TorsionFingerprints.GetTFDBetweenConformers(mol, confIds1=[0], confIds2=[1, 2])
@@ -108,6 +113,10 @@ class TestCase(unittest.TestCase):
 
     tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
     self.assertEqual(len(tfdmat), 3)
+
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
+    self.assertAlmostEqual(tfd,0,4)
+
 
   def testTorsionFingerprintsAtomReordering(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
@@ -149,6 +158,12 @@ class TestCase(unittest.TestCase):
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
       mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 0)
+
+  def testGithub4720(self):
+    # exceptions with highly-coordinated atoms
+    mol = Chem.MolFromSmiles('S(F)(F)(F)(F)(Cl)c1ccccc1')
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
+    self.assertEqual(len(tors_list), 1)
 
   def assertBondStereoRoundTrips(self, fname):
     path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', fname)
@@ -328,7 +343,7 @@ class TestCase(unittest.TestCase):
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
     self.assertEqual(
-      smiles, set(['F[C@@H](Cl)[C@@H](F)Cl', 'F[C@@H](Cl)[C@H](F)Cl', 'F[C@H](Cl)[C@H](F)Cl']))
+      smiles, set(['F[C@@H](Cl)[C@@H](F)Cl', 'F[C@H](Cl)[C@@H](F)Cl', 'F[C@H](Cl)[C@H](F)Cl']))
 
     mol = Chem.MolFromSmiles('CC=CC=CC')
     opts = AllChem.StereoEnumerationOptions(unique=False)
@@ -362,11 +377,11 @@ class TestCase(unittest.TestCase):
       smiles,
       set(
         sorted([
-          'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C/[C@H](F)Cl',
+          'F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl',
           'F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl',
-          'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl', 'F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl',
-          'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl', 'F[C@@H](Cl)/C=C/C=C\\[C@H](F)Cl',
-          'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl'
+          'F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl', 'F[C@H](Cl)/C=C/C=C\\[C@@H](F)Cl',
+          'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl',
+          'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl'
         ])))
 
   def testEnumerateStereoisomersOnlyEnhancedStereo(self):
@@ -375,7 +390,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(filename)
     smiles = set(Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol))
     # switches the centers linked by an "OR", but not the absolute group
-    self.assertEqual(smiles, {r'C[C@@H](F)[C@@H](C)[C@@H](C)Br', r'C[C@H](F)[C@H](C)[C@@H](C)Br'})
+    self.assertEqual(smiles, {r'C[C@H]([C@@H](C)F)[C@@H](C)Br', r'C[C@@H]([C@H](C)F)[C@@H](C)Br'})
 
     original_smiles = Chem.MolToSmiles(mol)
     self.assertIn(original_smiles, smiles)
@@ -421,6 +436,30 @@ class TestCase(unittest.TestCase):
                        (14, 'R')], [(1, 'S'), (12, 'R'),
                                     (14, 'S')], [(1, 'S'), (12, 'S'),
                                                  (14, 'R')], [(1, 'S'), (12, 'S'), (14, 'S')]])
+
+  def testIssue3505(self):
+    m = Chem.MolFromSmiles('CCC(C)Br')
+    mols = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(mols), 2)
+    for mol in mols:
+      at = mol.GetAtomWithIdx(2)
+      self.assertIn(at.GetChiralTag(),
+                    [Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.ChiralType.CHI_TETRAHEDRAL_CCW])
+      self.assertTrue(at.HasProp("_ChiralityPossible"))
+
+  def testEnumerateEitherDoubleStereo(self):
+    """ EnumerateStereoisomers from MOL with explicit either cis/trans bond """
+    rdbase = os.environ["RDBASE"]
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/simple_either.mol')
+    mol = Chem.MolFromMolFile(filename)
+    smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol)]
+    self.assertEqual(set(smiles), {"C/C=C/C", "C/C=C\\C"})
+
+  def testTryEmbeddingManyChirals(self):
+    smiles = "C1" + "C(Cl)(Br)" * 40 + "C1"
+    mol = Chem.MolFromSmiles(smiles)
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=2)
+    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol, options=opts))), 2)
 
 
 if __name__ == '__main__':

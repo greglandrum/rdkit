@@ -1,5 +1,10 @@
-
-#define CATCH_CONFIG_MAIN
+//
+// Copyright 2020-2022 Schrodinger, Inc and other RDKit contributors
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #include "catch.hpp"
 
@@ -19,7 +24,8 @@
 using namespace RDKit;
 
 TEST_CASE("TEMPLATE_ERROR") {
-  // for this guy the template needs to account for bonds modified when tautomers are sanitized
+  // for this guy the template needs to account for bonds modified when
+  // tautomers are sanitized
   auto mol = "Cc1nc2ccccc2[nH]1"_smiles;
   REQUIRE(mol);
   auto target = "CN1C2=C(C(=O)Nc3ccccc3)C(=O)CCN2c2ccccc21"_smiles;
@@ -35,7 +41,9 @@ TEST_CASE("TEMPLATE_ERROR") {
     std::cout << "Tautomer " << MolToSmiles(*taut) << " match " << test
               << std::endl;
 #endif
-    if (test) match = true;
+    if (test) {
+      match = true;
+    }
   }
   CHECK(match);
 
@@ -148,8 +156,8 @@ TEST_CASE("TEST_ENOL") {
   CHECK(tautomerSmiles == "O=C1CCCCC1");
 
   MatchVectType matchVect;
-  auto nMatches = SubstructMatch(*target1, *tautomerQuery, matchVect);
-  CHECK(nMatches == 1);
+  auto hasMatch = SubstructMatch(*target1, *tautomerQuery, matchVect);
+  CHECK(hasMatch);
 
   auto templateFingerpint = tautomerQuery->patternFingerprintTemplate();
   REQUIRE(templateFingerpint);
@@ -225,7 +233,7 @@ TEST_CASE("TEST_FINGERPRINT") {
     auto queryBond = new QueryBond();
     queryBond->setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
     queryBond->expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                   Queries::COMPOSITE_OR);
+                           Queries::COMPOSITE_OR);
     molWithoutTautomerBonds.replaceBond(modifiedBondIdx, queryBond, true);
     delete queryBond;
   }
@@ -307,4 +315,56 @@ TEST_CASE("TEST_NOT_TAUTOMER") {
   auto target = "CC1=NC2=CC=CC=C2O1"_smiles;
   REQUIRE(target);
   CHECK(tautomerQuery->isSubstructOf(*target));
+}
+
+TEST_CASE("github #3821 TAUTOMERQUERY_COPY_CONSTRUCTOR") {
+  auto mol = "c1ccccc1"_smiles;
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQueryCopyConstructed =
+      std::unique_ptr<TautomerQuery>(new TautomerQuery(*tautomerQuery));
+  CHECK(&(tautomerQuery->getTemplateMolecule()) !=
+        &tautomerQueryCopyConstructed->getTemplateMolecule());
+}
+
+TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
+  auto mol = "c1ccccc1"_smiles;
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQueryAssigned = *tautomerQuery;
+  CHECK(&(tautomerQuery->getTemplateMolecule()) !=
+        &tautomerQueryAssigned.getTemplateMolecule());
+}
+
+TEST_CASE("Serialization") {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  SECTION("basics") {
+    auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
+    REQUIRE(mol);
+    auto tautomerQuery =
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+    CHECK(15 == tautomerQuery->getTautomers().size());
+
+    std::string pickle = tautomerQuery->serialize();
+    TautomerQuery serialized(pickle);
+    CHECK(serialized.getTautomers().size() ==
+          tautomerQuery->getTautomers().size());
+
+    auto queryFingerprint = serialized.patternFingerprintTemplate();
+    REQUIRE(queryFingerprint);
+    std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
+                                        "CN1C2=NC=NC2=C(O)N=C1N"};
+    for (auto targetSmiles : targetSmis) {
+      auto target = SmilesToMol(targetSmiles);
+      REQUIRE(target);
+      CHECK(serialized.isSubstructOf(*target));
+      auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
+      REQUIRE(targetFingerprint);
+      CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
+      delete targetFingerprint;
+      delete target;
+    }
+    delete queryFingerprint;
+  }
+#endif
 }

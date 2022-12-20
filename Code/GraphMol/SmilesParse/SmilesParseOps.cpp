@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -146,8 +147,7 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
       // SMARTS semantics: unspecified bonds can be single or aromatic
       if (bondOrder == Bond::UNSPECIFIED) {
         auto *newB = new QueryBond(Bond::SINGLE);
-        newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-                          Queries::COMPOSITE_OR, true);
+        newB->setQuery(makeSingleOrAromaticBondQuery());
         newB->setOwningMol(mol);
         newB->setBeginAtomIdx(atomIdx1);
         newB->setEndAtomIdx(atomIdx2);
@@ -362,6 +362,55 @@ void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
 }
 }  // namespace
 
+static const std::map<int, int> permutationLimits = {
+    {RDKit::Atom::ChiralType::CHI_TETRAHEDRAL, 2},
+    {RDKit::Atom::ChiralType::CHI_ALLENE, 2},
+    {RDKit::Atom::ChiralType::CHI_SQUAREPLANAR, 3},
+    {RDKit::Atom::ChiralType::CHI_OCTAHEDRAL, 30},
+    {RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL, 20}};
+
+bool checkChiralPermutation(int chiralTag, int permutation) {
+  if (chiralTag > RDKit::Atom::ChiralType::CHI_OTHER &&
+      permutationLimits.find(chiralTag) != permutationLimits.end() &&
+      (permutation < 0 || permutation > permutationLimits.at(chiralTag))) {
+    return false;
+  }
+  return true;
+}
+
+void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
+  PRECONDITION(mol, "no molecule");
+  for (const auto atom : mol->atoms()) {
+    int permutation;
+    if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
+        permutationLimits.find(atom->getChiralTag()) !=
+            permutationLimits.end() &&
+        atom->getPropIfPresent(common_properties::_chiralPermutation,
+                               permutation)) {
+      if (!checkChiralPermutation(atom->getChiralTag(), permutation)) {
+        std::string error =
+            (boost::format("Invalid chiral specification on atom %d") %
+             atom->getIdx())
+                .str();
+        BOOST_LOG(rdWarningLog) << error << std::endl;
+        if (strict) {
+          throw SmilesParseException(error);
+        }
+      }
+      // directly convert @TH1 -> @ and @TH2 -> @@
+      if (atom->getChiralTag() == RDKit::Atom::ChiralType::CHI_TETRAHEDRAL) {
+        if (permutation == 0 || permutation == 1) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        } else if (permutation == 2) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        }
+      }
+    }
+  }
+}
+
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //  Here's what we want to do here:
   //    loop through the molecule's atom bookmarks
@@ -441,6 +490,13 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
                           "bad begin atom");
           CHECK_INVARIANT(bond2->getBeginAtomIdx() == atom2->getIdx(),
                           "bad begin atom");
+
+          // we use the _cxsmilesBondIdx value from the second one, if it's
+          // there
+          if (bond2->hasProp("_cxsmilesBondIdx")) {
+            bond1->setProp("_cxsmilesBondIdx",
+                           bond2->getProp<unsigned int>("_cxsmilesBondIdx"));
+          }
 
           Bond *matchedBond;
 
@@ -550,7 +606,44 @@ void CleanupAfterParsing(RWMol *mol) {
   }
   for (auto bond : mol->bonds()) {
     bond->clearProp(common_properties::_unspecifiedOrder);
+    bond->clearProp("_cxsmilesBondIdx");
   }
+  for (auto sg : RDKit::getSubstanceGroups(*mol)) {
+    sg.clearProp("_cxsmilesindex");
+  }
+  if (!Chirality::getAllowNontetrahedralChirality()) {
+    bool needWarn = false;
+    for (auto atom : mol->atoms()) {
+      if (atom->hasProp(common_properties::_chiralPermutation)) {
+        needWarn = true;
+        atom->clearProp(common_properties::_chiralPermutation);
+      }
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER) {
+        needWarn = true;
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+    if (needWarn) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring non-tetrahedral stereo specification since setAllowNontetrahedralChirality() is false."
+          << std::endl;
+    }
+  }
+}
+
+RDKit::QueryBond *getUnspecifiedQueryBond(const RDKit::Atom *a1,
+                                          const RDKit::Atom *a2) {
+  PRECONDITION(a1, "bad atom pointer");
+  QueryBond *newB;
+  if (!a1->getIsAromatic() || (a2 && !a2->getIsAromatic())) {
+    newB = new QueryBond(Bond::SINGLE);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  } else {
+    newB = new QueryBond(Bond::AROMATIC);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  }
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder, 1);
+  return newB;
 }
 
 }  // end of namespace SmilesParseOps

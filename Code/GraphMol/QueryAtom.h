@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,9 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_QUERYATOM_H_
-#define _RD_QUERYATOM_H_
+#ifndef RD_QUERYATOM_H
+#define RD_QUERYATOM_H
 
+#include <utility>
 #include "Atom.h"
 #include <Query/QueryObjects.h>
 #include <GraphMol/QueryOps.h>
@@ -28,8 +29,8 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
  public:
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
-  QueryAtom() : Atom(){};
-  explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)){};
+  QueryAtom() : Atom() {}
+  explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {}
   explicit QueryAtom(const Atom &other)
       : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())) {
     if (other.getIsotope()) {
@@ -45,32 +46,58 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
           makeAtomNumRadicalElectronsQuery(other.getNumRadicalElectrons()),
           Queries::CompositeQueryType::COMPOSITE_AND);
     }
-  };
+  }
   QueryAtom(const QueryAtom &other) : Atom(other) {
-    dp_query = other.dp_query->copy();
-  };
+    if (other.dp_query) {
+      dp_query = other.dp_query->copy();
+    } else {
+      dp_query = nullptr;
+    }
+  }
   QueryAtom &operator=(const QueryAtom &other) {
-    if (this == &other) return *this;
+    if (this == &other) {
+      return *this;
+    }
     Atom::operator=(other);
     delete dp_query;
-    dp_query = other.dp_query->copy();
+    if (other.dp_query) {
+      dp_query = other.dp_query->copy();
+    } else {
+      dp_query = nullptr;
+    }
     return *this;
   }
-  ~QueryAtom();
+
+  QueryAtom(QueryAtom &&other) noexcept : Atom(std::move(other)) {
+    dp_query = std::exchange(other.dp_query, nullptr);
+  }
+  QueryAtom &operator=(QueryAtom &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    QueryAtom::operator=(std::move(other));
+    dp_query = std::exchange(other.dp_query, nullptr);
+    return *this;
+  }
+
+  ~QueryAtom() override;
 
   //! returns a copy of this query, owned by the caller
-  Atom *copy() const;
+  Atom *copy() const override;
 
   // This method can be used to distinguish query atoms from standard atoms:
-  bool hasQuery() const { return dp_query != nullptr; };
+  bool hasQuery() const override { return dp_query != nullptr; }
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) {
+  std::string getQueryType() const override { return dp_query->getTypeLabel(); }
+
+  //! replaces our current query with the value passed in
+  void setQuery(QUERYATOM_QUERY *what) override {
     delete dp_query;
     dp_query = what;
   }
   //! returns our current query
-  QUERYATOM_QUERY *getQuery() const { return dp_query; };
+  QUERYATOM_QUERY *getQuery() const override { return dp_query; }
 
   //! expands our current query
   /*!
@@ -91,10 +118,10 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   */
   void expandQuery(QUERYATOM_QUERY *what,
                    Queries::CompositeQueryType how = Queries::COMPOSITE_AND,
-                   bool maintainOrder = true);
+                   bool maintainOrder = true) override;
 
   //! returns true if we match Atom \c what
-  bool Match(Atom const *what) const;
+  bool Match(Atom const *what) const override;
 
   //! returns true if our query details match those of QueryAtom \c what
   bool QueryMatch(QueryAtom const *what) const;
@@ -108,7 +135,9 @@ namespace detail {
 inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   std::string res = "";
   if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    for (unsigned int i = 0; i < depth; ++i) {
+      res += "  ";
+    }
     res += q->getFullDescription() + "\n";
     for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
          ci != q->endChildren(); ++ci) {

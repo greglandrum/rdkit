@@ -10,12 +10,12 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <RDBoost/Wrap.h>
 #include "props.hpp"
 
 namespace python = boost::python;
@@ -23,6 +23,7 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
+
 SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (idx >= sgs.size()) {
@@ -41,6 +42,16 @@ void clearMolSubstanceGroups(ROMol &mol) {
 
 SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
   SubstanceGroup sg(&mol, type);
+  addSubstanceGroup(mol, sg);
+  return &(getSubstanceGroups(mol).back());
+}
+
+SubstanceGroup *createMolDataSubstanceGroup(ROMol &mol, std::string fieldName,
+                                            std::string value) {
+  SubstanceGroup sg(&mol, "DAT");
+  sg.setProp("FIELDNAME", fieldName);
+  STR_VECT dataFields{value};
+  sg.setProp("DATAFIELDS", dataFields);
   addSubstanceGroup(mol, sg);
   return &(getSubstanceGroups(mol).back());
 }
@@ -67,7 +78,7 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
 
 python::tuple getCStatesHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto cs : self.getCStates()) {
+  for (const auto &cs : self.getCStates()) {
     res.append(cs);
   }
   return python::tuple(res);
@@ -75,7 +86,7 @@ python::tuple getCStatesHelper(const SubstanceGroup &self) {
 
 python::tuple getBracketsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto brk : self.getBrackets()) {
+  for (const auto &brk : self.getBrackets()) {
     res.append(python::make_tuple(brk[0], brk[1], brk[2]));
   }
   return python::tuple(res);
@@ -83,11 +94,31 @@ python::tuple getBracketsHelper(const SubstanceGroup &self) {
 
 python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto ap : self.getAttachPoints()) {
+  for (const auto &ap : self.getAttachPoints()) {
     res.append(ap);
   }
   return python::tuple(res);
 }
+
+void SetAtomsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> atoms;
+  pythonObjectToVect(iterable, atoms);
+  self.setAtoms(atoms);
+}
+
+void SetParentAtomsHelper(SubstanceGroup &self,
+                          const python::object &iterable) {
+  std::vector<unsigned int> patoms;
+  pythonObjectToVect(iterable, patoms);
+  self.setParentAtoms(patoms);
+}
+
+void SetBondsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> bonds;
+  pythonObjectToVect(iterable, bonds);
+  self.setBonds(bonds);
+}
+
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -133,6 +164,18 @@ struct sgroup_wrap {
              "returns a list of the indices of the bonds in this "
              "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
+        .def("SetAtoms", SetAtomsHelper,
+             "Set the list of the indices of the atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetParentAtoms", SetParentAtomsHelper,
+             "Set the list of the indices of the parent atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetBonds", SetBondsHelper,
+             "Set the list of the indices of the bonds in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
         .def("AddAtomWithIdx", &SubstanceGroup::addAtomWithIdx)
         .def("AddBondWithIdx", &SubstanceGroup::addBondWithIdx)
         .def("AddParentAtomWithIdx", &SubstanceGroup::addParentAtomWithIdx)
@@ -146,40 +189,42 @@ struct sgroup_wrap {
         .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
         .def("GetBrackets", getBracketsHelper)
+        .def("ClearBrackets", &SubstanceGroup::clearBrackets)
+        .def("ClearCStates", &SubstanceGroup::clearCStates)
+        .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints)
 
         .def("SetProp",
-             (void (RDProps::*)(const std::string &, std::string, bool) const) &
+             (void(RDProps::*)(const std::string &, std::string, bool) const) &
                  SubstanceGroup::setProp<std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetDoubleProp",
-             (void (RDProps::*)(const std::string &, double, bool) const) &
+             (void(RDProps::*)(const std::string &, double, bool) const) &
                  SubstanceGroup::setProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetIntProp",
-             (void (RDProps::*)(const std::string &, int, bool) const) &
+             (void(RDProps::*)(const std::string &, int, bool) const) &
                  SubstanceGroup::setProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
-        .def(
-            "SetUnsignedProp",
-            (void (RDProps::*)(const std::string &, unsigned int, bool) const) &
-                SubstanceGroup::setProp<unsigned int>,
-            (python::arg("self"), python::arg("key"), python::arg("val"),
-             python::arg("computed") = false),
-            "sets the value of a particular property")
+        .def("SetUnsignedProp",
+             (void(RDProps::*)(const std::string &, unsigned int, bool) const) &
+                 SubstanceGroup::setProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "sets the value of a particular property")
         .def("SetBoolProp",
-             (void (RDProps::*)(const std::string &, bool, bool) const) &
+             (void(RDProps::*)(const std::string &, bool, bool) const) &
                  SubstanceGroup::setProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("HasProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::hasProp,
              "returns whether or not a particular property exists")
         .def("GetProp",
@@ -187,7 +232,7 @@ struct sgroup_wrap {
                  SubstanceGroup::getProp<std::string>,
              "returns the value of a particular property")
         .def("GetIntProp",
-             (int (RDProps::*)(const std::string &) const) &
+             (int(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<int>,
              "returns the value of a particular property")
         .def("GetUnsignedProp",
@@ -195,11 +240,11 @@ struct sgroup_wrap {
                  SubstanceGroup::getProp<unsigned int>,
              "returns the value of a particular property")
         .def("GetDoubleProp",
-             (double (RDProps::*)(const std::string &) const) &
+             (double(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<double>,
              "returns the value of a particular property")
         .def("GetBoolProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<bool>,
              "returns the value of a particular property")
         .def(
@@ -221,7 +266,11 @@ struct sgroup_wrap {
               python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
-             " n.b. some properties cannot be converted to python types.\n");
+             " n.b. some properties cannot be converted to python types.\n")
+        .def("ClearProp",
+             (void(RDProps::*)(const std::string &) const) &
+                 SubstanceGroup::clearProp,
+             "Removes a particular property (does nothing if not set).\n\n");
 
     python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
                 "returns a copy of the molecule's SubstanceGroups (if any)",
@@ -239,6 +288,14 @@ struct sgroup_wrap {
                 python::return_value_policy<
                     python::reference_existing_object,
                     python::with_custodian_and_ward_postcall<0, 1>>());
+    python::def(
+        "CreateMolDataSubstanceGroup", &createMolDataSubstanceGroup,
+        (python::arg("mol"), python::arg("fieldName"), python::arg("value")),
+        "creates a new DATA SubstanceGroup associated with a molecule, "
+        "returns the new SubstanceGroup",
+        python::return_value_policy<
+            python::reference_existing_object,
+            python::with_custodian_and_ward_postcall<0, 1>>());
     python::def("AddMolSubstanceGroup", &addMolSubstanceGroup,
                 (python::arg("mol"), python::arg("sgroup")),
                 "adds a copy of a SubstanceGroup to a molecule, returns the "

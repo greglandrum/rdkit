@@ -41,6 +41,7 @@ from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger = logger()
 from rdkit import Chem
+from rdkit import rdBase
 from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams
@@ -541,7 +542,42 @@ class TestCase(unittest.TestCase):
     smiles = ['mydoghasfleas']
     results = FilterCatalog.RunFilterCatalog(fc, smiles, numThreads=3)
     self.assertEquals(len(results[0]), 1)
-    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule");
+    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule")
+
+  def testThreadedPythonFilter(self):
+
+    class MWFilter(FilterCatalog.FilterMatcher):
+
+      def __init__(self, minMw, maxMw):
+        FilterCatalog.FilterMatcher.__init__(self, "MW violation")
+        self.minMw = minMw
+        self.maxMw = maxMw
+
+      def IsValid(self):
+        return True
+
+      def HasMatch(self, mol):
+        mw = rdMolDescriptors.CalcExactMolWt(mol)
+        res = not self.minMw <= mw <= self.maxMw
+        Chem.MolFromSmiles("---")
+        rdBase.LogErrorMsg("dasfsadf")
+        return res
+
+    path = os.path.join(os.environ['RDBASE'], 'Code', 'GraphMol', 'test_data', 'pains.smi')
+    with open(path) as f:
+      smiles = [f.strip() for f in f.readlines()][1:]
+
+    print("1")
+    self.assertEqual(len(smiles), 3)
+
+    print("2")
+    entry = FilterCatalog.FilterCatalogEntry("MW Violation", MWFilter(100, 500))
+    fc = FilterCatalog.FilterCatalog()
+    fc.AddEntry(entry)
+    self.assertTrue(entry.GetDescription() == "MW Violation")
+
+    print("running")
+    results = FilterCatalog.RunFilterCatalog(fc, smiles*10, numThreads=3)
 
 
 if __name__ == '__main__':

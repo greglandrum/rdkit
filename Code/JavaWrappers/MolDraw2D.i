@@ -29,13 +29,13 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-%include "boost_tuple.i"
 %include "std_vector.i"
 %include "std_map.i"
 %include "std_pair.i"
-%include "boost_tuple.i"
+%include "std_tuple.i"
 %{
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -44,17 +44,22 @@
 #include <utility>
 %}
 
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+%{
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+ %}
+#endif
+
 %template(Int_String_Map) std::map< int, std::string >;
 
-#ifdef SWIGJAVA
 %template(ColourPalette) std::map< int, RDKit::DrawColour >;
-#endif
 
 %template(Int_Double_Map) std::map< int, double >;
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
 %template(ROMol_Ptr_Vect) std::vector<RDKit::ROMol*>;
 %template(Point2D_Vect) std::vector<RDGeom::Point2D *>;
+%template(ColourPalette_Vect) std::vector< std::map< int, RDKit::DrawColour > >;
 
 %ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
 %ignore RDKit::MolDraw2DUtils::contourAndDrawGaussians(
@@ -70,8 +75,50 @@
 %ignore RDKit::MolDraw2DUtils::contourAndDrawGrid;
 
 
+%include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    
+#ifdef SWIGJAVA
+%typemap(jni) std::string RDKit::MolDraw2DCairo::toByteArray "jbyteArray"
+%typemap(jtype) std::string RDKit::MolDraw2DCairo::toByteArray "byte[]"
+%typemap(jstype) std::string RDKit::MolDraw2DCairo::toByteArray "byte[]"
+%typemap(javaout) std::string RDKit::MolDraw2DCairo::toByteArray {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::MolDraw2DCairo::toByteArray {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+#endif
+
+#ifdef SWIGCSHARP
+%template(UChar_Vect) std::vector<unsigned char>;
+#endif
+          
+%include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+    
+#ifdef SWIGJAVA
+%extend RDKit::MolDraw2DCairo {
+  const std::string toByteArray() {
+     return ($self)->getDrawingText();
+  }
+}
+#endif
+
+#ifdef SWIGCSHARP
+%extend RDKit::MolDraw2DCairo {
+    const std::vector<unsigned char> getImage() {
+        const auto text = ($self)->getDrawingText();
+        const std::vector<unsigned char> image(text.begin(), text.end());
+        return image;
+    }
+};
+#endif
+        
+#endif // RDK_BUILD_CAIRO_SUPPORT
+        
 %include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 %inline %{

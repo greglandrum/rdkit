@@ -1,7 +1,7 @@
 /*
-* $Id$
 *
-*  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+*   and other RDKit contributors
 *  All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,8 @@
 *       with the distribution.
 *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 *       nor the names of its contributors may be used to endorse or promote
-*       products derived from this software without specific prior written permission.
+*       products derived from this software without specific prior written
+        permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -39,6 +40,7 @@
 #include <GraphMol/Conformer.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -61,6 +63,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/MolBundle.h>
 #include <sstream>
 %}
 
@@ -77,6 +80,15 @@
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 %ignore RDKit::ROMol::getAtomNeighbors(Atom const *at) const;
 %ignore RDKit::ROMol::getAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::atomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::atomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::atomNeighbors(Atom const *at);
+%ignore RDKit::ROMol::atomBonds(Atom const *at);
+%ignore RDKit::ROMol::atoms();
+%ignore RDKit::ROMol::atoms() const;
+%ignore RDKit::ROMol::bonds();
+%ignore RDKit::ROMol::bonds() const;
+
 %ignore RDKit::ROMol::getVertices() ;
 %ignore RDKit::ROMol::getVertices() const ;
 %ignore RDKit::ROMol::getEdges() ;
@@ -124,7 +136,7 @@
 %newobject getAtomBonds;
 
 %{
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 bool getPreferCoordGen() {
   return RDDepict::preferCoordGen;
 }
@@ -189,6 +201,13 @@ void setPreferCoordGen(bool);
     return RDKit::MolToHELM(*($self));
   }
 
+  std::string MolToCMLBlock(int confId=-1, bool kekulize=true) {
+    return RDKit::MolToCMLBlock(*($self), confId, kekulize);
+  }
+  void MolToCMLFile(std::string fName, int confId=-1, bool kekulize=true) {
+    RDKit::MolToCMLFile(*($self), fName, confId, kekulize);
+  }
+
   std::string MolToXYZBlock(int confId=-1) {
     return RDKit::MolToXYZBlock(*($self), confId);
   }
@@ -216,6 +235,27 @@ void setPreferCoordGen(bool);
 
   std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
     std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    return mvs;
+  };
+
+  bool hasSubstructMatch(RDKit::MolBundle & query,
+                         RDKit::SubstructMatchParameters ps) {
+    ps.maxMatches = 1;
+    std::vector<RDKit::MatchVectType> mv = SubstructMatch(*($self), query, ps);
+    return mv.size() > 0;
+  };
+
+  std::vector<std::pair<int, int>> getSubstructMatch(
+      RDKit::MolBundle & query, RDKit::SubstructMatchParameters ps) {
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self), query, ps);
+    RDKit::MatchVectType mv;
+    if (mvs.size()) mv = mvs[0];
+    return mv;
+  };
+
+  std::vector<std::vector<std::pair<int, int>>> getSubstructMatches(
+      RDKit::MolBundle & query, RDKit::SubstructMatchParameters ps) {
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self), query, ps);
     return mvs;
   };
 
@@ -248,6 +288,17 @@ void setPreferCoordGen(bool);
 
   RDKit::ROMol *replaceCore(const RDKit::ROMol &coreQuery, bool replaceDummies=true,bool labelByIndex=false) {
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
+  };
+
+  /* Methods from SubstructUtils.h */
+  const RDKit::MatchVectType &getMostSubstitutedCoreMatch(const RDKit::ROMol& core,
+    const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::getMostSubstitutedCoreMatch(*($self), core, matches);
+  };
+
+  std::vector<RDKit::MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
+    const RDKit::ROMol& core, const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::sortMatchesByDegreeOfCoreSubstitution(*($self), core, matches);
   };
 
   /* Methods from MolFileStereoChem.h */
@@ -334,18 +385,35 @@ void setPreferCoordGen(bool);
 
   }
 
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  void generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          const RDKit::MatchVectType &refMatchVect,
                                           int confId=-1,
-                                           bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
-            acceptFailure,forceRDKit);
+                                          bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,refMatchVect,confId,forceRDKit);
   }
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          int confId=-1,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
+            acceptFailure,forceRDKit,allowOptionalAttachments);
+  }
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
                                           int confId,
-                                          RDKit::ROMol referencePattern,
-                                          bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
-           &referencePattern,acceptFailure,forceRDKit);
+                                          const RDKit::ROMol &referencePattern,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
+           &referencePattern,acceptFailure,forceRDKit,allowOptionalAttachments);
+  }
+
+  double normalizeDepiction(int confId=-1, int canonicalize=1,
+                            double scaleFactor=-1.0) {
+    return RDDepict::normalizeDepiction(*($self), confId, canonicalize, scaleFactor);
+  }
+
+  void straightenDepiction(int confId=-1, bool minimizeRotation=false) {
+    RDDepict::straightenDepiction(*($self), confId, minimizeRotation);
   }
 
   /* From FindRings.cpp, MolOps.h */
@@ -479,7 +547,34 @@ void setPreferCoordGen(bool);
                              int refCid = -1, const std::vector<std::pair<int,int> > *atomMap = 0,
                              const RDNumeric::DoubleVector *weights = 0,
                              bool reflect = false, unsigned int maxIters = 50){
-     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+    return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+  }
+
+  double getBestAlignmentTransform(
+    const RDKit::ROMol &refMol, RDGeom::Transform3D &bestTrans,
+    std::vector<std::pair<int,int> > &bestMatch, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
+    unsigned int maxIters = 50) {
+    return RDKit::MolAlign::getBestAlignmentTransform(*($self), refMol, bestTrans, bestMatch,
+      prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights, reflect, maxIters);
+  }
+
+  double calcRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::CalcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
+  }
+
+  double getBestRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::getBestRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */

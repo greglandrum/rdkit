@@ -15,6 +15,17 @@
 
 namespace RDKit {
 
+namespace {
+
+template <class T>
+void remove_element(std::vector<T> &container, unsigned int element) {
+  auto pos = std::find(container.begin(), container.end(), element);
+  if (pos != container.end()) {
+    container.erase(pos);
+  }
+}
+}  // namespace
+
 SubstanceGroup::SubstanceGroup(ROMol *owning_mol, const std::string &type)
     : RDProps(), dp_mol(owning_mol) {
   PRECONDITION(owning_mol, "supplied owning molecule is bad");
@@ -101,6 +112,21 @@ void SubstanceGroup::addBondWithBookmark(int mark) {
   PRECONDITION(dp_mol, "bad mol");
   Bond *bond = dp_mol->getUniqueBondWithBookmark(mark);
   d_bonds.push_back(bond->getIdx());
+}
+
+void SubstanceGroup::removeAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_atoms, idx);
+}
+
+void SubstanceGroup::removeParentAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_patoms, idx);
+}
+
+void SubstanceGroup::removeBondWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_bonds, idx);
 }
 
 void SubstanceGroup::addBracket(const SubstanceGroup::Bracket &bracket) {
@@ -269,7 +295,7 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
 
 bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id) {
-  auto match_sgroup = [&](const SubstanceGroup &sg) {
+  auto match_sgroup = [id](const SubstanceGroup &sg) {
     unsigned int storedId;
     return sg.getPropIfPresent("ID", storedId) && id == storedId;
   };
@@ -316,7 +342,9 @@ bool removedParentInHierarchy(
     const boost::dynamic_bitset<> &toRemove,
     const std::map<unsigned int, unsigned int> &indexLookup) {
   PRECONDITION(idx < sgs.size(), "cannot find SubstanceGroup");
-  if (toRemove[idx]) return true;
+  if (toRemove[idx]) {
+    return true;
+  }
 
   unsigned int parent;
   if (sgs[idx].getPropIfPresent("PARENT", parent)) {
@@ -420,5 +448,48 @@ std::ostream &operator<<(std::ostream &target,
                          const RDKit::SubstanceGroup &sgroup) {
   target << sgroup.getIndexInMol() << ' '
          << sgroup.getProp<std::string>("TYPE");
+
+  auto brackets = sgroup.getBrackets();
+  if (!brackets.empty()) {
+    target << " Brk: " << brackets.size();
+  }
+
+  auto cstates = sgroup.getCStates();
+  if (!cstates.empty()) {
+    target << " CSt: " << cstates.size();
+  }
+
+  auto attachpts = sgroup.getAttachPoints();
+  if (!attachpts.empty()) {
+    target << " AtPt: " << attachpts.size();
+  }
+
+  auto atoms = sgroup.getAtoms();
+  if (!atoms.empty()) {
+    target << " Atoms: { ";
+    for (auto atom_idx : atoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto patoms = sgroup.getParentAtoms();
+  if (!patoms.empty()) {
+    target << " PAtoms: { ";
+    for (auto atom_idx : patoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto bonds = sgroup.getBonds();
+  if (!bonds.empty()) {
+    target << " Bonds: { ";
+    for (auto bond_idx : bonds) {
+      target << bond_idx << ' ';
+    }
+    target << '}';
+  }
+
   return target;
 }

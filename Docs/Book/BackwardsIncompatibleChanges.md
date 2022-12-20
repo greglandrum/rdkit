@@ -8,6 +8,124 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2022.09
+
+### Changes in canonicalization
+
+Changes to the way atomic chirality is used in the canonicalization algorithm
+mean that canonical atom ranking and canonical SMILES generated with this RDKit
+version can be different from those generated with previous versions
+
+### Improvements to GetBestRMS() and CalcRMS()
+
+`GetBestRMS() and CalcRMS()` by default now treat terminal conjugated functional
+groups like carboxylate and nitro symmetrically. For example, the group
+`C(=[O:1])[O-:2]` can match in either orientation. The SMARTS pattern which is
+used to recognize affected groups is:
+`[{atomP};$([{atomP}]-[*]=[{atomP}]),$([{atomP}]=[*]-[{atomP}])]~[*]` where
+`{atomP}` is `O,N;D1`. The previous behavior can be restored using by setting
+the `symmetrizeConjugatedTerminalGroups` argument to false when calling
+`GetBestRMS() and CalcRMS()`
+
+
+## Release 2022.03
+
+### Changes to the handling of dummy atoms and aromaticity
+
+The rules for aromaticity in rings containing dummy atoms have been changed. The
+general intention of the new handling is that aromaticity will not be perceived
+for rings containing dummy atoms unless it's clear that the dummies should be
+aromatic. As an example: the SMILES `C1=C*2=CC=CC=*2C=C1` is perceived to be
+aromatic while the SMILES `C1=C*2C=CC=C*2C=C1` (which does not have any double
+bonds to the dummy atoms) is not; in previous RDKit releases both of these
+structures were aromatic. There's more information about this in the discussion
+of PR #4722 (https://github.com/rdkit/rdkit/pull/4722) and Issue #4721
+(https://github.com/rdkit/rdkit/issues/4721).
+
+### Tautomer enumeration improvements
+
+The rules for tautomer enumeration in `MolStandardize` have been updated to more
+closely match the rules in the original publication. These changes primarily
+consist of making the rules more specific; the consequence is that less
+tautomers will be generated with this version. The previous rules can still be
+accessed via the function `GetV1TautomerEnumerator()` (Python) or
+`getV1TautomerEnumerator()` (C++)
+
+
+## Release 2021.03
+
+### Changes to conformer generation
+
+In the interest of providing higher quality results by default, the conformer
+generator now uses symmetry when doing RMS pruning. The pure distance geometry
+based conformer generator also now generates trans(oid) conformations for
+amides, esters, and related structures.
+
+### Changes to R-Group Decomposition results
+
+There have been a large number of changes in the R-group decomposition code
+which we believe improve the quality of the results and the handling of the many
+strange edge cases which arise when doing RGD.
+
+### Reactions now produce STEREONONE instead of STEREOANY for unspecified double bonds
+
+Double bonds in the products of reactions which have unspecified stereochemistry
+are now set to be `STEREONONE` instead of `STEREOANY`. Using `STEREONONE` is
+consistent with the rest of the behavior of the RDKit with respect to double
+bonds.
+
+### Moving MolToSVG()
+
+The function `Chem.MolToSVG()` (or `Chem.rdmolops.MolToSVG()`) has been moved to
+the `Chem.Draw` package along with the other drawing code.
+
+
+## Release 2020.09
+
+### Changes in the chemistry model [UPDATED for release 2020.09.2]
+
+We've added additional allowed valences for I (now 1, 3, 5), At (now 1, 3, 5),
+Xe (now 0, 2, 4, 6), and Po (now 2, 4, 6). Molecules with atoms in the new
+valence states will no longer generate sanitization errors. Note that this has
+an impact on the chemistry of molecules containing 3-valent I and at least one
+implicit H (present 24 times in ChEMBL 27): previously this was incorrectly
+assigned two implicit Hs, now it has no implicit Hs. 
+
+Aromaticity perception of molecules like `Cc1nnc2n1c1ccccc1n1c(C)nnc12` now
+correctly recognizes the full outer envelope, i.e. the bonds joining the rings
+are now also aromatic. In 2020.03 the three rings were connected by single bonds.
+
+### FindMCS can now return single atom MCSs
+FindMCS() may return single atom MCSs, whereas previously it returned an empty
+MCS unless there was at least one commond bond across the input structures.
+So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
+
+### New return type for tautomer enumeration
+Due to improvements in the tautomer enumeration code, the method
+`TautomerEnumerator::enumerate` now returns a `TautomerEnumeratorResult`
+object instead of a vector of molecules. Note that if you are iterating over
+the results of a call to `enumerate()` you shouldn't need to change your code.
+If you want to invoke the old (and deprecated, see below) form from C++, call
+`TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
+`boost::dynamic_bitset*` to capture the modified atoms.
+
+### Default precision for coordgen
+The default precision setting for coordgen has been changed. The new default
+was selected to greatly reduce the number of molecules for which it takes a
+very long time to generate coordinates while still producing nice looking
+structures. We may continue to tweak this default value if/when problems
+with it are reported. If you would like to go back to the previous setting, set 
+`CoordgenParams.minimizerPrecision` to `CoordgenParams.sketcherStandardPrecision` 
+when you invoke `rdCoordGen.AddCoords()`
+
+### Change in uncharge() behavior for inorganic acids
+Uncharger::uncharge() will now neutralize `[Cl,Br,I][O-], [Cl,Br,I](=O)[O-],
+[Cl,Br,I](=O)(=O)[O-], [Cl,Br,I](=O)(=O)(=O)[O-], [O-]N=N[O-], [N,P](=O)[O-],
+[N+](=O)([O-])[O-], P(=O)([O-])[O-], P(=O)([O-])([O-])[O-], S([O-])[O-],
+S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-]`.
+Previously not all of these inorganic acid counterions were consistently
+neutralized.
+
 ## Release 2020.03
 
 ### Use of chirality with `@=` in PostgreSQL cartridge

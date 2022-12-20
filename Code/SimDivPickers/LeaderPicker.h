@@ -16,6 +16,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/RDThreads.h>
 #include <cstdlib>
 #include "DistPicker.h"
 
@@ -36,7 +37,7 @@ class LeaderPicker : public DistPicker {
   /*! \brief Default Constructor
    *
    */
-  LeaderPicker()  {}
+  LeaderPicker() {}
   LeaderPicker(double threshold)
       : default_threshold(threshold), default_nthreads(1) {}
   LeaderPicker(double threshold, int nthreads)
@@ -98,9 +99,12 @@ class LeaderPicker : public DistPicker {
                        unsigned int pickSize, const RDKit::INT_VECT &firstPicks,
                        double threshold, int nthreads) const {
     CHECK_INVARIANT(distMat, "Invalid Distance Matrix");
-    if (!poolSize) throw ValueErrorException("empty pool to pick from");
-    if (poolSize < pickSize)
+    if (!poolSize) {
+      throw ValueErrorException("empty pool to pick from");
+    }
+    if (poolSize < pickSize) {
       throw ValueErrorException("pickSize cannot be larger than the poolSize");
+    }
     distmatFunctor functor(distMat);
     return this->lazyPick(functor, poolSize, pickSize, firstPicks, threshold,
                           nthreads);
@@ -108,18 +112,25 @@ class LeaderPicker : public DistPicker {
 
   /*! \overload */
   RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
-                       unsigned int pickSize) const {
+                       unsigned int pickSize) const override {
     RDKit::INT_VECT iv;
     return pick(distMat, poolSize, pickSize, iv, default_threshold,
                 default_nthreads);
   }
 };
 
+#if defined(RDK_BUILD_THREADSAFE_SSS)
+#if defined(unix) || defined(__unix__) || defined(__unix)
+#define USE_THREADED_LEADERPICKER
+#endif
+#endif
+
 #ifdef USE_THREADED_LEADERPICKER
 // Note that this block of code currently only works on linux (which is why it's
-// disabled by default) We will revisit this during the 2020.03 release cycle in
-// order to get a multi-threaded version of the LeaderPicker that works on all
-// supported platforms
+// disabled by default elsewhere). In order to work on other platforms we need
+// cross-platform threading primitives which support a barrier; or a rewrite.
+// Given that we will get the cross-platform threading for free with C++20, I
+// think it makes sense to just wait
 template <typename T>
 void *LeaderPickerWork(void *arg);
 
@@ -152,7 +163,9 @@ struct LeaderPickerState {
 
   LeaderPickerState(unsigned int count, int nt) {
     v.resize(count);
-    for (unsigned int i = 0; i < count; i++) v[i] = i;
+    for (unsigned int i = 0; i < count; i++) {
+      v[i] = i;
+    }
 
     // InitializeBlocks
     unsigned int bcount;
@@ -162,7 +175,9 @@ struct LeaderPickerState {
       bcount = (count + (bsize - 1)) / bsize;
       unsigned int tasks = (bcount + 1) / 2;
       // limit number of threads to available work
-      if (nt > (int)tasks) nt = tasks;
+      if (nt > (int)tasks) {
+        nt = tasks;
+      }
     } else {
       bsize = 32768;
       bcount = (count + (bsize - 1)) / bsize;
@@ -211,16 +226,18 @@ struct LeaderPickerState {
         pthread_create(&threads[i].tid, NULL, LeaderPickerWork<T>,
                        (void *)&threads[i]);
       }
-    } else
+    } else {
       nthreads = 1;
+    }
   }
 
   ~LeaderPickerState() {
     if (nthreads > 1) {
       thread_op = 1;
       pthread_barrier_wait(&wait);
-      for (unsigned int i = 0; i < nthreads; i++)
+      for (unsigned int i = 0; i < nthreads; i++) {
         pthread_join(threads[i].tid, 0);
+      }
       pthread_barrier_destroy(&wait);
       pthread_barrier_destroy(&done);
     }
@@ -228,9 +245,13 @@ struct LeaderPickerState {
 
   bool empty() {
     while (head_block) {
-      if (head_block->len) return false;
+      if (head_block->len) {
+        return false;
+      }
       unsigned int next_tick = head_block->next[tick];
-      if (!next_tick) return true;
+      if (!next_tick) {
+        return true;
+      }
       head_block = &blocks[next_tick];
     }
     return true;
@@ -239,7 +260,9 @@ struct LeaderPickerState {
   unsigned int compact(int *dst, int *src, unsigned int len) {
     unsigned int count = 0;
     for (unsigned int i = 0; i < len; i++) {
-      if ((*func)(query, src[i]) > threshold) dst[count++] = src[i];
+      if ((*func)(query, src[i]) > threshold) {
+        dst[count++] = src[i];
+      }
     }
     return count;
   }
@@ -265,16 +288,19 @@ struct LeaderPickerState {
             if (next->len) {
               list->next[tock] = next_tick;
               next->next[tock] = next_next_tick;
-            } else
+            } else {
               list->next[tock] = next_next_tick;
+            }
           }
           cycle = nthreads - 1;
-        } else
+        } else {
           cycle--;
+        }
         if (next_next_tick) {
           list = &blocks[next_next_tick];
-        } else
+        } else {
           break;
+        }
       } else {
         if (cycle == 0) {
           list->len = compact(list->ptr, list->ptr, list->len);
@@ -291,8 +317,9 @@ struct LeaderPickerState {
       thread_op = 0;
       pthread_barrier_wait(&wait);
       pthread_barrier_wait(&done);
-    } else
+    } else {
       compact_job(0);
+    }
     tick ^= 1;
   }
 
@@ -311,7 +338,9 @@ void *LeaderPickerWork(void *arg) {
 
   for (;;) {
     pthread_barrier_wait(&stat->wait);
-    if (stat->thread_op) return (void *)0;
+    if (stat->thread_op) {
+      return (void *)0;
+    }
     stat->compact_job(thread->id);
     pthread_barrier_wait(&stat->done);
   }
@@ -326,9 +355,12 @@ struct LeaderPickerState {
   int query;
   T *func;
 
-  LeaderPickerState(unsigned int count, int) : left(count), threshold(0.0), query(0), func(nullptr) {
+  LeaderPickerState(unsigned int count, int)
+      : left(count), threshold(0.0), query(0), func(nullptr) {
     v.resize(count);
-    for (unsigned int i = 0; i < count; i++) v[i] = i;
+    for (unsigned int i = 0; i < count; i++) {
+      v[i] = i;
+    }
   }
 
   bool empty() { return left == 0; }
@@ -338,7 +370,9 @@ struct LeaderPickerState {
     for (unsigned int i = 0; i < len; i++) {
       double ld = (*func)(query, src[i]);
       // std::cerr << query << "-" << src[i] << " " << ld << std::endl;
-      if (ld > threshold) dst[count++] = src[i];
+      if (ld > threshold) {
+        dst[count++] = src[i];
+      }
     }
     return count;
   }
@@ -363,13 +397,20 @@ RDKit::INT_VECT LeaderPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize,
                                        const RDKit::INT_VECT &firstPicks,
                                        double threshold, int nthreads) const {
-  if (!poolSize) throw ValueErrorException("empty pool to pick from");
+  if (!poolSize) {
+    throw ValueErrorException("empty pool to pick from");
+  }
 
-  if (poolSize < pickSize)
+  if (poolSize < pickSize) {
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
+  }
 
-  if (!pickSize) pickSize = poolSize;
+  if (!pickSize) {
+    pickSize = poolSize;
+  }
   RDKit::INT_VECT picks;
+
+  nthreads = RDKit::getNumThreadsToUse(nthreads);
 
   LeaderPickerState<T> stat(poolSize, nthreads);
   stat.threshold = threshold;

@@ -49,9 +49,9 @@ const Sort *SequenceRule::getSorter() const {
 }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
-  // pseudo atoms (atomic no. 0) match all
-  if (a->getEnd()->getAtomicNum() == 0 || b->getEnd()->getAtomicNum() == 0) {
-    return 0;
+  
+  if (!CIPLabeler_detail::decrementRemainingCallCountAndCheck()){
+    throw MaxIterationsExceeded();
   }
 
   int cmp = compare(a, b);
@@ -88,12 +88,6 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
           continue;
         }
 
-        // pseudo atoms (atomic no. 0) match all
-        if (aEdge->getEnd()->getAtomicNum() == 0 ||
-            bEdge->getEnd()->getAtomicNum() == 0) {
-          return 0;
-        }
-
         cmp = compare(aEdge, bEdge);
         if (cmp != 0) {
           return cmp;
@@ -119,12 +113,6 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
 
         if (areUpEdges(aNode, bNode, aEdge, bEdge)) {
           continue;
-        }
-
-        // pseudo atoms (atomic no. 0) match all
-        if (aEdge->getEnd()->getAtomicNum() == 0 ||
-            bEdge->getEnd()->getAtomicNum() == 0) {
-          return 0;
         }
 
         cmp = compare(aEdge, bEdge);
@@ -165,5 +153,5 @@ bool SequenceRule::areUpEdges(Node *aNode, Node *bNode, Edge *aEdge,
   return false;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

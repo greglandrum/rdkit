@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_CANON_H_
-#define _RD_CANON_H_
+#ifndef RD_CANON_H
+#define RD_CANON_H
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -28,9 +28,9 @@ const int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
 
 //! used in traversals of the molecule
 typedef enum {
-  WHITE_NODE = 0,  //! not visited
-  GREY_NODE,       //! visited, but not finished
-  BLACK_NODE,      //! visited and finished
+  WHITE_NODE = 0,  //!< not visited
+  GREY_NODE,       //!< visited, but not finished
+  BLACK_NODE,      //!< visited and finished
 } AtomColors;
 
 //! used to indicate types of entries in the molecular stack:
@@ -55,7 +55,7 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
   explicit MolStackElem(Atom *at) {
     type = MOL_STACK_ATOM;
     obj.atom = at;
-  };
+  }
   //! construct a bond node
   /*!
 
@@ -67,12 +67,12 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
     type = MOL_STACK_BOND;
     obj.bond = bond;
     number = idx;
-  };
+  }
   //! construct for a ring closure
   explicit MolStackElem(int idx) {
     type = MOL_STACK_RING;
     number = idx;
-  };
+  }
   //! construct for a branch opening or closing
   explicit MolStackElem(const char *chr, int idx) {
     switch (chr[0]) {
@@ -95,7 +95,7 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
 typedef std::vector<MolStackElem> MolStack;
 
 //! used to represent possible branches from an atom
-typedef boost::tuple<int, int, Bond *> PossibleType;
+typedef std::tuple<int, int, Bond *> PossibleType;
 
 //! constructs the canonical traversal order for a molecular fragment
 /*!

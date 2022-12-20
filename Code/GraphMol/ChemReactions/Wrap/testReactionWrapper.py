@@ -1,10 +1,11 @@
 #
-#  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc. and
+#  other RDKit contributors
+#
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# modification, are permitted provided that the following conditions are met:
 #
 #     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
@@ -16,16 +17,15 @@
 #       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
@@ -951,6 +951,135 @@ class StereoGroupTests(unittest.TestCase):
     mol = Chem.MolFromSmiles("C/C=C/C")
     #  this shouldn't raise
     rxn.RunReactants([mol])
+
+  def test_rxnblock_removehs(self):
+    rxnblock = """$RXN
+Dummy 0
+  Dummy        0123456789
+
+  1  1
+$MOL
+
+  Dummy   01234567892D
+
+ 10 10  0  0  0  0            999 V2000
+    7.0222  -11.1783    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+    8.0615  -11.7783    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+    7.0222   -9.6783    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+    5.7231   -8.9283    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0
+    5.7231   -7.7283    0.0000 A   0  0  0  0  0  0  0  0  0  5  0  0
+    4.4242   -9.6783    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0
+    4.4242  -11.1783    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0
+    3.3849  -11.7783    0.0000 A   0  0  0  0  0  0  0  0  0  8  0  0
+    5.7231  -11.9283    0.0000 N   0  0  0  0  0  0  0  0  0  9  0  0
+    5.7231  -13.1094    0.0000 H   0  0
+  1  2  2  0  0  0  8
+  1  3  1  0  0  0  8
+  3  4  2  0  0  0  8
+  4  5  1  0  0  0  2
+  4  6  1  0  0  0  8
+  6  7  2  0  0  0  8
+  7  8  1  0  0  0  2
+  7  9  1  0  0  0  8
+  9  1  1  0  0  0  8
+  9 10  1  0
+M  SUB  1   9   2
+M  END
+$MOL
+
+  Dummy   01234567892D
+
+  9  9  0  0  0  0            999 V2000
+   17.0447  -11.1783    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+   18.0840  -11.7783    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+   17.0447   -9.6783    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   15.7457   -8.9283    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0
+   15.7457   -7.7283    0.0000 A   0  0  0  0  0  0  0  0  0  5  0  0
+   14.4467   -9.6783    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0
+   14.4467  -11.1783    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0
+   13.4074  -11.7783    0.0000 A   0  0  0  0  0  0  0  0  0  8  0  0
+   15.7457  -11.9283    0.0000 N   0  0  0  0  0  0  0  0  0  9  0  0
+  1  2  1  0  0  0  8
+  1  3  1  0  0  0  8
+  3  4  2  0  0  0  8
+  4  5  1  0  0  0  2
+  4  6  1  0  0  0  8
+  6  7  2  0  0  0  8
+  7  8  1  0  0  0  2
+  7  9  1  0  0  0  8
+  9  1  2  0  0  0  8
+M  END
+"""
+
+    mol = Chem.MolFromSmiles("c1(=O)nc([Cl])cc([F])[nH]1")
+    rxn = rdChemReactions.ReactionFromRxnBlock(rxnblock)
+    self.assertIsNotNone(rxn)
+    prods = rxn.RunReactants((mol, ))
+    # if the explicit hydrogen is not removed and the reactant template
+    # is not sanitized, the reactant template is not aromatic and our
+    # aromatic reactant won't match
+    self.assertEqual(len(prods), 0)
+
+    rxn = rdChemReactions.ReactionFromRxnBlock(rxnblock, removeHs=True, sanitize=True)
+    self.assertIsNotNone(rxn)
+    prods = rxn.RunReactants((mol, ))
+    self.assertEqual(len(prods), 2)
+
+  def testReactionInPlace(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1][N:2][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+    self.assertIsNotNone(rxn)
+    reactant = Chem.MolFromSmiles('O=C(C)NCC')
+    self.assertTrue(rxn.RunReactantInPlace(reactant))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
+    self.assertFalse(rxn.RunReactantInPlace(reactant))
+    self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
+
+  def testGithub4651(self):
+    mol_sulfonylchloride = Chem.MolFromSmiles("Nc1c(CCCSNCC)cc(cc1)S(=O)(=O)Cl")
+    mol_amine = Chem.MolFromSmiles("Nc2cc(C)on2")
+    mol_sulfonamide = Chem.MolFromSmiles("CCNSCCCc1cc(S(=O)(=O)Nc2cc(C)on2)ccc1N")
+
+    smirks_fwd = (
+      "[S;$(S(=O)(=O)[C,c,N]):1](=O)(=O)(-[Cl])"
+      "."
+      "[N;$([N&H2&D1,N&H1&D2])"
+      # N aliphatic and not aromatic bond to carbon
+      "&$(N(-&!@[#6]))"
+      "&!$(N-C=[O,N,S]):2]"
+      ">>"
+      "[S:1](=O)(=O)-[N+0:2]")
+
+    smirks_reverse = ">>".join(smirks_fwd.split(">>")[::-1])
+
+    reaction_fwd = rdChemReactions.ReactionFromSmarts(smirks_fwd)
+    reaction_reverse = rdChemReactions.ReactionFromSmarts(smirks_reverse)
+
+    product = reaction_fwd.RunReactants((mol_sulfonylchloride, mol_amine))[0][0]
+
+    reagent_sulfonylchloride, reagent_amine = reaction_reverse.RunReactants((mol_sulfonamide, ))[0]
+
+    # trigger bug
+    with self.assertRaises(RuntimeError):
+      reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))
+
+    # The second call used to deadlock
+    with self.assertRaises(RuntimeError):
+      reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))
+
+  def testV3000Reactions(self):
+    reaction = rdChemReactions.ReactionFromSmarts(
+      '[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[Br].[#6:7]B(O)O>>[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[#6:7]'
+    )
+    self.assertIsNotNone(reaction)
+
+    mb1 = rdChemReactions.ReactionToRxnBlock(reaction, forceV3000=True)
+    mb2 = rdChemReactions.ReactionToV3KRxnBlock(reaction)
+    self.assertEqual(mb1, mb2)
+    reaction2 = rdChemReactions.ReactionFromRxnBlock(mb1)
+    self.assertIsNotNone(reaction2)
+
+    self.assertEqual(reaction.GetNumReactantTemplates(), reaction2.GetNumReactantTemplates())
 
 
 if __name__ == '__main__':

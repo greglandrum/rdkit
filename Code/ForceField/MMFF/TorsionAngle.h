@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,11 +8,11 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_MMFFTORSIONANGLE_H__
-#define __RD_MMFFTORSIONANGLE_H__
+#ifndef RD_MMFFTORSIONANGLE_H
+#define RD_MMFFTORSIONANGLE_H
 
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 
 namespace RDGeom {
 class Point3D;
@@ -25,11 +23,9 @@ namespace MMFF {
 class MMFFTor;
 
 //! the torsion term for MMFF
-class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib
-    : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
-  TorsionAngleContrib()
-       {};
+  TorsionAngleContrib() {}
   //! Constructor
   /*!
     The torsion is between atom1 - atom2 - atom3 - atom4
@@ -46,11 +42,11 @@ class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib
   TorsionAngleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                       unsigned int idx3, unsigned int idx4,
                       const MMFFTor *mmffTorParams);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual TorsionAngleContrib *copy() const {
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  TorsionAngleContrib *copy() const override {
     return new TorsionAngleContrib(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
@@ -64,7 +60,7 @@ RDKIT_FORCEFIELD_EXPORT double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
                                                  const RDGeom::Point3D &kPoint,
                                                  const RDGeom::Point3D &lPoint);
 //! returns the 3-tuple of a torsion angle force constants
-RDKIT_FORCEFIELD_EXPORT boost::tuple<double, double, double>
+RDKIT_FORCEFIELD_EXPORT std::tuple<double, double, double>
 calcTorsionForceConstant(const MMFFTor *mmffTorParams);
 //! calculates and returns the torsional MMFF energy
 RDKIT_FORCEFIELD_EXPORT double calcTorsionEnergy(const double V1,

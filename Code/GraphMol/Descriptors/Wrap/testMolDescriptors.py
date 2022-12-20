@@ -24,23 +24,23 @@ class TestCase(unittest.TestCase):
   def testAtomPairTypes(self):
     params = rdMD.AtomPairsParameters
     mol = Chem.MolFromSmiles("C=C")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     1 | (1 | 1<<params.numPiBits)<<params.numBranchBits)
 
     mol = Chem.MolFromSmiles("C#CO")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))!=\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))!=
                     rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))==
                     2 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2))==
                     1 | (0 | 3<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),1)==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),1)==
                     1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
   def testAtomPairTypesChirality(self):
@@ -609,6 +609,12 @@ class TestCase(unittest.TestCase):
       self.assertAlmostEqual(oTPSA, orig_tpsa[i], 2)
       nTPSA = rdMD.CalcTPSA(mol, force=True, includeSandP=True)
       self.assertAlmostEqual(nTPSA, new_tpsa[i], 2)
+
+  def testGithub1761(self):
+    mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
+    self.assertRaises(OverflowError, lambda: rdMD.GetMorganFingerprint(mol, -1))
+    self.assertRaises(OverflowError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
+    self.assertRaises(ValueError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, 0))
 
   @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
   def testBCUT(self):

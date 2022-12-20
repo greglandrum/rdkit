@@ -35,14 +35,26 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
               int panelWidth = -1, int panelHeight = -1,
               bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_context(context) {
-    initDrawing();
+    PRECONDITION(width > 0, "bad width");
+    PRECONDITION(height > 0, "bad height");
     initTextDrawer(noFreetype);
-  };
+  }
+  MolDraw2DJS(const MolDraw2DJS &) = delete;
+  MolDraw2DJS(MolDraw2DJS &&) = delete;
+  MolDraw2DJS &operator=(const MolDraw2DJS &) = delete;
+  MolDraw2DJS &operator=(MolDraw2DJS &&) = delete;
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawPolygon(const std::vector<Point2D> &cds) override;
-  void drawEllipse(const Point2D &cds1, const Point2D &cds2) override;
+  void drawLine(const Point2D &cds1, const Point2D &cds2,
+                bool rawCoords = false) override;
+  void drawPolygon(const std::vector<Point2D> &cds,
+                   bool rawCoords = false) override;
+  void drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                   bool rawCoords = false) override;
   void clearDrawing() override;
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
  private:
   emscripten::val &d_context;

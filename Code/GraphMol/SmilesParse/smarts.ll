@@ -99,11 +99,11 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
     }
 %}
 
-@[' ']*TH |
-@[' ']*AL |
-@[' ']*SQ |
-@[' ']*BP |
-@[' ']*OH 	{ return CHI_CLASS_TOKEN; }
+@[' ']*TH { yylval->chiraltype = Atom::ChiralType::CHI_TETRAHEDRAL; return CHI_CLASS_TOKEN; }
+@[' ']*AL { yylval->chiraltype = Atom::ChiralType::CHI_ALLENE; return CHI_CLASS_TOKEN; }
+@[' ']*SP { yylval->chiraltype = Atom::ChiralType::CHI_SQUAREPLANAR; return CHI_CLASS_TOKEN; }
+@[' ']*TB { yylval->chiraltype = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL; return CHI_CLASS_TOKEN; }
+@[' ']*OH { yylval->chiraltype = Atom::ChiralType::CHI_OCTAHEDRAL; return CHI_CLASS_TOKEN; }
 
 @		{ return AT_TOKEN; }
 
@@ -353,6 +353,10 @@ A			{
 \~	{ yylval->bond = new QueryBond();
 	yylval->bond->setQuery(makeBondNullQuery());
 	return BOND_TOKEN;  }
+
+\$	{ yylval->bond = new QueryBond(Bond::QUADRUPLE);
+	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::QUADRUPLE));
+    return BOND_TOKEN; }
 
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);

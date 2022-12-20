@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,11 +101,16 @@ Mol *deconstructROMol(CROMol data);
 
 CROMol parseMolBlob(char *data, int len);
 char *makeMolBlob(CROMol data, int *len);
-CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery);
+/* sanitize argument is only used if asSmarts and asQuery are false */
+CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery, bool sanitize);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
-char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
+char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing,
+                   bool useV3000);
+const char *makeMolJSON(CROMol data);
+CROMol parseMolJSON(char *data, bool warnOnFail);
+
 bool isValidSmiles(char *data);
 bool isValidSmarts(char *data);
 bool isValidCTAB(char *data);
@@ -112,12 +118,13 @@ bool isValidMolBlob(char *data, int len);
 
 int molcmp(CROMol i, CROMol a);
 
-int MolSubstruct(CROMol i, CROMol a);
-int MolSubstructCount(CROMol i, CROMol a, bool uniquify);
+int MolSubstruct(CROMol i, CROMol a, bool useChirality);
+int MolSubstructCount(CROMol i, CROMol a, bool uniquify, bool useChirality);
 
 bytea *makeMolSignature(CROMol data);
 
 double MolAMW(CROMol i);
+double MolExactMW(CROMol i);
 double MolLogP(CROMol i);
 int MolHBA(CROMol i);
 int MolHBD(CROMol i);
@@ -136,9 +143,11 @@ int MolNumAromaticCarbocycles(CROMol i);
 int MolNumAliphaticCarbocycles(CROMol i);
 int MolNumSaturatedCarbocycles(CROMol i);
 int MolNumHeterocycles(CROMol i);
+int MolNumAmideBonds(CROMol i);
 
 double MolFractionCSP3(CROMol i);
 double MolTPSA(CROMol i);
+double MolLabuteASA(CROMol i);
 double MolChi0v(CROMol i);
 double MolChi1v(CROMol i);
 double MolChi2v(CROMol i);
@@ -152,6 +161,8 @@ double MolChi4n(CROMol i);
 double MolKappa1(CROMol i);
 double MolKappa2(CROMol i);
 double MolKappa3(CROMol i);
+double MolPhi(CROMol i);
+double MolHallKierAlpha(CROMol i);
 
 int MolNumSpiroAtoms(CROMol i);
 int MolNumBridgeheadAtoms(CROMol i);

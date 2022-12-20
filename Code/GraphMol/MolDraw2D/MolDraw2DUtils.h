@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,15 +13,15 @@
 #define MOLDRAW2DUTILS_H
 #include <GraphMol/RWMol.h>
 
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 
 // ****************************************************************************
 
 namespace RDKit {
 class MolDraw2D;
-class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
+
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
 /*
 The operations include: kekulization, addition of chiral Hs (so that we can draw
@@ -33,17 +33,17 @@ conformation if the molecule does not already have a conformation
 \param addChiralHs: adds Hs to the graph on chiral atoms
 \param wedgeBonds: calls WedgeMolBonds()
 \param forceCoords: generates a 2D conformation even if one is present already
+\param wavyBonds: calls addWavyBondsForStereoAny() and clears other markers that
+   double bond stereo is unknown
 
 NOTE: the kekulization step can fail, throwing a MolSanitizeExecption. If this
 happens the molecule will be in an inconsistent, partially kekulized, state.
 This isn't normally a problem for molecules that have been sanitized, but can be
 problematic if the molecules have been modified post santitization.
 */
-RDKIT_MOLDRAW2D_EXPORT void prepareMolForDrawing(RWMol &mol,
-                                                 bool kekulize = true,
-                                                 bool addChiralHs = true,
-                                                 bool wedgeBonds = true,
-                                                 bool forceCoords = false);
+RDKIT_MOLDRAW2D_EXPORT void prepareMolForDrawing(
+    RWMol &mol, bool kekulize = true, bool addChiralHs = true,
+    bool wedgeBonds = true, bool forceCoords = false, bool wavyBonds = false);
 
 //! prepare a molecule for drawing and draw it
 /*
@@ -69,12 +69,18 @@ RDKIT_MOLDRAW2D_EXPORT void prepareAndDrawMolecule(
     const std::vector<int> *highlight_bonds = nullptr,
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1,
+    bool kekulize = true, bool addChiralHs = true, bool wedgeBonds = true,
+    bool forceCoords = false, bool wavyBonds = false);
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
+RDKIT_MOLDRAW2D_EXPORT void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
+                                                         const char *json);
+RDKIT_MOLDRAW2D_EXPORT void updateMolDrawOptionsFromJSON(
+    MolDrawOptions &opts, const std::string &json);
 
 struct ContourParams {
   bool setScale = true;           // assumes the grid is drawn first
@@ -122,8 +128,7 @@ RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
 RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours = 10,
-    const ContourParams &ps = ContourParams(),
-    const ROMol *mol = nullptr) {
+    const ContourParams &ps = ContourParams(), const ROMol *mol = nullptr) {
   std::vector<double> levels;
   contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps,
                      mol);
@@ -173,6 +178,53 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
                           mol);
 };
 
+//! Draw a molecule to a MolDraw2D object according to ACS 1996 guidelines
+/*
+  The ACS1996 guidelines, as described at
+  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+  A number of values in drawer.drawOptions() are changed.
+  This is designed to be used with a flexiCanvas, i.e. a MolDraw2D object
+  created with width and height -1, because it works to a fixed scale.
+  It will issue a warning if the dimensions are otherwise and the picture may
+  look sub-optimal.
+ */
+RDKIT_MOLDRAW2D_EXPORT void drawMolACS1996(
+    MolDraw2D &drawer, const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+
+//! Set the draw options to produce something as close as possible to
+//! the ACS 1996 guidelines as described at
+//! https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+/*
+ \param MolDrawOptions opt - the options what will be changed
+ \param float meanBondLength - mean bond length of the molecule
+
+ Works best if the MolDraw2D object is created with width and height -1 (a
+ flexiCanvas).
+ The mean bond length may be calculated with MolDraw2DUtils::meanBondLength.
+ It is used to calculate the offset for the lines in multiple bonds.
+
+ Options changed are:
+   bondLineWidth = 0.6
+   scaleBondWidth = false
+   scalingFactor = 14.4 / meanBondLen
+   multipleBondOffset = 0.18
+   highlightBondWidthMultiplier = 32
+   setMonochromeMode - black and white
+   fixedFontSize = 10
+   additionalAtomLabelPadding = 0.066
+   fontFile - if it isn't set already, then if RDBASE is set and the file
+              exists, uses $RDBASE/Fonts/Data/FreeSans.ttf.  Otherwise uses
+              BuiltinRobotoRegular.
+ */
+RDKIT_MOLDRAW2D_EXPORT void setACS1996Options(MolDrawOptions &opts,
+                                              double meanBondLen = 1.0);
+RDKIT_MOLDRAW2D_EXPORT double meanBondLength(const ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
+
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H

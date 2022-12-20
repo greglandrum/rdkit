@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -9,15 +9,21 @@
 
 #include "RDGeneral/test.h"
 #include "catch.hpp"
-
+#include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -30,7 +36,7 @@ TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
               xmlns='http://www.w3.org/2000/svg'
                       xmlns:rdkit='http://www.rdkit.org/xml'
                       xmlns:xlink='http://www.w3.org/1999/xlink'
-                  xml:space='preserve'
+         xml:space='preserve'
 width='200px' height='200px' >
 <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
 <path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
@@ -429,6 +435,599 @@ M  END)CTAB";
   }
 }
 
+TEST_CASE("workaround for broken MJ2009-MJ2011 molblocks",
+          "[feature][sgroups]") {
+  SECTION("molblock1 strictParsing true/false") {
+    std::string molblock1 = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SBL   1  1   7
+M  SAP   1  1   8
+M  END
+)CTAB";
+    std::string expectedMolblock1 = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  1  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SBL   1  1   7
+M  SMT   1 CF3
+M  SAP   1  1   8   6   
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1)), FileParseException);
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblock1, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1);
+  }
+  SECTION("molblock1 strictParsing true/false no/bad SBL group") {
+    std::string molblock1NoSBL = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  END
+)CTAB";
+    std::string molblock1BadSBL = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SBL   1  2   7   8
+M  END
+)CTAB";
+    std::string expectedMolblock1NoSGroups = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1NoSBL)),
+                      FileParseException);
+    REQUIRE_NOTHROW(
+        mol.reset(MolBlockToMol(molblock1NoSBL, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1NoSGroups);
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1BadSBL)),
+                      FileParseException);
+    REQUIRE_NOTHROW(
+        mol.reset(MolBlockToMol(molblock1BadSBL, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1NoSGroups);
+  }
+  SECTION("molblock2 strictParsing true/false") {
+    std::string molblock2 = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SBL   1  1   7
+M  SAP   1  1   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+    std::string expectedMolblock2 = R"CTAB(
+     RDKit          2D
+
+ 13 13  0  2  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2  3  1  0
+  3  4  2  0
+  6  8  1  0
+  3 12  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+ 11 12  1  0
+ 12 13  2  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SBL   1  1   7
+M  SMT   1 CF3
+M  SAP   1  1   8   6   
+M  SAL   2  3  11  12  13
+M  SBL   2  1   8
+M  SMT   2 COOH
+M  SAP   2  1  12   3   
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2)), FileParseException);
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblock2, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2);
+  }
+  SECTION("molblock2 strictParsing true/false no/bad SBL group1") {
+    std::string molblock2NoSBL = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+    std::string molblock2BadSBL = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SBL   1  2   7   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+    std::string expectedMolblock2NoSGroup1 = R"CTAB(
+     RDKit          2D
+
+ 13 13  0  1  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2  3  1  0
+  3  4  2  0
+  6  8  1  0
+  3 12  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+ 11 12  1  0
+ 12 13  2  0
+M  STY  1   1 SUP
+M  SAL   1  3  11  12  13
+M  SBL   1  1   8
+M  SMT   1 COOH
+M  SAP   1  1  12   3   
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2NoSBL)),
+                      FileParseException);
+    REQUIRE_NOTHROW(
+        mol.reset(MolBlockToMol(molblock2NoSBL, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2NoSGroup1);
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2BadSBL)),
+                      FileParseException);
+    REQUIRE_NOTHROW(
+        mol.reset(MolBlockToMol(molblock2BadSBL, true, true, false)));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2NoSGroup1);
+  }
+}
+
+TEST_CASE(
+    "do not throw but remove malformed V2000 SGroups when strictParsing is "
+    "false",
+    "[feature][sgroups]") {
+  std::string molblock = R"CTAB(
+  ChemDraw01072117362D
+
+ 16 16  0  0  0  0  0  0  0  0999 V2000
+   -1.7862    0.7219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7862   -0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717   -0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572   -0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572    0.7219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717    1.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572    2.3719    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572   -0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -0.1031    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572   -1.3406    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -2.5781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7862   -1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4289    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    2.5781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 11 12  1  0      
+ 11 13  1  0      
+ 10 11  1  0      
+  8  9  2  0      
+  8 10  1  0      
+  4  8  1  0      
+ 15 16  1  0      
+ 14 15  1  0      
+  6 14  1  0      
+  7 16  1  0      
+  1  2  2  0      
+  2  3  1  0      
+  3  4  2  0      
+  4  5  1  0      
+  5  6  2  0      
+  6  1  1  0      
+M  STY  1   1 SUP
+M  SLB  1   1   1
+M  SAL   1  6   8   9  10  11  12  13
+M  SBL   1  1   6
+M  SMT   1 COOiPr
+M  SBV   1   6   -0.7145    0.4125
+M  STY  1   2 SUP
+M  SLB  1   2   2
+M  SAL   2  3  14  15  16
+M  SBL   2  2   9  10
+M  SMT   2 (CH2)3
+M  SBV   2   9    0.3572   -0.2062
+M  SBV   2  10    0.3572   -0.2062
+M  END
+)CTAB";
+  SECTION("molblock strictParsing true") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(getSubstanceGroups(*mol).size() == 2);
+  }
+  SECTION("molblock bad sgroup idx") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "M  SBL   1  1   6", "M  SBL   3  1   6");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (1)") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "M  SBV   1   6   -0.7145    0.4125", "M  SBV   1   6");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (2)") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "M  SBL   2  2   9  10", "M  SBL   2  3   9  10");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad bond idx") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "M  SBL   2  2   9  10", "M  SBL   2  2   9  99");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad atom idx") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "M  SAL   2  3  14  15  16", "M  SAL   2  3  14  15  99");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+}
+
+TEST_CASE(
+    "do not throw but remove malformed V3000 SGroups when strictParsing is "
+    "false",
+    "[feature][sgroups]") {
+  std::string molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 16 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.786200 0.721900 0.000000 0
+M  V30 2 C -1.786200 -0.103100 0.000000 0
+M  V30 3 C -1.071700 -0.515600 0.000000 0
+M  V30 4 C -0.357200 -0.103100 0.000000 0
+M  V30 5 C -0.357200 0.721900 0.000000 0
+M  V30 6 C -1.071700 1.134400 0.000000 0
+M  V30 7 O -0.357200 2.371900 0.000000 0
+M  V30 8 C 0.357200 -0.515600 0.000000 0
+M  V30 9 O 1.071700 -0.103100 0.000000 0
+M  V30 10 O 0.357200 -1.340600 0.000000 0
+M  V30 11 C 1.071700 -1.753100 0.000000 0
+M  V30 12 C 1.071700 -2.578100 0.000000 0
+M  V30 13 C 1.786200 -1.340600 0.000000 0
+M  V30 14 C -1.428900 1.340600 0.000000 0
+M  V30 15 C -0.714500 1.753100 0.000000 0
+M  V30 16 C -0.714500 2.578100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 11 12
+M  V30 2 1 11 13
+M  V30 3 1 10 11
+M  V30 4 2 8 9
+M  V30 5 1 8 10
+M  V30 6 1 4 8
+M  V30 7 1 15 16
+M  V30 8 1 14 15
+M  V30 9 1 6 14
+M  V30 10 1 7 16
+M  V30 11 2 1 2
+M  V30 12 1 2 3
+M  V30 13 2 3 4
+M  V30 14 1 4 5
+M  V30 15 2 5 6
+M  V30 16 1 6 1
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(6 8 9 10 11 12 13) XBONDS=(1 6) LABEL=COOiPr CSTATE=(4 6 -
+M  V30 -0.7145 0.4125 0)
+M  V30 2 SUP 2 ATOMS=(3 14 15 16) XBONDS=(2 9 10) LABEL=(CH2)3 CSTATE=(4 9 0.35-
+M  V30 72 -0.2062 0) CSTATE=(4 10 0.3572 -0.2062 0)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+  SECTION("molblock strictParsing true") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(getSubstanceGroups(*mol).size() == 2);
+  }
+  SECTION("molblock sgroup line too short (1)") {
+    std::string molblockBad =
+        boost::replace_all_copy(molblock, "XBONDS=(1 6)", "XBONDS=(2 6)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (2)") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "ATOMS=(6 8 9 10 11 12 13)", "ATOMS=(7 8 9 10 11 12 13)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad bond idx") {
+    std::string molblockBad =
+        boost::replace_all_copy(molblock, "XBONDS=(2 9 10)", "XBONDS=(2 9 99)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad atom idx") {
+    std::string molblockBad = boost::replace_all_copy(
+        molblock, "ATOMS=(3 14 15 16)", "ATOMS=(3 14 15 99)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+}
+
 TEST_CASE("parsing of SCN lines", "[bug][sgroups]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
@@ -739,6 +1338,217 @@ M  END
     auto *at = static_cast<QueryAtom *>(mol->getAtomWithIdx(1));
     REQUIRE(at->hasQuery());
     CHECK(at->getQuery()->getDescription() == "AtomNull");
+  }
+}
+
+TEST_CASE("CML writer", "[CML][writer]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> mol{new RWMol{}};
+    mol->setProp(common_properties::_Name, "S-lactic acid");
+
+    for (auto z : {6u, 1u, 1u, 1u, 6u, 1u, 8u, 1u, 6u, 8u, 8u}) {
+      auto *a = new Atom{z};
+      mol->addAtom(a, false, true);
+    }
+    mol->getAtomWithIdx(7u)->setIsotope(2u);
+    mol->getAtomWithIdx(10u)->setFormalCharge(-1);
+
+    mol->addBond(0u, 1u, Bond::SINGLE);
+    mol->addBond(0u, 2u, Bond::SINGLE);
+    mol->addBond(0u, 3u, Bond::SINGLE);
+    mol->addBond(0u, 4u, Bond::SINGLE);
+    mol->addBond(4u, 5u, Bond::SINGLE);
+    mol->addBond(4u, 6u, Bond::SINGLE);
+    mol->addBond(4u, 8u, Bond::SINGLE);
+    mol->addBond(6u, 7u, Bond::SINGLE);
+    mol->addBond(8u, 9u, Bond::DOUBLE);
+    mol->addBond(8u, 10u, Bond::SINGLE);
+
+    auto *conf = new Conformer{11u};
+    conf->setId(0u);
+
+    conf->setAtomPos(0u, RDGeom::Point3D{-0.95330, 0.60416, 1.01609});
+    conf->setAtomPos(1u, RDGeom::Point3D{-1.00832, 1.68746, 0.83520});
+    conf->setAtomPos(2u, RDGeom::Point3D{-1.96274, 0.16103, 0.94471});
+    conf->setAtomPos(3u, RDGeom::Point3D{-0.57701, 0.44737, 2.04167});
+    conf->setAtomPos(4u, RDGeom::Point3D{0.00000, 0.00000, 0.00000});
+    conf->setAtomPos(5u, RDGeom::Point3D{-0.43038, 0.18596, -1.01377});
+    conf->setAtomPos(6u, RDGeom::Point3D{0.22538, -1.36531, 0.19373});
+    conf->setAtomPos(7u, RDGeom::Point3D{1.21993, -1.33937, 0.14580});
+    conf->setAtomPos(8u, RDGeom::Point3D{1.38490, 0.73003, 0.00000});
+    conf->setAtomPos(9u, RDGeom::Point3D{1.38490, 1.96795, 0.00000});
+    conf->setAtomPos(10u, RDGeom::Point3D{2.35253, -0.07700, 0.00000});
+
+    mol->addConformer(conf);
+
+    mol->updatePropertyCache();
+    MolOps::assignStereochemistryFrom3D(*mol);
+
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
+    <name>S-lactic acid</name>
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
+      <atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
+      <atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
+      <atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
+      <atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
+        <atomParity atomRefs4="a0 a5 a6 a8">1</atomParity>
+      </atom>
+      <atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
+      <atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
+      <atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
+      <atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
+      <atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
+      <atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a0 a2" id="b1" order="S"/>
+      <bond atomRefs2="a0 a3" id="b2" order="S"/>
+      <bond atomRefs2="a0 a4" id="b3" order="S"/>
+      <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
+      <bond atomRefs2="a4 a6" id="b5" order="S"/>
+      <bond atomRefs2="a4 a8" id="b6" order="S"/>
+      <bond atomRefs2="a6 a7" id="b7" order="S"/>
+      <bond atomRefs2="a8 a9" id="b8" order="D"/>
+      <bond atomRefs2="a8 a10" id="b9" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+
+  SECTION("chirality1") {
+    auto mol = R"CTAB(
+  Mrv1921 04232106262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 I 0.8918 -1.0472 0 0
+M  V30 2 C 0.8918 0.4928 0 0
+M  V30 3 Br 0.8918 2.0328 0 0
+M  V30 4 F 2.4318 0.4928 0 0
+M  V30 5 Cl -0.6482 0.4928 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="I" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="-1.047200"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="0.492800">
+        <atomParity atomRefs4="a0 a2 a3 a4">1</atomParity>
+      </atom>
+      <atom id="a2" elementType="Br" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="2.032800"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0" x2="2.431800" y2="0.492800"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0" x2="-0.648200" y2="0.492800"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="W"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+  SECTION("chirality2") {
+    auto mol = R"CTAB(
+  Mrv1921 04232106262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 I 0.8918 -1.0472 0 0
+M  V30 2 C 0.8918 0.4928 0 0
+M  V30 3 Br 0.8918 2.0328 0 0
+M  V30 4 F 2.4318 0.4928 0 0
+M  V30 5 Cl -0.6482 0.4928 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 2 4 CFG=3
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="I" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="-1.047200"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="0.492800">
+        <atomParity atomRefs4="a0 a2 a3 a4">-1</atomParity>
+      </atom>
+      <atom id="a2" elementType="Br" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="2.032800"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0" x2="2.431800" y2="0.492800"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0" x2="-0.648200" y2="0.492800"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="H"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+
+  SECTION("no conformer") {
+    auto mol = "C[C@](O)(F)Cl"_smiles;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0">
+        <atomParity atomRefs4="a0 a2 a3 a4">1</atomParity>
+      </atom>
+      <atom id="a2" elementType="O" formalCharge="0" hydrogenCount="1"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
   }
 }
 
@@ -1436,7 +2246,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE(
     "Problems parsing SGroup abbreviations with multiple attachment points",
-    "[bug][parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -1867,7 +2677,7 @@ TEST_CASE("multiple molecules in the PNG", "[writer][PNG]") {
 
   std::vector<std::string> smiles = {"c1ccccc1", "CCCOC", "c1ncccc1"};
   std::vector<std::unique_ptr<ROMol>> mols;
-  for (const auto smi : smiles) {
+  for (const auto &smi : smiles) {
     mols.emplace_back(SmilesToMol(smi));
   }
   SECTION("pickles") {
@@ -1920,7 +2730,7 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
 
   std::vector<std::string> smiles = {"c1ccccc1", "CCO", "CC(=O)O", "c1ccccn1"};
   std::vector<std::unique_ptr<ROMol>> mols;
-  for (const auto smi : smiles) {
+  for (const auto &smi : smiles) {
     mols.emplace_back(SmilesToMol(smi));
   }
   SECTION("pickles") {
@@ -1954,5 +2764,2539 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
     for (unsigned i = 0; i < molsRead.size(); ++i) {
       CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
     }
+  }
+}
+
+TEST_CASE("github #3413: V3K mol blocks with no atoms fail to parse", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(6065
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 0 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 0);
+    CHECK(m->getNumBonds() == 0);
+  }
+}
+
+TEST_CASE("github #3415: problem parsing SGroup data containing \" ", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
+  }
+  SECTION("empty string") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO").empty());
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
+  }
+}
+
+TEST_CASE("github #3597: Scientific notation in SDF V3000 files", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2020 11302014062D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0980    2.3321    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    m->getConformer().getAtomPos(0).z = 1e-6;
+    m->getConformer().getAtomPos(1).z = 1e-4;
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("1e-06") == std::string::npos);
+  }
+  SECTION("toosmall") {
+    auto m = R"CTAB(
+  Mrv2020 11302014062D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0980    2.3321    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    m->getConformer().getAtomPos(0).z = 1e-17;
+    m->getConformer().getAtomPos(1).z = 1e-4;
+    auto mb = MolToV3KMolBlock(*m);
+    // std::cerr<<mb<<std::endl;
+    CHECK(mb.find("M  V30 1 C -2.812500 1.919600 0.000000 0") !=
+          std::string::npos);
+  }
+}
+
+TEST_CASE("github #3620: V3K mol block parser not saving the chiral flag",
+          "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 12082009582D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -1.875 6.0417 0 0 CFG=2
+M  V30 2 C -0.5413 6.8117 0 0
+M  V30 3 F -3.2087 6.8117 0 0
+M  V30 4 Cl -1.875 4.5017 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 4
+M  V30 3 1 1 2 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    unsigned int chiralFlag = 0;
+    CHECK(
+        m->getPropIfPresent(common_properties::_MolFileChiralFlag, chiralFlag));
+    CHECK(chiralFlag == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("4 3 0 0 1") != std::string::npos);
+  }
+}
+
+TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> m{SequenceToMol("G")};
+    REQUIRE(m);
+    int confId = -1;
+    {
+      int flavor = 0;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") != std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    4    5\n") != std::string::npos);
+    }
+    {
+      int flavor = 2;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") == std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    4\n") != std::string::npos);
+    }
+    {
+      int flavor = 8;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") != std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    5\n") != std::string::npos);
+    }
+    {
+      int flavor = 2 | 8;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #3599: Add explicit support for remaining CTAB query bond types",
+    "[feature]") {
+  SECTION("basics V3K") {
+    auto m = R"CTAB(
+  Mrv2014 11302009242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 3.7917 -2.96 0 0
+M  V30 2 C 2.458 -3.73 0 0
+M  V30 3 O 2.458 -5.27 0 0
+M  V30 4 C 3.7917 -6.04 0 0
+M  V30 5 C 5.1253 -5.27 0 0
+M  V30 6 C 5.1253 -3.73 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 4 5
+M  V30 3 1 1 6
+M  V30 4 5 1 2
+M  V30 5 6 5 6
+M  V30 6 7 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(3)->hasQuery());
+    CHECK(m->getBondWithIdx(3)->getQuery()->getDescription() ==
+          "SingleOrDoubleBond");
+    REQUIRE(m->getBondWithIdx(4)->hasQuery());
+    CHECK(m->getBondWithIdx(4)->getQuery()->getDescription() ==
+          "SingleOrAromaticBond");
+    REQUIRE(m->getBondWithIdx(5)->hasQuery());
+    CHECK(m->getBondWithIdx(5)->getQuery()->getDescription() ==
+          "DoubleOrAromaticBond");
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("M  V30 4 5 1 2") != std::string::npos);
+    CHECK(mb.find("M  V30 5 6 5 6") != std::string::npos);
+    CHECK(mb.find("M  V30 6 7 3 4") != std::string::npos);
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    m.reset(new RWMol(pkl));
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(3)->hasQuery());
+    CHECK(m->getBondWithIdx(3)->getQuery()->getDescription() ==
+          "SingleOrDoubleBond");
+    REQUIRE(m->getBondWithIdx(4)->hasQuery());
+    CHECK(m->getBondWithIdx(4)->getQuery()->getDescription() ==
+          "SingleOrAromaticBond");
+    REQUIRE(m->getBondWithIdx(5)->hasQuery());
+    CHECK(m->getBondWithIdx(5)->getQuery()->getDescription() ==
+          "DoubleOrAromaticBond");
+
+    auto smarts = MolToSmarts(*m);
+    CHECK(smarts == "[#7]1-,=[#6]-[#8]=,:[#6]-[#6][#6]-1");
+  }
+  SECTION("basics V2K") {
+    auto m = R"CTAB(
+  Mrv2014 11302009442D          
+
+  6  6  0  0  0  0            999 V2000
+    2.0313   -1.5857    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3168   -1.9982    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3168   -2.8232    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0313   -3.2357    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7457   -2.8232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7457   -1.9982    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  1  2  5  0  0  0  0
+  5  6  6  0  0  0  0
+  3  4  7  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(3)->hasQuery());
+    CHECK(m->getBondWithIdx(3)->getQuery()->getDescription() ==
+          "SingleOrDoubleBond");
+    REQUIRE(m->getBondWithIdx(4)->hasQuery());
+    CHECK(m->getBondWithIdx(4)->getQuery()->getDescription() ==
+          "SingleOrAromaticBond");
+    REQUIRE(m->getBondWithIdx(5)->hasQuery());
+    CHECK(m->getBondWithIdx(5)->getQuery()->getDescription() ==
+          "DoubleOrAromaticBond");
+    auto mb = MolToMolBlock(*m);
+    CHECK(mb.find("  1  2  5") != std::string::npos);
+    CHECK(mb.find("  5  6  6") != std::string::npos);
+    CHECK(mb.find("  3  4  7") != std::string::npos);
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    m.reset(new RWMol(pkl));
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(3)->hasQuery());
+    CHECK(m->getBondWithIdx(3)->getQuery()->getDescription() ==
+          "SingleOrDoubleBond");
+    REQUIRE(m->getBondWithIdx(4)->hasQuery());
+    CHECK(m->getBondWithIdx(4)->getQuery()->getDescription() ==
+          "SingleOrAromaticBond");
+    REQUIRE(m->getBondWithIdx(5)->hasQuery());
+    CHECK(m->getBondWithIdx(5)->getQuery()->getDescription() ==
+          "DoubleOrAromaticBond");
+  }
+}
+
+TEST_CASE("supplier close methods") {
+  std::string rdbase = getenv("RDBASE");
+
+  SECTION("SDF") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+    {
+      SDMolSupplier suppl(fname);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+    {
+      std::ifstream instr(fname);
+      ForwardSDMolSupplier suppl(&instr, false);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+  SECTION("SMILES") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+    {
+      SmilesMolSupplier suppl(fname, ",", 1, 0, true);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+  SECTION("TDT") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    {
+      TDTMolSupplier suppl(fname, "PN");
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  SECTION("MAE") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+    {
+      MaeMolSupplier suppl(fname);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+#endif
+}
+
+TEST_CASE(
+    "github #3768: SubstanceGroup output doesn't properly quote double "
+    "quotes") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 01292104542D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.3343 -0.7691 0 0
+M  V30 2 C -1.333 0.7709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=[DUP]Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="   -0.1770   -0.5034    DA    ALL  0       0" -
+M  V30 QUERYOP="""""" FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    auto sg = sgs[0];
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "\"\"");
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("FIELDINFO=\"\"\"\"") != std::string::npos);
+    CHECK(mb.find("QUERYOP=\"\"\"\"\"") != std::string::npos);
+  }
+  SECTION("parens and quote not at beginning") {
+    auto m = R"CTAB(
+  Mrv2014 01292104542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.3343 -0.7691 0 0
+M  V30 2 C -1.333 0.7709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=[DUP]Tempstruct FIELDINFO="foo""" -
+M  V30 FIELDDISP="   -0.1770   -0.5034    DA    ALL  0       0" -
+M  V30 QUERYOP="(bar)" FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    auto sg = sgs[0];
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "foo\"");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "(bar)");
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("FIELDINFO=\"foo\"\"\"") != std::string::npos);
+    CHECK(mb.find("QUERYOP=\"(bar)\"") != std::string::npos);
+  }
+}
+
+TEST_CASE("github #3216: WedgeMolBonds() should prefer degree-1 atoms") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2007 06082008522D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -17.7571 16.6703 0 0
+M  V30 2 C -16.4234 17.4403 0 0
+M  V30 3 C -15.0897 16.6703 0 0 CFG=1
+M  V30 4 C -13.7561 17.4403 0 0 CFG=2
+M  V30 5 Br -15.0897 15.1303 0 0
+M  V30 6 C -12.4225 16.6703 0 0
+M  V30 7 Cl -13.7561 18.9803 0 0
+M  V30 8 C -11.0888 17.4403 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 5 CFG=1
+M  V30 4 1 3 4
+M  V30 5 1 4 6
+M  V30 6 1 4 7 CFG=1
+M  V30 7 1 6 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    WedgeMolBonds(*m, &m->getConformer());
+    CHECK(m->getBondBetweenAtoms(2, 4)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(3, 6)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(2, 3)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(3, 5)->getBondDir() == Bond::BondDir::NONE);
+  }
+}
+
+TEST_CASE("Hydrogen bonds in CTABs") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 03022114422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.4583 -0.125 0 0
+M  V30 2 C -4.1247 0.645 0 0
+M  V30 3 C -2.791 -0.125 0 0
+M  V30 4 C -1.4573 0.645 0 0
+M  V30 5 O -2.791 -1.665 0 0
+M  V30 6 C -6.792 0.645 0 0
+M  V30 7 O -5.4583 -1.665 0 0
+M  V30 8 H -4.1247 -2.435 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 1 6
+M  V30 6 1 1 7
+M  V30 7 1 7 8
+M  V30 8 10 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getBondBetweenAtoms(4, 7));
+    CHECK(m->getBondBetweenAtoms(4, 7)->getBondType() ==
+          Bond::BondType::HYDROGEN);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("V30 8 10 5 8") != std::string::npos);
+    CHECK(MolToSmiles(*m) ==
+          "CC1=O~[H]OC(C)C1");  // the SMILES writer still doesn't know what to
+                                // do with it
+  }
+}
+
+TEST_CASE("Support empty FIELDNAMES in SDT lines") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 03112117322D          
+
+  6  6  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2764   -0.8194    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1002   -0.8626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4748   -1.5977    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0255   -2.2896    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2016   -2.2465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  6   1   2   3   4   5   6
+M  SDT   1                                                       
+M  SDD   1    -2.4921   -3.0466    DA    ALL  1       5  
+M  SED   1 foo: 1234.6
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    {
+      auto outctab = MolToMolBlock(*m);
+      CHECK(outctab.find("1234.6") != std::string::npos);
+      auto nm = MolBlockToMol(outctab);
+      REQUIRE(nm);
+      auto sgs = getSubstanceGroups(*nm);
+      REQUIRE(sgs.size() == 1);
+      delete nm;
+    }
+    {
+      auto outctab = MolToV3KMolBlock(*m);
+      CHECK(outctab.find("1234.6") != std::string::npos);
+      auto nm = MolBlockToMol(outctab);
+      REQUIRE(nm);
+      auto sgs = getSubstanceGroups(*nm);
+      REQUIRE(sgs.size() == 1);
+      delete nm;
+    }
+  }
+}
+
+TEST_CASE("Support reading unambiguous short atom lines") {
+  SECTION("basics") {
+    std::string mb = R"CTAB(
+  Mrv2014 03112117322D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C 
+   -2.2764   -0.8194    0.0000 C
+  1  2  1  0  0  0  0
+M  END
+)CTAB";
+    // we fail when doing strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb), FileParseException);
+
+    bool removeHs = true;
+    bool sanitize = true;
+    bool strictParsing = false;
+    // but can read it with non-strict parsing
+    std::unique_ptr<ROMol> m{
+        MolBlockToMol(mb, sanitize, removeHs, strictParsing)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(0)->getAtomicNum() == 6);
+    CHECK(m->getAtomWithIdx(1)->getAtomicNum() == 6);
+  }
+  SECTION("too short") {
+    std::string mb = R"CTAB(
+  Mrv2014 03112117322D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000  
+   -2.2764   -0.8194    0.0000 C
+  1  2  1  0  0  0  0
+M  END
+)CTAB";
+    // we fail when doing strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb), FileParseException);
+
+    bool removeHs = true;
+    bool sanitize = true;
+    bool strictParsing = false;
+    // fail even with non-strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
+                      FileParseException);
+  }
+}
+
+TEST_CASE("Github #4099: HCount field in v2000 mol blocks ignored") {
+  SECTION("basics") {
+    auto mol = R"CTAB(Test
+
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    2.7500   -7.9167   -0.0000 C   0  0  0  3  0  0  0  0  0  0  0  0
+    3.6160   -7.4167   -0.0000 N   0  0  0  1  0  0  0  0  0  0  0  0
+    4.4821   -7.9167   -0.0000 C   0  0  0  2  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7&h0]-[#6&h{1-}]");
+  }
+}
+
+TEST_CASE("Github #4131: HCOUNT from v3000 CTABS incorrectly interpreted") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+  Mrv2108 05122108272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.458 -2.2567 0 0 HCOUNT=2
+M  V30 2 N 6.7916 -1.4867 0 0 HCOUNT=0
+M  V30 3 C 8.1254 -2.2567 0 0 HCOUNT=-1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7]-[#6&h0]");
+  }
+}
+
+TEST_CASE("sgroups and strict parsing") {
+  SECTION("everything ok") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m(MolBlockToMol(ctab));
+    CHECK(m);
+  }
+  SECTION("SGroups totally missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+  SECTION("one SGroup missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    // fails without an exception
+    m.reset(MolBlockToMol(ctab));
+    CHECK(!m);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+
+  SECTION("END SGROUPS missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+}
+
+TEST_CASE("double bond stereo should not be set when the coords are all zero") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(1, 2));
+  CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
+}
+
+TEST_CASE("Handle MRV_COORDINATE_BOND_TYPE data Substance Groups") {
+  SECTION(
+      "Convert SDF V2000 MRV_COORDINATE_BOND_TYPE data Substance Groups "
+      "into coordinate bonds") {
+    auto m = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  8  0  0  0  0
+  4  8  8  0  0  0  0
+  2  9  8  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 7
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 8
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 9
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+
+    std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+        {5, 6}, {3, 7}, {1, 8}};
+
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(typeid(*bnd) == typeid(Bond));
+    }
+
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+
+  SECTION(
+      "GitHub Issue #4473: MRV_COORDINATE_BOND_TYPE SGroup may reference bond "
+      "index, instead of atom") {
+    // Same input as previous test, just shuffled the bonds and changed
+    // the indexes in the SGroups
+
+    auto m1 = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  6  7  8  0  0  0  0
+  4  8  8  0  0  0  0
+  2  9  8  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 1
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 2
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 3
+M  END
+)CTAB"_ctab;
+
+    // Same input, but changing the type of 2 of the bonds, and giving
+    // a random value to the other SGroup to check that we fail
+    auto m2 = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  6  7  1  0  0  0  0
+  4  8  1  0  0  0  0
+  2  9  1  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 1
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 2
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 100
+M  END
+)CTAB"_ctab;
+
+    std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+        {5, 6}, {3, 7}, {1, 8}};
+
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m1->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(typeid(*bnd) == typeid(Bond));
+    }
+    CHECK(getSubstanceGroups(*m1).empty());
+
+    REQUIRE(m2);
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m2->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() != Bond::BondType::DATIVE);
+    }
+    CHECK(getSubstanceGroups(*m2).empty());
+  }
+}
+
+TEST_CASE(
+    "Github #4256: multiple ATTCHPT entries for one atom handled "
+    "incorrectly") {
+  SECTION("V3000") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06172117542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.8333 3.5 0 0
+M  V30 2 C -3.4997 4.27 0 0 ATTCHPT=-1 ATTCHPT=3
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      bool sanitize = true;
+      bool removeHs = true;
+      bool strictParsing = false;
+      std::unique_ptr<RWMol> m{
+          MolBlockToMol(ctab, sanitize, removeHs, strictParsing)};
+      REQUIRE(m);
+      auto atom = m->getAtomWithIdx(1);
+      REQUIRE(atom->hasProp(common_properties::molAttachPoint));
+      REQUIRE(atom->getProp<int>(common_properties::molAttachPoint) == -1);
+    }
+  }
+  SECTION("V2000 1") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115462D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  2   2   3   2   2
+M  END
+)CTAB";
+  }
+  SECTION("V2000 2") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115482D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  1   2   3
+M  APO  1   2   2
+M  END
+)CTAB";
+  }
+}
+
+TEST_CASE("Long lines in V3000 mol blocks") {
+  SECTION("basics") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.5417 -5.875 0 0
+M  V30 2 C 4.8753 -5.105 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    4.8753   -5.1050    DA    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSL QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 1);
+  }
+  SECTION("long data elements") {
+    auto m = R"CTAB(query with bogus sgroups
+  Mrv2108 07152116102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 5 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.5417 -5.875 0 0
+M  V30 2 C 4.8753 -5.105 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSR QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across two lines"
+M  V30 2 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSR QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across more than two lines because we really want to be sure -
+M  V30 that we are doing this right"
+M  V30 3 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSR QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across exactly two lines so that we can check the edge case -
+M  V30 11111111111111111111"
+M  V30 4 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSR QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across more than two lines because we really want to be sure -
+M  V30 that we are doing this right" SEQID=1
+M  V30 5 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSR QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across exactly two lines so that we can check the edge case -
+M  V30 11111111111111111111" SEQID=2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 5);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 5);
+  }
+
+  SECTION(
+      "GitHub Issue #4471: SDF SGroups may be missing the final space in the "
+      "\"M V30 \" prefix") {
+    auto m = R"CTAB(bogus mol with unspaced SGroup field
+  Mrv2114 09022123382D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.7917 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Data -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 -
+M  V30 FIELDDATA=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 1);
+  }
+
+  SECTION(
+      "GitHub Issue #4477: Same SDF SGroup lines may be written multiple "
+      "times") {
+    auto m = R"CTAB(
+  Mrv2014 03112117322D
+
+  6  6  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2764   -0.8194    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1002   -0.8626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4748   -1.5977    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0255   -2.2896    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2016   -2.2465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  6   1   2   3   4   5   6
+M  SDT   1
+M  SDD   1    -2.4921   -3.0466    DA  123456789012345  ALL  1       5
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+
+    auto pos = 0u;
+    auto count = 0u;
+    std::string target{"FIELDDISP"};
+    while (pos < mb.size()) {
+      pos = mb.find(target, pos);
+      if (pos < mb.size()) {
+        pos += target.size();
+        ++count;
+      }
+    }
+
+    CHECK(count == 1);
+  }
+}
+
+TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
+  SECTION("basics") {
+    auto m = "CC=C(F)F"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+  SECTION("possible chirality") {
+    auto m = "CC=C(O)F"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") != std::string::npos);
+  }
+  SECTION("terminal") {
+    auto m = "CC=C"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+  SECTION("nitrogen") {
+    auto m = "CC(C)=NF"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  3  4  2  3") == std::string::npos);
+  }
+  SECTION("nitrogen with") {
+    auto m = "CC=NF"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") != std::string::npos);
+  }
+  SECTION("direction explicitly set should be ignored") {
+    auto m = "CC=C(F)F"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(0)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "github #4476: Additional SDT properties not decoded if FIELDNAME is "
+    "empty") {
+  SECTION("basics") {
+    auto m = R"CTAB(query
+  Mrv2102 09032106302D          
+
+  2  1  0  0  0  0            999 V2000
+   -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2680    2.8459    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   2
+M  SDT   1                                                     PQ=
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 [#6;R]
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(getSubstanceGroups(*m).size() == 1);
+    const auto sg = getSubstanceGroups(*m)[0];
+    CHECK(sg.hasProp("QUERYTYPE"));
+    CHECK(sg.getProp<std::string>("QUERYTYPE") == "PQ");
+    CHECK(sg.hasProp("QUERYOP"));
+    CHECK(sg.getProp<std::string>("QUERYOP") == "=");
+  }
+}
+
+TEST_CASE("github #4468: decode SMARTS in SGroups") {
+  SECTION("parsing v3000") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(
+              static_cast<QueryAtom *>(m->getAtomWithIdx(1))) == "[#6&R]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("ensure bad SMARTS don't break things") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("empty SMARTS") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("bad operator") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP=> FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("SMARTS with multiple atoms become recursive") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]-[#8]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(
+              m->getAtomWithIdx(1))) == "[$([#6&R]-[#8])]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("parsing v3000, v2000 compatibility version") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(
+              static_cast<QueryAtom *>(m->getAtomWithIdx(1))) == "[#6&R]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("parsing v2000") {
+    auto m = R"CTAB(query
+  Mrv2102 09032106302D          
+
+  2  1  0  0  0  0            999 V2000
+   -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2680    2.8459    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   2
+M  SDT   1                                                     SQ=
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 [#6;R]
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(
+              static_cast<QueryAtom *>(m->getAtomWithIdx(1))) == "[#6&R]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+}
+
+TEST_CASE("Github #4561: failure to parse CTAB with LINKNODE and SGROUP") {
+  SECTION("BASICS") {
+    auto mol1 = R"CTAB(
+  Mrv2108 09252106182D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 12.719 -9.1518 0 0
+M  V30 2 O 14.0458 -9.9326 0 0
+M  V30 3 * 15.3857 -9.1735 0 0
+M  V30 4 * 11.379 -9.9108 0 0
+M  V30 5 C 12.7317 -7.6118 0 0
+M  V30 6 C 12.2558 -6.1472 0 0
+M  V30 7 C 13.7622 -6.4674 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 5 1 7 6
+M  V30 6 1 6 5
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 LINKNODE 1 2 2 7 5 7 6
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(5 2 1 5 7 6) XBONDS=(2 2 3) BRKXYZ=(9 12.044 -10.2974 0 -
+M  V30 12.044 -8.7593 0 0 0 0) BRKXYZ=(9 14.7161 -8.7854 0 14.7161 -10.3235 0 -
+M  V30 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    CHECK(getSubstanceGroups(*mol1).size() == 1);
+    CHECK(mol1->hasProp(common_properties::molFileLinkNodes));
+  }
+}
+
+TEST_CASE(
+    "Github #4785: MDL query with aromatic bond sets aromatic flag on atoms "
+    "even though they are not in an aromatic ring") {
+  SECTION("benzene") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 6 C 129.4587 -104.355 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(mol->getBondWithIdx(0)->getIsAromatic());
+  }
+  SECTION("non-kekulizeable") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(!mol);
+  }
+  SECTION("as reported1") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  MRV SMA   1 [#6;a;a]
+M  MRV SMA   2 [#6;a;a]
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported2") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported3") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -0.353800 0.616300 0.000000 0
+M  V30 2 A -1.066800 0.201200 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2 TOPO=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+}
+TEST_CASE("checking array bounds") {
+  SECTION("XBONDS") {
+    auto mb = R"CTAB(
+  Mrv2108 01202214292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -6.6667 7.5833 0 0
+M  V30 2 C -5.333 8.3533 0 0
+M  V30 3 C -3.9993 7.5833 0 0
+M  V30 4 * -2.6656 8.3533 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(2 2 3) XBONDS=(20 1 3) BRKXYZ=(9 -3.9121 8.7006 0 -
+M  V30 -2.9881 7.1002 0 0 0 0) BRKXYZ=(9 -5.4201 7.2361 0 -6.3441 8.8365 0 0 -
+M  V30 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(mb)), FileParseException);
+  }
+  SECTION("ATOMS") {
+    auto mb = R"CTAB(
+  Mrv2108 01202214292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -6.6667 7.5833 0 0
+M  V30 2 C -5.333 8.3533 0 0
+M  V30 3 C -3.9993 7.5833 0 0
+M  V30 4 * -2.6656 8.3533 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(12 2 3) XBONDS=(2 1 3) BRKXYZ=(9 -3.9121 8.7006 0 -
+M  V30 -2.9881 7.1002 0 0 0 0) BRKXYZ=(9 -5.4201 7.2361 0 -6.3441 8.8365 0 0 -
+M  V30 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(mb)), FileParseException);
+  }
+}
+
+TEST_CASE("Github #5108: Wiggly bonds don't override wedged bonds") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("as reported, bond ordering changed") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 4 CFG=1
+M  V30 3 1 2 3 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("assignChiralTypesFromBondDirs details") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 4 CFG=1
+M  V30 3 1 2 3
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::UNKNOWN);
+    bool replaceExistingTags = false;
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, replaceExistingTags);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    replaceExistingTags = true;
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, replaceExistingTags);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE(
+    "Github #5152: presence of exocyclic query bonds in CTAB prevents "
+    "aromaticity perception") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.229300 0.915100 0.000000 0
+M  V30 2 C -3.562800 0.145100 0.000000 0
+M  V30 3 C -3.562800 -1.395100 0.000000 0
+M  V30 4 C -2.229300 -2.165100 0.000000 0
+M  V30 5 C -0.895500 -1.395100 0.000000 0
+M  V30 6 C -0.895500 0.145100 0.000000 0
+M  V30 7 A 0.438100 0.915100 0.000000 0
+M  V30 8 A 0.438100 -2.165100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 6 6 7
+M  V30 8 6 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(m->getBondWithIdx(0)->getIsAromatic());
+  }
+  SECTION("more detailed") {
+    std::string molb = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.229300 0.915100 0.000000 0
+M  V30 2 C -3.562800 0.145100 0.000000 0
+M  V30 3 C -3.562800 -1.395100 0.000000 0
+M  V30 4 C -2.229300 -2.165100 0.000000 0
+M  V30 5 C -0.895500 -1.395100 0.000000 0
+M  V30 6 C -0.895500 0.145100 0.000000 0
+M  V30 7 A 0.438100 0.915100 0.000000 0
+M  V30 8 A 0.438100 -2.165100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 6 6 7
+M  V30 8 6 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    std::string ptrn = "7 6 6 7";
+    std::vector<std::string> alternatives = {
+        "7 5 6 7",  // S/D
+        "7 7 6 7",  // D/A
+        "7 8 6 7",  // any
+    };
+    auto pos = molb.find(ptrn);
+    REQUIRE(pos != std::string::npos);
+    for (auto alternative : alternatives) {
+      auto mb2 = molb.replace(pos, ptrn.size(), alternative);
+      std::unique_ptr<RWMol> m(MolBlockToMol(mb2));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getIsAromatic());
+      CHECK(m->getBondWithIdx(0)->getIsAromatic());
+    }
+  }
+}
+
+TEST_CASE(
+    "Github #5165: issue with V3000 SD files containing enhanced "
+    "stereochemistry information") {
+  SECTION("as reported") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/"
+                        "mol_with_enhanced_stereo_2_And_groups.sdf";
+    SDMolSupplier suppl(fName);
+    std::unique_ptr<ROMol> mol{suppl.next()};
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+
+  SECTION("as reported, less whitespace") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
+    SDMolSupplier suppl(fName);
+    std::unique_ptr<ROMol> mol{suppl.next()};
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+}
+
+TEST_CASE("POL atoms in CTABS") {
+  SECTION("V3000") {
+    auto mol = R"CTAB(
+  Mrv2102 05042219282D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Pol -6.25 3.375 0 0
+M  V30 2 C -4.9163 4.145 0 0
+M  V30 3 C -3.5826 3.375 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Pol");
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("1 Pol") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Pol_p;;$|");
+  }
+  SECTION("V2000") {
+    auto mol = R"CTAB(
+  Mrv2102 05042219412D          
+
+  3  2  0  0  0  0            999 V2000
+   -3.3482    1.8080    0.0000 Mod 0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6337    2.2205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9193    1.8080    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Mod");
+    auto mb = MolToMolBlock(*mol);
+    CHECK(mb.find("0 Mod 0") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Mod_p;;$|");
+  }
+}
+
+TEST_CASE("PDB ACE caps bond order") {
+  auto mol = R"DATA(HEADER TEST
+ATOM      1  H1  ACE     1      25.950  25.179  24.582  1.00  0.00           H
+ATOM      2  CH3 ACE     1      25.986  26.176  24.145  1.00  0.00           C
+ATOM      3  H2  ACE     1      25.332  26.843  24.703  1.00  0.00           H
+ATOM      4  H3  ACE     1      25.673  26.131  23.104  1.00  0.00           H
+ATOM      5  C   ACE     1      27.405  26.691  24.218  1.00  0.00           C
+ATOM      6  O   ACE     1      28.285  25.999  24.713  1.00  0.00           O
+ATOM      7  N   ALA     2      27.621  27.909  23.728  1.00  0.00           N
+ATOM      8  H   ALA     2      26.838  28.435  23.370  1.00  0.00           H
+ATOM      9  CA  ALA     2      28.916  28.589  23.730  1.00  0.00           C
+ATOM     10  HA  ALA     2      29.471  28.288  24.620  1.00  0.00           H
+ATOM     11  CB  ALA     2      29.710  28.153  22.489  1.00  0.00           C
+ATOM     12  HB1 ALA     2      29.172  28.440  21.584  1.00  0.00           H
+ATOM     13  HB2 ALA     2      30.691  28.627  22.488  1.00  0.00           H
+ATOM     14  HB3 ALA     2      29.844  27.070  22.499  1.00  0.00           H
+ATOM     15  C   ALA     2      28.737  30.119  23.778  1.00  0.00           C
+ATOM     16  O   ALA     2      27.675  30.634  23.429  1.00  0.00           O
+ATOM     17  N   NME     3      29.784  30.841  24.197  1.00  0.00           N
+ATOM     18  H   NME     3      30.622  30.348  24.461  1.00  0.00           H
+ATOM     19  CH3 NME     3      29.784  32.300  24.293  1.00  0.00           C
+ATOM     20 HH31 NME     3      28.951  32.628  24.918  1.00  0.00           H
+ATOM     21 HH32 NME     3      30.720  32.652  24.729  1.00  0.00           H
+ATOM     22 HH33 NME     3      29.663  32.734  23.299  1.00  0.00           H
+TER      23      NME     3
+END
+)DATA"_pdb;
+  REQUIRE(mol);
+  // Oxygen in ACE (3rd heavy atom in mol) should be C=O, i.e. not OH
+  CHECK(mol->getAtomWithIdx(2)->getTotalNumHs() == 0);
+  CHECK(mol->getAtomWithIdx(2)->getTotalDegree() == 1);
+  auto bond = mol->getBondBetweenAtoms(1, 2);
+  REQUIRE(bond);
+  CHECK(bond->getBondType() == Bond::BondType::DOUBLE);
+}
+
+TEST_CASE(
+    "github #5327: MolFromMolBlock should correctly assign stereochemistry "
+    "to 3D molecules") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("3D as 2D") {
+    // here we lie to the RDKit and tell it that a 3D conformer is 2D,
+    //  the code detects that and still sets the conformer to be 3D and
+    //  assigns stereo:
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("2D as 3D") {
+    // here we lie to the RDKit and tell it that a 2D conformer is 3D,
+    //  there's no chiral volume, so we don't end up with a chiral center
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.299038 -0.750000 0.000000 0
+M  V30 2 C 0.000000 -0.000000 0.000000 0
+M  V30 3 F 0.750000 -1.299038 0.000000 0
+M  V30 4 Cl -0.750000 1.299038 0.000000 0
+M  V30 5 O 1.299038 0.750000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("double bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("double bond, crossed") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("double bond, wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("non-tetrahedral") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("non-tetrahedral, wiggly") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=2
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("Force use of MolBlock wedges", "") {
+  SECTION("basics") {
+    auto m = R"CTAB(bad wedging
+  ChemDraw07092209022D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714471 0.825000 0.000000 0
+M  V30 2 C -0.714471 0.000000 0.000000 0
+M  V30 3 C -0.000000 -0.412500 0.000000 0
+M  V30 4 C 0.714471 0.000000 0.000000 0
+M  V30 5 C 0.714471 0.825000 0.000000 0
+M  V30 6 C -0.000000 1.237500 0.000000 0
+M  V30 7 C -0.000000 -1.237500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=1
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+  }
+  SECTION("GitHub5448") {
+    {
+      auto m = R"CTAB(
+  ChemDraw07232208492D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.151421 0.903801 0.000000 0
+M  V30 2 C 1.151421 0.078801 0.000000 0
+M  V30 3 N 1.936021 -0.176200 0.000000 0
+M  V30 4 C 2.420921 0.491301 0.000000 0
+M  V30 5 N 1.936021 1.158699 0.000000 0
+M  V30 6 C 0.436921 -0.333699 0.000000 0
+M  V30 7 C -0.277478 0.078801 0.000000 0
+M  V30 8 C -0.991978 -0.333699 0.000000 0
+M  V30 9 C 0.436921 -1.158699 0.000000 0
+M  V30 10 C -1.706442 0.078813 0.000000 0
+M  V30 11 C -2.420921 -0.333674 0.000000 0
+M  V30 12 F -1.706428 0.903813 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 1
+M  V30 6 1 2 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8 CFG=2
+M  V30 9 1 6 9 CFG=2
+M  V30 10 1 8 10
+M  V30 11 1 10 11
+M  V30 12 1 10 12 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 10)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      WedgeMolBonds(*m, &m->getConformer());
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
+      reapplyMolBlockWedging(*m);
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    }
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #5423: Parsing a Mol block/file does not clear the "
+    "\"molTotValence\" property from atoms") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.657143 -0.742857 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
+}
+
+TEST_CASE("Github #5433: PRECONDITION error with nonsense molecule") {
+  auto m = R"CTAB(
+  SomeFailingMolFile
+
+  8  8  0  0  1  0            999 V2000
+   -0.7145    1.2375    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.6500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  6  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  4  0  0  0
+  3  8  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+}
+
+TEST_CASE("Github #5765: R label information lost") {
+  SECTION("just R") {
+    auto m = R"CTAB(
+  MJ221900                      
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    2.0625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8578    2.0625    0.0000 R   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1433    0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  4  1  2  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R");
+  }
+  SECTION("R with number") {
+    auto m = R"CTAB(
+  MJ221900                      
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    2.0625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8578    2.0625    0.0000 R95 0  0  0  0  0  0  0  0  0  0  0  0
+    2.1433    0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  4  1  2  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R95");
+  }
+  SECTION("V3000") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R");
+  }
+  SECTION("V3000 with number") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R98 -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R98");
+  }
+  SECTION("R# also gets the tag (was #5810)") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R# -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");
+  }
+  SECTION("R# also gets the tag (V2000, #5810)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -2.9167    3.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5830    3.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2503    3.7700    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0
+  1  2  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");
+  }
+}
+
+TEST_CASE("github #5718: ") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+
+  Mrv2108 07152116012D          
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END")CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(1)->hasQuery());
+    auto ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("[#6;R]") != std::string::npos);
+  }
+}
+
+TEST_CASE("github #5827: do not write properties with new lines to SDF") {
+  auto m = R"CTAB(
+  Mrv2211 12152210292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.5 6.0833 0 0
+M  V30 2 O 1.8337 6.8533 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  SECTION("basics") {
+    m->setProp("foo", "fooprop");
+    m->setProp("bar", "foo\n\nprop");
+    m->setProp("baz", "foo\r\n\r\nprop");
+    m->setProp("bletch\nnope", "fooprop");
+    m->setProp("bletch\r\nnope2", "fooprop");
+    std::ostringstream oss;
+    SDWriter sdw(&oss);
+    sdw.write(*m);
+    sdw.flush();
+    auto sdf = oss.str();
+    CHECK(sdf.find("<foo>") != std::string::npos);
+    CHECK(sdf.find("<bar>") == std::string::npos);
+    CHECK(sdf.find("<baz>") == std::string::npos);
+    CHECK(sdf.find("<bletch") == std::string::npos);
   }
 }

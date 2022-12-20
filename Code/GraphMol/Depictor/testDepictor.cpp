@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -32,6 +33,29 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
+
+void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
+                    unsigned int cid2, double tol = 0.01) {
+  unsigned int nat = mol1->getNumAtoms();
+  CHECK_INVARIANT(nat == mol2->getNumAtoms(), "");
+
+  const RDKit::Conformer &conf1 = mol1->getConformer(cid1);
+  const RDKit::Conformer &conf2 = mol2->getConformer(cid2);
+
+  for (unsigned int i = 0; i < nat; i++) {
+    RDGeom::Point3D pt1 = conf1.getAtomPos(i);
+    RDGeom::Point3D pt2 = conf2.getAtomPos(i);
+    pt2 -= pt1;
+
+    if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol)) {
+      std::cerr << MolToMolBlock(*mol1, cid1) << std::endl;
+      std::cerr << MolToMolBlock(*mol2, cid2) << std::endl;
+      break;
+    }
+    CHECK_INVARIANT(fabs(pt2.x) < tol, "");
+    CHECK_INVARIANT(fabs(pt2.y) < tol, "");
+  }
+}
 
 void test1() {
   // std::string smiString = "OCC(F)(F)C(F)(F)C(F)(F)C(F)F";
@@ -59,49 +83,50 @@ void test1() {
                            CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O \
                            ON=C(CC1=CC=CC=C1)[CH](C#N)C2=CC=CC=C2 \
                            COc(cc1)ccc1C(=C2/C#N)\\C=C(NC2=C(C#N)C#N)\\c3ccc(OC)cc3O \
-                           COc(cc1)ccc1C(=C2)C=C(NC2=C)c3ccc(OC)cc3O";
+                           COc(cc1)ccc1C(=C2)C=C(NC2=C)c3ccc(OC)cc3O \
+                          C1=CC=CC=C1CCCC2=CC(C=CC=C3)=C3C=C2 C/C=C/C(C1CCCCCC1)=O \
+                          C/C=C/C(C1CCCCCC1)=O.c1ccccc1CC(Cl)=O \
+                          [I-].CCC[N+](C)(CCC)CCC C1COCCN2CCOCCN(CCO1)CCOCCOCC2 C1CN2CCN1CC2 \
+                          C(CCCCCCC)(=O)CCCCCC \
+                          ClCCCCCCCCCCCCCCCCCCCCCCCCCCCC(=O)CCCCCCCCCCCCCCCCCCCCCCCCCCF \
+                          C(CCCCCCC)(=O)CCCCCC \
+                          C/C=C/C(C1CCCCCC1)=O C1CC(CC12)C=C2 c1ccccc1\\C=C(Cl)/C#N \
+                          N#C\\C=C(Cl)/Cc1ccccc1 \
+                          CN(C)c(cc1)ccc1\\C=C(/C#N)c(n2)c(C#N)c([n]3cccc3)[n]2c(c4)cccc4 \
+                          CCOC(=O)CN1C(=O)/C=C(/C)c(c12)c(C)n[n]2C \
+                          C/12=C\\C(=O)c3cc(OC(F)(F)F)ccc3N2C(=O)/C(CC(=O)OC)=C\\1C(=O)OCC \
+                          C/12=C(\\NC(N2)=O)NC(=O)NC1=O F\\C=C/Cl F/C=C/Cl c1ccccc1\\C=C/C \
+                          c1ccccc1\\C=C\\C=C\\C=C\\Cl \
+                          c1ccccc1\\C=C/C=C\\C=C/Cl c1ccccc1\\C=C\\C=C(O)\\C=C(Br)\\Cl \
+                          c1ccccc1\\C=C/C=C(O)\\C=C(Br)/Cl \
+                          CC#CCC O=C=O C1=CC=CC=C1 C1CCC1 C1CC1(C#CC) C1CCCCCCC1 C1=CC=CC=C1(CCCCCCC) \
+                          C1=CC=CC=C1(CC(CCC)CCC(C)(C)C) \
+                          C1=CC=CC=C1CCCC2=CC(C=CC=C3)=C3C=C2 \
+                          C1=CC=CC=C1(CC(CCC)CCC(CCC)(CCC)C) \
+                          C1=CC(C=CC=C2)=C2C=C1 C1=CC(C=C2)=C2C=C1 \
+                          C1=CC(CCC2)=C2C=C1 C1(CCC3)CCCC2C1C3CCC2 \
+                          C12=CC=C3C(C4=C(C=CC=C5)C5=C3)C1C(C=C4)=CC=C2 \
+                          C12CCCC3(CCCCC3)C1CCCC2 \
+                          C1CCCC2(CC2)C1 C12C3C4C1C5C2C3C45 \
+                          C2(C=C(C=C5)NC5=C4)=CC(C=C2)=CC1=CC=C(C=C3C=CC4=N3)N1";
 
-  /*C1=CC=CC=C1CCCC2=CC(C=CC=C3)=C3C=C2 C/C=C/C(C1CCCCCC1)=O
-  C/C=C/C(C1CCCCCC1)=O.c1ccccc1CC(Cl)=O \
-  [I-].CCC[N+](C)(CCC)CCC C1COCCN2CCOCCN(CCO1)CCOCCOCC2 C1CN2CCN1CC2 \
-  C(CCCCCCC)(=O)CCCCCC \
-   ClCCCCCCCCCCCCCCCCCCCCCCCCCCCC(=O)CCCCCCCCCCCCCCCCCCCCCCCCCCF \
-   C(CCCCCCC)(=O)CCCCCC \
-   C/C=C/C(C1CCCCCC1)=O C1CC(CC12)C=C2 c1ccccc1\\C=C(Cl)/C#N
-  N#C\\C=C(Cl)/Cc1ccccc1 \
-   CN(C)c(cc1)ccc1\\C=C(/C#N)c(n2)c(C#N)c([n]3cccc3)[n]2c(c4)cccc4 \
-   CCOC(=O)CN1C(=O)/C=C(/C)c(c12)c(C)n[n]2C
-  C/12=C\\C(=O)c3cc(OC(F)(F)F)ccc3N2C(=O)/C(CC(=O)OC)=C\\1C(=O)OCC \
-   C/12=C(\\NC(N2)=O)NC(=O)NC1=O F\\C=C/Cl F/C=C/Cl c1ccccc1\\C=C/C
-  c1ccccc1\\C=C\\C=C\\C=C\\Cl \
-   c1ccccc1\\C=C/C=C\\C=C/Cl c1ccccc1\\C=C\\C=C(O)\\C=C(Br)\\Cl \
-   c1ccccc1\\C=C/C=C(O)\\C=C(Br)/Cl \
-   CC#CCC O=C=O C1=CC=CC=C1 C1CCC1 C1CC1(C#CC) C1CCCCCCC1 C1=CC=CC=C1(CCCCCCC) \
-   C1=CC=CC=C1(CC(CCC)CCC(C)(C)C) \
-   C1=CC=CC=C1CCCC2=CC(C=CC=C3)=C3C=C2 \
-   C1=CC=CC=C1(CC(CCC)CCC(CCC)(CCC)C) \
-   C1=CC(C=CC=C2)=C2C=C1 C1=CC(C=C2)=C2C=C1 \
-   C1=CC(CCC2)=C2C=C1 C1(CCC3)CCCC2C1C3CCC2 \
-   C12=CC=C3C(C4=C(C=CC=C5)C5=C3)C1C(C=C4)=CC=C2 \
-   C12CCCC3(CCCCC3)C1CCCC2 \
-   C1CCCC2(CC2)C1 C12C3C4C1C5C2C3C45 \
-   C2(C=C(C=C5)NC5=C4)=CC(C=C2)=CC1=CC=C(C=C3C=CC4=N3)N1";
-*/
   std::string rdbase = getenv("RDBASE");
   std::string ofile =
       rdbase + "/Code/GraphMol/Depictor/test_data/test1.out.sdf";
   SDWriter writer(ofile);
-
+  std::string ifile = rdbase + "/Code/GraphMol/Depictor/test_data/test1.sdf";
+  SDMolSupplier suppl(ifile);
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString, spaceSep);
   for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
        ++token) {
     std::string smi = *token;
-    RWMol *m = SmilesToMol(smi, 0, 1);
+    std::unique_ptr<RWMol> m{SmilesToMol(smi)};
     TEST_ASSERT(m)
     RDDepict::compute2DCoords(*m);
     writer.write(*m);
-    delete m;
+    std::unique_ptr<ROMol> ref{suppl.next()};
+    _compareCoords(m.get(), 0, ref.get(), 0);
   }
 }
 
@@ -221,27 +246,6 @@ void test3() {
   }
 }
 
-void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
-                    unsigned int cid2, double tol = 0.01) {
-  unsigned int nat = mol1->getNumAtoms();
-  CHECK_INVARIANT(nat == mol2->getNumAtoms(), "");
-
-  const RDKit::Conformer &conf1 = mol1->getConformer(cid1);
-  const RDKit::Conformer &conf2 = mol1->getConformer(cid2);
-
-  for (unsigned int i = 0; i < nat; i++) {
-    RDGeom::Point3D pt1 = conf1.getAtomPos(i);
-    RDGeom::Point3D pt2 = conf2.getAtomPos(i);
-    pt2 -= pt1;
-
-    CHECK_INVARIANT(fabs(pt2.x) < tol, "");
-    CHECK_INVARIANT(fabs(pt2.y) < tol, "");
-    // if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol) ) {
-    //  BOOST_LOG(rdInfoLog)<< pt1 << " " << pt2 << "\n";
-    //}
-  }
-}
-
 void test4() {
   // test prespecified coordinates for various smiles
   RDGeom::INT_POINT2D_MAP crdMap;
@@ -299,24 +303,25 @@ void test4() {
   // one final test for a case we know is a pain
   smi = "C1CCCC2(Cl)(CCCCCC12)";
   crdMap.clear();
-  crdMap[0] = RDGeom::Point2D(-0.83, -3.12);
-  crdMap[1] = RDGeom::Point2D(0.19, -4.22);
-  crdMap[2] = RDGeom::Point2D(1.66, -3.88);
-  crdMap[3] = RDGeom::Point2D(2.10, -2.45);
-  crdMap[4] = RDGeom::Point2D(1.08, -1.35);
-  crdMap[5] = RDGeom::Point2D(2.56, -1.12);
+  crdMap[0] = RDGeom::Point2D(-0.83, 3.12);
+  crdMap[1] = RDGeom::Point2D(0.19, 4.22);
+  crdMap[2] = RDGeom::Point2D(1.66, 3.88);
+  crdMap[3] = RDGeom::Point2D(2.10, 2.45);
+  crdMap[4] = RDGeom::Point2D(1.08, 1.35);
+  crdMap[5] = RDGeom::Point2D(2.56, 1.12);
   crdMap[6] = RDGeom::Point2D(1.73, 0.00);
-  crdMap[7] = RDGeom::Point2D(1.08, 1.35);
-  crdMap[8] = RDGeom::Point2D(-0.38, 1.69);
-  crdMap[9] = RDGeom::Point2D(-1.56, 0.75);
-  crdMap[10] = RDGeom::Point2D(-1.56, -0.75);
-  crdMap[11] = RDGeom::Point2D(-0.38, -1.69);
+  crdMap[7] = RDGeom::Point2D(1.08, -1.35);
+  crdMap[8] = RDGeom::Point2D(-0.38, -1.69);
+  crdMap[9] = RDGeom::Point2D(-1.56, -0.75);
+  crdMap[10] = RDGeom::Point2D(-1.56, 0.75);
+  crdMap[11] = RDGeom::Point2D(-0.38, 1.69);
 
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
   cid2 = RDDepict::compute2DCoords(*mref, nullptr, false);
   crdMap.erase(crdMap.find(5));
   // MolToMolFile(mref, "junk1.mol");
+  // std::cerr << MolToXYZBlock(*mref) << std::endl;
   m1 = SmilesToMol(smi, 0, 1);
   cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
   _compareCoords(m1, cid1, mref, cid2);
@@ -1064,6 +1069,405 @@ void testGithub2027() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGenerate2DDepictionRefPatternMatchVect() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test "
+         "generateDepictionMatching2DStructure with refPattern and matchVect"
+      << std::endl;
+  auto indazoleRef = R"RES(
+     RDKit          2D
+
+  9 10  0  0  0  0  0  0  0  0999 V2000
+   -6.0878    2.4335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.0878   -0.5666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4897   -0.5664    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    1.6833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    0.1835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  8  9  2  0
+  6  8  1  0
+  7  9  1  0
+  7  5  1  0
+M  END)RES"_ctab;
+  auto cycloheptylPyrazole = "c1cc(C2CCCCCC2)[nH]n1"_smiles;
+  double msd;
+  bool raised;
+
+  // test using refPattern
+  auto refPatt = "a1aan[nH]1"_smarts;
+  RDDepict::generateDepictionMatching2DStructure(
+      *cycloheptylPyrazole, *indazoleRef, -1, refPatt.get());
+  TEST_ASSERT(cycloheptylPyrazole->getNumConformers() == 1);
+  MatchVectType molMatchVect;
+  TEST_ASSERT(SubstructMatch(*cycloheptylPyrazole, *refPatt, molMatchVect));
+  MatchVectType refMatchVect;
+  TEST_ASSERT(SubstructMatch(*indazoleRef, *refPatt, refMatchVect));
+  TEST_ASSERT(molMatchVect.size() == refMatchVect.size());
+  msd = 0.0;
+  for (size_t i = 0; i < molMatchVect.size(); ++i) {
+    msd += (indazoleRef->getConformer().getAtomPos(refMatchVect.at(i).second) -
+            cycloheptylPyrazole->getConformer().getAtomPos(
+                molMatchVect.at(i).second))
+               .lengthSq();
+  }
+  msd /= static_cast<double>(molMatchVect.size());
+  TEST_ASSERT(msd < 1.0e-4);
+  // try with a pattern larger than the reference molecule
+  auto hugePatt = "CCCCCCCCCCCCCCCCCCCCCCCCCCC"_smarts;
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, -1, hugePatt.get());
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  TEST_ASSERT(raised);
+  // try with an out of range confId
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, 1, refPatt.get());
+  } catch (const RDKit::ConformerException &) {
+    raised = true;
+  }
+
+  // test using matchVect directly
+  cycloheptylPyrazole->removeConformer(0);
+  MatchVectType matchVect;
+  for (size_t i = 0; i < molMatchVect.size(); ++i) {
+    matchVect.emplace_back(
+        std::make_pair(refMatchVect.at(i).second, molMatchVect.at(i).second));
+  }
+  RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                 *indazoleRef, matchVect);
+  TEST_ASSERT(cycloheptylPyrazole->getNumConformers() == 1);
+  msd = 0.0;
+  for (const auto &pair : matchVect) {
+    msd += (indazoleRef->getConformer().getAtomPos(pair.first) -
+            cycloheptylPyrazole->getConformer().getAtomPos(pair.second))
+               .lengthSq();
+  }
+  msd /= static_cast<double>(matchVect.size());
+  TEST_ASSERT(msd < 1.0e-4);
+  // try with a matchVect larger than the reference molecule
+  MatchVectType matchVectHuge(matchVect);
+  for (size_t i = 0; i < indazoleRef->getNumAtoms(); ++i) {
+    matchVectHuge.emplace_back(std::make_pair(0, 0));
+  }
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                   *indazoleRef, matchVectHuge);
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  // try with a matchVect with out of range indices
+  MatchVectType matchVectOutOfRange(matchVect);
+  matchVectOutOfRange.emplace_back(std::make_pair(100, 100));
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, matchVectOutOfRange);
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  // try with an out of range confId
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                   *indazoleRef, matchVect, 1);
+  } catch (const RDKit::ConformerException &) {
+    raised = true;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGenerate2DDepictionAllowRGroups() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test "
+         "generateDepictionMatching2DStructure with allowRGroups"
+      << std::endl;
+  auto templateRef = R"RES(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  RGP  3   7   1   8   2   9   3
+M  END)RES"_ctab;
+  auto orthoMeta = "c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1"_smiles;
+  auto ortho = "c1ccc(-c2ccccc2-c2ccccc2)cc1"_smiles;
+  auto meta = "c1ccc(-c2cccc(-c3ccccc3)c2)cc1"_smiles;
+  auto biphenyl = "c1ccccc1-c1ccccc1"_smiles;
+  auto phenyl = "c1ccccc1"_smiles;
+
+  RDDepict::generateDepictionMatching2DStructure(*orthoMeta, *templateRef);
+  TEST_ASSERT(orthoMeta->getNumConformers() == 1);
+
+  for (auto mol : {ortho.get(), meta.get(), biphenyl.get(), phenyl.get()}) {
+    // fails as does not match template
+    bool raised = false;
+    try {
+      RDDepict::generateDepictionMatching2DStructure(*mol, *templateRef);
+    } catch (const RDDepict::DepictException &) {
+      raised = true;
+    }
+    TEST_ASSERT(raised);
+
+    // succeeds with allowRGroups = true
+    auto matchVect = RDDepict::generateDepictionMatching2DStructure(
+        *mol, *templateRef, -1, nullptr, false, false, true);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    double msd = 0.0;
+    for (const auto &pair : matchVect) {
+      msd += (templateRef->getConformer().getAtomPos(pair.first) -
+              mol->getConformer().getAtomPos(pair.second))
+                 .lengthSq();
+    }
+    msd /= static_cast<double>(matchVect.size());
+    TEST_ASSERT(msd < 1.0e-4);
+  }
+
+  // test that using a refPattern with R groups and a reference without works
+  auto pyridineRef = R"RES(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)RES"_ctab;
+  auto genericRefPatternWithRGroups = "[*:3]a1a([*:1])aa([*:2])aa1"_smarts;
+  std::unique_ptr<ROMol> pyridineRefHs(
+      MolOps::addHs(static_cast<const ROMol &>(*pyridineRef)));
+
+  for (auto mol : {ortho.get(), meta.get(), biphenyl.get(), phenyl.get()}) {
+    auto matchVect = RDDepict::generateDepictionMatching2DStructure(
+        *mol, *pyridineRef, -1, genericRefPatternWithRGroups.get(), false,
+        false, true);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    double msd = 0.0;
+    for (const auto &pair : matchVect) {
+      msd += (pyridineRef->getConformer().getAtomPos(pair.first) -
+              mol->getConformer().getAtomPos(pair.second))
+                 .lengthSq();
+    }
+    msd /= static_cast<double>(matchVect.size());
+    TEST_ASSERT(msd < 1.0e-4);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testNormalizeStraighten() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test normalize and straighten depiction"
+      << std::endl;
+
+  auto noradrenalineMJ = R"RES(
+  MJ201100                      
+
+ 12 12  0  0  1  0  0  0  0  0999 V2000
+    2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0312    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437   -0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2062    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437   -1.0716    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2687    0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  3  2  1  0  0  0  0
+  3  4  1  6  0  0  0
+  3  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7  9  2  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  5 12  1  0  0  0  0
+M  END)RES"_ctab;
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) < 1.e-5);
+    auto scalingFactor = RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 1.875, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 1.513, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -0.321, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 1.340, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -0.773, 1.e-3));
+    auto bond4_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.y, 1.547, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, 1.547, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, 0.0, 1.e-3));
+    auto bond4_11Conf2 = conformer2->getAtomPos(11) - conformer2->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.x, -0.773, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.y, 1.339, 1.e-3));
+  }
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
+    auto scalingFactor =
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, -1);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 1.875, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 0.321, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 1.513, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 1.547, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, bond10_11Conf1.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, bond10_11Conf1.y, 1.e-3));
+  }
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
+    auto scalingFactor =
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, 0, 3.0);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 3.0, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto conformer3 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer3, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 2.475, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 0.0, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 2.143, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -1.237, 1.e-3));
+    auto bond4_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.y, 2.475, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    auto bond10_11Conf3 =
+        conformer3->getAtomPos(11) - conformer3->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, bond10_11Conf3.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, bond10_11Conf3.y, 1.e-3));
+    auto bond4_11Conf2 = conformer2->getAtomPos(11) - conformer2->getAtomPos(4);
+    auto bond4_11Conf3 = conformer3->getAtomPos(11) - conformer3->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.x, bond4_11Conf3.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.y, bond4_11Conf3.y, 1.e-3));
+  }
+  {
+    std::string zeroCoordCTab = R"RES(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END
+)RES";
+    std::unique_ptr<RWMol> zeroCoordBenzene(MolBlockToMol(zeroCoordCTab));
+    auto res = RDDepict::normalizeDepiction(*zeroCoordBenzene);
+    TEST_ASSERT(res < 0.);
+    TEST_ASSERT(MolToMolBlock(*zeroCoordBenzene) == zeroCoordCTab);
+  }
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1264,6 +1668,9 @@ int main() {
   testGithub1691();
 #endif
   testGithub2027();
+  testGenerate2DDepictionRefPatternMatchVect();
+  testGenerate2DDepictionAllowRGroups();
+  testNormalizeStraighten();
 
   return (0);
 }

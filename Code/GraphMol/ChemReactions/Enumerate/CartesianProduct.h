@@ -38,7 +38,7 @@
 
 namespace RDKit {
 //! This is a class for enumerating reagents using Cartesian Products of
-// reagents.
+/// reagents.
 /*!
   CartesianProductStrategy produces a  standard walk through all possible
   reagent combinations:
@@ -72,35 +72,35 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
   size_t m_numPermutationsProcessed{};
 
  public:
-  CartesianProductStrategy()
-      : EnumerationStrategyBase() {}
+  CartesianProductStrategy() : EnumerationStrategyBase() {}
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &,
-                                  const EnumerationTypes::BBS &) {
+  void initializeStrategy(const ChemicalReaction &,
+                          const EnumerationTypes::BBS &) override {
     m_numPermutationsProcessed = 0;
   }
 
-  virtual const char *type() const { return "CartesianProductStrategy"; }
+  const char *type() const override { return "CartesianProductStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  virtual const EnumerationTypes::RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() override {
     if (m_numPermutationsProcessed) {
       increment();
-    } else
+    } else {
       ++m_numPermutationsProcessed;
+    }
 
     return m_permutation;
   }
 
-  virtual boost::uint64_t getPermutationIdx() const {
+  boost::uint64_t getPermutationIdx() const override {
     return m_numPermutationsProcessed;
   }
 
-  virtual operator bool() const { return hasNext(); }
+  operator bool() const override { return hasNext(); }
 
-  EnumerationStrategyBase *copy() const {
+  EnumerationStrategyBase *copy() const override {
     return new CartesianProductStrategy(*this);
   }
 
@@ -112,16 +112,14 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
 
   bool hasNext() const {
     // Fix me -> use multiprecision int here???
-    if (m_numPermutations == EnumerationStrategyBase::EnumerationOverflow ||
-        m_numPermutationsProcessed < rdcast<size_t>(m_numPermutations)) {
-      return true;
-    } else {
-      return false;
-    }
+    return m_numPermutations == EnumerationStrategyBase::EnumerationOverflow ||
+           m_numPermutationsProcessed < rdcast<size_t>(m_numPermutations);
   }
 
   void next(size_t rowToIncrement) {
-    if (!hasNext()) return;
+    if (!hasNext()) {
+      return;
+    }
     m_permutation[rowToIncrement] += 1;
     size_t max_index_of_row = m_permutationSizes[rowToIncrement] - 1;
     if (m_permutation[rowToIncrement] > max_index_of_row) {

@@ -7,37 +7,15 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
 
 
 rdkit_library(RDGeneral
-              Invariant.cpp types.cpp utils.cpp RDLog.cpp 
+              Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
               LocaleSwitcher.cpp versions.cpp SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
-
-if(MINGW)
-  set(hasMSVCRuntime "FALSE")
-  if(RDK_BUILD_THREADSAFE_SSS)
-    set(needMSVCRuntime "TRUE")
-  else()
-    set(needMSVCRuntime "FALSE")
-  endif()
-  if(needMSVCRuntime AND MSVC_RUNTIME_DLL)
-    if(EXISTS "${MSVC_RUNTIME_DLL}")
-      set(hasMSVCRuntime "TRUE")
-    endif()
-  endif()
-  if(needMSVCRuntime AND (NOT hasMSVCRuntime))
-    set(systemRootPath "$ENV{SystemRoot}")
-    string(REGEX REPLACE "\\\\" "/" systemRootPath "${systemRootPath}")
-    message(FATAL_ERROR "Please set MSVC_RUNTIME_DLL to the full path to a msvcrXXX.dll "
-      "Microsoft Visual C Runtime DLL appropriate for your system; the most likely path is "
-      "${systemRootPath}/System32, or ${systemRootPath}/SysWOW64 in case you are building "
-      "32-bit RDKit under a 64-bit Windows OS.")
-  endif()
-endif(MINGW)
 
 if(RDK_USE_BOOST_STACKTRACE AND UNIX AND NOT APPLE)
 set(EXTRA_STACKTRACE_LIBS dl)
 endif()
 
-target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL} ${EXTRA_STACKTRACE_LIBS})
+target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${EXTRA_STACKTRACE_LIBS})
 
 
 rdkit_headers(Exceptions.h
@@ -62,8 +40,10 @@ rdkit_headers(Exceptions.h
               LocaleSwitcher.h
               Ranking.h
               hanoiSort.h
+              RDExportMacros.h
               export.h
               test.h
+              ConcurrentQueue.h
               DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)
@@ -72,3 +52,20 @@ endif (NOT RDK_INSTALL_INTREE)
 
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
+
+if(RDK_BUILD_THREADSAFE_SSS)
+rdkit_test(testConcurrentQueue testConcurrentQueue.cpp LINK_LIBRARIES RDGeneral)
+endif(RDK_BUILD_THREADSAFE_SSS)
+
+if(RDK_BUILD_CPP_TESTS)
+add_library(rdkitCatch catch_main.cpp)
+target_link_libraries(rdkitCatch PUBLIC rdkit_base)
+target_include_directories(rdkitCatch PUBLIC ${CATCH_INCLUDE_DIR})
+endif(RDK_BUILD_CPP_TESTS)
+
+
+rdkit_catch_test(dictTestsCatch catch_dict.cpp 
+           LINK_LIBRARIES RDGeneral )
+
+rdkit_catch_test(logTestsCatch catch_logs.cpp 
+           LINK_LIBRARIES RDGeneral )

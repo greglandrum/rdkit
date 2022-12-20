@@ -15,9 +15,7 @@
 #include "types.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
-#define BOOST_ALLOW_DEPRECATED_HEADERS
 #include <boost/random.hpp>
-#undef BOOST_ALLOW_DEPRECATED_HEADERS
 #include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
@@ -42,7 +40,7 @@ typedef boost::variate_generator<rng_type &, uniform_int> int_source_type;
 typedef boost::variate_generator<rng_type &, uniform_double> double_source_type;
 
 //! Optionally seed and return a reference to the global (Boost) random
-// generator
+/// generator
 RDKIT_RDGENERAL_EXPORT rng_type &getRandomGenerator(int seed = -1);
 
 //! Return a random double value between 0.0 and 1.0
@@ -88,10 +86,11 @@ RDKIT_RDGENERAL_EXPORT std::string augmentTagName(const std::string &tag);
 template <unsigned n>
 inline double int_pow(double x) {
   double half = int_pow<n / 2>(x);
-  if (n % 2 == 0)  // even
+  if (n % 2 == 0) {  // even
     return half * half;
-  else
+  } else {
     return half * half * x;
+  }
 }
 
 template <>

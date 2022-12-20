@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2010-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2010-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,20 +18,39 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include "FileParserUtils.h"
+#include <string_view>
 
 namespace RDKit {
 class RWMol;
 class Conformer;
 
 namespace FileParserUtils {
+RDKIT_FILEPARSERS_EXPORT inline std::string_view strip(
+    std::string_view orig, std::string stripChars = " \t\r\n") {
+  std::string_view res = orig;
+  auto start = res.find_first_not_of(stripChars);
+  if (start != std::string_view::npos) {
+    auto end = res.find_last_not_of(stripChars) + 1;
+    res = res.substr(start, end - start);
+  } else {
+    res = "";
+  }
+  return res;
+}
+
 template <typename T>
-T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
-  std::string trimmed = boost::trim_copy(input);
-  if (acceptSpaces && trimmed == "") {
+T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
+  auto trimmed = strip(input, " ");
+  if (acceptSpaces && trimmed.empty()) {
     return 0;
   } else {
     return boost::lexical_cast<T>(trimmed);
   }
+}
+template <typename T>
+T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
+  return stripSpacesAndCast<T>(std::string_view(input.c_str()), acceptSpaces);
 }
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
                                    bool acceptSpaces = true);
@@ -39,7 +58,16 @@ RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
                                                  bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
                                          bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT int toInt(const std::string_view input,
+                                   bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(std::string_view input,
+                                                 bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string_view input,
+                                         bool acceptSpaces = true);
 
+// parses info from a V3000 CTAB into a molecule
+RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(const ROMol &tmol,
+                                                  int confId = -1);
 // reads a line from an MDL v3K CTAB
 RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
                                                   unsigned int &line);
@@ -56,7 +84,8 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
     bool &chiralityPossible, unsigned int &nAtoms, unsigned int &nBonds,
     bool strictParsing = true);
 
-//! finishes up the processing (sanitization, etc.) of a molecule read from CTAB
+//! finishes up the processing (sanitization, etc.) of a molecule read from
+//! CTAB
 RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,
                                                   bool chiralityPossible,
                                                   bool sanitize, bool removeHs);
@@ -106,7 +135,8 @@ void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
   }
 }
 
-//! applies all properties matching a particular prefix as an atom property list
+//! applies all properties matching a particular prefix as an atom property
+//! list
 template <typename T>
 void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
                               const std::string missingValueMarker = "n/a") {
@@ -117,8 +147,8 @@ void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
   }
 }
 static const std::string atomPropPrefix = "atom.";
-//! if the property name matches our rules for atom property lists, we'll apply
-//! it to the atoms
+//! if the property name matches our rules for atom property lists, we'll
+//! apply it to the atoms
 inline void processMolPropertyList(
     ROMol &mol, const std::string pn,
     const std::string &missingValueMarker = "n/a") {
@@ -145,8 +175,8 @@ inline void processMolPropertyList(
     }
   }
 }
-//! loops over all properties and applies the ones that match the rules for atom
-//! property lists to the atoms
+//! loops over all properties and applies the ones that match the rules for
+//! atom property lists to the atoms
 inline void processMolPropertyLists(
     ROMol &mol, const std::string &missingValueMarker = "n/a") {
   for (auto pn : mol.getPropList()) {

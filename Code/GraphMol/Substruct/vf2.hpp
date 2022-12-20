@@ -23,7 +23,7 @@
 namespace boost {
 namespace detail {
 typedef std::uint32_t node_id;
-const node_id NULL_NODE = 0xFFFF;
+const node_id NULL_NODE = 0xFFFFFFFF;
 struct NodeInfo {
   node_id id;
   node_id in;
@@ -43,10 +43,18 @@ struct Pair {
  * The ordering by in/out degree
  */
 static bool nodeInfoComp1(const NodeInfo &a, const NodeInfo &b) {
-  if (a.out < b.out) return true;
-  if (a.out > b.out) return false;
-  if (a.in < b.in) return true;
-  if (a.in > b.in) return false;
+  if (a.out < b.out) {
+    return true;
+  }
+  if (a.out > b.out) {
+    return false;
+  }
+  if (a.in < b.in) {
+    return true;
+  }
+  if (a.in > b.in) {
+    return false;
+  }
   return false;
 }
 
@@ -55,12 +63,24 @@ static bool nodeInfoComp1(const NodeInfo &a, const NodeInfo &b) {
  * The frequency is in the out field, the valence in `in'.
  */
 static int nodeInfoComp2(const NodeInfo &a, const NodeInfo &b) {
-  if (!a.in && b.in) return 1;
-  if (a.in && !b.in) return -1;
-  if (a.out < b.out) return -1;
-  if (a.out > b.out) return 1;
-  if (a.in < b.in) return -1;
-  if (a.in > b.in) return 1;
+  if (!a.in && b.in) {
+    return 1;
+  }
+  if (a.in && !b.in) {
+    return -1;
+  }
+  if (a.out < b.out) {
+    return -1;
+  }
+  if (a.out > b.out) {
+    return 1;
+  }
+  if (a.in < b.in) {
+    return -1;
+  }
+  if (a.in > b.in) {
+    return 1;
+  }
   return 0;
 }
 
@@ -106,8 +126,9 @@ node_id *SortNodesByFrequency(const Graph *g) {
   for (unsigned int i = 0; i < vect.size(); i += run) {
     for (run = 1; i + run < vect.size() && vect[i + run].in == vect[i].in &&
                   vect[i + run].out == vect[i].out;
-         ++run)
+         ++run) {
       ;
+    }
     for (unsigned int j = 0; j < run; ++j) {
       vect[i + j].in += vect[i + j].out;
       vect[i + j].out = run;
@@ -190,7 +211,7 @@ class VF2SubState {
 
     // es_compared = new std::map<unsigned int,bool>();
     *share_count = 1;
-  };
+  }
 
   VF2SubState(const VF2SubState &state)
       : g1(state.g1),
@@ -215,7 +236,7 @@ class VF2SubState {
     share_count = state.share_count;
 
     ++(*share_count);
-  };
+  }
 
   ~VF2SubState() {
     if (--*share_count == 0) {
@@ -228,23 +249,26 @@ class VF2SubState {
       // delete [] vs_compared;
       // delete es_compared;
     }
-  };
+  }
 
-  bool IsGoal() { return core_len == n1; };
+  bool IsGoal() { return core_len == n1; }
   bool MatchChecks(const node_id c1[], const node_id c2[]) {
     return mc(c1, c2);
-  };
-  bool IsDead() { return n1 > n2 || t1_len > t2_len; };
+  }
+  bool IsDead() { return n1 > n2 || t1_len > t2_len; }
   unsigned int CoreLen() { return core_len; }
   Graph *GetGraph1() { return g1; }
   Graph *GetGraph2() { return g2; }
 
   bool NextPair(Pair<Graph> &pair) {
-    if (pair.n1 == NULL_NODE) pair.n1 = 0;
-    if (pair.n2 == NULL_NODE)
+    if (pair.n1 == NULL_NODE) {
+      pair.n1 = 0;
+    }
+    if (pair.n2 == NULL_NODE) {
       pair.n2 = 0;
-    else
+    } else {
       pair.n2++;
+    }
 
 #if 0
     std::cerr<<" **** np: "<< prev_n1<<","<<prev_n2<<std::endl;
@@ -278,8 +302,9 @@ class VF2SubState {
         boost::tie(n1iter_beg, n1iter_end) =
             boost::adjacent_vertices(pair.n1, *g1);
 
-        while (n1iter_beg != n1iter_end && core_1[*n1iter_beg] == NULL_NODE)
+        while (n1iter_beg != n1iter_end && core_1[*n1iter_beg] == NULL_NODE) {
           ++n1iter_beg;
+        }
 
         assert(n1iter_beg != n1iter_end);
 
@@ -293,8 +318,12 @@ class VF2SubState {
       //   pair.n1=order[core_len];
       // :)
       unsigned int i = 0;
-      while (i < n1 && core_1[pair.n1 = order[i]] != NULL_NODE) i++;
-      if (i == n1) pair.n1 = n1;
+      while (i < n1 && core_1[pair.n1 = order[i]] != NULL_NODE) {
+        i++;
+      }
+      if (i == n1) {
+        pair.n1 = n1;
+      }
     } else {
       while (pair.n1 < n1 && core_1[pair.n1] != NULL_NODE) {
         pair.n1++;
@@ -325,7 +354,7 @@ class VF2SubState {
       }
     }
     return pair.n1 < n1 && pair.n2 < n2;
-  };
+  }
   bool IsFeasiblePair(node_id node1, node_id node2) {
     assert(node1 < n1);
     assert(node2 < n2);
@@ -344,9 +373,12 @@ class VF2SubState {
     // }
 
     // O(1) check for adjacency list
-    if (boost::out_degree(node1, *g1) > boost::out_degree(node2, *g2))
+    if (boost::out_degree(node1, *g1) > boost::out_degree(node2, *g2)) {
       return false;
-    if (!vc(node1, node2)) return false;
+    }
+    if (!vc(node1, node2)) {
+      return false;
+    }
 
     unsigned int other1, other2;
 #ifdef RDK_VF2_PRUNING
@@ -400,7 +432,7 @@ class VF2SubState {
 #else
     return true;
 #endif
-  };
+  }
   void AddPair(node_id node1, node_id node2) {
     assert(node1 < n1);
     assert(node2 < n2);
@@ -443,7 +475,7 @@ class VF2SubState {
       }
       ++bNbrs;
     }
-  };
+  }
   void GetCoreSet(node_id c1[], node_id c2[]) {
     unsigned int i, j;
     for (i = 0, j = 0; i < n1; ++i) {
@@ -453,8 +485,8 @@ class VF2SubState {
         ++j;
       }
     }
-  };
-  VF2SubState *Clone() { return new VF2SubState(*this); };
+  }
+  VF2SubState *Clone() { return new VF2SubState(*this); }
   void BackTrack(node_id node1, node_id node2) {
     if (term_1[node1] == core_len) {
       term_1[node1] = 0;
@@ -490,21 +522,26 @@ class VF2SubState {
     core_1[node1] = NULL_NODE;
     core_2[node2] = NULL_NODE;
     --core_len;
-  };
+  }
   bool Match(node_id c1[], node_id c2[]) {
     if (IsGoal()) {
       GetCoreSet(c1, c2);
-      if (MatchChecks(c1, c2)) return true;
+      if (MatchChecks(c1, c2)) {
+        return true;
+      }
     }
 
-    if (IsDead()) return false;
+    if (IsDead()) {
+      return false;
+    }
 
     Pair<Graph> pair;
     while (NextPair(pair)) {
       if (IsFeasiblePair(pair.n1, pair.n2)) {
         AddPair(pair.n1, pair.n2);
-        if (Match(c1, c2))  // recurse
+        if (Match(c1, c2)) {  // recurse
           return true;
+        }
         BackTrack(pair.n1, pair.n2);
       }
     }
@@ -526,14 +563,17 @@ class VF2SubState {
       }
     }
 
-    if (IsDead()) return false;
+    if (IsDead()) {
+      return false;
+    }
 
     Pair<Graph> pair;
     while (NextPair(pair)) {
       if (IsFeasiblePair(pair.n1, pair.n2)) {
         AddPair(pair.n1, pair.n2);
-        if (MatchAll(c1, c2, res, lim))  // recurse
+        if (MatchAll(c1, c2, res, lim)) {  // recurse
           return true;
+        }
         BackTrack(pair.n1, pair.n2);
       }
     }

@@ -121,7 +121,8 @@ int testMolSup() {
     TEST_ASSERT(nmol->getProp<std::string>("s_m_entry_name") ==
                 "NCI_aids_few.1");
     TEST_ASSERT(nmol->hasProp("r_f3d_dummy"));
-    TEST_ASSERT(abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) < 0.0001);
+    TEST_ASSERT(std::abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) <
+                0.0001);
 
     // Test atom properties
     TEST_ASSERT(nmol->getNumAtoms() == 19);
@@ -144,8 +145,8 @@ int testMolSup() {
       // The real property is only defined for i >= 10
       if (i >= 10) {
         TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
-        TEST_ASSERT(abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i)) <
-                    0.0001);
+        TEST_ASSERT(std::abs(atom->getProp<double>("r_f3d_dummy") -
+                             (19.1 - i)) < 0.0001);
       } else {
         TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
       }
@@ -212,7 +213,32 @@ int testMolSup() {
         TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
       }
     }
-
+    {  // intentionally bad chirality label, intended to
+      // make sure we can step over parse errors
+      std::unique_ptr<ROMol> nmol;
+      try {
+        nmol.reset(maesup.next());
+      } catch (const Invar::Invariant &) {
+        // just ignore this failure
+      }
+      TEST_ASSERT(!nmol);
+    }
+    {  // "Undefined" chirality label
+      std::unique_ptr<ROMol> nmol(maesup.next());
+      TEST_ASSERT(nmol);
+      {
+        Atom *at = nmol->getAtomWithIdx(2);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+      }
+      {
+        Atom *at = nmol->getAtomWithIdx(5);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+      }
+    }
     TEST_ASSERT(maesup.atEnd());
   }
   {  // Test loop reading
@@ -270,6 +296,7 @@ int testMolSup() {
     TEST_ASSERT(ok);
   }
 
+#if RDK_USE_BOOST_IOSTREAMS
   {  // Test Maestro PDB property reading
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
     auto *strm = new gzstream(fname);
@@ -283,6 +310,7 @@ int testMolSup() {
     TEST_ASSERT(info->getChainId() == "A");
     TEST_ASSERT(info->getResidueNumber() == 5);
   }
+#endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
   return 1;
 }
@@ -1746,7 +1774,7 @@ void testSetStreamIndices() {
     if (addIndex) {
       pos = ifs.tellg();
     }
-    notEof = (std::getline(ifs, line) ? true : false);
+    notEof = !std::getline(ifs, line).fail();
     if (notEof) {
       if (addIndex) {
         indices.push_back(pos);
@@ -2304,6 +2332,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 1663);
   }
+#if RDK_USE_BOOST_IOSTREAMS
   {
     gzstream strm(maefname2);
 
@@ -2335,6 +2364,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
+#endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
   return 1;
@@ -2795,6 +2825,18 @@ void testGitHub2881() {
 void testGitHub2881() {}
 #endif
 
+void testGitHub3517() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+
+  SDMolSupplier sdsup(fname);
+  TEST_ASSERT(!sdsup.atEnd());
+  size_t l = sdsup.length();
+  TEST_ASSERT(l > 0);
+  TEST_ASSERT(!sdsup.atEnd());
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2982,6 +3024,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub2881();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub2881()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub3517();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub3517()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

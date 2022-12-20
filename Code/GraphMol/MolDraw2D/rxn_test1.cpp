@@ -13,6 +13,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
@@ -30,15 +31,103 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iterator>
+#include <map>
 
 using namespace RDKit;
-
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 #endif
 
 namespace {
+
+// if the generated SVG hashes to the value we're expecting, delete
+// the file.  That way, only the files that need inspection will be
+// left at the end of the run.
+static const bool DELETE_WITH_GOOD_HASH = true;
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"rxn_test1_1.svg", 46725873U},     {"rxn_test1_2.svg", 2822273042U},
+    {"rxn_test1_3.svg", 3749362740U},   {"rxn_test1_4.svg", 2720989271U},
+    {"rxn_test1_5.svg", 3245376196U},   {"rxn_test1_6.svg", 3282888040U},
+    {"rxn_test1_7.svg", 1748644916U},   {"rxn_test2_1.svg", 409647324U},
+    {"rxn_test2_2_1.svg", 1275078201U}, {"rxn_test2_2_2.svg", 2689198952U},
+    {"rxn_test2_2_3.svg", 3750657998U}, {"rxn_test2_2_4.svg", 844519751U},
+    {"rxn_test3_1.svg", 3321754513U},   {"rxn_test4_1.svg", 1987969092U},
+    {"rxn_test4_2.svg", 946039978U},
+};
+#else
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"rxn_test1_1.svg", 3077363070U},   {"rxn_test1_2.svg", 343913088U},
+    {"rxn_test1_3.svg", 1743857837U},   {"rxn_test1_4.svg", 421748462U},
+    {"rxn_test1_5.svg", 2287478842U},   {"rxn_test1_6.svg", 771132615U},
+    {"rxn_test1_7.svg", 573680560U},    {"rxn_test2_1.svg", 2821179072U},
+    {"rxn_test2_2_1.svg", 1304295583U}, {"rxn_test2_2_2.svg", 1361778996U},
+    {"rxn_test2_2_3.svg", 2608405344U}, {"rxn_test2_2_4.svg", 574045696U},
+    {"rxn_test3_1.svg", 3205563676U},   {"rxn_test4_1.svg", 2762964801U},
+    {"rxn_test4_2.svg", 1182024377U},
+};
+#endif
+
+// These PNG hashes aren't completely reliable due to floating point cruft,
+// but they can still reduce the number of drawings that need visual
+// inspection.  At present, the files
+// rxn_test1_2.png  rxn_test1_5.png  rxn_test2_2_1.png  rxn_test2_2_4.png
+// rxn_test4_2.png rxn_test1_3.png  rxn_test1_7.png  rxn_test2_2_2.png
+// rxn_test3_1.png rxn_test1_4.png  rxn_test2_1.png  rxn_test2_2_3.png
+// rxn_test4_1.png
+// give different results on my MBP and Ubuntu 20.04 VM.  The SVGs work
+// better because the floats are all output to only 1 decimal place so there
+// is a much smaller chance of different systems producing different files.
+static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
+    {"rxn_test1_1.png", 3579100589U},  {"rxn_test1_2.png", 3996724834U},
+    {"rxn_test1_3.png", 4153817948U},  {"rxn_test1_4.png", 4175225545U},
+    {"rxn_test1_5.png", 3400977230U},  {"rxn_test1_6.png", 2636974466U},
+    {"rxn_test1_7.png", 4164917700U},  {"rxn_test2_1.png", 2654417911U},
+    {"rxn_test2_2_1.png", 997060634U}, {"rxn_test2_2_2.png", 2090979640U},
+    {"rxn_test2_2_3.png", 857100114U}, {"rxn_test2_2_4.png", 610638635U},
+    {"rxn_test3_1.png", 501226401U},   {"rxn_test4_1.png", 805353504U},
+    {"rxn_test4_2.png", 2842629749U},
+};
+
+std::hash_result_t hash_file(const std::string &filename) {
+  std::ifstream ifs(filename, std::ios_base::binary);
+  std::string file_contents(std::istreambuf_iterator<char>{ifs}, {});
+  if (filename.substr(filename.length() - 4) == ".svg") {
+    // deal with MSDOS newlines.
+    file_contents.erase(
+        remove(file_contents.begin(), file_contents.end(), '\r'),
+        file_contents.end());
+  }
+  return gboost::hash_range(file_contents.begin(), file_contents.end());
+}
+
+void check_file_hash(const std::string &filename,
+                     std::hash_result_t exp_hash = 0U) {
+  //    std::cout << filename << " : " << hash_file(filename) << "U" <<
+  //    std::endl;
+
+  std::map<std::string, std::hash_result_t>::const_iterator it;
+  if (filename.substr(filename.length() - 4) == ".svg") {
+    it = SVG_HASHES.find(filename);
+  } else {
+    it = PNG_HASHES.find(filename);
+  }
+  std::hash_result_t file_hash = hash_file(filename);
+  if (exp_hash == 0U) {
+    exp_hash = it == SVG_HASHES.end() ? 0U : it->second;
+  }
+  if (it != SVG_HASHES.end() && file_hash == exp_hash) {
+    if (DELETE_WITH_GOOD_HASH) {
+      std::remove(filename.c_str());
+    }
+  } else {
+    std::cout << "file " << filename << " gave hash " << file_hash
+              << "U not the expected " << exp_hash << "U" << std::endl;
+  }
+}
+
 void drawit(ChemicalReaction *rxn, std::string nameBase,
             bool highlight_map = false,
             const std::vector<DrawColour> *highlight_colors = nullptr) {
@@ -52,6 +141,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
     drawer.writeDrawingText(nameBase + ".png");
+    check_file_hash(nameBase + ".png");
   }
 #endif
   {
@@ -59,10 +149,11 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
     MolDraw2DSVG drawer(width, height, outs);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
-    outs.flush();
+    outs.close();
+    check_file_hash(nameBase + ".svg");
   }
 }
-}
+}  // namespace
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
@@ -78,7 +169,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
@@ -91,7 +181,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-
   {
     std::string smiles =
         ">>[N:1]1[C:"
@@ -115,7 +204,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>O.ClCl>";
@@ -127,7 +215,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
@@ -140,8 +227,9 @@ void test1() {
     drawit(rxn, nameBase, true);
     delete rxn;
   }
-
   {
+    // With the new code (Jan 2022) it appears that the 2nd reagent overlaps
+    // the + sign, but this is an optical illusion.  Trust me :-).
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
         "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
@@ -186,7 +274,7 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
     std::vector<std::string> lines;
     boost::split(lines, indata, boost::is_any_of("\n"));
     unsigned int idx = 0;
-    BOOST_FOREACH (std::string &line, lines) {
+    for (auto &line : lines) {
       std::vector<std::string> tokens;
       boost::split(tokens, line, boost::is_any_of("\t "));
       std::cerr << tokens.size() << " " << line << std::endl;

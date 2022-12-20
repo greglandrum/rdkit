@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2015 Sereina Riniker
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2015 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +12,7 @@
 #define RD_TORSIONANGLEM6_H
 
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <vector>
 
 namespace RDGeom {
@@ -33,8 +31,7 @@ namespace CrystalFF {
 class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
     : public ForceFields::ForceFieldContrib {
  public:
-  TorsionAngleContribM6()
-       {};
+  TorsionAngleContribM6() {}
   //! Constructor
   /*!
    The torsion is between atom1 - atom2 - atom3 - atom4
@@ -52,11 +49,11 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
   TorsionAngleContribM6(ForceFields::ForceField *owner, unsigned int idx1,
                         unsigned int idx2, unsigned int idx3, unsigned int idx4,
                         std::vector<double> V, std::vector<int> signs);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual TorsionAngleContribM6 *copy() const {
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  TorsionAngleContribM6 *copy() const override {
     return new TorsionAngleContribM6(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};

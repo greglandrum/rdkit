@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,14 +10,19 @@
 //
 #include <list>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/Chirality.h>
 #include "MolFileStereochem.h"
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include "MolFileStereochem.h"
 #include <RDGeneral/Ranking.h>
 
 namespace RDKit {
+
+void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+                              const Conformer *conf, int &dirCode,
+                              bool &reverse);
+
 typedef std::list<double> DOUBLE_LIST;
 
 void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
@@ -36,10 +41,8 @@ void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 
 void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
-  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
-  for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    Bond *bond = *bondIt;
+  auto wedgeBonds = pickBondsToWedge(mol);
+  for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
       Bond::BondDir dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
@@ -61,20 +64,36 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   }
 }
 
-INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
+std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
+    const ROMol &mol, const Atom &atom) {
+  unsigned int hasDouble = 0;
+  unsigned int hasKnownDouble = 0;
+  unsigned int hasAnyDouble = 0;
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(&atom))) {
+    const auto bond = mol[nbri];
+    if (bond->getBondType() == Bond::BondType::DOUBLE) {
+      ++hasDouble;
+      if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
+        ++hasAnyDouble;
+      } else if (bond->getStereo() > Bond::BondStereo::STEREOANY) {
+        ++hasKnownDouble;
+      }
+    }
+  }
+  return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
+}
+
+std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   // we need ring information; make sure findSSSR has been called before
   // if not call now
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::findSSSR(mol);
   }
 
-  static int noNbrs = 100;
   INT_VECT nChiralNbrs(mol.getNumAtoms(), noNbrs);
 
   // start by looking for bonds that are already wedged
-  for (ROMol::ConstBondIterator cbi = mol.beginBonds(); cbi != mol.endBonds();
-       ++cbi) {
-    const Bond *bond = *cbi;
+  for (const auto bond : mol.bonds()) {
     if (bond->getBondDir() == Bond::BEGINWEDGE ||
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
@@ -92,9 +111,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
 
   // now rank atoms by the number of chiral neighbors or Hs they have:
   bool chiNbrs = false;
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       ++cai) {
-    const Atom *at = *cai;
+  for (const auto at : mol.atoms()) {
     if (nChiralNbrs[at->getIdx()] > noNbrs) {
       // std::cerr << " SKIPPING1: " << at->getIdx() << std::endl;
       continue;
@@ -105,11 +122,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      const Atom *nat = mol[*nbrIdx];
-      ++nbrIdx;
+    for (const auto nat : mol.atomNeighbors(at)) {
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
         nChiralNbrs[at->getIdx()] -= 10;
@@ -123,13 +136,105 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       nChiralNbrs[at->getIdx()] -= 1;
     }
   }
+  return std::pair<bool, INT_VECT>(chiNbrs, nChiralNbrs);
+}
+
+// picks a bond for atom that we will wedge when we write the mol file
+// returns idx of that bond.
+int pickBondToWedge(const Atom *atom, const ROMol &mol,
+                    const INT_VECT &nChiralNbrs, const INT_MAP_INT &resSoFar,
+                    int noNbrs) {
+  // here is what we are going to do
+  // - at each chiral center look for a bond that is begins at the atom and
+  //   is not yet picked to be wedged for a different chiral center, preferring
+  //   bonds to Hs
+  // - if we do not find a bond that begins at the chiral center - we will take
+  //   the first bond that is not yet picked by any other chiral centers
+  // we use the orders calculated above to determine which order to do the
+  // wedging
+
+  // If we call wedgeMolBonds() on a fragment, it can happen that we end up with
+  // atoms that don't have enough neighbors. Those are going to cause problems,
+  // so just bail here.
+  // if (atom->getDegree() < 3) {
+  //   return -1;
+  // }
+  std::vector<std::pair<int, int>> nbrScores;
+  for (const auto bond : mol.atomBonds(atom)) {
+    // can only wedge single bonds:
+    if (bond->getBondType() != Bond::SINGLE) {
+      continue;
+    }
+
+    int bid = bond->getIdx();
+    if (resSoFar.find(bid) == resSoFar.end()) {
+      // very strong preference for Hs:
+      if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
+        nbrScores.emplace_back(-1000000,
+                               bid);  // lower than anything else can be
+        continue;
+      }
+      // prefer lower atomic numbers with lower degrees and no specified
+      // chirality:
+      const Atom *oatom = bond->getOtherAtom(atom);
+      int nbrScore = oatom->getAtomicNum() + 100 * oatom->getDegree() +
+                     1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
+      // prefer neighbors that are nonchiral or have as few chiral neighbors
+      // as possible:
+      int oIdx = oatom->getIdx();
+      if (nChiralNbrs[oIdx] < noNbrs) {
+        // the counts are negative, so we have to subtract them off
+        nbrScore -= 100000 * nChiralNbrs[oIdx];
+      }
+      // prefer bonds to non-ring atoms:
+      nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
+      // prefer non-ring bonds;
+      nbrScore += 20000 * mol.getRingInfo()->numBondRings(bid);
+      // prefer bonds to atoms which don't have a double bond from them
+      unsigned int hasDoubleBond;       // is a double bond there?
+      unsigned int hasKnownDoubleBond;  // is specified stereo there?
+      unsigned int hasAnyDoubleBond;    // is STEREOANY there?
+      std::tie(hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond) =
+          getDoubleBondPresence(mol, *oatom);
+      nbrScore += 11000 * hasDoubleBond;
+      nbrScore += 12000 * hasKnownDoubleBond;
+      nbrScore += 23000 * hasAnyDoubleBond;
+
+      // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
+      //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
+      //           << std::endl;
+      nbrScores.emplace_back(nbrScore, bid);
+    }
+  }
+  // There's still one situation where this whole thing can fail: an unlucky
+  // situation where all neighbors of all neighbors of an atom are chiral and
+  // that atom ends up being the last one picked for stereochem assignment. This
+  // also happens in cases where the chiral atom doesn't have all of its
+  // neighbors (like when working with partially sanitized fragments)
+  //
+  // We'll bail here by returning -1
+  if (nbrScores.empty()) {
+    return -1;
+  }
+  std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
+  return nbrScores[0].second;
+}
+
+INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
+  // returns map of bondIdx -> bond begin atom for those bonds that
+  // need wedging.
   std::vector<unsigned int> indices(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     indices[i] = i;
   }
+  static int noNbrs = 100;
+  std::pair<bool, INT_VECT> retVal = countChiralNbrs(mol, noNbrs);
+  bool chiNbrs = retVal.first;
+  INT_VECT nChiralNbrs = retVal.second;
   if (chiNbrs) {
-    std::sort(indices.begin(), indices.end(),
-              Rankers::argless<INT_VECT>(nChiralNbrs));
+    std::sort(indices.begin(), indices.end(), [&](auto i1, auto i2) {
+      return nChiralNbrs[i1] < nChiralNbrs[i2];
+    });
   }
 #if 0
   std::cerr << "  nbrs: ";
@@ -141,17 +246,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
             std::ostream_iterator<int>(std::cerr, " "));
   std::cerr << std::endl;
 #endif
-  // picks a bond for each atom that we will wedge when we write the mol file
-  // here is what we are going to do
-  // - at each chiral center look for a bond that is begins at the atom and
-  //   is not yet picked to be wedged for a different chiral center, preferring
-  //   bonds to Hs
-  // - if we do not find a bond that begins at the chiral center - we will take
-  //   the first bond that is not yet picked by any other chiral centers
-  // we use the orders calculated above to determine which order to do the
-  // wedging
   INT_MAP_INT res;
-  BOOST_FOREACH (unsigned int idx, indices) {
+  for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
       continue;  // already have a wedged bond here
@@ -163,63 +259,163 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
-    std::vector<std::pair<int, int>> nbrScores;
-    while (atomBonds.first != atomBonds.second) {
-      const Bond *bond = mol[*atomBonds.first];
-      ++atomBonds.first;
-
-      // can only wedge single bonds:
-      if (bond->getBondType() != Bond::SINGLE) {
-        continue;
-      }
-
-      int bid = bond->getIdx();
-      if (res.find(bid) == res.end()) {
-        // very strong preference for Hs:
-        if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.emplace_back(
-              -1000000, bid);  // lower than anything else can be
-          continue;
-        }
-        // prefer lower atomic numbers with lower degrees and no specified
-        // chirality:
-        const Atom *oatom = bond->getOtherAtom(atom);
-        int nbrScore = oatom->getAtomicNum() + 10 * oatom->getDegree() +
-                       100 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
-        // prefer neighbors that are nonchiral or have as few chiral neighbors
-        // as possible:
-        int oIdx = oatom->getIdx();
-        if (nChiralNbrs[oIdx] < noNbrs) {
-          // the counts are negative, so we have to subtract them off
-          nbrScore -= 10000 * nChiralNbrs[oIdx];
-        }
-        // prefer bonds to non-ring atoms:
-        nbrScore += 1000 * mol.getRingInfo()->numAtomRings(oIdx);
-        // prefer non-ring bonds;
-        nbrScore += 1000 * mol.getRingInfo()->numBondRings(bid);
-        // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
-        //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
-        //           << std::endl;
-        nbrScores.emplace_back(nbrScore, bid);
-      }
+    int bnd = pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
+    if (bnd >= 0) {
+      res[bnd] = idx;
     }
-    // There's still one situation where this whole thing can fail: an unlucky
-    // situation where all neighbors of all neighbors of an atom are chiral and
-    // that atom ends up being the last one picked for stereochem assignment.
-    //
-    // We'll catch that as an error here and hope that it's as unlikely to occur
-    // as it seems like it is. (I'm going into this knowing that it's bound to
-    // happen; I'll kick myself and do the hard solution at that point.)
-    CHECK_INVARIANT(nbrScores.size(),
-                    "no eligible neighbors for chiral center");
-    std::sort(nbrScores.begin(), nbrScores.end(),
-              Rankers::pairLess<int, int>());
-    res[nbrScores[0].second] = idx;
   }
   return res;
 }
 
+std::vector<Bond *> getBondNeighbors(ROMol &mol, const Bond &bond) {
+  std::vector<Bond *> res;
+  for (auto nbri :
+       boost::make_iterator_range(mol.getAtomBonds(bond.getBeginAtom()))) {
+    auto nbrBond = mol[nbri];
+    if (nbrBond == &bond) {
+      continue;
+    }
+    res.push_back(nbrBond);
+  }
+  for (auto nbri :
+       boost::make_iterator_range(mol.getAtomBonds(bond.getEndAtom()))) {
+    auto nbrBond = mol[nbri];
+    if (nbrBond == &bond) {
+      continue;
+    }
+    res.push_back(nbrBond);
+  }
+  return res;
+}
+
+const Atom *getNonsharedAtom(const Bond &bond1, const Bond &bond2) {
+  if (bond1.getBeginAtomIdx() == bond2.getBeginAtomIdx() ||
+      bond1.getBeginAtomIdx() == bond2.getEndAtomIdx()) {
+    return bond1.getEndAtom();
+  } else if (bond1.getEndAtomIdx() == bond2.getBeginAtomIdx() ||
+             bond1.getEndAtomIdx() == bond2.getEndAtomIdx()) {
+    return bond1.getBeginAtom();
+  }
+  POSTCONDITION(0, "bonds don't share an atom");
+}
+
+const unsigned StereoBondThresholds::DBL_BOND_NO_STEREO;
+const unsigned StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO;
+const unsigned StereoBondThresholds::CHIRAL_ATOM;
+const unsigned StereoBondThresholds::DIRECTION_SET;
+
+// a note on the way the StereoBondThresholds are used:
+//  the penalties are all 1/10th of the corresponding threshold, so
+//  the penalty for being connected to a chiral atom is
+//  StereoBondThresholds::CHIRAL_ATOM/10
+//  This allows us to just add up the penalties for a particular
+//  single bond and still use one set of thresholds - an individual
+//  single bond will never have any particular penalty term applied
+//  more than a couple of times
+//
+void addWavyBondsForStereoAny(ROMol &mol, bool clearDoubleBondFlags,
+                              unsigned addWhenImpossible) {
+  std::vector<int> singleBondScores(mol.getNumBonds(), 0);
+  // used to store the double bond neighbors, if any, of each single bond
+  std::map<unsigned, std::vector<unsigned>> singleBondNeighbors;
+  boost::dynamic_bitset<> doubleBondsToSet(mol.getNumBonds());
+  // mark single bonds adjacent to double bonds
+  for (const auto dblBond : mol.bonds()) {
+    if (dblBond->getBondType() != Bond::BondType::DOUBLE) {
+      continue;
+    }
+    if (dblBond->getStereo() == Bond::BondStereo::STEREOANY) {
+      doubleBondsToSet.set(dblBond->getIdx());
+    }
+    for (auto singleBond : getBondNeighbors(mol, *dblBond)) {
+      if (singleBond->getBondType() != Bond::BondType::SINGLE) {
+        continue;
+      }
+      // NOTE: we could make this canonical by initializing scores to the
+      // canonical atom ranks
+      int score = singleBondScores[singleBond->getIdx()];
+      ++score;
+
+      // penalty for having a direction already set
+      if (singleBond->getBondDir() != Bond::BondDir::NONE) {
+        score += StereoBondThresholds::DIRECTION_SET / 10;
+      }
+
+      // penalties from the double bond itself:
+
+      // penalize being adjacent to a double bond with empty stereo:
+      if (dblBond->getStereo() == Bond::BondStereo::STEREONONE) {
+        score += StereoBondThresholds::DBL_BOND_NO_STEREO / 10;
+      } else if (dblBond->getStereo() > Bond::BondStereo::STEREOANY) {
+        // penalize being adjacent to a double bond with specified stereo:
+        score += StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO / 10;
+      }
+
+      // atom-related penalties
+      auto otherAtom = getNonsharedAtom(*singleBond, *dblBond);
+      // favor atoms with smaller numbers of neighbors:
+      score += 10 * otherAtom->getDegree();
+      // penalty for being adjacent to an atom with specified stereo
+      if (otherAtom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED &&
+          otherAtom->getChiralTag() != Atom::ChiralType::CHI_OTHER) {
+        score += StereoBondThresholds::CHIRAL_ATOM / 10;
+      }
+      singleBondScores[singleBond->getIdx()] = score;
+      if (dblBond->getStereo() == Bond::BondStereo::STEREOANY) {
+        singleBondNeighbors[singleBond->getIdx()].push_back(dblBond->getIdx());
+      }
+    }
+  }
+  std::vector<std::tuple<int, unsigned int, size_t>> sortedScores;
+  for (size_t i = 0; i < mol.getNumBonds(); ++i) {
+    auto score = singleBondScores[i];
+    if (!score) {
+      continue;
+    }
+    sortedScores.push_back(
+        std::make_tuple(-1 * singleBondNeighbors[i].size(), score, i));
+  }
+  std::sort(sortedScores.begin(), sortedScores.end());
+  for (const auto &tpl : sortedScores) {
+    // FIX: check if dir is already set
+    for (auto dblBondIdx : singleBondNeighbors[std::get<2>(tpl)]) {
+      if (doubleBondsToSet[dblBondIdx]) {
+        if (addWhenImpossible) {
+          if (std::get<1>(tpl) > addWhenImpossible) {
+            continue;
+          }
+        } else if (std::get<1>(tpl) >
+                   StereoBondThresholds::DBL_BOND_NO_STEREO) {
+          BOOST_LOG(rdWarningLog)
+              << "Setting wavy bond flag on bond " << std::get<2>(tpl)
+              << " which may make other stereo info ambiguous" << std::endl;
+        }
+        mol.getBondWithIdx(std::get<2>(tpl))
+            ->setBondDir(Bond::BondDir::UNKNOWN);
+        if (clearDoubleBondFlags) {
+          auto dblBond = mol.getBondWithIdx(dblBondIdx);
+          if (dblBond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+            dblBond->setBondDir(Bond::BondDir::NONE);
+          }
+          dblBond->setStereo(Bond::BondStereo::STEREONONE);
+        }
+        doubleBondsToSet.reset(dblBondIdx);
+      }
+    }
+  }
+  if (addWhenImpossible) {
+    if (doubleBondsToSet.count()) {
+      std::stringstream sstr;
+      sstr << " unable to set wavy bonds for double bonds:";
+      for (size_t i = 0; i < mol.getNumBonds(); ++i) {
+        if (doubleBondsToSet[i]) {
+          sstr << " " << i;
+        }
+      }
+      BOOST_LOG(rdWarningLog) << sstr.str() << std::endl;
+    }
+  }
+}
 //
 // Determine bond wedge state
 ///
@@ -369,15 +565,7 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
 }
 
 void ClearSingleBondDirFlags(ROMol &mol) {
-  for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    if ((*bondIt)->getBondType() == Bond::SINGLE) {
-      if ((*bondIt)->getBondDir() == Bond::UNKNOWN) {
-        (*bondIt)->setProp(common_properties::_UnknownStereo, 1);
-      }
-      (*bondIt)->setBondDir(Bond::NONE);
-    }
-  }
+  MolOps::clearSingleBondDirFlags(mol);
 }
 
 void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
@@ -386,4 +574,77 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
                "conformer does not belong to molecule");
   MolOps::detectBondStereochemistry(mol, conf->getId());
 }
+
+void reapplyMolBlockWedging(ROMol &mol) {
+  MolOps::clearSingleBondDirFlags(mol);
+  for (auto b : mol.bonds()) {
+    int explicit_unknown_stereo = -1;
+    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                 explicit_unknown_stereo) &&
+        explicit_unknown_stereo) {
+      b->setBondDir(Bond::UNKNOWN);
+    }
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setBondDir(Bond::BEGINWEDGE);
+      } else if (bond_dir == 6) {
+        b->setBondDir(Bond::BEGINDASH);
+      }
+    }
+    int cfg = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
+      switch (cfg) {
+        case 1:
+          b->setBondDir(Bond::BEGINWEDGE);
+          break;
+        case 2:
+          if (b->getBondType() == Bond::SINGLE) {
+            b->setBondDir(Bond::UNKNOWN);
+          } else if (b->getBondType() == Bond::DOUBLE) {
+            b->setBondDir(Bond::EITHERDOUBLE);
+            b->setStereo(Bond::STEREOANY);
+          }
+          break;
+        case 3:
+          b->setBondDir(Bond::BEGINDASH);
+          break;
+      }
+    }
+  }
+}
+
+void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
+  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+  const auto conf = mol.getConformer(confId);
+  for (auto b : mol.bonds()) {
+    if (b->getBondType() == Bond::DOUBLE) {
+      int dirCode;
+      bool reverse;
+      GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
+      if (dirCode == 3) {
+        b->setStereo(Bond::STEREOANY);
+      }
+    }
+  }
+  static int noNbrs = 100;
+  auto si = Chirality::findPotentialStereo(mol);
+  if (si.size()) {
+    std::pair<bool, INT_VECT> retVal = countChiralNbrs(mol, noNbrs);
+    INT_VECT nChiralNbrs = retVal.second;
+    for (auto i : si) {
+      if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
+          i.specified == Chirality::StereoSpecified::Unspecified) {
+        i.specified = Chirality::StereoSpecified::Unknown;
+        auto atom = mol.getAtomWithIdx(i.centeredOn);
+        INT_MAP_INT resSoFar;
+        int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
+        auto bond = mol.getBondWithIdx(bndIdx);
+        bond->setBondDir(Bond::UNKNOWN);
+      }
+    }
+  }
+}
+
 }  // namespace RDKit

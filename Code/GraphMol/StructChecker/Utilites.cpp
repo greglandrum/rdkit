@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2016 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2016-2022 Novartis Institutes for BioMedical Research and
+//  other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +12,8 @@
 #include "../../Geometry/point.h"
 #include "Utilites.h"
 #include <algorithm>
+#include <tuple>
+
 namespace RDKit {
 namespace StructureCheck {
 
@@ -32,8 +35,7 @@ void SetupNeighbourhood(const ROMol &mol,
   }
 }
 
-bool getMolAtomPoints(const ROMol &mol,
-                      std::vector<RDGeom::Point3D> &atomPoint,
+bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
                       bool twod) {
   bool non_zero_z = false;
   atomPoint.resize(mol.getNumAtoms());
@@ -57,7 +59,7 @@ bool getMolAtomPoints(const ROMol &mol,
   return non_zero_z;
 }
 
-typedef boost::tuple<std::string, int, int, int> NbrData;
+typedef std::tuple<std::string, int, int, int> NbrData;
 
 bool lessTuple(const NbrData &left, const NbrData &right) {
   if (left.get<0>() < right.get<0>()) return true;

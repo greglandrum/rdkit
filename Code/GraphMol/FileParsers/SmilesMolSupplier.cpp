@@ -68,12 +68,6 @@ SmilesMolSupplier::SmilesMolSupplier(std::istream *inStream, bool takeOwnership,
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
-SmilesMolSupplier::~SmilesMolSupplier() {
-  if (df_owner && dp_inStream) {
-    delete dp_inStream;
-  }
-}
-
 void SmilesMolSupplier::init() {
   dp_inStream = nullptr;
   df_owner = true;
@@ -396,7 +390,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 
   // the stream pointer is now at the last thing we read in
   while (d_molpos.size() <= idx) {
-    int nextP = this->skipComments();
+    std::streampos nextP = this->skipComments();
     if (nextP < 0) {
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx << "): "

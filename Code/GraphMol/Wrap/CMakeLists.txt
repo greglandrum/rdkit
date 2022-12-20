@@ -13,7 +13,7 @@ rdkit_python_extension(rdmolops
                        ChiralityOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       ChemReactions MolDraw2D Depictor
+                       ChemReactions Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Subgraphs SmilesParse MolTransforms GraphMol )
 
@@ -38,14 +38,19 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp CompressedSDMolSupplier.cpp
-                       PDBWriter.cpp )
+                       PDBWriter.cpp
+											 MultithreadedSmilesMolSupplier.cpp
+											 MultithreadedSDMolSupplier.cpp)
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp
-                       PDBWriter.cpp )
+                       PDBWriter.cpp 
+											 MultithreadedSmilesMolSupplier.cpp
+											 MultithreadedSDMolSupplier.cpp)
+
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 rdkit_python_extension(rdmolfiles
@@ -79,7 +84,12 @@ add_pytest(pyTestSGroups
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
+	add_pytest(pyTestMultithreadedMolSupplier
+         ${CMAKE_CURRENT_SOURCE_DIR}/testMultithreadedMolSupplier.py)
 endif (RDK_TEST_MULTITHREADED)
 
 add_pytest(pyTestPropertyLists
          ${CMAKE_CURRENT_SOURCE_DIR}/testPropertyLists.py)
+
+add_pytest(pyCDXMLTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)

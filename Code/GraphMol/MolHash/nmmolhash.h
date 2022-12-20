@@ -22,7 +22,7 @@
 namespace RDKit {
 class RWMol;
 namespace MolHash {
-enum class RDKIT_MOLHASH_EXPORT HashFunction {
+enum class HashFunction {
   AnonymousGraph = 1,
   ElementGraph = 2,
   CanonicalSmiles = 3,
@@ -42,9 +42,10 @@ enum class RDKIT_MOLHASH_EXPORT HashFunction {
   ArthorSubstructureOrder = 17
 };
 
-RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func);
+RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func,
+                                         bool useCXSmiles = false);
 
-enum class RDKIT_MOLHASH_EXPORT StripType {
+enum class StripType {
   AtomStereo = 1,
   BondStereo = 2,
   Isotope = 4,

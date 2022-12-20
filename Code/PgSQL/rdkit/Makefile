@@ -26,7 +26,7 @@ ifeq ($(USE_AVALON),1)
   AVALONREGRESS=avalon
 endif
 
-POPCOUNTFLAGS=-DUSE_BUILTIN_POPCOUNT -mpopcnt
+POPCOUNTFLAGS=-DRDK_OPTIMIZE_POPCNT -mpopcnt
 
 ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
@@ -103,7 +103,7 @@ CC = $(CXX)
 	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
 
 
-COMPILE.cxx.bc = $(CLANG) -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -emit-llvm -c
+COMPILE.cxx.bc = $(CLANG) -std=c++17 -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -emit-llvm -c
 
 %.bc : %.cpp
 	$(COMPILE.cxx.bc) -o $@ $<

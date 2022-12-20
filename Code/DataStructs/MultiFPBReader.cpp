@@ -8,17 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/tuple/tuple_comparison.hpp>
-
 #include <RDGeneral/Invariant.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/RDThreads.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
 #endif
 
-#include <boost/foreach.hpp>
 #include "MultiFPBReader.h"
 #include <algorithm>
 
@@ -29,32 +25,24 @@ std::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
 }
 
 namespace {
-struct tplSorter
-    : public std::binary_function<MultiFPBReader::ResultTuple,
-                                  MultiFPBReader::ResultTuple, bool> {
-  bool operator()(const MultiFPBReader::ResultTuple &v1,
-                  const MultiFPBReader::ResultTuple &v2) const {
-    if (v1.get<0>() == v2.get<0>()) {
-      if (v1.get<2>() == v2.get<2>()) {
-        return v1.get<1>() < v2.get<1>();
-      } else {
-        return v1.get<2>() < v2.get<2>();
-      }
+auto tplSorter = [](const MultiFPBReader::ResultTuple &v1,
+                    const MultiFPBReader::ResultTuple &v2) {
+  if (std::get<0>(v1) == std::get<0>(v2)) {
+    if (std::get<2>(v1) == std::get<2>(v2)) {
+      return std::get<1>(v1) < std::get<1>(v2);
     } else {
-      return v1.get<0>() > v2.get<0>();
+      return std::get<2>(v1) < std::get<2>(v2);
     }
+  } else {
+    return std::get<0>(v1) > std::get<0>(v2);
   }
 };
-struct pairSorter
-    : public std::binary_function<std::pair<unsigned int, unsigned int>,
-                                  std::pair<unsigned int, unsigned int>, bool> {
-  bool operator()(const std::pair<unsigned int, unsigned int> &v1,
-                  const std::pair<unsigned int, unsigned int> &v2) const {
-    if (v1.first == v2.first) {
-      return v1.second < v2.second;
-    } else {
-      return v1.first < v2.first;
-    }
+
+auto pairSorter = [](const auto &v1, const auto &v2) {
+  if (v1.first == v2.first) {
+    return v1.second < v2.second;
+  } else {
+    return v1.first < v2.first;
   }
 };
 
@@ -111,13 +99,13 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   res.clear();
   res.resize(0);
   numThreads = getNumThreadsToUse(numThreads);
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::vector<std::future<void>> tg;
 #endif
   if (numThreads == 1) {
     func(0, 1, &args);
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < args.readers.size();
          ++tid) {
@@ -134,7 +122,7 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
     res.reserve(res.size() + (*args.res).size());
     res.insert(res.end(), (*args.res)[i].begin(), (*args.res)[i].end());
   }
-  std::sort(res.begin(), res.end(), tplSorter());
+  std::sort(res.begin(), res.end(), tplSorter);
 }
 void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
                    const std::uint8_t *bv, double threshold,
@@ -173,7 +161,7 @@ void get_containing_nbrs(
     std::vector<std::pair<unsigned int, unsigned int>> &res,
     unsigned int numThreads, bool initOnSearch) {
   numThreads = getNumThreadsToUse(numThreads);
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::vector<std::future<void>> tg;
 #endif
 
@@ -181,7 +169,7 @@ void get_containing_nbrs(
   if (numThreads == 1) {
     contain_helper(0, 1, bv, &d_readers, &accum, initOnSearch);
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
          ++tid) {
@@ -198,19 +186,19 @@ void get_containing_nbrs(
   res.clear();
   for (unsigned int i = 0; i < d_readers.size(); ++i) {
     std::vector<unsigned int> &r_res = accum[i];
-    BOOST_FOREACH (unsigned int ri, r_res) {
+    for (auto ri : r_res) {
       res.emplace_back(ri, i);
     }
   }
 
-  std::sort(res.begin(), res.end(), pairSorter());
+  std::sort(res.begin(), res.end(), pairSorter);
 }
 
 }  // end of anonymous namespace
 
 void MultiFPBReader::init() {
   unsigned int nBits = 0;
-  BOOST_FOREACH (FPBReader *rdr, d_readers) {
+  for (auto *rdr : d_readers) {
     rdr->init();
     if (!nBits) {
       nBits = rdr->nBits();
@@ -228,7 +216,7 @@ MultiFPBReader::MultiFPBReader(std::vector<FPBReader *> &readers,
   df_init = false;
   df_takeOwnership = takeOwnership;
   df_initOnSearch = initOnSearch;
-  BOOST_FOREACH (FPBReader *rdr, readers) {
+  for (auto *rdr : readers) {
     PRECONDITION(rdr != nullptr, "bad reader");
   }
   d_readers = readers;
@@ -305,4 +293,4 @@ MultiFPBReader::getContainingNeighbors(const ExplicitBitVect &ebv,
   return res;
 }
 
-}  // end of RDKit namespace
+}  // namespace RDKit

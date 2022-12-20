@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,10 +15,12 @@
 */
 
 #include <RDGeneral/export.h>
-#ifndef __RD_ROMOL_H__
-#define __RD_ROMOL_H__
+#ifndef RD_ROMOL_H
+#define RD_ROMOL_H
 
 /// Std stuff
+#include <cstddef>
+#include <iterator>
 #include <utility>
 #include <map>
 
@@ -26,6 +28,11 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <boost/serialization/split_member.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
 // our stuff
@@ -36,6 +43,7 @@
 #include "Conformer.h"
 #include "SubstanceGroup.h"
 #include "StereoGroup.h"
+#include "RingInfo.h"
 
 namespace RDKit {
 class SubstanceGroup;
@@ -102,20 +110,27 @@ RDKIT_GRAPHMOL_EXPORT extern const int ci_ATOM_HOLDER;
 
 //! \name C++11 Iterators
 
-template <class Graph, class Vertex>
+template <class Graph, class Vertex,
+          class Iterator = typename Graph::vertex_iterator>
 struct CXXAtomIterator {
   Graph *graph;
-  typename Graph::vertex_iterator vstart, vend;
+  Iterator vstart, vend;
 
   struct CXXAtomIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Vertex;
+    using pointer = Vertex *;
+    using reference = Vertex &;
+
     Graph *graph;
-    typename Graph::vertex_iterator pos;
+    Iterator pos;
     Atom *current;
 
-    CXXAtomIter(Graph *graph, typename Graph::vertex_iterator pos)
+    CXXAtomIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Vertex &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
@@ -131,24 +146,33 @@ struct CXXAtomIterator {
     vstart = vs.first;
     vend = vs.second;
   }
+  CXXAtomIterator(Graph *graph, Iterator start, Iterator end)
+      : graph(graph), vstart(start), vend(end){};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
 };
 
-template <class Graph, class Edge>
+template <class Graph, class Edge,
+          class Iterator = typename Graph::edge_iterator>
 struct CXXBondIterator {
   Graph *graph;
-  typename Graph::edge_iterator vstart, vend;
+  Iterator vstart, vend;
 
   struct CXXBondIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Edge;
+    using pointer = Edge *;
+    using reference = Edge &;
+
     Graph *graph;
-    typename Graph::edge_iterator pos;
+    Iterator pos;
     Bond *current;
 
-    CXXBondIter(Graph *graph, typename Graph::edge_iterator pos)
+    CXXBondIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Edge &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
@@ -164,6 +188,8 @@ struct CXXBondIterator {
     vstart = vs.first;
     vend = vs.second;
   }
+  CXXBondIterator(Graph *graph, Iterator start, Iterator end)
+      : graph(graph), vstart(start), vend(end){};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
 };
@@ -176,7 +202,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \cond TYPEDEFS
 
   //! \name typedefs
-  //@{
+  //! @{
   typedef MolGraph::vertex_descriptor vertex_descriptor;
   typedef MolGraph::edge_descriptor edge_descriptor;
 
@@ -233,7 +259,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   typedef CONF_SPTR_LIST_I ConformerIterator;
   typedef CONF_SPTR_LIST_CI ConstConformerIterator;
 
-  //@}
+  //! @}
   //! \endcond
 
   //! C++11 Range iterator
@@ -250,6 +276,30 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   CXXAtomIterator<const MolGraph, Atom *const> atoms() const {
     return {&d_graph};
+  }
+
+  CXXAtomIterator<const MolGraph, Atom *const, MolGraph::adjacency_iterator>
+  atomNeighbors(Atom const *at) const {
+    auto pr = getAtomNeighbors(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator> atomNeighbors(
+      Atom const *at) {
+    auto pr = getAtomNeighbors(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXBondIterator<const MolGraph, Bond *const, MolGraph::out_edge_iterator>
+  atomBonds(Atom const *at) const {
+    auto pr = getAtomBonds(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator> atomBonds(
+      Atom const *at) {
+    auto pr = getAtomBonds(at);
+    return {&d_graph, pr.first, pr.second};
   }
 
   /*!
@@ -285,18 +335,85 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     dp_ringInfo = nullptr;
     initFromOther(other, quickCopy, confId);
     numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
-  };
+  }
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr);
+  //! construct a molecule from a pickle string
+  ROMol(const std::string &binStr, unsigned int propertyFlags);
 
-  virtual ~ROMol() { destroy(); };
+  ROMol(ROMol &&o) noexcept
+      : RDProps(std::move(o)),
+        d_graph(std::move(o.d_graph)),
+        d_atomBookmarks(std::move(o.d_atomBookmarks)),
+        d_bondBookmarks(std::move(o.d_bondBookmarks)),
+        d_confs(std::move(o.d_confs)),
+        d_sgroups(std::move(o.d_sgroups)),
+        d_stereo_groups(std::move(o.d_stereo_groups)),
+        numBonds(o.numBonds) {
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
+    o.d_graph.clear();
+    o.numBonds = 0;
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
+  }
+  ROMol &operator=(ROMol &&o) noexcept {
+    if (this == &o) {
+      return *this;
+    }
+    RDProps::operator=(std::move(o));
+    d_graph = std::move(o.d_graph);
+    d_atomBookmarks = std::move(o.d_atomBookmarks);
+    d_bondBookmarks = std::move(o.d_bondBookmarks);
+    if (dp_ringInfo) {
+      delete dp_ringInfo;
+    }
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
 
-  //@}
+    d_confs = std::move(o.d_confs);
+    d_sgroups = std::move(o.d_sgroups);
+    d_stereo_groups = std::move(o.d_stereo_groups);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
+    numBonds = o.numBonds;
+    o.numBonds = 0;
+
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
+
+    o.d_graph.clear();
+    return *this;
+  }
+
+  ROMol &operator=(const ROMol &) =
+      delete;  // disable assignment, RWMol's support assignment
+
+  virtual ~ROMol() { destroy(); }
+
+  //! @}
   //! \name Atoms
-  //@{
+  //! @{
 
   //! returns our number of atoms
-  unsigned int getNumAtoms(bool onlyExplicit = 1) const;
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(boost::num_vertices(d_graph));
+  }
+  unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
   //! returns a pointer to a particular Atom
@@ -315,10 +432,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
   //! returns the degree (number of neighbors) of an Atom in the graph
   unsigned int getAtomDegree(const Atom *at) const;
-  //@}
+  //! @}
 
   //! \name Bonds
-  //@{
+  //! @{
 
   //! returns our number of Bonds
   unsigned int getNumBonds(bool onlyHeavy = 1) const;
@@ -353,20 +470,20 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
                                rdcast<unsigned int>(idx2));
   }
 
-  //@}
+  //! @}
 
   //! \name Bookmarks
-  //@{
+  //! @{
 
   //! associates an Atom pointer with a bookmark
   void setAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].push_back(at);
-  };
+  }
   //! associates an Atom pointer with a bookmark
   void replaceAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].clear();
     d_atomBookmarks[mark].push_back(at);
-  };
+  }
   //! returns the first Atom associated with the \c bookmark provided
   Atom *getAtomWithBookmark(int mark);
   //! returns the Atom associated with the \c bookmark provided
@@ -380,16 +497,16 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void clearAtomBookmark(int mark, const Atom *atom);
 
   //! blows out all atomic \c bookmarks
-  void clearAllAtomBookmarks() { d_atomBookmarks.clear(); };
+  void clearAllAtomBookmarks() { d_atomBookmarks.clear(); }
   //! queries whether or not any atoms are associated with a \c bookmark
-  bool hasAtomBookmark(int mark) const { return d_atomBookmarks.count(mark); };
+  bool hasAtomBookmark(int mark) const { return d_atomBookmarks.count(mark); }
   //! returns a pointer to all of our atom \c bookmarks
-  ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; };
+  ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; }
 
   //! associates a Bond pointer with a bookmark
   void setBondBookmark(Bond *bond, int mark) {
     d_bondBookmarks[mark].push_back(bond);
-  };
+  }
   //! returns the first Bond associated with the \c bookmark provided
   Bond *getBondWithBookmark(int mark);
   //! returns the Bond associated with the \c bookmark provided
@@ -403,16 +520,16 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void clearBondBookmark(int mark, const Bond *bond);
 
   //! blows out all bond \c bookmarks
-  void clearAllBondBookmarks() { d_bondBookmarks.clear(); };
+  void clearAllBondBookmarks() { d_bondBookmarks.clear(); }
   //! queries whether or not any bonds are associated with a \c bookmark
-  bool hasBondBookmark(int mark) const { return d_bondBookmarks.count(mark); };
+  bool hasBondBookmark(int mark) const { return d_bondBookmarks.count(mark); }
   //! returns a pointer to all of our bond \c bookmarks
-  BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; };
+  BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; }
 
-  //@}
+  //! @}
 
   //! \name Conformers
-  //@{
+  //! @{
 
   //! return the conformer with a specified ID
   //! if the ID is negative the first conformation will be returned
@@ -445,11 +562,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
 
   //! \name Topology
-  //@{
+  //! @{
 
   //! returns a pointer to our RingInfo structure
   //! <b>Note:</b> the client should not delete this.
-  RingInfo *getRingInfo() const { return dp_ringInfo; };
+  RingInfo *getRingInfo() const { return dp_ringInfo; }
 
   //! provides access to all neighbors around an Atom
   /*!
@@ -552,11 +669,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
          int res = boost::connected_components(G_p,&mapping[0]);
       \endcode
    */
-  MolGraph const &getTopology() const { return d_graph; };
-  //@}
+  MolGraph const &getTopology() const { return d_graph; }
+  //! @}
 
   //! \name Iterators
-  //@{
+  //! @{
 
   //! get an AtomIterator pointing at our first Atom
   AtomIterator beginAtoms();
@@ -622,10 +739,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   inline ConstConformerIterator endConformers() const { return d_confs.end(); }
 
-  //@}
+  //! @}
 
   //! \name Properties
-  //@{
+  //! @{
 
   //! clears all of our \c computed \c properties
   void clearComputedProps(bool includeRings = true) const;
@@ -638,21 +755,21 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   bool needsUpdatePropertyCache() const;
 
-  //@}
+  //! @}
 
   //! \name Misc
-  //@{
+  //! @{
   //! sends some debugging info to a stream
   void debugMol(std::ostream &str) const;
-  //@}
+  //! @}
 
-  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; };
+  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; }
   const Atom *operator[](const vertex_descriptor &v) const {
     return d_graph[v];
-  };
+  }
 
-  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; };
-  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; };
+  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; }
+  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; }
 
   //! Gets a reference to the groups of atoms with relative stereochemistry
   /*!
@@ -663,22 +780,42 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return d_stereo_groups;
   }
 
+  //! Sets groups of atoms with relative stereochemistry
+  /*!
+    \param stereo_groups the new set of stereo groups. All will be replaced.
+
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format. stereo_groups should be std::move()ed into this function.
+  */
+  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  //! \name boost::serialization support
+  //! @{
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const;
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version);
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+  //! @}
+#endif
+
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
   BOND_BOOKMARK_MAP d_bondBookmarks;
-  RingInfo *dp_ringInfo;
+  RingInfo *dp_ringInfo = nullptr;
   CONF_SPTR_LIST d_confs;
   std::vector<SubstanceGroup> d_sgroups;
+  std::vector<StereoGroup> d_stereo_groups;
+  std::unique_ptr<boost::dynamic_bitset<>> dp_delAtoms = nullptr;
+  std::unique_ptr<boost::dynamic_bitset<>> dp_delBonds = nullptr;
+
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
   friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
       &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
-  std::vector<StereoGroup> d_stereo_groups;
-
-  ROMol &operator=(
-      const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
   unsigned int numBonds{0};
@@ -711,14 +848,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
 
-  //! Sets groups of atoms with relative stereochemistry
-  /*!
-    \param stereo_groups the new set of stereo groups. All will be replaced.
-
-    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
-    file format. stereo_groups should be std::move()ed into this function.
-  */
-  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add
