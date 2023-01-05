@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -158,6 +158,14 @@ getsrETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek,
                   //! Landrum and Riniker (10.1021/acs.jcim.0c00025) - the
                   //! macrocycle part
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::srETKDGv3);
+}
+DGeomHelpers::EmbedParameters *
+getETKDGv4() {  //! New parameters for acyclic bonds (version 4)
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv4);
+}
+DGeomHelpers::EmbedParameters *
+getsrETKDGv4() {  //! New parameters for acyclic bonds (version 4)
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::srETKDGv4);
 }
 DGeomHelpers::EmbedParameters *getKDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
@@ -488,6 +496,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("ETKDGv3", RDKit::getETKDGv3,
               "Returns an EmbedParameters object for the ETKDG method - "
               "version 3 (macrocycles).",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("srETKDGv4", RDKit::getsrETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4 (small rings).",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("ETKDGv4", RDKit::getETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4 (macrocycles).",
               python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",

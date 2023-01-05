@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -222,6 +222,63 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 -1.0,     // pruneRmsThresh
                                 true,     // onlyHeavyAtomsForRMS
                                 2,        // ETversion
+                                nullptr,  // boundsMat
+                                true,     // embedFragmentsSeparately
+                                true,     // useSmallRingTorsions
+                                false,    // useMacrocycleTorsions
+                                false,    // useMacrocycle14config
+                                nullptr,  // CPCI
+                                nullptr   // callback
+);
+
+//! New parameters for acyclic bonds (version 4) 
+const EmbedParameters ETKDGv4(0,        // maxIterations
+                              1,        // numThreads
+                              -1,       // randomSeed
+                              true,     // clearConfs
+                              false,    // useRandomCoords
+                              2.0,      // boxSizeMult
+                              true,     // randNegEig
+                              1,        // numZeroFail
+                              nullptr,  // coordMap
+                              1e-3,     // optimizerForceTol
+                              false,    // ignoreSmoothingFailures
+                              true,     // enforceChirality
+                              true,     // useExpTorsionAnglePrefs
+                              true,     // useBasicKnowledge
+                              false,    // verbose
+                              5.0,      // basinThresh
+                              -1.0,     // pruneRmsThresh
+                              true,     // onlyHeavyAtomsForRMS
+                              4,        // ETversion
+                              nullptr,  // boundsMat
+                              true,     // embedFragmentsSeparately
+                              false,    // useSmallRingTorsions
+                              true,     // useMacrocycleTorsions
+                              true,     // useMacrocycle14config
+                              nullptr,  // CPCI
+                              nullptr   // callback
+);
+
+const EmbedParameters srETKDGv4(0,        // maxIterations
+                                1,        // numThreads
+                                -1,       // randomSeed
+                                true,     // clearConfs
+                                false,    // useRandomCoords
+                                2.0,      // boxSizeMult
+                                true,     // randNegEig
+                                1,        // numZeroFail
+                                nullptr,  // coordMap
+                                1e-3,     // optimizerForceTol
+                                false,    // ignoreSmoothingFailures
+                                true,     // enforceChirality
+                                true,     // useExpTorsionAnglePrefs
+                                true,     // useBasicKnowledge
+                                false,    // verbose
+                                5.0,      // basinThresh
+                                -1.0,     // pruneRmsThresh
+                                true,     // onlyHeavyAtomsForRMS
+                                4,        // ETversion
                                 nullptr,  // boundsMat
                                 true,     // embedFragmentsSeparately
                                 true,     // useSmallRingTorsions
@@ -1095,9 +1152,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
-  if (params.ETversion < 1 || params.ETversion > 2) {
+  if (params.ETversion != 1 && params.ETversion != 2 && params.ETversion != 4) {
     throw ValueErrorException(
-        "Only version 1 and 2 of the experimental "
+        "Only version 1, 2, and 4 of the experimental "
         "torsion-angle preferences (ETversion) supported");
   }
 

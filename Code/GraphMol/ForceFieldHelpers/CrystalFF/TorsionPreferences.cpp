@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Sereina Riniker
+//  Copyright (C) 2022 Sereina Riniker
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -38,6 +38,7 @@ const unsigned int MIN_MACROCYCLE_SIZE = 9;
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
  * Version 2 taken from J. Chem. Inf. Model. 56, 1 (2016)
+ * Version 4 taken from J. Chem. Inf. Model. 62, 1644 (2022)
  *
  * torsion-angle potential form:
  * V = V1*(1 + s1*cos(1x)) + V2*(1 + s2*cos(2x)) + V3*(1 + s3*cos(3x))
@@ -47,6 +48,7 @@ const unsigned int MIN_MACROCYCLE_SIZE = 9;
  */
 #include "torsionPreferences_v1.in"
 #include "torsionPreferences_v2.in"
+#include "torsionPreferences_v4.in"
 #include "torsionPreferences_smallrings.in"
 #include "torsionPreferences_macrocycles.in"
 
@@ -91,8 +93,11 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
       case 2:
         params = torsionPreferencesV2;
         break;
+      case 4:
+        params = torsionPreferencesV4;
+        break;
       default:
-        throw ValueErrorException("ETversion must be 1 or 2.");
+        throw ValueErrorException("ETversion must be 1, 2, or 4.");
     }
   } else {
     params = paramData;
