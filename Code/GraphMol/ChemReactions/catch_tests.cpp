@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
@@ -98,7 +99,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     auto p = prods[0][0];
 
     clearAtomMappingProps(*p);
-    CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@@H](Cl)Br |&1:3|");
+    CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@H](Cl)Br |&1:3|");
   }
   SECTION("Reaction splits StereoGroup") {
     ROMOL_SPTR mol("F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|"_smiles);
@@ -119,7 +120,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     clearAtomMappingProps(*p0);
     clearAtomMappingProps(*p1);
     CHECK(MolToCXSmiles(*p0) == "O[C@H](F)Cl |&1:1|");
-    CHECK(MolToCXSmiles(*p1) == "O[C@@H](Cl)Br |&1:1|");
+    CHECK(MolToCXSmiles(*p1) == "O[C@H](Cl)Br |&1:1|");
   }
   SECTION("Reaction combines StereoGroups") {
     ROMOL_SPTR mol1("F[C@H](Cl)O |&1:1|"_smiles);
@@ -1249,7 +1250,7 @@ TEST_CASE("CDXML Parser") {
       
        auto rxns = CDXMLFileToChemicalReactions(fname);
        CHECK(rxns.size() == 1);
-       int i=0;
+       unsigned int i=0;
        int count = 0;
        for(auto &mol : rxns[0]->getReactants()) {
            CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
@@ -1371,5 +1372,44 @@ std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnb));
       CHECK(orxn.find("BEGIN AGENT") == std::string::npos);
       CHECK(orxn.find("END AGENT") == std::string::npos);
     }
+  }
+}
+
+TEST_CASE("Github #6015: Reactions do not propagate query information to products"){
+  SECTION("basics, as-reported") {
+    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1][O:2]>>[C:1][O:2]")};
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("[C&R&X3][OR]F"))};
+    REQUIRE(reactants.size()==1);
+    REQUIRE(reactants[0]);
+    auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size()==1);
+    CHECK(products[0][0]->getAtomWithIdx(0)->hasQuery());
+    CHECK(products[0][0]->getAtomWithIdx(1)->hasQuery());
+    CHECK(products[0][0]->getAtomWithIdx(2)->hasQuery());
+    CHECK(products[0][0]->getBondWithIdx(0)->hasQuery());
+    CHECK(products[0][0]->getBondWithIdx(1)->hasQuery());
+    CHECK(MolToSmarts(*products[0][0])=="[C&R&X3][O&R]F");
+    
+  }
+  SECTION("more complex") {
+    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1][O:2]>>[C:1][O:2]")};
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("CC[C&R&X3](CC)[OR]NCC"))};
+    REQUIRE(reactants.size()==1);
+    REQUIRE(reactants[0]);
+    auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size()==1);
+    for(const auto atom : products[0][0]->atoms()){
+      INFO(atom->getIdx());
+      CHECK(atom->hasQuery());
+    }
+    for(const auto bond : products[0][0]->bonds()){
+      INFO(bond->getIdx());
+      CHECK(bond->hasQuery());
+    }
+   
   }
 }

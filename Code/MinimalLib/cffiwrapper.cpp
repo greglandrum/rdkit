@@ -36,6 +36,7 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
+#include <GraphMol/Chirality.h>
 #include <DataStructs/BitOps.h>
 
 #include "common.h"
@@ -175,7 +176,7 @@ extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
   if (!pkl || !pkl_sz) {
-    return "";
+    return nullptr;
   }
   auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MinimalLib::molblock_helper(mol, details_json, false);
@@ -184,7 +185,7 @@ extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
 extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                  const char *details_json) {
   if (!pkl || !pkl_sz) {
-    return "";
+    return nullptr;
   }
   auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MinimalLib::molblock_helper(mol, details_json, true);
@@ -795,6 +796,19 @@ extern "C" short fragment_parent(char **mol_pkl, size_t *mol_pkl_sz,
   return standardize_func(mol_pkl, mol_pkl_sz, details_json,
                           MinimalLib::do_fragment_parent);
 };
+
+// chirality
+extern "C" short use_legacy_stereo_perception(short value) {
+  short was = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(value);
+  return was;
+}
+
+extern "C" short allow_non_tetrahedral_chirality(short value) {
+  short was = Chirality::getAllowNontetrahedralChirality();
+  Chirality::setAllowNontetrahedralChirality(value);
+  return was;
+}
 
 #if (defined(__GNUC__) || defined(__GNUG__))
 #pragma GCC diagnostic pop
