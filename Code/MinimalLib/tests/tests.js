@@ -13,7 +13,11 @@ const assert = require('assert');
 const {
     performance
   } = require('perf_hooks');
-var initRDKitModule = require("../demo/RDKit_minimal.js");
+// the default path to RDKit_minimal.js can be overridden through
+// the RDKIT_MINIMAL_JS variable if needed
+const minimalLib = process.env.RDKIT_MINIMAL_JS || '../demo/RDKit_minimal.js';
+console.log('Loading ' + minimalLib);
+var initRDKitModule = require(minimalLib);
 var RDKitModule;
 const fs       = require('fs');
 const readline = require('readline');
@@ -30,7 +34,7 @@ const extractBondCoords = (svg, bondDetail) => {
 const angleDegBetweenVectors = (v1, v2) => 180 / Math.PI * Math.acos((v1[0] * v2[0] + v1[1] * v2[1])
     / Math.sqrt((v1[0] * v1[0] + v1[1] * v1[1]) * (v2[0] * v2[0] + v2[1] * v2[1])));
 
-    // the goal here isn't to be comprehensive (the RDKit has tests for that),
+// the goal here isn't to be comprehensive (the RDKit has tests for that),
 // just to make sure that the wrappers are working as expected
 function test_basics() {
     var bmol = null;
@@ -859,6 +863,12 @@ function test_sanitize() {
     assert(mol.is_valid());
 }
 
+function test_removehs() {
+    const badValenceSmiles = 'N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12';
+    mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
+    assert(mol.is_valid());
+}
+
 function test_flexicanvas() {
     var mol = RDKitModule.get_mol("CCCC");
     assert.equal(mol.is_valid(),1);
@@ -968,15 +978,51 @@ M  END`);
 }
 
 function test_legacy_stereochem() {
-    RDKitModule.use_legacy_stereo_perception(true);
-    var mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
-    assert.equal(mol.is_valid(),1);
-    assert.equal(mol.get_smiles(),"CC1CCC2(CC1)CC[C@H](C)C(C)C2");
+    var origSetting;
+    try {
+        origSetting = RDKitModule.use_legacy_stereo_perception(true);
+        var mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
+        assert.equal(mol.is_valid(),1);
+        assert.equal(mol.get_smiles(),"CCC(C)=C1CC(C)(O)C1");
 
-    RDKitModule.use_legacy_stereo_perception(false);
-    mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
-    assert.equal(mol.is_valid(),1);
-    //assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
+        RDKitModule.use_legacy_stereo_perception(false);
+        mol = RDKitModule.get_mol("O[C@@]1(C)C/C(/C1)=C(/C)\\CC");
+        assert.equal(mol.is_valid(),1);
+        assert.equal(mol.get_smiles(),"CC/C(C)=C1\\C[C@](C)(O)C1");
+    } finally {
+        RDKitModule.use_legacy_stereo_perception(origSetting);
+    }
+}
+
+function test_allow_non_tetrahedral_chirality() {
+    var ctab = `
+  Mrv2108 09132105183D          
+
+  5  4  0  0  0  0            999 V2000
+   -1.2500    1.4518    0.0000 Pt  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    2.2768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4250    1.4518    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0750    1.4518    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    0.6268    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  END
+`;
+    var origSetting;
+    try {
+        origSetting = RDKitModule.allow_non_tetrahedral_chirality(true);
+        var mol = RDKitModule.get_mol(ctab);
+        assert.equal(mol.is_valid(),1);
+        assert.equal(mol.get_smiles(), "F[Pt@SP3](F)(Cl)Cl");
+        RDKitModule.allow_non_tetrahedral_chirality(false);
+        var mol = RDKitModule.get_mol(ctab);
+        assert.equal(mol.is_valid(),1);
+        assert.equal(mol.get_smiles(), "F[Pt](F)(Cl)Cl");
+    } finally {
+        RDKitModule.allow_non_tetrahedral_chirality(origSetting);
+    }
 }
 
 function test_prop() {
@@ -1758,11 +1804,13 @@ initRDKitModule().then(function(instance) {
     test_has_coords();
     test_kekulize();
     test_sanitize();
+    test_removehs();
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
     test_rxn_drawing();
     test_legacy_stereochem();
+    test_allow_non_tetrahedral_chirality();
     test_prop();
     test_highlights();
     test_add_chiral_hs();

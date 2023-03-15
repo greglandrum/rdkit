@@ -14,7 +14,7 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
-              NontetrahedralStereo.cpp
+              NontetrahedralStereo.cpp WedgeBonds.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -183,3 +183,6 @@ rdkit_catch_test(canonTestsCatch catch_canon.cpp
 
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp 
            LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )
+
+rdkit_catch_test(queryTestsCatch catch_queries.cpp 
+           LINK_LIBRARIES SmilesParse GraphMol )
