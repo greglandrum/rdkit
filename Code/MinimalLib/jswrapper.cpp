@@ -482,13 +482,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(const std::string &, const std::string &)>(
                     &JSMol::set_prop))
       .function("get_prop", &JSMol::get_prop)
+      .function("clear_prop", &JSMol::clear_prop)
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",
                 select_overload<std::string(double, bool)>(
                     &JSMol::condense_abbreviations))
       .function("add_hs", &JSMol::add_hs)
+      .function("add_hs_in_place", &JSMol::add_hs_in_place)
       .function("remove_hs", &JSMol::remove_hs)
+      .function("remove_hs_in_place", &JSMol::remove_hs_in_place)
       .function("normalize_depiction",
                 select_overload<double()>(&JSMol::normalize_depiction))
       .function("normalize_depiction",
@@ -548,6 +551,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
   function("use_legacy_stereo_perception", &use_legacy_stereo_perception);
+  function("allow_non_tetrahedral_chirality", &allow_non_tetrahedral_chirality);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_mol", &get_mol_no_details, allow_raw_pointers());
