@@ -38,7 +38,7 @@ import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem import rdChemReactions
+from rdkit.Chem import AllChem, rdChemReactions
 from rdkit import Geometry
 from rdkit import RDConfig
 from rdkit.Chem.SimpleEnum import Enumerator
@@ -819,7 +819,7 @@ class StereoGroupTests(unittest.TestCase):
     -> preserve stereo group
     """
     reaction = '[C@:1]>>[C@:1]'
-    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@@H](Cl)Br |&1:1|', 'FC(Cl)Br']
+    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@H](Cl)Br |&1:1|', 'FC(Cl)Br']
     for reactant in reactants:
       products = _reactAndSummarize(reaction, reactant)
       self.assertEqual(products, reactant)
@@ -831,7 +831,7 @@ class StereoGroupTests(unittest.TestCase):
     -> preserve stereo group
     """
     reaction = '[C:1]>>[C:1]'
-    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@@H](Cl)Br |&1:1|', 'FC(Cl)Br']
+    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@H](Cl)Br |&1:1|', 'FC(Cl)Br']
     for reactant in reactants:
       products = _reactAndSummarize(reaction, reactant)
       self.assertEqual(products, reactant)
@@ -845,7 +845,7 @@ class StereoGroupTests(unittest.TestCase):
     reaction = '[C@:1]>>[C@@:1]'
 
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)Br |o1:1|')
-    self.assertEqual(products, 'F[C@@H](Cl)Br |o1:1|')
+    self.assertEqual(products, 'F[C@H](Cl)Br |o1:1|')
     products = _reactAndSummarize(reaction, 'F[C@@H](Cl)Br |&1:1|')
     self.assertEqual(products, 'F[C@H](Cl)Br |&1:1|')
     products = _reactAndSummarize(reaction, 'FC(Cl)Br')
@@ -868,10 +868,10 @@ class StereoGroupTests(unittest.TestCase):
     reaction = '[C@:1]F>>[C:1]F'
     # Reaction destroys stereo (but preserves unaffected group
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
-    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |&1:3|')
+    self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
     # Reaction destroys stereo (but preserves the rest of the group
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|')
-    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |&1:3|')
+    self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
 
   def test_reaction_defines_stereo(self):
     """
@@ -889,11 +889,11 @@ class StereoGroupTests(unittest.TestCase):
 
     # Remove group with defined stereo
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |&1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |&1:3|')
 
     # Remove atoms with defined stereo from group
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
 
   def test_stereogroup_is_spectator_to_reaction(self):
     """
@@ -902,19 +902,19 @@ class StereoGroupTests(unittest.TestCase):
     """
     # 5a. Reaction preserves unrelated stereo
     products = _reactAndSummarize('[C@:1]F>>[C@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5b. Reaction ignores unrelated stereo'
     products = _reactAndSummarize('[C:1]F>>[C:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5c. Reaction inverts unrelated stereo'
     products = _reactAndSummarize('[C@:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
     # 5d. Reaction destroys unrelated stereo' 1:3|
     products = _reactAndSummarize('[C@:1]F>>[C:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |o1:3|')
     # 5e. Reaction assigns unrelated stereo'
     products = _reactAndSummarize('[C:1]F>>[C@@:1]F', 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
-    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@H](Cl)Br |o1:3|')
 
   def test_reaction_splits_stereogroup(self):
     """
@@ -935,8 +935,9 @@ class StereoGroupTests(unittest.TestCase):
     products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
                                   'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|', 'CC(=O)C')
     # stereogroup manually checked, product SMILES assumed correct.
-    self.assertEqual(products,
-                     'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|')
+    self.assertEqual(
+      products,
+      'CC(C)(OCC[C@H](Br)C[C@H](Cl)Br)OCC[C@H](Br)C[C@H](Cl)Br |&1:6,9,15,18|')
 
     # Stereogroup atoms are not in the reaction, but have multiple copies in the
     # product.
@@ -944,7 +945,7 @@ class StereoGroupTests(unittest.TestCase):
                                   'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|', 'CC(=O)C')
     # stereogroup manually checked, product SMILES assumed correct.
     self.assertEqual(products,
-                     'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|')
+                     'CC(C)(OCC[C@H](Br)C[C@H](Cl)Br)OCC[C@H](Br)C[C@H](Cl)Br |&1:6,9,15,18|')
 
   def test_github(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:2][C:3]>>[C:2][C][*:3]')
@@ -1081,6 +1082,21 @@ M  END
 
     self.assertEqual(reaction.GetNumReactantTemplates(), reaction2.GetNumReactantTemplates())
 
+  def testGithub6138(self):
+    mol = Chem.MolFromSmiles("COc1ccccc1Oc1nc(Nc2cc(C)[nH]n2)cc2ccccc12")
+    rxn = AllChem.ReactionFromSmarts("([c:1]:[n&H1&+0&D2:3]:[n:2])>>([c:1]:[n&H0&+0&D3:3](:[n:2])-C1-C-C-C-C-O-1)")
+
+    def run(r):
+      return Chem.MolToSmiles(r.RunReactants((mol,))[0][0])
+
+    rxn_reloaded = pickle.loads(pickle.dumps(rxn))
+
+    res1 = Chem.MolToSmiles(rxn.RunReactants((mol,))[0][0])
+    res2 = Chem.MolToSmiles(rxn_reloaded.RunReactants((mol,))[0][0])
+    rxn_reloaded_after_use = pickle.loads(pickle.dumps(rxn))
+    res3 = Chem.MolToSmiles(rxn_reloaded_after_use.RunReactants((mol,))[0][0])
+    self.assertEqual(res1, res2)
+    self.assertEqual(res1, res3)
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
