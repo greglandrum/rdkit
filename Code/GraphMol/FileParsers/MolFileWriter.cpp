@@ -545,6 +545,12 @@ bool hasNonDefaultValence(const Atom *atom) {
            (atom->getExplicitValence() !=
             PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
   }
+
+  // atoms that have bonds to them but no implict Hs, do not need VAL tags
+  if (atom->getDegree() && !atom->getTotalNumHs()) {
+    return false;
+  }
+
   return true;
 }
 
