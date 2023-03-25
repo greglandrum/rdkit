@@ -1191,24 +1191,21 @@ void testGithub189() {
     TEST_ASSERT(m->getNumBonds() == 8);
     TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence() == 4);
-
     std::string mb = MolToMolBlock(*m);
     delete m;
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
     TEST_ASSERT(m->getNumBonds() == 8);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence() == 4);
 
     // try v3k
-    mb = MolToMolBlock(*m, true, -1, true, true);
+    mb = MolToV3KMolBlock(*m);
     delete m;
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
     TEST_ASSERT(m->getNumBonds() == 8);
-    TEST_ASSERT(m->getAtomWithIdx(2)->getNoImplicit());
     TEST_ASSERT(m->getAtomWithIdx(2)->getTotalValence() == 4);
 
     delete m;

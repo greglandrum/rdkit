@@ -3079,3 +3079,56 @@ M  END
                                sprop));
   CHECK(std::string("(5 4 5 2 3 1)") == sprop);
 }
+
+TEST_CASE("some valence problems") {
+  SECTION("Al should not have valence of 6") {
+    auto m = R"CTAB(
+  Mrv2211 03252304432D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Al 2.2917 6.25 0 0
+M  V30 2 N 3.8317 6.25 0 0
+M  V30 3 N 2.2917 4.71 0 0
+M  V30 4 N 0.7517 6.25 0 0
+M  V30 5 N 2.2917 8.3033 0 0
+M  V30 6 C 2.2917 9.8433 0 0
+M  V30 7 C 0.7517 8.3033 0 0
+M  V30 8 C 3.7792 8.7019 0 0
+M  V30 9 C 4.9206 7.3389 0 0
+M  V30 10 C 4.421 4.8272 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 9 5 1
+M  V30 5 1 5 6
+M  V30 6 1 5 7
+M  V30 7 1 5 8
+M  V30 8 1 2 9
+M  V30 9 1 9 8
+M  V30 10 1 2 10
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("[PbH2] should not have radicals") {
+    auto m = "[PbH2]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 2);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("[Pb] should have two radicals") {
+    auto m = "[Pb]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
+  }
+}

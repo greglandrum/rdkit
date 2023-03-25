@@ -317,24 +317,39 @@ void assignRadicals(RWMol &mol) {
         !atom->getAtomicNum()) {
       continue;
     }
-    const auto &valens =
-        PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
-    int chg = atom->getFormalCharge();
     int nOuter =
         PeriodicTable::getTable()->getNouterElecs(atom->getAtomicNum());
+    int chg = atom->getFormalCharge();
+    if (chg > nOuter) {
+      atom->setNumRadicalElectrons(0);
+      continue;
+    }
+    int effectiveAtomicNumber = atom->getAtomicNum() - chg;
+    if (effectiveAtomicNumber < 0) {
+      effectiveAtomicNumber = 0;
+    }
+    const auto &valens =
+        PeriodicTable::getTable()->getValenceList(effectiveAtomicNumber);
     if (valens.size() != 1 || valens[0] != -1) {
       double accum = 0.0;
-      RWMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(atom);
-      while (beg != end) {
-        accum += mol[*beg]->getValenceContrib(atom);
-        ++beg;
+      for (const auto bond : mol.atomBonds(atom)) {
+        accum += bond->getValenceContrib(atom);
       }
-      accum += atom->getNumExplicitHs();
+      accum += atom->getTotalNumHs();
+      if (accum == valens[0]) {
+        atom->setNumRadicalElectrons(0);
+        continue;
+      }
       int totalValence = static_cast<int>(accum + 0.1);
       int baseCount = 8;
       if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {
         baseCount = 2;
+      }
+
+      // special case for main-group elements with d orbitals and implicit
+      // valence states:
+      if (atom->getAtomicNum() > 30 && (totalValence - chg) <= valens[0]) {
+        nOuter = valens[0];
       }
 
       // applies to later (more electronegative) elements:
@@ -677,7 +692,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         for (auto &sg : mol.getStereoGroups()) {
           std::vector<Atom *> sgats;
           for (auto sga : sg.getAtoms()) {
-            if ((*mapping)[sga->getIdx()] == frag) {
+            if ((*mapping)[sga->getIdx()] == static_cast<int>(frag)) {
               sgats.push_back(re->getAtomWithIdx(ids[sga->getIdx()]));
             }
           }
@@ -985,7 +1000,7 @@ void addHapticBond(RWMol &mol, unsigned int metalIdx,
   dummyAt->setQuery(makeAtomNullQuery());
 
   unsigned int dummyIdx = mol.addAtom(dummyAt);
-  for (auto i = 0; i < mol.getNumConformers(); ++i) {
+  for (auto i = 0u; i < mol.getNumConformers(); ++i) {
     auto &conf = mol.getConformer(i);
     RDGeom::Point3D dummyPos;
     for (auto ha : hapticAtoms) {
