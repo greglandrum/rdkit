@@ -41,7 +41,7 @@
 #include <mutex>
 #endif
 
-// #define DEBUG_EMBEDDING 1
+#define DEBUG_EMBEDDING 1
 
 #ifdef M_PI_2
 #undef M_PI_2
@@ -260,7 +260,7 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 nullptr   // callback
 );
 
-//! New parameters for acyclic bonds (version 4) 
+//! New parameters for acyclic bonds (version 4)
 const EmbedParameters ETKDGv4(0,        // maxIterations
                               1,        // numThreads
                               -1,       // randomSeed
@@ -332,6 +332,7 @@ struct EmbedArgs {
   std::vector<std::pair<std::vector<unsigned int>, int>> const
       *stereoDoubleBonds;
   ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
+  double *topolBoundsMat;
 };
 }  // namespace detail
 
@@ -525,8 +526,19 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
       fixedPts.set(v.first);
     }
   }
+  std::map<std::pair<int, int>, double> extraWeights;
+  if (eargs.topolBoundsMat) {
+    for (auto i = 0; i < static_cast<int>(positions->size()); ++i) {
+      for (auto j = 0; j < i; ++j) {
+        auto tdist = eargs.topolBoundsMat[i * positions->size() + j];
+        if (feq(tdist, 1, 0.01) || feq(tdist, 2, .01)) {
+          extraWeights[std::make_pair(i, j)] = 10.;
+        }
+      }
+    }
+  }
   std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
+      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, &extraWeights,
       embedParams.basinThresh, &fixedPts));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -621,8 +633,20 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   // time removing the chiral constraints and
   // increasing the weight on the fourth dimension
 
+  std::map<std::pair<int, int>, double> extraWeights;
+  if (eargs.topolBoundsMat) {
+    for (auto i = 0; i < static_cast<int>(positions->size()); ++i) {
+      for (auto j = 0; j < i; ++j) {
+        auto tdist = eargs.topolBoundsMat[i * positions->size() + j];
+        if (feq(tdist, 1, 0.01) || feq(tdist, 2, .01)) {
+          extraWeights[std::make_pair(i, j)] = 100.;
+        }
+      }
+    }
+  }
+
   std::unique_ptr<ForceFields::ForceField> field2(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, nullptr,
+      *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, &extraWeights,
       embedParams.basinThresh));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -1504,13 +1528,16 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads = getNumThreadsToUse(params.numThreads);
 
+    // we don't own this, so don't have to worry about the memory
+    auto topolDistMat = MolOps::getDistanceMat(*piece);
+
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {&confsOk,        fourD,
                                &fragMapping,    &confs,
                                fragIdx,         mmat,
                                &chiralCenters,  &tetrahedralCarbons,
                                &doubleBondEnds, &stereoDoubleBonds,
-                               &etkdgDetails};
+                               &etkdgDetails,   topolDistMat};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
     }

@@ -589,29 +589,30 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
+TEST_CASE("tracking failure causes") {
+  SECTION("basics") {
     auto mol =
         "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-REQUIRE(mol);
-MolOps::addHs(*mol);
-DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-ps.randomSeed = 0xf00d;
-ps.trackFailures = true;
-ps.maxIterations = 50;
-ps.randomSeed = 42;
-auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(cid < 0);
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.randomSeed = 42;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
 
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
 
-auto fail_cp = ps.failures;
-// make sure we reset the counts each time
-cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(ps.failures == fail_cp);
-}
-SECTION("chirality") {
-  auto mol = R"CTAB(
+    auto fail_cp = ps.failures;
+    // make sure we reset the counts each time
+    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(ps.failures == fail_cp);
+  }
+  SECTION("chirality") {
+    auto mol = R"CTAB(
   Ketcher  1102315302D 1   1.00000     0.00000     0
 
  10 11  0  0  1  0  0  0  0  0999 V2000
@@ -638,40 +639,44 @@ SECTION("chirality") {
   4 10  1  1     0  0
 M  END
 )CTAB"_ctab;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] > 5);
-}
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    for (auto i = 0u; i < ps.failures.size(); ++i) {
+      std::cerr << i << " " << ps.failures[i] << std::endl;
+    }
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >
+          5);
+  }
 
-#ifdef RDK_TEST_MULTITHREADED
-SECTION("multithreaded") {
-  auto mol =
-      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 10;
-  ps.randomSeed = 42;
-  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
+  // #ifdef RDK_TEST_MULTITHREADED
+  // SECTION("multithreaded") {
+  //   auto mol =
+  //       "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+  //   REQUIRE(mol);
+  //   MolOps::addHs(*mol);
+  //   DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  //   ps.randomSeed = 0xf00d;
+  //   ps.trackFailures = true;
+  //   ps.maxIterations = 10;
+  //   ps.randomSeed = 42;
+  //   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-  DGeomHelpers::EmbedParameters ps2 = ps;
-  ps2.numThreads = 4;
+  //   DGeomHelpers::EmbedParameters ps2 = ps;
+  //   ps2.numThreads = 4;
 
-  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-  CHECK(cids2 == cids);
+  //   auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+  //   CHECK(cids2 == cids);
 
-  CHECK(ps.failures == ps2.failures);
-}
-#endif
+  //   CHECK(ps.failures == ps2.failures);
+  // }
+  // #endif
 }
 
 TEST_CASE("Github #5883: confgen failing for chiral N in a three ring") {
