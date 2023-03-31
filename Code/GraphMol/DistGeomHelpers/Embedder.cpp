@@ -41,7 +41,7 @@
 #include <mutex>
 #endif
 
-#define DEBUG_EMBEDDING 1
+// #define DEBUG_EMBEDDING 1
 
 #ifdef M_PI_2
 #undef M_PI_2
