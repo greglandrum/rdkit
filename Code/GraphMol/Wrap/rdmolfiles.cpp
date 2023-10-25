@@ -716,6 +716,10 @@ void wrap_maewriter();
 void wrap_multiSmiSupplier();
 void wrap_multiSDSupplier();
 
+// Generalized file reader
+void wrap_generalizedFileReader();
+
+
 BOOST_PYTHON_MODULE(rdmolfiles) {
   std::string docString;
 
@@ -2289,5 +2293,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
    *******************************************************/
   wrap_multiSmiSupplier();
   wrap_multiSDSupplier();
+  wrap_generalizedFileReader();
 #endif
 }

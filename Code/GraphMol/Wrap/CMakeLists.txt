@@ -41,7 +41,8 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        TDTWriter.cpp CompressedSDMolSupplier.cpp
                        PDBWriter.cpp
                        MultithreadedSmilesMolSupplier.cpp
-                       MultithreadedSDMolSupplier.cpp)
+                       MultithreadedSDMolSupplier.cpp
+                       GeneralizedFileReader.cpp)
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
@@ -50,7 +51,8 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        TDTWriter.cpp
                        PDBWriter.cpp
                        MultithreadedSmilesMolSupplier.cpp
-                       MultithreadedSDMolSupplier.cpp)
+                       MultithreadedSDMolSupplier.cpp
+                       GeneralizedFileReader.cpp)
 
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
@@ -95,3 +97,6 @@ add_pytest(pyTestPropertyLists
 
 add_pytest(pyCDXMLTest
          ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)
+
+add_pytest(pyGeneralizedReaderTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/testGeneralizedFileReader.py)
