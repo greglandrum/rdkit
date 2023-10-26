@@ -2293,6 +2293,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
    *******************************************************/
   wrap_multiSmiSupplier();
   wrap_multiSDSupplier();
-  wrap_generalizedFileReader();
 #endif
+  wrap_generalizedFileReader();
 }

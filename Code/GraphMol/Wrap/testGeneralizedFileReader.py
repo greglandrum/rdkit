@@ -6,7 +6,6 @@ import unittest
 
 from rdkit import Chem, RDConfig, __version__, rdBase
 
-@unittest.skipUnless(hasattr(Chem,'DetermineFileFormat'),"not built with multi-threading support")
 class TestCase(unittest.TestCase):
     def testDetermineFormat(self):
        testd = (

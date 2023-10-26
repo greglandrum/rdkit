@@ -90,11 +90,6 @@ void determineFormat(const std::string path, std::string& fileFormat,
 
 //! returns a new MolSupplier object based on the file name instantiated
 //! with the relevant options provided in the SupplierOptions struct
-/*!
-    <b>Note:</b>
-      - the caller owns the memory and therefore the pointer must be deleted
-*/
-
 std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
                                          const struct SupplierOptions& opt) {
   std::string fileFormat = "";
