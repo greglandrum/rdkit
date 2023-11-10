@@ -28,7 +28,48 @@ TEST_CASE("Determine Connectivity") {
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
 
+      bool useHueckel = false;
+      int charge = 0;
+      double factor = 1.3;
+      bool useVdw = true;
+      determineConnectivity(*mol, useHueckel, charge, factor, useVdw);
       determineConnectivity(*mol, false);
+      MolOps::removeAllHs(*mol, false);
+
+      auto numAtoms = mol->getNumAtoms();
+
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+      for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
+          const auto origBond = orig->getBondBetweenAtoms(i, j);
+          const auto molBond = mol->getBondBetweenAtoms(i, j);
+          if (origBond) {
+            CHECK(molBond);
+          } else {
+            CHECK(!molBond);
+          }
+        }
+      }
+    }
+  }  // SECTION
+
+  SECTION("connect the dots") {
+    unsigned int numTests = 39;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName =
+          rdbase + "/Code/GraphMol/DetermineBonds/test_data/connectivity/" +
+          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
+      bool useHueckel = false;
+      int charge = 0;
+      double factor = 1.3;
+      bool useVdw = false;
+      determineConnectivity(*mol, useHueckel, charge, factor, useVdw);
       MolOps::removeAllHs(*mol, false);
 
       auto numAtoms = mol->getNumAtoms();
@@ -338,5 +379,17 @@ H	  20.371657	   2.180532	   1.492305
     REQUIRE(m);
     determineBonds(*m);
     CHECK(m->getNumAtoms() == 102);
+  }
+}
+
+TEST_CASE("Github #6121: Single Atom in DetermineBonds") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(1
+
+H   0.0         0.0           0.0
+)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineBonds(*m);
   }
 }

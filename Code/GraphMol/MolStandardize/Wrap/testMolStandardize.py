@@ -2,17 +2,16 @@
 # Copyright (C) 2018 Susan H. Leung
 #         All Rights Reserved
 #
-from rdkit import RDConfig
+import math
 import os
 import sys
-import math
-from datetime import datetime, timedelta
 import unittest
-from rdkit import DataStructs
-from rdkit import Chem
-from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.rdchem import Atom
+from datetime import datetime, timedelta
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.Chem.rdchem import Atom
+from rdkit.Geometry import rdGeometry as geom
 
 
 class TestCase(unittest.TestCase):
@@ -73,8 +72,11 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("C1(CCCCC1)[Zn]Br")
     md = rdMolStandardize.MetalDisconnector()
     nm = md.Disconnect(mol)
-    #    Metal.MetalDisconnector.Disconnect(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "[Br-].[CH-]1CCCCC1.[Zn+2]")
+    nm = Chem.Mol(mol)
+    md.DisconnectInPlace(nm)
+    self.assertEqual(Chem.MolToSmiles(nm), "[Br-].[CH-]1CCCCC1.[Zn+2]")
+
 
     # test user defined metal_nof
     md.SetMetalNof(
@@ -85,12 +87,49 @@ class TestCase(unittest.TestCase):
     nm2 = md.Disconnect(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
 
+    # Split with organometallics disconnector, two ways.
+    rufile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                          'ruthenium.mol')
+    rumol = Chem.MolFromMolFile(rufile)
+    disrumol = rdMolStandardize.DisconnectOrganometallics(rumol)
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
+
+    opts = rdMolStandardize.MetalDisconnectorOptions()
+    opts.splitGrignards = True
+    opts.splitAromaticC = True
+    opts.adjustCharges = False
+    opts.removeHapticDummies = True
+    def_opts = rdMolStandardize.MetalDisconnectorOptions()
+    self.assertNotEqual(def_opts.splitGrignards, opts.splitGrignards)
+    self.assertNotEqual(def_opts.splitAromaticC, opts.splitAromaticC)
+    self.assertNotEqual(def_opts.adjustCharges, opts.adjustCharges)
+    self.assertNotEqual(def_opts.removeHapticDummies, opts.removeHapticDummies)
+
+    md = rdMolStandardize.MetalDisconnector(opts)
+
+    grigfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                            'grignard_2.mol')
+    grigmol = Chem.MolFromMolFile(grigfile)
+    disgrigmol = md.Disconnect(grigmol)
+    self.assertEqual(Chem.MolToSmiles(disgrigmol), "[Cl-].[Mg+2].[c-]1ccccc1")
+
+    # and passing in the options explicitly
+    disrumol = rdMolStandardize.DisconnectOrganometallics(rumol, opts)
+    self.assertEqual(Chem.MolToSmiles(disrumol),
+                     "[Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1")
+
   def test6Charge(self):
     mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")
     # instantiate with default acid base pair library
     reionizer = rdMolStandardize.Reionizer()
     nm = reionizer.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
+
+    nm = Chem.Mol(mol)
+    reionizer.reionizeInPlace(nm)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
+
 
     # try reionize with another acid base pair library without the right
     # pairs
@@ -105,20 +144,35 @@ class TestCase(unittest.TestCase):
     mol3 = Chem.MolFromSmiles("O=C([O-])c1ccccc1")
     nm3 = uncharger.uncharge(mol3)
     self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
+    nm3 = Chem.Mol(mol3)
+    uncharger.unchargeInPlace(nm3)
+    self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
 
     # test canonical Uncharger
     uncharger = rdMolStandardize.Uncharger(canonicalOrder=False)
     mol3 = Chem.MolFromSmiles("C[N+](C)(C)CC(C(=O)[O-])CC(=O)[O-]")
     nm3 = uncharger.uncharge(mol3)
     self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O")
+    nm3 = Chem.Mol(mol3)
+    uncharger.unchargeInPlace(nm3)
+    self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O")
+
+
     uncharger = rdMolStandardize.Uncharger(canonicalOrder=True)
     nm3 = uncharger.uncharge(mol3)
+    self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]")
+    nm3 = Chem.Mol(mol3)
+    uncharger.unchargeInPlace(nm3)
     self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]")
 
   def test7Fragment(self):
     fragremover = rdMolStandardize.FragmentRemover()
     mol = Chem.MolFromSmiles("CN(C)C.Cl.Cl.Br")
     nm = fragremover.remove(mol)
+    self.assertEqual(Chem.MolToSmiles(nm), "CN(C)C")
+
+    nm = Chem.Mol(mol)
+    fragremover.removeInPlace(nm)
     self.assertEqual(Chem.MolToSmiles(nm), "CN(C)C")
 
     lfragchooser = rdMolStandardize.LargestFragmentChooser()
@@ -133,6 +187,9 @@ class TestCase(unittest.TestCase):
     fragremover = rdMolStandardize.FragmentRemover(skip_if_all_match=True)
     mol = Chem.MolFromSmiles("[Na+].Cl.Cl.Br")
     nm = fragremover.remove(mol)
+    self.assertEqual(nm.GetNumAtoms(), mol.GetNumAtoms())
+    nm = Chem.Mol(mol)
+    fragremover.removeInPlace(mol)
     self.assertEqual(nm.GetNumAtoms(), mol.GetNumAtoms())
 
     smi3 = "CNC[C@@H]([C@H]([C@@H]([C@@H](CO)O)O)O)O.c1cc2c(cc1C(=O)O)oc(n2)c3cc(cc(c3)Cl)Cl"
@@ -200,6 +257,10 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("C[n+]1ccccc1[O-]")
     nm = normalizer.normalize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
+    nm = Chem.Mol(mol)
+    normalizer.normalizeInPlace(nm)
+    self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
+
 
   def test9Validate(self):
     vm = rdMolStandardize.RDKitValidation()
@@ -926,6 +987,28 @@ chlorine	[Cl]
     # now with defaults
     nm = rdMolStandardize.RemoveFragments(m)
     self.assertEqual(Chem.MolToSmiles(nm), "CC")
+
+  def test22StandardizeInPlace(self):
+    m = Chem.MolFromSmiles("O=N(=O)-C(O[Fe])C(C(=O)O)C-N(=O)=O")
+    rdMolStandardize.CleanupInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m),"O=C([O-])C(C[N+](=O)[O-])C(O)[N+](=O)[O-].[Fe+]")
+
+    m = Chem.MolFromSmiles('[F-].[Cl-].[Br-].CC')
+    rdMolStandardize.RemoveFragmentsInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CC")
+
+    m = Chem.MolFromSmiles('C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O')
+    rdMolStandardize.ReionizeInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
+
+    m = Chem.MolFromSmiles('CCO[Fe]')
+    rdMolStandardize.DisconnectOrganometallicsInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CCO.[Fe]")
+
+    m = Chem.MolFromSmiles(r"C[N+](C)=C\C=C\[O-]")
+    rdMolStandardize.NormalizeInPlace(m)
+    self.assertEqual(Chem.MolToSmiles(m), "CN(C)C=CC=O")
+
 
 
 if __name__ == "__main__":

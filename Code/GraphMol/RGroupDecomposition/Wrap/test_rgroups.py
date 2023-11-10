@@ -30,20 +30,20 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest
-import os, sys, copy
-
+import copy
+import os
 import pickle
-
-from rdkit import rdBase
-from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import (RGroupDecompose, RGroupDecomposition,
-                                              RGroupDecompositionParameters, RGroupLabels,
-                                              RGroupCoreAlignment)
+import sys
+import unittest
 from collections import OrderedDict
 
 # the RGD code can generate a lot of warnings. disable them
-from rdkit import RDLogger
+from rdkit import Chem, RDLogger, rdBase
+from rdkit.Chem.rdRGroupDecomposition import (RGroupCoreAlignment,
+                                              RGroupDecompose,
+                                              RGroupDecomposition,
+                                              RGroupDecompositionParameters,
+                                              RGroupLabels)
 
 RDLogger.DisableLog("rdApp.warning")
 
@@ -654,6 +654,76 @@ $$$$
     self.assertEqual(unmatched, [])
     rgroups, unmatched = RGroupDecompose(chiral_cores, mols, options=params)
     self.assertEqual(unmatched, [])
+
+  def testTautomerCore(self):
+    block = """"
+  Mrv2008 08072313382D          
+
+  9  9  0  0  0  0            999 V2000
+    5.9823    5.0875    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9823    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.8500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    5.0875    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    5.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    6.3250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6968    3.8500    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.0250    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  1  6  1  0  0  0  0
+  2  8  1  0  0  0  0
+  3  9  1  0  0  0  0
+M  RGP  2   8   1   9   2
+M  END
+"""
+    core = Chem.MolFromMolBlock(block)
+    mol1 = Chem.MolFromSmiles('Cc1cnc(O)cc1Cl')
+    mol2 = Chem.MolFromSmiles('CC1=CNC(=O)C=C1F')
+
+    params = RGroupDecompositionParameters()
+    params.doTautomers = True
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol1), 0)
+    self.assertEqual(rgd.Add(mol2), 1)
+    self.assertTrue(rgd.Process())
+    rows = rgd.GetRGroupsAsRows(asSmiles=True)
+    expected_rows = [
+        {'Core': 'Oc1cc([*:1])c([*:2])cn1', 'R1': 'Cl[*:1]', 'R2': 'C[*:2]'},
+        {'Core': 'O=c1cc([*:1])c([*:2])c[nH]1', 'R1': 'F[*:1]', 'R2': 'C[*:2]'}]
+    self.assertEqual(rows, expected_rows)
+
+  def testMolMatchesCore(self):
+    core = Chem.MolFromSmarts("[*:1]c1[!#1]([*:2])cc([*:3])n([*:4])c(=O)1")
+    cmol = Chem.MolFromSmiles("Clc1c(C)cc(F)n(CC)c(=O)1")
+    nmol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=O)1")
+    smol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=S)1")
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol), -1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms())
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms() - 1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol, matches), -1)
+    self.assertEqual(len(matches), 0)
+    cmol_h = Chem.AddHs(cmol)
+    nmol_h = Chem.AddHs(nmol)
+    self.assertTrue(cmol_h.HasSubstructMatch(core))
+    self.assertEqual(len(cmol_h.GetSubstructMatch(core)), core.GetNumAtoms())
+    self.assertFalse(nmol_h.HasSubstructMatch(core))
 
 
 if __name__ == '__main__':

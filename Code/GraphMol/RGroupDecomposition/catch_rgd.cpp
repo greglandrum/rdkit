@@ -462,22 +462,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -496,22 +496,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -537,7 +537,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -565,7 +565,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -580,7 +580,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1C[C@]([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -778,4 +778,33 @@ TEST_CASE("MDL R labels from original core") {
           common_properties::dummyLabel));
     }
   }
+}
+
+TEST_CASE("Mol matches core") {
+  auto core = "[*:1]c1[!#1]([*:2])cc([*:3])n([*:4])c(=O)1"_smarts;
+  auto cmol = "Clc1c(C)cc(F)n(CC)c(=O)1"_smiles;
+  auto nmol = "Clc1ncc(F)n(CC)c(=O)1"_smiles;
+  auto smol = "Clc1ncc(F)n(CC)c(=S)1"_smiles;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  CHECK(decomp.getMatchingCoreIdx(*cmol) == 0);
+  CHECK(decomp.getMatchingCoreIdx(*nmol) == 0);
+  CHECK(decomp.getMatchingCoreIdx(*smol) == -1);
+  std::vector<MatchVectType> matches;
+  CHECK(decomp.getMatchingCoreIdx(*cmol, &matches) == 0);
+  CHECK(matches.size() == 1);
+  CHECK(matches.front().size() == core->getNumAtoms());
+  CHECK(decomp.getMatchingCoreIdx(*nmol, &matches) == 0);
+  CHECK(matches.size() == 1);
+  CHECK(matches.front().size() == core->getNumAtoms() - 1);
+  CHECK(decomp.getMatchingCoreIdx(*smol, &matches) == -1);
+  CHECK(matches.empty());
+  MolOps::addHs(*cmol);
+  MolOps::addHs(*nmol);
+  MatchVectType match;
+  CHECK(SubstructMatch(*cmol, *core, match));
+  CHECK(match.size() == core->getNumAtoms());
+  match.clear();
+  CHECK(!SubstructMatch(*nmol, *core, match));
 }

@@ -34,13 +34,14 @@
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
+#include <typeinfo>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <mutex>
 #endif
 
-//#define DEBUG_EMBEDDING 1
+// #define DEBUG_EMBEDDING 1
 
 #ifdef M_PI_2
 #undef M_PI_2
@@ -475,13 +476,11 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
       field->fixedPoints().push_back(v.first);
     }
   }
-  unsigned int nPasses = 0;
   field->initialize();
   if (field->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
       needMore = field->minimize(400, embedParams.optimizerForceTol);
-      ++nPasses;
     }
   }
   std::vector<double> e_contribs;
@@ -576,13 +575,9 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
-    int nPasses2 = 0;
     while (needMore) {
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
-      ++nPasses2;
     }
-    // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
-    // "<<nPasses2<<std::endl;
   }
   return true;
 }
@@ -1016,7 +1011,13 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // we should at least have 3 though
         CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
+        double volLowerBound = 5.0;
+        double volUpperBound = 100.0;
+
         if (nbrs.size() < 4) {
+          // we get lower volumes if there are three neighbors,
+          //  this was github #5883
+          volLowerBound = 2.0;
           nbrs.insert(nbrs.end(), atom->getIdx());
         }
 
@@ -1024,13 +1025,15 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // positive chiral volume
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], 5.0, 100.0);
+          auto *cset =
+              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
+                                      nbrs[3], volLowerBound, volUpperBound);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], -100.0, -5.0);
+          auto *cset =
+              new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1], nbrs[2],
+                                      nbrs[3], -volUpperBound, -volLowerBound);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else {
@@ -1224,31 +1227,36 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
         "random seed must either be positive, zero, or negative one");
     int new_seed = params->randomSeed;
     if (new_seed > -1) {
-      if (!multiplication_overflows_(rdcast<int>(ci + 1), params->randomSeed)) {
-        // old method of computing a new seed
-        new_seed = (ci + 1) * params->randomSeed;
+      if (params->enableSequentialRandomSeeds) {
+        new_seed += ci + 1;
       } else {
-        // If the above simple multiplication will overflow, use a
-        // cheap and easy way to hash the conformer index and seed
-        // together: for N'ary numerical system, where N is the
-        // maximum possible value of the pair of numbers. The
-        // following will generate unique integers:
-        // hash(a, b) = a + b * N
-        auto big_seed = rdcast<size_t>(params->randomSeed);
-        size_t max_val = std::max(ci + 1, big_seed);
-        size_t big_num = big_seed + max_val * (ci + 1);
-        // only grab the first 31 bits xor'd with the next 31 bits to
-        // make sure its positive, careful, the 'ULL' is important
-        // here, 0x7fffffff is the 'int' type because of C default
-        // number semantics and that we definitely don't want!
-        const size_t positive_int_mask = 0x7fffffffULL;
-        size_t folded_num = (big_num & positive_int_mask) ^ (big_num >> 31ULL);
-        new_seed = rdcast<int>(folded_num & positive_int_mask);
+        if (!multiplication_overflows_(rdcast<int>(ci + 1),
+                                       params->randomSeed)) {
+          // old method of computing a new seed
+          new_seed = (ci + 1) * params->randomSeed;
+        } else {
+          // If the above simple multiplication will overflow, use a
+          // cheap and easy way to hash the conformer index and seed
+          // together: for N'ary numerical system, where N is the
+          // maximum possible value of the pair of numbers. The
+          // following will generate unique integers:
+          // hash(a, b) = a + b * N
+          auto big_seed = rdcast<size_t>(params->randomSeed);
+          size_t max_val = std::max(ci + 1, big_seed);
+          size_t big_num = big_seed + max_val * (ci + 1);
+          // only grab the first 31 bits xor'd with the next 31 bits to
+          // make sure its positive, careful, the 'ULL' is important
+          // here, 0x7fffffff is the 'int' type because of C default
+          // number semantics and that we definitely don't want!
+          const size_t positive_int_mask = 0x7fffffffULL;
+          size_t folded_num =
+              (big_num & positive_int_mask) ^ (big_num >> 31ULL);
+          new_seed = rdcast<int>(folded_num & positive_int_mask);
+        }
       }
     }
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
-
     bool gotCoords =
         EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed);
 

@@ -423,6 +423,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS)
       .value("FINAL_CENTER_IN_VOLUME",
              RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CENTER_IN_VOLUME)
+      .value("LINEAR_DOUBLE_BOND",
+             RDKit::DGeomHelpers::EmbedFailureCauses::LINEAR_DOUBLE_BOND)
+      .value("BAD_DOUBLE_BOND_STEREO",
+             RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
       .export_values();
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
@@ -522,7 +526,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "trackFailures", &RDKit::DGeomHelpers::EmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")
       .def("GetFailureCounts", &RDKit::getFailureCounts,
-           "returns the counts of eacu");
+           "returns the counts of each failure type")
+      .def_readwrite(
+          "enableSequentialRandomSeeds",
+          &RDKit::DGeomHelpers::EmbedParameters::enableSequentialRandomSeeds,
+          "handle random number seeds so that conformer generation can be restarted");
+
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\

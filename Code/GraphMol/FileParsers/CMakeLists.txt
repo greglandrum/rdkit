@@ -116,5 +116,9 @@ rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
            LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
-           LINK_LIBRARIES FileParsers Subgraphs)
+           LINK_LIBRARIES CIPLabeler FileParsers Subgraphs)
+
+rdkit_catch_test(connectTheDotsTest connectTheDots_catch.cpp
+           LINK_LIBRARIES FileParsers)
+
 

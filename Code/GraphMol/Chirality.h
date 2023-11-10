@@ -22,6 +22,7 @@ namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
+class Conformer;
 
 namespace Chirality {
 
@@ -65,6 +66,12 @@ RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
+
+// this routine removes chiral markers and stereo indications that should not be
+// present this is only called when the molecule has not been sanitized and when
+// the new stereo (not legacy) is in use
+
+RDKIT_GRAPHMOL_EXPORT void removeBadStereo(ROMol &mol);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
@@ -160,6 +167,10 @@ RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool bondAffectsAtomChirality(const Bond *bond,
                                                     const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
+
+RDKIT_GRAPHMOL_EXPORT bool has_protium_neighbor(const ROMol &mol,
+                                                const Atom *atom);
+
 }  // namespace detail
 /// @endcond
 
@@ -201,6 +212,63 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoSpecified &s);
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoType &s);
+
+struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
+  bool wedgeTwoBondsIfPossible =
+      false;  //!< If this is enabled then two bonds will be wedged at chiral
+              //!< centers subject to the following constraints:
+              //!<   1. ring bonds will not be wedged
+              //!<   2. bonds to chiral centers will not be wedged
+              //!<   3. bonds separated by more than 120 degrees will not be
+              //!<      wedged
+};
+
+namespace detail {
+RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
+    const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
+RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
+    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, INT_VECT> countChiralNbrs(
+    const ROMol &mol, int noNbrs);
+RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
+                                          const INT_VECT &nChiralNbrs,
+                                          const INT_MAP_INT &resSoFar,
+                                          int noNbrs);
+}  // namespace detail
+
+//! picks the bonds which should be wedged
+/// \returns a map from bond idx -> controlling atom idx
+RDKIT_GRAPHMOL_EXPORT INT_MAP_INT pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
+
+RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
+    ROMol &mol, const Conformer *conf = nullptr,
+    const BondWedgingParameters *params = nullptr);
+RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
+                                     const Conformer *conf);
+
+//! Returns whether or not a bond is a candidate for bond stereo
+RDKIT_GRAPHMOL_EXPORT bool canBeStereoBond(const Bond *bond);
+
+//! Returns true for double bonds which should be shown as a crossed bonds.
+// It always returns false if any adjacent bond is a squiggle bond.
+RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
+
+//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
+/*!
+ \param mol: molecule to have its wedges altered
+ */
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+//! Remove MolBlock bond wedging information from molecule.
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
+//! Invert bond wedging information read from a mol block (if present).
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
 }  // namespace Chirality
 }  // namespace RDKit
