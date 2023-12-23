@@ -214,6 +214,12 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
           (*atomInvariants)[i] == 0) {
         continue;
       }
+      // skip dummies and very common atoms
+      auto anum = mol.getAtomWithIdx(i)->getAtomicNum();
+      if (anum == 0 || anum == 6 || anum == 7 || anum == 8) {
+        continue;
+      }
+
       atomsInPath.reset();
       atomsInPath.set(i);
       INT_VECT path;

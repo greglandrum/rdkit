@@ -417,7 +417,8 @@ TEST_CASE("RDKitFP including atoms") {
     args.additionalOutput = &ao;
     std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
     REQUIRE(fp);
-    CHECK(fp->getNumOnBits() == 4);  // 3 atoms and one path
+    CHECK(fp->getNumOnBits() ==
+          2);  // 1 atoms (the C and O don't set bits) and one path
     CHECK(ao.bitPaths->size() == 1);
     CHECK(ao.atomToBits->size() == 3);
     CHECK(ao.atomCounts->size() == 3);
