@@ -42,19 +42,26 @@ std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
   result->reserve(mol.getNumAtoms());
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
        atomIt != mol.endAtoms(); ++atomIt) {
-    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128) << 1 |
-                         static_cast<unsigned int>((*atomIt)->getIsAromatic());
+    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128);
+    if (1) {
+      aHash =
+          aHash << 1 | static_cast<unsigned int>((*atomIt)->getIsAromatic());
+    }
     result->push_back(aHash);
   }
   return result;
 }
 
 std::string RDKitFPAtomInvGenerator::infoString() const {
-  return "RDKitFPAtomInvGenerator";
+  if (!df_useAromaticity) {
+    return "RDKitFPAtomInvGenerator useAromaticity=false";
+  } else {
+    return "RDKitFPAtomInvGenerator";
+  }
 }
 
 RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
-  return new RDKitFPAtomInvGenerator();
+  return new RDKitFPAtomInvGenerator(df_useAromaticity);
 }
 
 template <typename OutputType>
@@ -67,7 +74,9 @@ std::string RDKitFPArguments::infoString() const {
          " maxPath=" + std::to_string(d_maxPath) +
          " useHs=" + std::to_string(df_useHs) +
          " branchedPaths=" + std::to_string(df_branchedPaths) +
-         " useBondOrder=" + std::to_string(df_useBondOrder);
+         " useBondOrder=" + std::to_string(df_useBondOrder) +
+         " tautomerInsensitive=" + std::to_string(df_tautomerInsensitive) +
+         " useAtoms=" + std::to_string(df_useAtoms);
 }
 
 RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
@@ -75,14 +84,19 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
                                    bool useBondOrder, bool countSimulation,
                                    const std::vector<std::uint32_t> countBounds,
                                    std::uint32_t fpSize,
-                                   std::uint32_t numBitsPerFeature)
+                                   std::uint32_t numBitsPerFeature,
+                                   bool tautomerInsensitive, bool useAtoms,
+                                   bool useAromaticity)
     : FingerprintArguments(countSimulation, countBounds, fpSize,
                            numBitsPerFeature),
       d_minPath(minPath),
       d_maxPath(maxPath),
       df_useHs(useHs),
       df_branchedPaths(branchedPaths),
-      df_useBondOrder(useBondOrder) {
+      df_useBondOrder(useBondOrder),
+      df_tautomerInsensitive(tautomerInsensitive),
+      df_useAtoms(useAtoms),
+      df_useAromaticity(useAromaticity) {
   PRECONDITION(minPath != 0, "minPath==0");
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
 }
@@ -91,7 +105,7 @@ template <typename OutputType>
 void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
     AdditionalOutput *additionalOutput, size_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
-  if (additionalOutput->bitPaths) {
+  if (additionalOutput->bitPaths && !d_bondPath.empty()) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
   }
   if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
@@ -165,7 +179,8 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       // the bond hashes of the path
       std::vector<std::uint32_t> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,
-          fpArguments->df_useBondOrder, atomInvariants);
+          fpArguments->df_useBondOrder, atomInvariants,
+          fpArguments->df_tautomerInsensitive);
       if (!bondHashes.size()) {
         continue;
       }
@@ -175,9 +190,9 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       if (path.size() > 1) {
         std::sort(bondHashes.begin(), bondHashes.end());
 
-        // finally, we will add the number of distinct atoms in the path at the
-        // end
-        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
+        // finally, we will add the number of distinct atoms in the path at
+        // the end of the vect. This allows us to distinguish C1CC1 from
+        // CC(C)C
         bondHashes.push_back(static_cast<std::uint32_t>(atomsInPath.count()));
         seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
       } else {
@@ -189,6 +204,25 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
     }
   }
 
+  if (fpArguments->df_useAtoms) {
+    // add the atom invariants as environments
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      if (fromAtoms && !(*fromAtoms)[i]) {
+        continue;
+      }
+      if (atomInvariants && atomInvariants->size() &&
+          (*atomInvariants)[i] == 0) {
+        continue;
+      }
+      atomsInPath.reset();
+      atomsInPath.set(i);
+      INT_VECT path;
+      result.push_back(new RDKitFPAtomEnv<OutputType>(
+          static_cast<OutputType>(gboost::hash_value(atomInvariants->at(i))),
+          atomsInPath, path));
+    }
+  }
+
   return result;
 }
 
@@ -197,16 +231,17 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
     bool useBondOrder, AtomInvariantsGenerator *atomInvariantsGenerator,
     bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    bool ownsAtomInvGen) {
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature, bool ownsAtomInvGen,
+    bool tautomerInsensitive, bool useAtoms, bool useAromaticity) {
   auto *envGenerator = new RDKitFPEnvGenerator<OutputType>();
   auto *arguments = new RDKitFPArguments(
       minPath, maxPath, useHs, branchedPaths, useBondOrder, countSimulation,
-      countBounds, fpSize, numBitsPerFeature);
+      countBounds, fpSize, numBitsPerFeature, tautomerInsensitive, useAtoms,
+      useAromaticity);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
-    atomInvariantsGenerator = new RDKitFPAtomInvGenerator();
+    atomInvariantsGenerator = new RDKitFPAtomInvGenerator(useAromaticity);
     ownsAtomInvGenerator = true;
   }
 
@@ -215,23 +250,25 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
                                               ownsAtomInvGenerator, false);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t>
-    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
-                         bool branchedPaths, bool useBondOrder,
-                         AtomInvariantsGenerator *atomInvariantsGenerator,
-                         bool countSimulation,
-                         const std::vector<std::uint32_t> countBounds,
-                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-                         bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                    bool branchedPaths, bool useBondOrder,
+                    AtomInvariantsGenerator *atomInvariantsGenerator,
+                    bool countSimulation,
+                    const std::vector<std::uint32_t> countBounds,
+                    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                    bool ownsAtomInvGen, bool tautomerInsensitive,
+                    bool useAtoms, bool useAromaticity);
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t>
-    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
-                         bool branchedPaths, bool useBondOrder,
-                         AtomInvariantsGenerator *atomInvariantsGenerator,
-                         bool countSimulation,
-                         const std::vector<std::uint32_t> countBounds,
-                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-                         bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                    bool branchedPaths, bool useBondOrder,
+                    AtomInvariantsGenerator *atomInvariantsGenerator,
+                    bool countSimulation,
+                    const std::vector<std::uint32_t> countBounds,
+                    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                    bool ownsAtomInvGen, bool tautomerInsensitive,
+                    bool useAtoms, bool useAromaticity);
 
 }  // namespace RDKitFP
 

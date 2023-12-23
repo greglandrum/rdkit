@@ -337,3 +337,88 @@ TEST_CASE("multithreaded fp generation") {
 #endif
   }
 }
+
+TEST_CASE("RDKitFP including atoms") {
+  SECTION("just atoms") {
+    auto m = "[Cl-].[Na+]"_smiles;
+    REQUIRE(m);
+    unsigned int minPath = 1;
+    unsigned int maxPath = 7;
+    bool useHs = true;
+    bool branchedPaths = true;
+    bool useBondOrder = true;
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
+    bool countSimulation = false;
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
+    std::uint32_t fpSize = 2048;
+    std::uint32_t numBitsPerFeature = 1;
+    bool ownsAtomInvGen = false;
+    bool tautomerInsensitive = false;
+    bool useAtoms = true;
+    bool useAromaticity = true;
+
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        RDKitFP::getRDKitFPGenerator<std::uint32_t>(
+            minPath, maxPath, useHs, branchedPaths, useBondOrder,
+            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
+            numBitsPerFeature, ownsAtomInvGen, tautomerInsensitive, useAtoms,
+            useAromaticity)};
+
+    // we want to make sure that information about the atoms lands in the
+    // additional output:
+    AdditionalOutput ao;
+    ao.allocateBitPaths();
+    ao.allocateAtomToBits();
+    ao.allocateAtomCounts();
+    FingerprintFuncArguments args;
+    args.additionalOutput = &ao;
+    std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
+    REQUIRE(fp);
+    CHECK(fp->getNumOnBits() == 2);
+    CHECK(ao.bitPaths->empty());
+    CHECK(ao.atomToBits->size() == 2);
+    CHECK(ao.atomCounts->size() == 2);
+    CHECK(ao.atomCounts->at(0) == 1);
+    CHECK(ao.atomCounts->at(1) == 1);
+  }
+  SECTION("substruct generator") {
+    auto m = "[Cl-].[Na+]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>()};
+
+    AdditionalOutput ao;
+    ao.allocateBitPaths();
+    ao.allocateAtomToBits();
+    ao.allocateAtomCounts();
+    FingerprintFuncArguments args;
+    args.additionalOutput = &ao;
+    std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
+    REQUIRE(fp);
+    CHECK(fp->getNumOnBits() == 2);
+    CHECK(ao.bitPaths->empty());
+    CHECK(ao.atomToBits->size() == 2);
+    CHECK(ao.atomCounts->size() == 2);
+    CHECK(ao.atomCounts->at(0) == 1);
+    CHECK(ao.atomCounts->at(1) == 1);
+  }
+  SECTION("substruct generator") {
+    auto m = "C[O-].[Na+]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>()};
+
+    AdditionalOutput ao;
+    ao.allocateBitPaths();
+    ao.allocateAtomToBits();
+    ao.allocateAtomCounts();
+    FingerprintFuncArguments args;
+    args.additionalOutput = &ao;
+    std::unique_ptr<ExplicitBitVect> fp{fpgen->getFingerprint(*m, args)};
+    REQUIRE(fp);
+    CHECK(fp->getNumOnBits() == 4);  // 3 atoms and one path
+    CHECK(ao.bitPaths->size() == 1);
+    CHECK(ao.atomToBits->size() == 3);
+    CHECK(ao.atomCounts->size() == 3);
+  }
+}

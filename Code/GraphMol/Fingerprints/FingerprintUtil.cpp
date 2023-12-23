@@ -361,7 +361,8 @@ std::vector<unsigned int> generateBondHashes(
     const ROMol &mol, boost::dynamic_bitset<> &atomsInPath,
     const std::vector<const Bond *> &bondCache,
     const std::vector<short> &isQueryBond, const PATH_TYPE &path,
-    bool useBondOrder, const std::vector<std::uint32_t> *atomInvariants) {
+    bool useBondOrder, const std::vector<std::uint32_t> *atomInvariants,
+    bool tautomerInsensitive) {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 

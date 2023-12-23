@@ -24,6 +24,9 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
   bool df_useHs;
   bool df_branchedPaths;
   bool df_useBondOrder;
+  bool df_tautomerInsensitive;
+  bool df_useAtoms;
+  bool df_useAromaticity;
 
   std::string infoString() const override;
 
@@ -45,22 +48,32 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
    versions
    \param numBitsPerFeature controls the number of bits that are set for each
    path/subgraph found
+   \param tautomerInsensitive generate tautomer insensitive fingerprints
+   \param useAtoms include bits for individual atoms
+   \param useAromaticity include presence of aromaticity in the atom invariants
 
    */
   RDKitFPArguments(unsigned int minPath, unsigned int maxPath, bool useHs,
                    bool branchedPaths, bool useBondOrder, bool countSimulation,
                    const std::vector<std::uint32_t> countBounds,
-                   std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
+                   std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                   bool tautomerInsensitive, bool useAtoms,
+                   bool useAromaticity);
 };
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
     : public AtomInvariantsGenerator {
  public:
+  RDKitFPAtomInvGenerator() = default;
+  RDKitFPAtomInvGenerator(bool useAromaticity)
+      : df_useAromaticity(useAromaticity){};
+
   std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const override;
 
   std::string infoString() const override;
   RDKitFPAtomInvGenerator *clone() const override;
+  bool df_useAromaticity = true;
 };
 
 template <typename OutputType>
@@ -138,6 +151,10 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
  path/subgraph found
  \param ownsAtomInvGen  if set atom invariants generator is destroyed with the
  fingerprint generator
+ \param tautomerInsensitive generate tautomer insensitive fingerprints
+ \param useAtoms include bits for individual atoms
+ \param useAromaticity include presence of aromaticity in the atom invariants
+
 
  /return FingerprintGenerator<OutputType>* that generates RDKit fingerprints
 
@@ -156,7 +173,25 @@ RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     bool countSimulation = false,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
     std::uint32_t fpSize = 2048, std::uint32_t numBitsPerFeature = 2,
-    bool ownsAtomInvGen = false);
+    bool ownsAtomInvGen = false, bool tautomerInsensitive = false,
+    bool useAtoms = false, bool useAromaticity = true);
+
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitSubstructFPGenerator(
+    unsigned int minPath = 1, unsigned int maxPath = 5, bool useHs = false,
+    bool branchedPaths = true, bool useBondOrder = true,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    bool countSimulation = false,
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    std::uint32_t fpSize = 2048, std::uint32_t numBitsPerFeature = 1,
+    bool ownsAtomInvGen = false, bool tautomerInsensitive = true,
+    bool useAtoms = true, bool useAromaticity = false) {
+  return getRDKitFPGenerator<OutputType>(
+      minPath, maxPath, useHs, branchedPaths, useBondOrder,
+      atomInvariantsGenerator, countSimulation, countBounds, fpSize,
+      numBitsPerFeature, ownsAtomInvGen, tautomerInsensitive, useAtoms,
+      useAromaticity);
+}
 
 }  // namespace RDKitFP
 }  // namespace RDKit

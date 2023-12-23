@@ -150,7 +150,8 @@ RDKIT_FINGERPRINTS_EXPORT std::vector<unsigned int> generateBondHashes(
     const ROMol &mol, boost::dynamic_bitset<> &atomsInPath,
     const std::vector<const Bond *> &bondCache,
     const std::vector<short> &isQueryBond, const std::vector<int> &path,
-    bool useBondOrder, const std::vector<std::uint32_t> *atomInvariants);
+    bool useBondOrder, const std::vector<std::uint32_t> *atomInvariants,
+    bool tautomerInsensitive);
 
 }  // namespace RDKitFPUtils
 
