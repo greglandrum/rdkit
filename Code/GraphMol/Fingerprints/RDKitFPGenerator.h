@@ -178,14 +178,19 @@ RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitSubstructFPGenerator(
-    unsigned int minPath = 1, unsigned int maxPath = 5, bool useHs = false,
-    bool branchedPaths = true, bool useBondOrder = true,
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    bool countSimulation = false,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    std::uint32_t fpSize = 2048, std::uint32_t numBitsPerFeature = 1,
-    bool ownsAtomInvGen = false, bool tautomerInsensitive = true,
-    bool useAtoms = true, bool useAromaticity = false) {
+    std::uint32_t fpSize = 2048, bool tautomerInsensitive = true) {
+  unsigned int minPath = 1;
+  unsigned int maxPath = 5;
+  bool useHs = false;
+  bool branchedPaths = true;
+  bool useBondOrder = true;
+  AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
+  bool countSimulation = false;
+  const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
+  std::uint32_t numBitsPerFeature = 1;
+  bool ownsAtomInvGen = false;
+  bool useAtoms = true;
+  bool useAromaticity = false;
   return getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
       atomInvariantsGenerator, countSimulation, countBounds, fpSize,
