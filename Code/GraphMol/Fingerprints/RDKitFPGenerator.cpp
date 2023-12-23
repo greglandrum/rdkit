@@ -43,7 +43,7 @@ std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
        atomIt != mol.endAtoms(); ++atomIt) {
     unsigned int aHash = ((*atomIt)->getAtomicNum() % 128);
-    if (1) {
+    if (df_useAromaticity) {
       aHash =
           aHash << 1 | static_cast<unsigned int>((*atomIt)->getIsAromatic());
     }

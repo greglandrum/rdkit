@@ -22,6 +22,7 @@
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <DataStructs/BitOps.h>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -420,5 +421,18 @@ TEST_CASE("RDKitFP including atoms") {
     CHECK(ao.bitPaths->size() == 1);
     CHECK(ao.atomToBits->size() == 3);
     CHECK(ao.atomCounts->size() == 3);
+  }
+  SECTION("aromaticity") {
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>()};
+    auto m = "Cc1ccccc1"_smiles;
+    REQUIRE(m);
+    auto q = "CC"_smiles;
+    REQUIRE(q);
+    std::unique_ptr<ExplicitBitVect> mfp{fpgen->getFingerprint(*m)};
+    REQUIRE(mfp);
+    std::unique_ptr<ExplicitBitVect> qfp{fpgen->getFingerprint(*q)};
+    REQUIRE(qfp);
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
   }
 }
