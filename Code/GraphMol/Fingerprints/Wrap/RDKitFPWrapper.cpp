@@ -23,7 +23,8 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
     bool useBondOrder, bool countSimulation, python::object &py_countBounds,
     std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    python::object &py_atomInvGen) {
+    python::object &py_atomInvGen, bool tautomerInsensitive, bool useAtoms,
+    bool useAromaticity) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
@@ -41,7 +42,14 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
   return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
       atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-      numBitsPerFeature, true);
+      numBitsPerFeature, true, tautomerInsensitive, useAtoms, useAromaticity);
+}
+
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitSubstructFPGenerator(
+    std::uint32_t fpSize, bool tautomerInsensitive) {
+  return RDKitFP::getRDKitSubstructFPGenerator<OutputType>(fpSize,
+                                                           tautomerInsensitive);
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -72,7 +80,9 @@ void exportRDKit() {
        python::arg("countSimulation") = false,
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048, python::arg("numBitsPerFeature") = 2,
-       python::arg("atomInvariantsGenerator") = python::object()),
+       python::arg("atomInvariantsGenerator") = python::object(),
+       python::arg("tautomerInsensitive") = false,
+       python::arg("useAtoms") = false, python::arg("useAromaticity") = true),
       "Get an RDKit fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - minPath: the minimum path length (in bonds) to be included\n"
@@ -94,6 +104,72 @@ void exportRDKit() {
       "found\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "    - tautomerInsensitive: generate tautomer insensitive fingerprints\n"
+      "    - useAtoms: include bits for individual atoms\n"
+      "    - useAromaticity: include presence of aromaticity in the atom invariants\n"
+      "\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitPaths: map from bitId to vectors of bond indices for the "
+      "individual subgraphs\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def(
+      "GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
+      (python::arg("minPath") = 1, python::arg("maxPath") = 7,
+       python::arg("useHs") = true, python::arg("branchedPaths") = true,
+       python::arg("useBondOrder") = true,
+       python::arg("countSimulation") = false,
+       python::arg("countBounds") = python::object(),
+       python::arg("fpSize") = 2048, python::arg("numBitsPerFeature") = 2,
+       python::arg("atomInvariantsGenerator") = python::object(),
+       python::arg("tautomerInsensitive") = false,
+       python::arg("useAtoms") = false, python::arg("useAromaticity") = true),
+      "Get an RDKit fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - minPath: the minimum path length (in bonds) to be included\n"
+      "    - maxPath: the maximum path length (in bonds) to be included\n"
+      "    - useHs: toggles inclusion of Hs in paths (if the molecule has "
+      "explicit Hs)\n"
+      "    - branchedPaths: toggles generation of branched subgraphs, not just "
+      "linear paths\n"
+      "    - useBondOrder: toggles inclusion of bond orders in the path "
+      "hashes\n"
+      "    - countSimulation:  if set, use count simulation while  "
+      "generating the fingerprint\n"
+      "    - countBounds: boundaries for count simulation, corresponding bit "
+      "will be  set if the count is higher than the number provided for that "
+      "spot\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
+      "    - numBitsPerFeature: the number of bits set per path/subgraph "
+      "found\n"
+      "    - atomInvariantsGenerator: atom invariants to be used during "
+      "fingerprint generation\n\n"
+      "    - tautomerInsensitive: generate tautomer insensitive fingerprints\n"
+      "    - useAtoms: include bits for individual atoms\n"
+      "    - useAromaticity: include presence of aromaticity in the atom invariants\n"
+      "\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitPaths: map from bitId to vectors of bond indices for the "
+      "individual subgraphs\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def(
+      "GetRDKitSubstructFPGenerator", &getRDKitSubstructFPGenerator<std::uint64_t>,
+       (python::arg("fpSize") = 2048, 
+       python::arg("tautomerInsensitive") = false),
+      "Get an RDKit fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
+      "    - tautomerInsensitive: generate tautomer insensitive fingerprints\n"
+      "\n"
       "This generator supports the following AdditionalOutput types:\n"
       "    - atomToBits: which bits each atom is involved in\n"
       "    - atomCounts: how many bits each atom sets\n"

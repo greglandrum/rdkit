@@ -380,7 +380,21 @@ class TestCase(unittest.TestCase):
     for ofp,tfp in zip(ofps,tfps):
       self.assertEqual(ofp,tfp)
 
+  def testSubstructFps(self):
+    m = Chem.MolFromSmiles('[Na+].[Cl-]')
+    self.assertIsNotNone(m)
+    fpg = rdFingerprintGenerator.GetRDKitFPGenerator(useAtoms=True, numBitsPerFeature=1)
+    fp = fpg.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 2)
 
+    fpg = rdFingerprintGenerator.GetRDKitSubstructFPGenerator()
+    fp = fpg.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 2)
+
+    m = Chem.MolFromSmiles('C[Na+].[Cl-]')
+    self.assertIsNotNone(m)
+    fp = fpg.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 4) # three atoms, one path
 
 
 if __name__ == '__main__':
