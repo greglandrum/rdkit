@@ -24,6 +24,12 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 
 namespace RDKit {
+
+namespace detail {
+RDKIT_FINGERPRINTS_EXPORT bool isPatternComplexQuery(const Bond *bond);
+RDKIT_FINGERPRINTS_EXPORT bool isTautomerBondQuery(const Bond *bond);
+}  // namespace detail
+
 namespace AtomPairs {
 const unsigned int numTypeBits = 4;
 const unsigned int atomNumberTypes[1 << numTypeBits] = {

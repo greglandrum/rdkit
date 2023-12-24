@@ -382,6 +382,8 @@ TEST_CASE("RDKitFP including atoms") {
     CHECK(ao.atomCounts->at(0) == 1);
     CHECK(ao.atomCounts->at(1) == 1);
   }
+}
+TEST_CASE("RDKit Substruct FPs") {
   SECTION("substruct generator") {
     auto m = "[Cl-].[Na+]"_smiles;
     REQUIRE(m);
@@ -403,7 +405,7 @@ TEST_CASE("RDKitFP including atoms") {
     CHECK(ao.atomCounts->at(0) == 1);
     CHECK(ao.atomCounts->at(1) == 1);
   }
-  SECTION("substruct generator") {
+  SECTION("with bond") {
     auto m = "C[O-].[Na+]"_smiles;
     REQUIRE(m);
     std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
@@ -426,6 +428,37 @@ TEST_CASE("RDKitFP including atoms") {
   SECTION("aromaticity") {
     std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
         RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>()};
+    auto m = "Cc1ccccc1"_smiles;
+    REQUIRE(m);
+    auto q = "CC"_smiles;
+    REQUIRE(q);
+    std::unique_ptr<ExplicitBitVect> mfp{fpgen->getFingerprint(*m)};
+    REQUIRE(mfp);
+    std::unique_ptr<ExplicitBitVect> qfp{fpgen->getFingerprint(*q)};
+    REQUIRE(qfp);
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
+  }
+}
+TEST_CASE("RDKit substruct FPs with tautomers") {
+  unsigned int fpSize = 2048;
+  bool useTautomers = true;
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+      RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>(fpSize,
+                                                           useTautomers)};
+  REQUIRE(fpgen);
+  SECTION("basics") {
+    auto m = "CC=CO"_smiles;
+    REQUIRE(m);
+    auto q = "CC=O"_smiles;
+    REQUIRE(q);
+    std::unique_ptr<ExplicitBitVect> mfp{fpgen->getFingerprint(*m)};
+    REQUIRE(mfp);
+    std::unique_ptr<ExplicitBitVect> qfp{fpgen->getFingerprint(*q)};
+    REQUIRE(qfp);
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
+  }
+
+  SECTION("aromaticity") {
     auto m = "Cc1ccccc1"_smiles;
     REQUIRE(m);
     auto q = "CC"_smiles;

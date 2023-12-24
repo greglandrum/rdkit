@@ -18,6 +18,7 @@
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/random.hpp>
 #include <climits>
@@ -154,30 +155,10 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
   }
   return;
 }
+
 }  // namespace detail
 
 namespace {
-
-bool isPatternComplexQuery(const Bond *b) {
-  if (!b->hasQuery()) {
-    return false;
-  }
-  // negated things are always complex:
-  if (b->getQuery()->getNegation()) {
-    return true;
-  }
-  std::string descr = b->getQuery()->getDescription();
-  // std::cerr<<"   !!!!!! "<<b->getIdx()<<"
-  // "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
-  return descr != "BondOrder";
-}
-
-bool isTautomerBondQuery(const Bond *b) {
-  // assumes we have already tested true for isPatternComplexQuery
-  auto description = b->getQuery()->getDescription();
-  return description == "SingleOrDoubleOrAromaticBond" ||
-         description == "SingleOrAromaticBond";
-}
 
 void updatePatternFingerprint(const ROMol &mol, ExplicitBitVect &fp,
                               unsigned int fpSize,
@@ -221,9 +202,9 @@ void updatePatternFingerprint(const ROMol &mol, ExplicitBitVect &fp,
   }
 
   for (const auto bond : mol.bonds()) {
-    if (isPatternComplexQuery(bond)) {
+    if (detail::isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
-      if (tautomericFingerprint && isTautomerBondQuery(bond)) {
+      if (tautomericFingerprint && detail::isTautomerBondQuery(bond)) {
         isTautomerBond.set(bond->getIdx());
       }
     }

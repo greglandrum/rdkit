@@ -38,6 +38,32 @@
 #include <RDGeneral/types.h>
 
 namespace RDKit {
+
+namespace detail {
+bool isPatternComplexQuery(const Bond *b) {
+  PRECONDITION(b, "no bond");
+  if (!b->hasQuery()) {
+    return false;
+  }
+  // negated things are always complex:
+  if (b->getQuery()->getNegation()) {
+    return true;
+  }
+  std::string descr = b->getQuery()->getDescription();
+  // std::cerr<<"   !!!!!! "<<b->getIdx()<<"
+  // "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
+  return descr != "BondOrder";
+}
+
+bool isTautomerBondQuery(const Bond *b) {
+  PRECONDITION(b, "no bond");
+  // assumes we have already tested true for isPatternComplexQuery
+  auto description = b->getQuery()->getDescription();
+  return description == "SingleOrDoubleOrAromaticBond" ||
+         description == "SingleOrAromaticBond";
+}
+}  // namespace detail
+
 namespace AtomPairs {
 unsigned int numPiElectrons(const Atom *atom) {
   PRECONDITION(atom, "no atom");
@@ -371,15 +397,15 @@ std::vector<unsigned int> generateBondHashes(
   bool queryInPath = false;
   std::vector<unsigned int> atomDegrees(mol.getNumAtoms(), 0);
   for (unsigned int i = 0; i < path.size() && !queryInPath; ++i) {
+    if (isQueryBond[path[i]]) {
+      queryInPath = true;
+    }
     const Bond *bi = bondCache[path[i]];
     CHECK_INVARIANT(bi, "bond not in cache");
     atomDegrees[bi->getBeginAtomIdx()]++;
     atomDegrees[bi->getEndAtomIdx()]++;
     atomsInPath.set(bi->getBeginAtomIdx());
     atomsInPath.set(bi->getEndAtomIdx());
-    if (isQueryBond[path[i]]) {
-      queryInPath = true;
-    }
   }
   if (queryInPath) {
     return bondHashes;
@@ -416,8 +442,10 @@ std::vector<unsigned int> generateBondHashes(
     std::cerr << "   bond(" << i << "):" << bondNbrs[i] << std::endl;
 #endif
     // we have the count of neighbors for bond bi, compute its hash:
-    unsigned int a1Hash = (*atomInvariants)[bi->getBeginAtomIdx()];
-    unsigned int a2Hash = (*atomInvariants)[bi->getEndAtomIdx()];
+    unsigned int a1Hash =
+        atomInvariants ? (*atomInvariants)[bi->getBeginAtomIdx()] : 1;
+    unsigned int a2Hash =
+        atomInvariants ? (*atomInvariants)[bi->getEndAtomIdx()] : 1;
     unsigned int deg1 = atomDegrees[bi->getBeginAtomIdx()];
     unsigned int deg2 = atomDegrees[bi->getEndAtomIdx()];
     if (a1Hash < a2Hash) {
@@ -428,11 +456,17 @@ std::vector<unsigned int> generateBondHashes(
     }
     unsigned int bondHash = 1;
     if (useBondOrder) {
-      if (bi->getIsAromatic() || bi->getBondType() == Bond::AROMATIC) {
+      if (bi->getIsAromatic()) {
         // makes sure aromatic bonds always hash as aromatic
         bondHash = Bond::AROMATIC;
       } else {
         bondHash = bi->getBondType();
+      }
+      if (tautomerInsensitive) {
+        if (bondHash == Bond::DOUBLE || bondHash == Bond::AROMATIC ||
+            bondHash == Bond::SINGLE) {
+          bondHash = 1000;
+        }
       }
     }
     std::uint32_t ourHash = bondNbrs[i];

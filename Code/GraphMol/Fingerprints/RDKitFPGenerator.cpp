@@ -173,9 +173,8 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
 
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
-       paths++) {
-    for (const auto &path : paths->second) {
+  for (const auto &paths : allPaths) {
+    for (const auto &path : paths.second) {
       // the bond hashes of the path
       std::vector<std::uint32_t> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,
@@ -210,7 +209,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       if (fromAtoms && !(*fromAtoms)[i]) {
         continue;
       }
-      if (atomInvariants && atomInvariants->size() &&
+      if (!atomInvariants || atomInvariants->empty() ||
           (*atomInvariants)[i] == 0) {
         continue;
       }
@@ -224,7 +223,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       atomsInPath.set(i);
       INT_VECT path;
       result.push_back(new RDKitFPAtomEnv<OutputType>(
-          static_cast<OutputType>(gboost::hash_value(atomInvariants->at(i))),
+          static_cast<OutputType>(gboost::hash_value((*atomInvariants)[i])),
           atomsInPath, path));
     }
   }
