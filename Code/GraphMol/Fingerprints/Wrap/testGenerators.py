@@ -394,7 +394,7 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('C[Na+].[Cl-]')
     self.assertIsNotNone(m)
     fp = fpg.GetFingerprint(m)
-    self.assertEqual(fp.GetNumOnBits(), 4) # three atoms, one path
+    self.assertEqual(fp.GetNumOnBits(), 3) # two atoms (C doesn't contribute), one path
 
 
 if __name__ == '__main__':

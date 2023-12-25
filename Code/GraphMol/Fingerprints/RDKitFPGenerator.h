@@ -178,9 +178,9 @@ RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitSubstructFPGenerator(
-    std::uint32_t fpSize = 2048, bool tautomerInsensitive = true) {
+    std::uint32_t fpSize = 512, bool tautomerInsensitive = true,
+    unsigned int maxPath = 4) {
   unsigned int minPath = 1;
-  unsigned int maxPath = 5;
   bool useHs = false;
   bool branchedPaths = true;
   bool useBondOrder = true;

@@ -47,9 +47,9 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitSubstructFPGenerator(
-    std::uint32_t fpSize, bool tautomerInsensitive) {
-  return RDKitFP::getRDKitSubstructFPGenerator<OutputType>(fpSize,
-                                                           tautomerInsensitive);
+    std::uint32_t fpSize, bool tautomerInsensitive, unsigned int maxPath) {
+  return RDKitFP::getRDKitSubstructFPGenerator<OutputType>(
+      fpSize, tautomerInsensitive, maxPath);
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -161,14 +161,16 @@ void exportRDKit() {
       python::return_value_policy<python::manage_new_object>());
 
   python::def(
-      "GetRDKitSubstructFPGenerator", &getRDKitSubstructFPGenerator<std::uint64_t>,
-       (python::arg("fpSize") = 2048, 
-       python::arg("tautomerInsensitive") = false),
-      "Get an RDKit fingerprint generator\n\n"
+      "GetRDKitSubstructFPGenerator",
+      &getRDKitSubstructFPGenerator<std::uint64_t>,
+      (python::arg("fpSize") = 512, python::arg("tautomerInsensitive") = false,
+       python::arg("maxPath") = 4),
+      "Get an RDKit fingerprint generator with good settings for substructure screening\n\n"
       "  ARGUMENTS:\n"
       "    - fpSize: size of the generated fingerprint, does not affect the "
       "sparse versions\n"
       "    - tautomerInsensitive: generate tautomer insensitive fingerprints\n"
+      "    - maxPath: the maximum path length (in bonds) to be included\n"
       "\n"
       "This generator supports the following AdditionalOutput types:\n"
       "    - atomToBits: which bits each atom is involved in\n"
