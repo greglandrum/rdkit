@@ -47,7 +47,7 @@ static bool rdkit_move_unmmapped_reactants_to_agents = true;
 static bool rdkit_init_reaction = true;
 static bool rdkit_guc_inited = false;
 
-#define SSS_FP_SIZE 2048
+#define SSS_FP_SIZE 512
 #define LAYERED_FP_SIZE 1024
 #define RDKIT_FP_SIZE 1024
 #define MORGAN_FP_SIZE 512
