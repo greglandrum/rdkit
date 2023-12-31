@@ -507,7 +507,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
 }
 
 extern "C" bytea *makeMolSignature(CROMol data) {
-  static std::unique_ptr<FingerprintGenerator<std::uint32_t>> generator{RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>(512,false)};
+  static std::unique_ptr<FingerprintGenerator<std::uint32_t>> generator{RDKitFP::getRDKitSubstructFPGenerator<std::uint32_t>(512,false,4)};
   auto *mol = (ROMol *)data;
   ExplicitBitVect *res = nullptr;
   bytea *ret = nullptr;
