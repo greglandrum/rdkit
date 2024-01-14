@@ -21,6 +21,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 #include "SanitException.h"
+#include <RDGeneral/FileParseException.h>
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {
@@ -309,6 +310,18 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false,
                                         bool mergeIsotopes = false);
 
+//! returns a pair of booleans (hasQueryHs, hasUnmergaebleQueryHs)
+/*!
+  This is really intended to be used with molecules that contain QueryAtoms
+  such as when checking smarts patterns for explicit hydrogens
+
+
+  \param mol the molecule to check for query Hs from
+  \return std::pair  if pair.first is true if the molecule has query hydrogens,
+  if pair.second is true, the queryHs cannot be removed my mergeQueryHs
+*/
+RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
+
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
@@ -376,6 +389,7 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustSingleBondsBetweenAromaticAtoms =
       false; /**<  sets non-ring single bonds between two aromatic or conjugated
                 atoms to SINGLE|AROMATIC */
+
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
@@ -442,6 +456,7 @@ typedef enum {
   SANITIZE_CLEANUPCHIRALITY = 0x100,
   SANITIZE_ADJUSTHS = 0x200,
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
+  SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
@@ -450,7 +465,6 @@ typedef enum {
 /*!
    This functions calls the following in sequence
      -# MolOps::cleanUp()
-     -# MolOps::cleanUpOrganometallics()
      -# mol.updatePropertyCache()
      -# MolOps::symmetrizeSSSR()
      -# MolOps::Kekulize()
@@ -589,6 +603,9 @@ RDKIT_GRAPHMOL_EXPORT void cleanUp(RWMol &mol);
 //! organometallic species before valence is perceived
 /*!
 
+    \b Note that this function is experimental and may either change in behavior
+   or be replaced with something else in future releases.
+
     Currently this:
      - replaces single bonds between "hypervalent" organic atoms and metals with
        dative bonds (this is following an IUPAC recommendation:
@@ -688,6 +705,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return number of smallest rings found
 
@@ -723,10 +742,12 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   done. The extra rings this process adds can be quite useful.
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
-                                   std::vector<std::vector<int>> &res);
+                                   std::vector<std::vector<int>> &res,
+                                   bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int findSSSR(
-    const ROMol &mol, std::vector<std::vector<int>> *res = nullptr);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
+                                   std::vector<std::vector<int>> *res = nullptr,
+                                   bool includeDativeBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -756,6 +777,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param includeDativeBonds - determines whether or not dative bonds are used in
+      the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -764,9 +787,11 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   first
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         std::vector<std::vector<int>> &res);
+                                         std::vector<std::vector<int>> &res,
+                                         bool includeDativeBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
+                                         bool includeDativeBonds = false);
 
 //! @}
 
@@ -897,8 +922,42 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! \name Stereochemistry
 //! @{
 
+// class to hold hybridizations
+
+class Hybridizations {
+ public:
+  Hybridizations() {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+  Hybridizations(const ROMol &mol);
+  Hybridizations(const Hybridizations &) {
+    throw FileParseException("not to be called without a mol parameter");
+  };
+
+  ~Hybridizations() = default;
+
+  Atom::HybridizationType operator[](int idx) {
+    return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  }
+  // Atom::HybridizationType &operator[](unsigned int idx) {
+  //      return static_cast<Atom::HybridizationType>(d_hybridizations[idx]);
+  //   d_hybridizations[d_hybridizations[idx]];
+  // }
+
+  // // void clear() { d_hybridizations.clear(); }
+  // // void resize(unsigned int sz) { d_hybridizations.resize(sz); }
+  unsigned int size() const { return d_hybridizations.size(); }
+
+ private:
+  std::vector<int> d_hybridizations;
+};
+
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
+
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
+                                               Hybridizations &hybridizations);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -953,7 +1012,14 @@ RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
 //! removes directions from single bonds. Wiggly bonds will have the property
 //! _UnknownStereo set on them
-RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
+                                                   bool onlyWedgeFlags = false);
+
+//! removes directions from all bonds. Wiggly bonds and cross bonds will have
+//! the property _UnknownStereo set on them
+RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
+                                         bool onlyWedgeFlags = false);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions
@@ -1039,12 +1105,50 @@ RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
 
+//! \brief Replaces haptic bond with explicit dative bonds.
+/*!
+ *
+ * @param mol the molecule of interest
+ *
+ * One way of showing haptic bonds (such as cyclopentadiene to iron in
+ * ferrocene) is to use a dummy atom with a dative bond to the iron atom with
+ * the bond labelled with the atoms involved in the organic end of the bond.
+ * Another way is to have explicit dative bonds from the atoms of the haptic
+ * group to the metal atom.  This function converts the former representation to
+ * the latter.
+ */
+RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
+
+//! \overload modifies molecule in place.
+RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
+
+//! \brief Replaces explicit dative bonds with haptic.
+/*!
+ *
+ * @param mol the molecule of interest
+ *
+ * Does the reverse of hapticBondsToDative.  If there are multiple contiguous
+ * atoms attached by dative bonds to an atom (probably a metal atom), the dative
+ * bonds will be replaced by a dummy atom in their centre attached to the
+ * (metal) atom by a dative bond, which is labelled with ENDPTS of the atoms
+ * that had the original dative bonds.
+ */
+RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
+
+//! \overload modifies molecule in place.
+RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
+
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
     RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
     unsigned int maxBackTracks = 100);
+
+// If the bond is dative, and it has a common_properties::MolFileBondEndPts
+// prop, returns a vector of the indices of the atoms mentioned in the prop.
+RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
+
 }  // namespace details
 
 }  // namespace MolOps

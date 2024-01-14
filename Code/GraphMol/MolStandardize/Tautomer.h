@@ -325,9 +325,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
   //! instead
-  [
-      [deprecated("please use the form returning a TautomerEnumeratorResult "
-                  "instead")]] std::vector<ROMOL_SPTR>
+  [[deprecated(
+      "please use the form returning a TautomerEnumeratorResult "
+      "instead")]] std::vector<ROMOL_SPTR>
   enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
             boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
 
@@ -396,6 +396,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   ROMol *canonicalize(const ROMol &mol,
                       boost::function<int(const ROMol &mol)> scoreFunc =
                           TautomerScoringFunctions::scoreTautomer) const;
+  void canonicalizeInPlace(RWMol &mol,
+                           boost::function<int(const ROMol &mol)> scoreFunc =
+                               TautomerScoringFunctions::scoreTautomer) const;
 
  private:
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,
