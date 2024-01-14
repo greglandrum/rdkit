@@ -264,12 +264,12 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 }
 
 void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-		ComputedData &accumData, MMFF::MMFFMolProperties &mmffProp) {
+                 ComputedData &accumData, MMFF::MMFFMolProperties &mmffProp) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(),
                   "Wrong size accumData");
-  
+
   boost::dynamic_bitset<> squishAtoms(mol.getNumAtoms());
   // find larger heteroatoms in conjugated 5 rings, because we need to add a bit
   // of extra flex for them
@@ -289,15 +289,18 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     auto endId = bond->getEndAtomIdx();
     unsigned int bOrder = bond->getBondType();
     MMFF::MMFFBond bProp;
-    auto bValid = mmffProp.getMMFFBondStretchParams(mol, begId, endId, bOrder, bProp);
+    auto bValid =
+        mmffProp.getMMFFBondStretchParams(mol, begId, endId, bOrder, bProp);
     if (bValid) {
       auto bl = bProp.r0;
-      //std::cerr << "Distance for (" << begId << ", " << endId << "): " << bl << std::endl;
+      // std::cerr << "Distance for (" << begId << ", " << endId << "): " << bl
+      // << std::endl;
 
       double extraSquish = 0.0;
       if (squishAtoms[begId] || squishAtoms[endId]) {
         extraSquish = 0.2;  // empirical
-	//std::cerr << "Extra squish for (" << begId << ", " << endId << ")" << std::endl;
+        // std::cerr << "Extra squish for (" << begId << ", " << endId << ")" <<
+        // std::endl;
       }
 
       accumData.bondLengths[bond->getIdx()] = bl;
@@ -635,39 +638,48 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   CHECK_INVARIANT(accumData.bondAdj->numRows() == mol.getNumBonds(),
                   "Wrong size bond adjacency matrix");
 
-  unsigned int aid2, aid1, aid3, bid1, bid2;
-  double angle;
-
   // loop over all bonds
   for (const auto bondi : mol.bonds()) {
-    bid1 = bondi->getIdx();
+    unsigned int aid2, aid1, aid3;
+    auto bid1 = bondi->getIdx();
     for (unsigned int j = bondi->getIdx() + 1; j < mol.getNumBonds(); ++j) {
-      const Bond *bondj = mol.getBondWithIdx(j);
-      bid2 = bondj->getIdx();
+      const auto bondj = mol.getBondWithIdx(j);
+      auto bid2 = bondj->getIdx();
       int aid11 = bondi->getBeginAtomIdx();
       int aid12 = bondi->getEndAtomIdx();
       int aid21 = bondj->getBeginAtomIdx();
       int aid22 = bondj->getEndAtomIdx();
-      if (aid11 != aid21 && aid11 != aid22 && aid12 != aid21 && aid12 != aid22) {
+      if (aid11 != aid21 && aid11 != aid22 && aid12 != aid21 &&
+          aid12 != aid22) {
         continue;
       }
       if (aid12 == aid21) {
-        aid1 = aid11; aid2 = aid12; aid3 = aid22;
+        aid1 = aid11;
+        aid2 = aid12;
+        aid3 = aid22;
       } else if (aid12 == aid22) {
-        aid1 = aid11; aid2 = aid12; aid3 = aid21;
+        aid1 = aid11;
+        aid2 = aid12;
+        aid3 = aid21;
       } else if (aid11 == aid21) {
-        aid1 = aid12; aid2 = aid11; aid3 = aid22;
-      } else if (aid11 == aid22) {
-        aid1 = aid12; aid2 = aid11; aid3 = aid21;
+        aid1 = aid12;
+        aid2 = aid11;
+        aid3 = aid22;
+      } else {
+        aid1 = aid12;
+        aid2 = aid11;
+        aid3 = aid21;
       }
       unsigned int angleType;
       MMFF::MMFFAngle aProp;
-      bool aValid = mmffProp.getMMFFAngleBendParams(mol, aid1, aid2, aid3, angleType, aProp);
+      bool aValid = mmffProp.getMMFFAngleBendParams(mol, aid1, aid2, aid3,
+                                                    angleType, aProp);
       if (!aValid) {
-        std::cerr << "Bounds matrix builder: Invalid MMFF angle parameters for (" << aid1 
-		<< ", " << aid2 << ", " << aid3 << ")" << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Bounds matrix builder: Invalid MMFF angle parameters for ("
+            << aid1 << ", " << aid2 << ", " << aid3 << ")" << std::endl;
       }
-      angle = aProp.theta0 * M_PI / 180; // theta0 is in degrees
+      auto angle = aProp.theta0 * M_PI / 180;  // theta0 is in degrees
       _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
       accumData.bondAngles->setVal(bid1, bid2, angle);
       accumData.bondAdj->setVal(bid1, bid2, aid2);
@@ -1848,10 +1860,10 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   ROMol molCopy(mol);
   MMFF::MMFFMolProperties mmffProp(molCopy);
 
-  if (mmffProp.isValid()) { // MMFF
+  if (mmffProp.isValid()) {  // MMFF
     set12Bounds(mol, mmat, accumData, mmffProp);
     set13Bounds(mol, mmat, accumData, mmffProp);
-  } else { // UFF + heuristics
+  } else {  // UFF + heuristics
     set12Bounds(mol, mmat, accumData);
     set13Bounds(mol, mmat, accumData);
   }
@@ -1935,10 +1947,10 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   ROMol molCopy(mol);
   MMFF::MMFFMolProperties mmffProp(molCopy);
 
-  if (mmffProp.isValid()) { // MMFF
+  if (mmffProp.isValid()) {  // MMFF
     set12Bounds(mol, mmat, accumData, mmffProp);
     set13Bounds(mol, mmat, accumData, mmffProp);
-  } else { // UFF + heuristics
+  } else {  // UFF + heuristics
     set12Bounds(mol, mmat, accumData);
     set13Bounds(mol, mmat, accumData);
   }
