@@ -38,8 +38,8 @@
 #include <limits>
 
 #include <cstring>
+#include <any>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -133,7 +133,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereochemCand;  // chirality bool COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
-RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation; // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;  // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
@@ -147,6 +147,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
 RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
+    _ChiralAtomRank;  // atom rank (unsigned int)
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _supplementalSmilesLabel;  // atom string (SmilesWrite)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _unspecifiedOrder;  // atom int (bool) smarts/smiles
@@ -154,6 +156,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _RingClosures;  // INT_VECT smarts/smiles/canon
 RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
+RDKIT_RDGENERAL_EXPORT extern const std::string OxidationNumber;  // int
 
 // MDL Style Properties (MolFileParser)
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
@@ -186,7 +189,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondStereo;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondCfg;  // unsigned int
-
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string

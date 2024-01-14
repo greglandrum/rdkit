@@ -847,21 +847,21 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
 
 namespace RDKit {
 namespace MolOps {
-int findSSSR(const ROMol &mol, VECT_INT_VECT *res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds) {
   if (!res) {
     VECT_INT_VECT rings;
-    return findSSSR(mol, rings);
+    return findSSSR(mol, rings, includeDativeBonds);
   } else {
-    return findSSSR(mol, (*res));
+    return findSSSR(mol, (*res), includeDativeBonds);
   }
 }
 
-int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.resize(0);
   if (mol.getRingInfo()->isInitialized()) {
     mol.getRingInfo()->reset();
   }
-  mol.getRingInfo()->initialize();
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SSSR);
   RINGINVAR_SET invars;
 
   unsigned int nats = mol.getNumAtoms();
@@ -871,12 +871,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   boost::dynamic_bitset<> activeBonds(nbnds);
   activeBonds.set();
 
-  // Zero-order bonds are not candidates for rings
+  // Zero-order bonds are not candidates for rings, and dative bonds may also be
+  // out
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
-    if (bond->getBondType() == Bond::ZERO) {
+    if (bond->getBondType() == Bond::ZERO ||
+        (!includeDativeBonds && isDative(*bond))) {
       activeBonds[bond->getIdx()] = 0;
     }
     ++firstB;
@@ -892,14 +894,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     int deg = atom->getDegree();
     atomDegrees[i] = deg;
     atomDegreesWithZeroOrderBonds[i] = deg;
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      const Bond *bond = mol[*beg];
-      if (bond->getBondType() == Bond::ZERO) {
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::ZERO ||
+          (!includeDativeBonds && isDative(*bond))) {
         atomDegrees[i]--;
       }
-      ++beg;
     }
   }
 
@@ -996,8 +995,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       }  // end of degree two nodes
       else if (nAtomsDone <
                curFrag.size()) {  // now deal with higher degree nodes
-        // this is brutal - we have no degree 2 nodes - find the first possible
-        // degree 3 node
+        // this is brutal - we have no degree 2 nodes - find the first
+        // possible degree 3 node
         int cand = -1;
         for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end();
              aidi++) {
@@ -1117,18 +1116,21 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   return rdcast<int>(res.size());
 }
 
-int symmetrizeSSSR(ROMol &mol) {
+int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp);
+  return symmetrizeSSSR(mol, tmp, includeDativeBonds);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.clear();
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  findSSSR(mol, sssrs);
+  findSSSR(mol, sssrs, includeDativeBonds);
+
+  // reinit as SYMM_SSSR
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
   res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
@@ -1261,7 +1263,7 @@ void fastFindRings(const ROMol &mol) {
     mol.getRingInfo()->reset();
   }
 
-  mol.getRingInfo()->initialize();
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_FAST);
 
   VECT_INT_VECT res;
   res.resize(0);

@@ -1556,7 +1556,8 @@ Molecule Hash Strings
     'NetCharge': rdkit.Chem.rdMolHash.HashFunction.NetCharge,
     'SmallWorldIndexBR': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBR,
     'SmallWorldIndexBRL': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBRL,
-    'ArthorSubstructureOrder': rdkit.Chem.rdMolHash.HashFunction.ArthorSubstructureOrder}
+    'ArthorSubstructureOrder': rdkit.Chem.rdMolHash.HashFunction.ArthorSubstructureOrder,
+    'HetAtomTautomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomerv2}
 
 .. testcode::
 
@@ -1567,7 +1568,7 @@ Molecule Hash Strings
 .. testoutput::
    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
-   AnonymousGraph **(***1*****1)*(*)*(*)*(*)*1***(*)*(*)*1
+   AnonymousGraph **1***(*(*)*(*)*(*)*(*)***2*****2)**1*
    ElementGraph CC(C(O)C1CCC(O)C(O)C1)N(C)C(O)OCC1CCCCC1
    CanonicalSmiles CC(C(O)c1ccc(O)c(O)c1)N(C)C(=O)OCc1ccccc1
    MurckoScaffold c1ccc(CCNCOCc2ccccc2)cc1
@@ -1584,6 +1585,7 @@ Molecule Hash Strings
    SmallWorldIndexBR B25R2
    SmallWorldIndexBRL B25R2L10
    ArthorSubstructureOrder 00180019010012000600009b000000
+   HetAtomTautomerv2 [CH3]-[CH](-[CH](-[OH])-[C]1:[C]:[C]:[C](:[O]):[C](:[O]):[C]:1)-[N](-[CH3])-[C](=[O])-[O]-[CH2]-[c]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_5_0
 
 .. testcode::
   
@@ -1727,7 +1729,7 @@ Molecule Hash Strings
 
 .. image:: images/RDKitCB_21_im5.png
 
-Contiguous Rotable Bonds
+Contiguous Rotatable Bonds
 =========================
 
 | **Author:** Paulo Tosco
