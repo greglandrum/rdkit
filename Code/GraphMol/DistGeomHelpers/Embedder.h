@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -35,6 +35,12 @@ enum EmbedFailureCauses {
   BAD_DOUBLE_BOND_STEREO = 9,
   CHECK_CHIRAL_CENTERS2 = 10,
   END_OF_ENUM = 11,
+};
+
+struct RDKIT_DISTGEOMHELPERS_EXPORT UserProvidedTorsion {
+  std::vector<int> atoms;
+  std::vector<double> V;
+  std::vector<int> signs;
 };
 
 //! Parameter object for controlling embedding
@@ -150,6 +156,9 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool trackFailures{false};
   std::vector<unsigned int> failures;
   bool enableSequentialRandomSeeds{false};
+  std::vector<UserProvidedTorsion>
+      explicitTorsions;  // if provided, these will be used instead of the usual
+                         // ET terms
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(

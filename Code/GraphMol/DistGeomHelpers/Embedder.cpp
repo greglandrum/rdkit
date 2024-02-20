@@ -1146,11 +1146,33 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
                ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
-  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+  if (params.useExpTorsionAnglePrefs || !params.explicitTorsions.empty() ||
+      params.useBasicKnowledge) {
+    // we only use the experimental torsion angle preferences if we don't have
+    // user-provided explicitTorsions
+    bool useET =
+        params.useExpTorsionAnglePrefs && params.explicitTorsions.empty();
+    bool useRT = params.useSmallRingTorsions && params.explicitTorsions.empty();
+    bool useMT =
+        params.useMacrocycleTorsions && params.explicitTorsions.empty();
+
     ForceFields::CrystalFF::getExperimentalTorsions(
-        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useSmallRingTorsions, params.useMacrocycleTorsions,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
+        *mol, etkdgDetails, useET, useRT, useMT, params.useBasicKnowledge,
+        params.ETversion, params.verbose);
+
+    if(!params.explicitTorsions.empty()){
+      etkdgDetails.expTorsionAtoms.clear();
+      etkdgDetails.expTorsionAngles.clear();
+      for(const auto &ut : params.explicitTorsions){
+        if(ut.atoms.size() != 4){
+          throw ValueErrorException("Explicit torsions must have 4 atoms");
+        }
+        etkdgDetails.expTorsionAtoms.push_back(ut.atoms);
+        etkdgDetails.expTorsionAngles.emplace_back(ut.signs,ut.V);
+      }
+    }
+
+
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
