@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
@@ -929,5 +930,44 @@ TEST_CASE(
       CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
       CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
     }
+  }
+}
+
+TEST_CASE("user-provided torsions") {
+  SECTION("basics") {
+    auto mol = "O=CC=N"_smiles;
+    REQUIRE(mol);
+    // MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.useRandomCoords = true;
+    ps.useExpTorsionAnglePrefs = true;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    CHECK_THAT(MolTransforms::getDihedralDeg(mol->getConformer(), 0, 1, 2, 3),
+               Catch::Matchers::WithinAbs(0.0, 0.1));
+    // std::cerr << MolToV3KMolBlock(*mol) << std::endl;
+
+    {  // silly test to make sure we can set the torsion
+      DGeomHelpers::UserProvidedTorsion ut = {
+          {0, 1, 2, 3}, {0.0, 15.0, 15.0, 0.0, 0.0, 0.0}, {1, -1, 1, 1, 1, 1}};
+      ps.explicitTorsions.push_back(ut);
+      cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid >= 0);
+      CHECK_THAT(MolTransforms::getDihedralDeg(mol->getConformer(), 0, 1, 2, 3),
+                 Catch::Matchers::WithinAbs(-46, 0.1));
+    }
+
+    {  // set it back to what ETKDG assigns
+      DGeomHelpers::UserProvidedTorsion ut = {
+          {0, 1, 2, 3}, {0.0, 15.0, 0.0, 0.0, 0.0, 0.0}, {1, -1, 1, 1, 1, 1}};
+      ps.explicitTorsions.clear();
+      ps.explicitTorsions.push_back(ut);
+      cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid >= 0);
+      CHECK_THAT(MolTransforms::getDihedralDeg(mol->getConformer(), 0, 1, 2, 3),
+                 Catch::Matchers::WithinAbs(0, 0.1));
+    }
+    // std::cerr << MolToV3KMolBlock(*mol) << std::endl;
   }
 }
