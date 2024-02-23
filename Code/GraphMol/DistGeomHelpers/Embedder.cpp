@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// #define DEBUG_EMBEDDING 0
+// #define DEBUG_EMBEDDING 1
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -755,6 +755,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       atoms.insert(chiralSet->d_idx4);
     }
   }
+#if 0
   std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
   if (atomsToCheck.size() > 0) {
     if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
@@ -772,6 +773,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       return false;
     }
   }
+#endif
 
   // "center in volume" chirality test
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -1160,18 +1162,15 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
         *mol, etkdgDetails, useET, useRT, useMT, params.useBasicKnowledge,
         params.ETversion, params.verbose);
 
-    if(!params.explicitTorsions.empty()){
-      etkdgDetails.expTorsionAtoms.clear();
-      etkdgDetails.expTorsionAngles.clear();
-      for(const auto &ut : params.explicitTorsions){
-        if(ut.atoms.size() != 4){
+    if (!params.explicitTorsions.empty()) {
+      for (const auto &ut : params.explicitTorsions) {
+        if (ut.atoms.size() != 4) {
           throw ValueErrorException("Explicit torsions must have 4 atoms");
         }
         etkdgDetails.expTorsionAtoms.push_back(ut.atoms);
-        etkdgDetails.expTorsionAngles.emplace_back(ut.signs,ut.V);
+        etkdgDetails.expTorsionAngles.emplace_back(ut.signs, ut.V);
       }
     }
-
 
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {

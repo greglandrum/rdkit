@@ -296,11 +296,10 @@ void getExperimentalTorsions(
           atoms.push_back(at2AtomicNum);
           atoms.push_back(isBoundToSP2O);
           details.improperAtoms.push_back(atoms);
-          /*if (verbose) {
+          if (verbose) {
             std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1]
-          << " "
-                << atoms[2] << " " << atoms[3] << std::endl;
-          }*/
+                      << " " << atoms[2] << " " << atoms[3] << std::endl;
+          }
         }
       }  // if atom is a N,O or C and SP2-hybridized
     }
@@ -343,10 +342,10 @@ void getExperimentalTorsions(
           std::vector<double> fconsts(6, 0.0);
           fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
           details.expTorsionAngles.emplace_back(signs, fconsts);
-          /*if (verbose) {
-            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
-          " " << aid4 << std::endl;
-          }*/
+          if (verbose) {
+            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3
+                      << " " << aid4 << std::endl;
+          }
         }
 
       }  // loop over atoms in ring
