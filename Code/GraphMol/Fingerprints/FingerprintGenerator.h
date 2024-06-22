@@ -305,6 +305,8 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   BondInvariantsGenerator *dp_bondInvariantsGenerator;
   const bool df_ownsAtomInvGenerator;
   const bool df_ownsBondInvGenerator;
+  std::vector<OutputType>
+      d_outputMapping;  // used to only generate a subset of the fingerprint
 
   std::unique_ptr<SparseIntVect<OutputType>> getFingerprintHelper(
       const ROMol &mol, FingerprintFuncArguments &args,
@@ -400,6 +402,8 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   };
 
   std::string infoString() const;
+  std::vector<OutputType> getOutputMapping() const { return d_outputMapping; }
+  std::vector<OutputType> &getOutputMapping() { return d_outputMapping; }
 };
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *

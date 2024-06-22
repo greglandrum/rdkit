@@ -125,8 +125,17 @@ template std::string FingerprintGenerator<std::uint64_t>::infoString() const;
 template <typename OutputType>
 std::string FingerprintGenerator<OutputType>::infoString() const {
   std::string separator = " --- ";
+  std::string mappingText;
+  if (!d_outputMapping.empty()) {
+    std::stringstream ss;
+    ss << "Output_mapping: ";
+    std::copy(d_outputMapping.begin(), d_outputMapping.end(),
+              std::ostream_iterator<OutputType>(ss, ","));
+    mappingText = ss.str();
+  }
   return dp_fingerprintArguments->commonArgumentsString() + separator +
          dp_fingerprintArguments->infoString() + separator +
+         (mappingText.empty() ? "" : mappingText + separator) +
          dp_atomEnvironmentGenerator->infoString() + separator +
          (dp_atomInvariantsGenerator
               ? (dp_atomInvariantsGenerator->infoString() + separator)
@@ -183,8 +192,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
       bondInvariants.get(), hashResults);
 
   // allocate the result
+  auto outputSize = d_outputMapping.empty() ? fpSize : d_outputMapping.size();
   auto res = std::make_unique<SparseIntVect<OutputType>>(
-      fpSize ? fpSize : dp_atomEnvironmentGenerator->getResultSize());
+      outputSize ? outputSize : dp_atomEnvironmentGenerator->getResultSize());
 
   // define a mersenne twister with customized parameters.
   // The standard parameters (used to create boost::mt19937)
@@ -220,13 +230,26 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
                                     atomInvariants.get(), bondInvariants.get(),
                                     args.additionalOutput, hashResults, fpSize);
 
-    auto bitId = seed;
-    if (fpSize != 0) {
-      bitId %= fpSize;
-    }
-    res->setVal(bitId, res->getVal(bitId) + 1);
-    if (args.additionalOutput) {
-      env->updateAdditionalOutput(args.additionalOutput, bitId);
+    auto updateBitId = [&](auto bitId) {
+      if (d_outputMapping.empty()) {
+        bitId %= fpSize;
+      } else {
+        auto where =
+            std::find(d_outputMapping.begin(), d_outputMapping.end(), seed);
+        if (where != d_outputMapping.end()) {
+          bitId = where - d_outputMapping.begin();
+        } else {
+          bitId = outputSize + 1;
+        }
+      }
+      return bitId;
+    };
+    auto bitId = updateBitId(seed);
+    if (bitId < outputSize) {
+      res->setVal(bitId, res->getVal(bitId) + 1);
+      if (args.additionalOutput) {
+        env->updateAdditionalOutput(args.additionalOutput, bitId);
+      }
     }
     // do the additional bits if required:
     if (dp_fingerprintArguments->d_numBitsPerFeature > 1) {
@@ -234,13 +257,12 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
 
       for (boost::uint32_t bitN = 1;
            bitN < dp_fingerprintArguments->d_numBitsPerFeature; ++bitN) {
-        bitId = (*randomSource)();
-        if (fpSize != 0) {
-          bitId %= fpSize;
-        }
-        res->setVal(bitId, res->getVal(bitId) + 1);
-        if (args.additionalOutput) {
-          env->updateAdditionalOutput(args.additionalOutput, bitId);
+        bitId = updateBitId((*randomSource)());
+        if (bitId < outputSize) {
+          res->setVal(bitId, res->getVal(bitId) + 1);
+          if (args.additionalOutput) {
+            env->updateAdditionalOutput(args.additionalOutput, bitId);
+          }
         }
       }
     }
@@ -422,8 +444,11 @@ FingerprintGenerator<OutputType>::getFingerprint(
   }
   auto tempResult = getFingerprintHelper(mol, args, effectiveSize);
 
-  auto result =
-      std::make_unique<ExplicitBitVect>(dp_fingerprintArguments->d_fpSize);
+  auto outputSize = tempResult->size();
+  if (!dp_fingerprintArguments->d_countBounds.empty()) {
+    outputSize *= dp_fingerprintArguments->d_countBounds.size();
+  }
+  auto result = std::make_unique<ExplicitBitVect>(outputSize);
   for (auto val : tempResult->getNonzeroElements()) {
     if (dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
