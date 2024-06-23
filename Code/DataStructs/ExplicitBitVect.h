@@ -1,6 +1,5 @@
 //
-// Copyright (c) 2003-208 greg Landrum and Rational Discovery LLC
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+// Copyright (c) 2003-2024 greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_EXPLICITBITVECTS_H__
-#define __RD_EXPLICITBITVECTS_H__
+#ifndef RD_EXPLICITBITVECTS_H
+#define RD_EXPLICITBITVECTS_H
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -74,6 +73,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   unsigned int getNumOffBits() const override;
 
   void getOnBits(IntVect &v) const override;
+  IntVect getOnBits() const override;
 
   void clearBits() override { dp_bits->reset(); }
   std::string toString() const override;

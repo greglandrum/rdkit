@@ -261,6 +261,15 @@ void SparseBitVect::getOnBits(IntVect &v) const {
   v.resize(nOn);
   std::copy(dp_bits->begin(), dp_bits->end(), v.begin());
 };
+IntVect SparseBitVect::getOnBits() const {
+  if (!dp_bits) {
+    throw ValueErrorException("BitVect not properly initialized.");
+  }
+  IntVect v;
+  v.reserve(getNumOnBits());
+  std::copy(dp_bits->begin(), dp_bits->end(), std::back_inserter(v));
+  return v;
+};
 
 // """ -------------------------------------------------------
 //

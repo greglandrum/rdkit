@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2024 greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_BITVECT_H__
-#define __RD_BITVECT_H__
+#ifndef RD_BITVECT_H
+#define RD_BITVECT_H
 
 #include <vector>
 #include <string>
@@ -38,6 +38,8 @@ class RDKIT_DATASTRUCTS_EXPORT BitVect {
   virtual unsigned int getNumOffBits() const = 0;
   //! replaces the contents of \c v with indices of our on bits
   virtual void getOnBits(IntVect& v) const = 0;
+  //! returns our on bits
+  virtual IntVect getOnBits() const = 0;
   //! clears (sets to off) all of our bits
   virtual void clearBits() = 0;
 

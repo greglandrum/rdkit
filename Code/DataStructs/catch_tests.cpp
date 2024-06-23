@@ -27,3 +27,32 @@ TEST_CASE("special cases for the limits of sparse vectors") {
     CHECK(sbv.getBit(std::numeric_limits<unsigned int>::max()) == 1);
   }
 }
+
+TEST_CASE("getOnBits") {
+  SECTION("SparseBitVect") {
+    SparseBitVect bv(100);
+    bv.setBit(0);
+    bv.setBit(12);
+    bv.setBit(17);
+
+    IntVect obl1;
+    bv.getOnBits(obl1);
+    CHECK(obl1.size() == 3);
+    auto obl2 = bv.getOnBits();
+    CHECK(obl2.size() == 3);
+    CHECK(obl1 == obl2);
+  }
+  SECTION("ExplicitBitVect") {
+    ExplicitBitVect bv(100);
+    bv.setBit(0);
+    bv.setBit(12);
+    bv.setBit(17);
+
+    IntVect obl1;
+    bv.getOnBits(obl1);
+    CHECK(obl1.size() == 3);
+    auto obl2 = bv.getOnBits();
+    CHECK(obl2.size() == 3);
+    CHECK(obl1 == obl2);
+  }
+}

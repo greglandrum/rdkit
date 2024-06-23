@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_SPARSEBITVECTS_H__
-#define __RD_SPARSEBITVECTS_H__
+#ifndef RD_SPARSEBITVECTS_H
+#define RD_SPARSEBITVECTS_H
 
 #include "BitVect.h"
 
@@ -83,6 +83,7 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
   std::string toString() const override;
 
   void getOnBits(IntVect &v) const override;
+  IntVect getOnBits() const override;
   void clearBits() override { dp_bits->clear(); }
   IntSet *dp_bits{
       nullptr};  //!< our raw data, exposed for the sake of efficiency

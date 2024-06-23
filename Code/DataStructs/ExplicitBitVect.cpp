@@ -175,11 +175,23 @@ void ExplicitBitVect::getOnBits(IntVect &v) const {
     IntVect().swap(v);
   }
   v.reserve(nOn);
-  for (unsigned int i = 0; i < d_size; i++) {
-    if ((bool)(*dp_bits)[i]) {
-      v.push_back(i);
-    }
+  auto bi = dp_bits->find_first();
+  while (bi != boost::dynamic_bitset<>::npos) {
+    v.push_back(bi);
+    bi = dp_bits->find_next(bi);
   }
+};
+
+IntVect ExplicitBitVect::getOnBits() const {
+  unsigned int nOn = getNumOnBits();
+  IntVect v;
+  v.reserve(nOn);
+  auto bi = dp_bits->find_first();
+  while (bi != boost::dynamic_bitset<>::npos) {
+    v.push_back(bi);
+    bi = dp_bits->find_next(bi);
+  }
+  return v;
 };
 
 void ExplicitBitVect::_initForSize(unsigned int size) {
