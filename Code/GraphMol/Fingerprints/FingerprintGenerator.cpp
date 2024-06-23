@@ -164,7 +164,7 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   }
 
   bool hashResults = false;
-  if (fpSize != 0) {
+  if (fpSize != 0 && d_outputMapping.empty()) {
     hashResults = true;
   }
 
@@ -193,8 +193,10 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
 
   // allocate the result
   auto outputSize = d_outputMapping.empty() ? fpSize : d_outputMapping.size();
-  auto res = std::make_unique<SparseIntVect<OutputType>>(
-      outputSize ? outputSize : dp_atomEnvironmentGenerator->getResultSize());
+  if (!outputSize) {
+    outputSize = dp_atomEnvironmentGenerator->getResultSize();
+  }
+  auto res = std::make_unique<SparseIntVect<OutputType>>(outputSize);
 
   // define a mersenne twister with customized parameters.
   // The standard parameters (used to create boost::mt19937)
@@ -447,13 +449,15 @@ FingerprintGenerator<OutputType>::getFingerprint(
   auto outputSize = dp_fingerprintArguments->d_fpSize;
   if (!d_outputMapping.empty()) {
     outputSize = d_outputMapping.size();
-    if (!dp_fingerprintArguments->d_countBounds.empty()) {
+    if (dp_fingerprintArguments->df_countSimulation &&
+        !dp_fingerprintArguments->d_countBounds.empty()) {
       outputSize *= dp_fingerprintArguments->d_countBounds.size();
     }
   }
   auto result = std::make_unique<ExplicitBitVect>(outputSize);
   for (auto val : tempResult->getNonzeroElements()) {
-    if (dp_fingerprintArguments->df_countSimulation) {
+    if (dp_fingerprintArguments->df_countSimulation &&
+        dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
            i < dp_fingerprintArguments->d_countBounds.size(); ++i) {
         // for every bound in the d_countBounds in dp_fingerprintArguments,

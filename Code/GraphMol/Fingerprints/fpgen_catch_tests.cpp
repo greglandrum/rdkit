@@ -380,3 +380,29 @@ TEST_CASE("countBounds edge cases") {
     CHECK(fp->getNumBits() == 2048);
   }
 }
+
+TEST_CASE("outputMapping") {
+  auto m = "c1cccnc1C"_smiles;
+  REQUIRE(m);
+  SECTION("getFingerprint") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen{
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2)};
+    REQUIRE(fpgen);
+    FingerprintFuncArguments args;
+    auto sfp = fpgen->getSparseCountFingerprint(*m, args);
+    REQUIRE(sfp);
+    auto &omap = fpgen->getOutputMapping();
+    REQUIRE(omap.empty());
+    auto obl = sfp->getNonzeroElements();
+    // bring over some bits
+    for (auto bid : obl) {
+      if (bid.first % 2) {
+        omap.push_back(bid.first);
+      }
+    }
+
+    auto filteredFP = fpgen->getFingerprint(*m, args);
+    REQUIRE(filteredFP);
+    REQUIRE(filteredFP->size() == omap.size());
+  }
+}
