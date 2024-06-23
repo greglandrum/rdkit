@@ -231,9 +231,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
                                     args.additionalOutput, hashResults, fpSize);
 
     auto updateBitId = [&](auto bitId) {
-      if (d_outputMapping.empty()) {
+      if (d_outputMapping.empty() && fpSize) {
         bitId %= fpSize;
-      } else {
+      } else if (!d_outputMapping.empty()) {
         auto where =
             std::find(d_outputMapping.begin(), d_outputMapping.end(), seed);
         if (where != d_outputMapping.end()) {
@@ -444,9 +444,12 @@ FingerprintGenerator<OutputType>::getFingerprint(
   }
   auto tempResult = getFingerprintHelper(mol, args, effectiveSize);
 
-  auto outputSize = tempResult->size();
-  if (!dp_fingerprintArguments->d_countBounds.empty()) {
-    outputSize *= dp_fingerprintArguments->d_countBounds.size();
+  auto outputSize = dp_fingerprintArguments->d_fpSize;
+  if (!d_outputMapping.empty()) {
+    outputSize = d_outputMapping.size();
+    if (!dp_fingerprintArguments->d_countBounds.empty()) {
+      outputSize *= dp_fingerprintArguments->d_countBounds.size();
+    }
   }
   auto result = std::make_unique<ExplicitBitVect>(outputSize);
   for (auto val : tempResult->getNonzeroElements()) {
