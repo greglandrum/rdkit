@@ -14,7 +14,6 @@
 
 #include <catch2/catch_all.hpp>
 
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
@@ -6552,4 +6551,40 @@ TEST_CASE(
   auto m = v2::SmilesParse::MolFromSmiles(*canonicalized_smiles.begin());
   REQUIRE(m);
   CHECK(*labels_reference == get_bond_stereo_labels(*m));
+}
+
+TEST_CASE("findMesoCenters bug") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  SECTION("as reported") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{
+            {"Cl[CH](C)[C@H](C)C[C@H](C)[CH](C)Cl", {{3, 6}}},
+            {"Cl[CH](C)[C@H](C)C[C@@H](C)[CH](C)Cl", {}},
+            {"Cl[C@H](C)[CH](C)C[CH](C)[C@H](C)Cl", {{1, 8}}},
+            {"Cl[C@H](C)[CH](C)C[CH](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@@H](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl", {{1, 8}, {3, 6}}},
+
+        };
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      CHECK(res.size() == expected.size());
+      CHECK(res == expected);
+      for (auto [a1, a2] : res) {
+        unsigned int oa = m->getNumAtoms() + 1;
+        CHECK(m->getAtomWithIdx(a1)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a2);
+        CHECK(m->getAtomWithIdx(a2)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a1);
+      }
+    }
+  }
 }
