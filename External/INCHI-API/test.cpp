@@ -503,6 +503,7 @@ void testGithubIssue437() {
     std::string smiles = "C[C@H]1CC[C@](O)(F)CC1";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
+    m->debugMol(std::cerr);
     std::string smi1 = MolToSmiles(*m, true);
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*m, tmp);
@@ -511,7 +512,11 @@ void testGithubIssue437() {
                 "InChI=1S/C7H13FO/c1-6-2-4-7(8,9)5-3-6/h6,9H,2-5H2,1H3/t6-,7+");
     delete m;
     m = InchiToMol(inchi, tmp);
+    m->debugMol(std::cerr);
     std::string smi2 = MolToSmiles(*m, true);
+    std::cerr << " smi1: " << smi1 << std::endl;
+    std::cerr << " smi2: " << smi2 << std::endl;
+    std::cerr << MolToMolBlock(*m) << std::endl;
     delete m;
     TEST_ASSERT(smi1 == smi2);
   }
@@ -947,14 +952,18 @@ void testGithub8239() {
     TEST_ASSERT(m);
     ExtraInchiReturnValues tmp;
     auto inchi = MolToInchi(*m, tmp);
-    TEST_ASSERT(inchi == "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m1/s1");
+    TEST_ASSERT(
+        inchi ==
+        "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m1/s1");
   }
   {
     auto m = "CO[P@@](=O)(OCC1C(C(CO1)O)O)OP(=O)(O)O"_smiles;
     TEST_ASSERT(m);
     ExtraInchiReturnValues tmp;
     auto inchi = MolToInchi(*m, tmp);
-    TEST_ASSERT(inchi == "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m0/s1");
+    TEST_ASSERT(
+        inchi ==
+        "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m0/s1");
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

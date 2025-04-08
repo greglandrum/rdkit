@@ -1556,8 +1556,12 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                 modifier *= -1;
               }
 
+              // set the stereo atoms for the double bond
+              bond->getStereoAtoms().push_back(leftNbr);
+              bond->getStereoAtoms().push_back(rightNbr);
+
               if (parity == INCHI_PARITY_ODD) {
-                bond->setStereo(Bond::STEREOZ);
+                bond->setStereo(Bond::STEREOCIS);
                 if (modifier == 1) {
                   eBondPairs.push_back(
                       std::make_pair(leftBond->getIdx(), rightBond->getIdx()));
@@ -1566,7 +1570,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                       std::make_pair(leftBond->getIdx(), rightBond->getIdx()));
                 }
               } else if (parity == INCHI_PARITY_EVEN) {
-                bond->setStereo(Bond::STEREOE);
+                bond->setStereo(Bond::STEREOTRANS);
                 if (modifier == 1) {
                   zBondPairs.push_back(
                       std::make_pair(leftBond->getIdx(), rightBond->getIdx()));
@@ -1579,9 +1583,6 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
               } else {
                 bond->setStereo(Bond::STEREOANY);
               }
-              // set the stereo atoms for the double bond
-              bond->getStereoAtoms().push_back(leftNbr);
-              bond->getStereoAtoms().push_back(rightNbr);
               break;
             }
             case INCHI_StereoType_Tetrahedral: {
@@ -2145,9 +2146,7 @@ std::string InchiToInchiKey(const std::string &inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
   int ret = 0;
-  {
-    ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
-  }
+  { ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2); }
   std::string error;
   switch (ret) {
     case INCHIKEY_OK:
