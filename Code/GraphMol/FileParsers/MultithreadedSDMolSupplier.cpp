@@ -57,6 +57,7 @@ void MultithreadedSDMolSupplier::initFromSettings(
 }
 
 MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
+  std::cerr << "MultithreadedSDMolSupplier destructor called" << std::endl;
   if (df_owner && dp_inStream) {
     delete dp_inStream;
     df_owner = false;

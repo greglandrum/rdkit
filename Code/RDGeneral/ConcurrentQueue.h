@@ -36,6 +36,9 @@ class ConcurrentQueue {
     d_elements = elements;
   }
 
+  ~ConcurrentQueue() {
+    std::cerr << "ConcurrentQueue destructor called" << std::endl;
+  }
   //! tries to push an element into the queue if it is not full without
   //! modifying the variable element, if the queue is full then pushing an
   //! element will result in blocking
@@ -62,21 +65,32 @@ class ConcurrentQueue {
 
 template <typename E>
 void ConcurrentQueue<E>::push(const E &element) {
+  std::cerr << "     !!!! push" << std::endl;
   std::unique_lock<std::mutex> lk(d_lock);
+  std::cerr << "     !!!! locked" << std::endl;
   //! concurrent queue is full so we wait until
   //! it is not full
-  while (d_head + d_capacity == d_tail) {
+  while (!d_done && d_head + d_capacity == d_tail) {
+    std::cerr << "        push WAITING" << std::endl;
     d_notFull.wait(lk);
   }
+  if (d_done) {
+    std::cerr << "     !!!! returning early" << std::endl;
+    return;
+  }
+  std::cerr << "     !!!! done waiting" << std::endl;
   bool wasEmpty = (d_head == d_tail);
   d_elements.at(d_tail % d_capacity) = element;
   d_tail++;
   //! if the concurrent queue was empty before
   //! then it is not any more since we have "pushed" an element
   //! thus we notify all the consumer threads
+  std::cerr << "     !!!! notify" << std::endl;
+
   if (wasEmpty) {
     d_notEmpty.notify_all();
   }
+  std::cerr << "     !!!! done" << std::endl;
 }
 
 template <typename E>
@@ -90,6 +104,9 @@ bool ConcurrentQueue<E>::pop(E &element) {
     }
     d_notEmpty.wait(lk);
   }
+  // if (d_done) {
+  //   return false;
+  // }
   bool wasFull = (d_head + d_capacity == d_tail);
   element = d_elements.at(d_head % d_capacity);
   d_head++;
@@ -117,8 +134,11 @@ bool ConcurrentQueue<E>::getDone() const {
 template <typename E>
 void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
+  std::cerr << "     !!!! set done" << std::endl;
   d_done = true;
   d_notEmpty.notify_all();
+  d_notFull.notify_all();
+  std::cerr << "     !!!! done done" << std::endl;
 }
 
 template <typename E>

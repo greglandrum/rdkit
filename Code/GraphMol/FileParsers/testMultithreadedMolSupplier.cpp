@@ -395,11 +395,25 @@ void testPerformance() {
   }
 }
 
+void testKill() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  MultithreadedSDMolSupplier multiSup(fname);
+  while (!multiSup.atEnd()) {
+    std::unique_ptr<ROMol> mol{multiSup.next()};
+    std::cerr << "hi" << std::endl;
+    // break;
+    throw std::runtime_error("test");
+    // std::exit(0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
 #ifdef RDK_TEST_MULTITHREADED
-
+#if 0
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testSmiCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSmiCorrectness()\n";
@@ -409,13 +423,18 @@ int main() {
   testSDCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
+#endif
   /*
     BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
     testPerformance();
     BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
     BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
   */
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testKill();
+  BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
 #endif
 
