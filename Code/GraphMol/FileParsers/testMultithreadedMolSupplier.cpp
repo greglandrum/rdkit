@@ -399,14 +399,30 @@ void testKill() {
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  MultithreadedSDMolSupplier multiSup(fname);
-  while (!multiSup.atEnd()) {
-    std::unique_ptr<ROMol> mol{multiSup.next()};
-    std::cerr << "hi" << std::endl;
-    // break;
-    throw std::runtime_error("test");
-    // std::exit(0);
+  auto helper = [&fname](auto numToRead) {
+    MultithreadedSDMolSupplier multiSup(fname);
+    auto nRead = 0u;
+    while (!multiSup.atEnd()) {
+      std::unique_ptr<ROMol> mol{multiSup.next()};
+      std::cerr << "hi" << std::endl;
+      ++nRead;
+      if (nRead >= numToRead) {
+        throw std::runtime_error("test");
+      }
+    }
+  };
+  bool ok = false;
+  try {
+    helper(0u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
   }
+  try {
+    helper(5u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
 }
 
 int main() {
@@ -433,7 +449,7 @@ int main() {
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testKill();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
+  BOOST_LOG(rdErrorLog) << "Finished: testKill()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
 #endif
