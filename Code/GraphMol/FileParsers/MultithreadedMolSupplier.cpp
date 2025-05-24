@@ -18,7 +18,6 @@ namespace v2 {
 namespace FileParsers {
 
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
-  std::cerr << "MultithreadedMolSupplier destructor called" << std::endl;
   df_shuttingDown = true;
   endThreads();
   // destroy all objects in the input queue
@@ -35,11 +34,9 @@ MultithreadedMolSupplier::~MultithreadedMolSupplier() {
 }
 
 void MultithreadedMolSupplier::reader() {
-  std::cerr << "READER " << df_shuttingDown << std::endl;
   std::string record;
   unsigned int lineNum, index;
   while (!df_shuttingDown && extractNextRecord(record, lineNum, index)) {
-    std::cerr << "   reader: " << index << std::endl;
     if (!df_shuttingDown && readCallback) {
       try {
         record = readCallback(record, index);
@@ -49,13 +46,10 @@ void MultithreadedMolSupplier::reader() {
       }
     }
     auto r = std::make_tuple(record, lineNum, index);
-    std::cerr << "     push: " << df_shuttingDown << " " << index << std::endl;
     if (!df_shuttingDown) {
       d_inputQueue->push(r);
     }
   }
-  std::cerr << "   reader done " << index << " " << df_shuttingDown
-            << std::endl;
 
   d_inputQueue->setDone();
   if (df_shuttingDown) {
@@ -64,10 +58,8 @@ void MultithreadedMolSupplier::reader() {
 }
 
 void MultithreadedMolSupplier::writer() {
-  std::cerr << "WRITER " << df_shuttingDown << std::endl;
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (!df_shuttingDown && d_inputQueue->pop(r)) {
-    std::cerr << "   writer " << d_threadCounter << std::endl;
     try {
       std::unique_ptr<RWMol> mol(
           processMoleculeRecord(std::get<0>(r), std::get<1>(r)));
@@ -77,8 +69,6 @@ void MultithreadedMolSupplier::writer() {
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol.release(), std::get<0>(r), std::get<2>(r)};
 
-      std::cerr << "   writer push " << std::get<2>(r) << " " << df_shuttingDown
-                << " " << d_threadCounter << std::endl;
       if (!df_shuttingDown) {
         d_outputQueue->push(temp);
       }
@@ -92,7 +82,6 @@ void MultithreadedMolSupplier::writer() {
   if (!df_shuttingDown && d_threadCounter != d_params.numWriterThreads) {
     ++d_threadCounter;
   } else {
-    std::cerr << "   writer done " << d_threadCounter << std::endl;
     d_outputQueue->setDone();
     if (df_shuttingDown) {
       d_inputQueue->setDone();
@@ -126,11 +115,8 @@ void MultithreadedMolSupplier::endThreads() {
   if (!df_started) {
     return;
   }
-  std::cerr << "  reader join" << std::endl;
   d_readerThread.join();
-  std::cerr << "  done!" << std::endl;
   for (auto &thread : d_writerThreads) {
-    std::cerr << "     writer join" << std::endl;
     thread.join();
   }
 }
@@ -146,8 +132,6 @@ void MultithreadedMolSupplier::startThreads() {
 }
 
 bool MultithreadedMolSupplier::atEnd() {
-  std::cerr << "  check: " << d_outputQueue->isEmpty() << " "
-            << d_outputQueue->getDone() << std::endl;
   return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
 }
 

@@ -404,7 +404,6 @@ void testKill() {
     auto nRead = 0u;
     while (!multiSup.atEnd()) {
       std::unique_ptr<ROMol> mol{multiSup.next()};
-      std::cerr << "hi" << std::endl;
       ++nRead;
       if (nRead >= numToRead) {
         throw std::runtime_error("test");
@@ -429,7 +428,7 @@ int main() {
   RDLog::InitLogs();
 
 #ifdef RDK_TEST_MULTITHREADED
-#if 0
+#if 1
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testSmiCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSmiCorrectness()\n";
