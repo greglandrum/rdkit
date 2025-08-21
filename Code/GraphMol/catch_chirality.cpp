@@ -18,6 +18,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -3620,13 +3621,13 @@ TEST_CASE("ValidateStereo", "[accurateCIP]") {
 
   SECTION("SprioChiralNotLostNewNoCanon") {
     testStereoValidationFromMol(validateStereoMolBlockSpiro,
-                                "C1C[C@H](Cl)CC[C@]12CC[C@@H](C)CC2", false,
+                                "C1C[C@@H](Cl)CC[C@@]12CC[C@@H](C)CC2", false,
                                 false);
   }
 
   SECTION("SprioChiralNotLostNewCanon") {
     testStereoValidationFromMol(validateStereoMolBlockSpiro,
-                                "C[C@H]1CC[C@@]2(CC1)CC[C@H](Cl)CC2", false,
+                                "C[C@H]1CC[C@@]2(CC1)CC[C@@H](Cl)CC2", false,
                                 true);
   }
 
@@ -6172,5 +6173,107 @@ M  END)CTAB";
     auto m = v2::FileParsers::MolFromMolBlock(ctab);
     REQUIRE(m);
     CHECK(m->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+}
+
+TEST_CASE(
+    "Github #8689: stereo canonicalization depends on bond iteration order") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    pathName += "github8689_2.sdf";
+    v2::FileParsers::SDMolSupplier suppl(pathName);
+    auto m1 = suppl[0];
+    REQUIRE(m1);
+    auto m2 = suppl[1];
+    REQUIRE(m2);
+    // m1->debugMol(std::cerr);
+    // m2->debugMol(std::cerr);
+
+    CIPLabeler::assignCIPLabels(*m1);
+    CIPLabeler::assignCIPLabels(*m2);
+    REQUIRE(m1->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m1->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+
+    CHECK(m1->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode));
+    CHECK(m1->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode));
+
+    auto smi1 = MolToSmiles(*m1);
+    auto smi2 = MolToSmiles(*m2);
+    CHECK(smi1 == smi2);
+  }
+}
+
+TEST_CASE("extra ring stereo with new stereo perception") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  // SECTION("basics") {
+  //   std::string smi = "C2O[C@H]3[C@@]4([C@](CCC(C24))(O)CC=C3)C";
+  //   auto m = v2::SmilesParse::MolFromSmiles(smi);
+  //   REQUIRE(m);
+  //   for (auto idx : {2, 3, 4}) {
+  //     INFO(idx);
+  //     const auto atm = m->getAtomWithIdx(idx);
+  //     REQUIRE(atm);
+  //     CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+  //     CHECK(!atm->hasProp(common_properties::_ringStereoOtherAtom));
+  //   }
+  // }
+  SECTION("don't destroy actual ring stereo") {
+    std::string smi = "C[C@@H]1CC[C@@H](C)CC1";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    for (auto idx : {1, 4}) {
+      INFO(idx);
+      const auto atm = m->getAtomWithIdx(idx);
+      REQUIRE(atm);
+      CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(atm->hasProp(common_properties::_ringStereoOtherAtom));
+    }
+#if 0    
+    bool breakTies = false;
+    bool includeChirality = true;
+    bool includeIsotopes = true;
+    bool includeAtomMaps = true;
+    bool includeChiralPresence = false;
+    bool includeStereoGroups = true;
+    bool useNonStereoRanks = false;
+    bool includeRingStereo = true;
+    std::vector<unsigned int> res1;
+    Canon::rankMolAtoms(*m, res1, breakTies, includeChirality, includeIsotopes,
+                        includeAtomMaps, includeChiralPresence,
+                        includeStereoGroups, useNonStereoRanks,
+                        includeRingStereo);
+    // std::cerr << "------------------------------" << std::endl;
+    // includeRingStereo = false;
+    // std::vector<unsigned int> res2;
+    // Canon::rankMolAtoms(*m, res2, breakTies, includeChirality,
+    // includeIsotopes,
+    //                     includeAtomMaps, includeChiralPresence,
+    //                     includeStereoGroups, useNonStereoRanks,
+    //                     includeRingStereo);
+    // std::cerr << "------------------------------" << std::endl;
+    // for (auto i = 0u; i < res1.size(); i++) {
+    //   std::cerr << "i(" << i << "): " << res1[i] << " " << res2[i] << "\n";
+    // }
+
+    std::cerr << "------------------------------" << std::endl;
+    for (auto i = 0u; i < res1.size(); i++) {
+      std::cerr << "i(" << i << "): " << res1[i] << "\n";
+    }
+  }
+#endif
   }
 }

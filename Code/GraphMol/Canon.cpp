@@ -682,7 +682,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
@@ -997,6 +996,43 @@ static void insertImplicitNbors(INT_LIST &bonds, const Atom::ChiralType tag,
   }
 }
 
+namespace {
+void setOtherRingAtom(ROMol &mol, const Atom *atom, unsigned int nbrIdx,
+                      bool sameChirality,
+                      boost::dynamic_bitset<> &ringStereoChemAdjusted,
+                      const UINT_VECT &atomVisitOrders,
+                      const boost::dynamic_bitset<> &numSwapsChiralAtoms) {
+  // Adjust the chirality flag of the ring stereo atoms according to
+  // the first one
+  if (!ringStereoChemAdjusted[nbrIdx] &&
+      atomVisitOrders[nbrIdx] > atomVisitOrders[atom->getIdx()]) {
+    mol.getAtomWithIdx(nbrIdx)->setChiralTag(atom->getChiralTag());
+    if (!sameChirality) {
+      mol.getAtomWithIdx(nbrIdx)->invertChirality();
+    }
+    // Odd number of swaps for first chiral ring atom --> needs to be
+    // swapped but we want to retain chirality
+    if (numSwapsChiralAtoms[atom->getIdx()]) {
+      // Odd number of swaps for chiral ring neighbor --> needs to be
+      // swapped but we want to retain chirality
+      if (!numSwapsChiralAtoms[nbrIdx]) {
+        mol.getAtomWithIdx(nbrIdx)->invertChirality();
+      }
+    }
+    // Even number of swaps for first chiral ring atom --> don't need
+    // to be swapped
+    else {
+      // Odd number of swaps for chiral ring neighbor --> needs to be
+      // swapped
+      if (numSwapsChiralAtoms[nbrIdx]) {
+        mol.getAtomWithIdx(nbrIdx)->invertChirality();
+      }
+    }
+    ringStereoChemAdjusted.set(nbrIdx);
+  }
+}
+}  // namespace
+
 void canonicalizeFragment(ROMol &mol, int atomIdx,
                           std::vector<AtomColors> &colors,
                           const UINT_VECT &ranks, MolStack &molStack,
@@ -1158,6 +1194,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !msI.obj.atom->hasProp(common_properties::_brokenChirality)) {
         if (msI.obj.atom->hasProp(common_properties::_ringStereoAtoms)) {
+          // we're here with the legacy stereo perception code
           // FIX: handle stereogroups here too
           if (!ringStereoChemAdjusted[msI.obj.atom->getIdx()]) {
             msI.obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
@@ -1167,37 +1204,21 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
               common_properties::_ringStereoAtoms);
           for (auto nbrV : ringStereoAtoms) {
             int nbrIdx = abs(nbrV) - 1;
-            // Adjust the chirality flag of the ring stereo atoms according to
-            // the first one
-            if (!ringStereoChemAdjusted[nbrIdx] &&
-                atomVisitOrders[nbrIdx] >
-                    atomVisitOrders[msI.obj.atom->getIdx()]) {
-              mol.getAtomWithIdx(nbrIdx)->setChiralTag(
-                  msI.obj.atom->getChiralTag());
-              if (nbrV < 0) {
-                mol.getAtomWithIdx(nbrIdx)->invertChirality();
-              }
-              // Odd number of swaps for first chiral ring atom --> needs to be
-              // swapped but we want to retain chirality
-              if (numSwapsChiralAtoms[msI.obj.atom->getIdx()]) {
-                // Odd number of swaps for chiral ring neighbor --> needs to be
-                // swapped but we want to retain chirality
-                if (!numSwapsChiralAtoms[nbrIdx]) {
-                  mol.getAtomWithIdx(nbrIdx)->invertChirality();
-                }
-              }
-              // Even number of swaps for first chiral ring atom --> don't need
-              // to be swapped
-              else {
-                // Odd number of swaps for chiral ring neighbor --> needs to be
-                // swapped
-                if (numSwapsChiralAtoms[nbrIdx]) {
-                  mol.getAtomWithIdx(nbrIdx)->invertChirality();
-                }
-              }
-              ringStereoChemAdjusted.set(nbrIdx);
-            }
+            bool sameChirality = nbrV >= 0;
+            setOtherRingAtom(mol, msI.obj.atom, nbrIdx, sameChirality,
+                             ringStereoChemAdjusted, atomVisitOrders,
+                             numSwapsChiralAtoms);
           }
+        } else if (msI.obj.atom->hasProp(
+                       common_properties::_ringStereoOtherAtom)) {
+          // we're here with the new stereo perception code
+          auto nbrIdx = msI.obj.atom->getProp<int>(
+              common_properties::_ringStereoOtherAtom);
+          bool sameChirality = (msI.obj.atom->getChiralTag() ==
+                                mol.getAtomWithIdx(nbrIdx)->getChiralTag());
+          setOtherRingAtom(mol, msI.obj.atom, nbrIdx, sameChirality,
+                           ringStereoChemAdjusted, atomVisitOrders,
+                           numSwapsChiralAtoms);
         } else if (size_t sgidx;
                    msI.obj.atom->getPropIfPresent("_stereoGroup", sgidx) &&
                    mol.getStereoGroups().size() > sgidx) {

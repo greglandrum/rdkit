@@ -1222,9 +1222,35 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                       knownAtoms, knownBonds, fixedBonds, res);
     }
   }
+
+  // detect ring stereo
+  // we will use the canonicalization code
+  const bool breakTies = false;
+  const bool includeChirality = true;
+  const bool includeIsotopes = true;
+  const bool includeAtomMaps = false;
+  const bool includeChiralPresence = false;
+  const bool useRingStereo = false;
+
+  std::vector<unsigned int> aranks2(mol.getNumAtoms());
+  std::cerr << "*!*!*!*!*!*!*!*!*!*" << std::endl;
+  Canon::rankFragmentAtoms(mol, aranks2, atomsInPlay, bondsInPlay, &atomSymbols,
+                           &bondSymbols, breakTies, includeChirality,
+                           includeIsotopes, includeAtomMaps,
+                           includeChiralPresence, useRingStereo);
+  for (auto i = 0u; i < aranks2.size(); i++) {
+    std::cerr << " ranks " << i << " " << aranks[i] << " " << aranks2[i]
+              << std::endl;
+  }
+
   for (const auto atom : mol.atoms()) {
     atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
                                 aranks[atom->getIdx()], true);
+    // remove ring-stereo markers from atoms that have stereochemistry
+    if (atom->hasProp(common_properties::_ringStereoOtherAtom) &&
+        fixedAtoms[atom->getIdx()]) {
+      atom->clearProp(common_properties::_ringStereoOtherAtom);
+    }
   }
 
 #if LOCAL_CANON
