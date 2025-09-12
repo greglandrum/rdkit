@@ -246,6 +246,10 @@ struct atom_wrapper {
         .def("SetNumExplicitHs", &Atom::setNumExplicitHs,
              python::args("self", "what"))
         .def("GetNumExplicitHs", &Atom::getNumExplicitHs, python::args("self"))
+        .def("SetNumSpecifiedHs", &Atom::setNumSpecifiedHs,
+             python::args("self", "what"))
+        .def("GetNumSpecifiedHs", &Atom::getNumSpecifiedHs,
+             python::args("self"))
         .def("SetIsAromatic", &Atom::setIsAromatic,
              python::args("self", "what"))
         .def("GetIsAromatic", &Atom::getIsAromatic, python::args("self"))
@@ -281,7 +285,7 @@ struct atom_wrapper {
         .def("GetBonds", AtomGetBonds, python::args("self"),
              "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
              python::args("self", "what"),
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"

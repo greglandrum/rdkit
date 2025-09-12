@@ -1710,7 +1710,7 @@ yyreduce:
     case 28:
 #line 312 "sln.yy" /* yacc.c:1651  */
     {
-      (yyvsp[-1].atom_T)->setNumExplicitHs(1);
+      (yyvsp[-1].atom_T)->setNumSpecifiedHs(1);
       (yyval.atom_T) = (yyvsp[-1].atom_T);
     }
 #line 1813 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
@@ -1719,7 +1719,7 @@ yyreduce:
     case 29:
 #line 316 "sln.yy" /* yacc.c:1651  */
     {
-      (yyvsp[-2].atom_T)->setNumExplicitHs((yyvsp[0].ival_T));
+      (yyvsp[-2].atom_T)->setNumSpecifiedHs((yyvsp[0].ival_T));
       (yyval.atom_T) = (yyvsp[-2].atom_T);
     }
 #line 1822 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */

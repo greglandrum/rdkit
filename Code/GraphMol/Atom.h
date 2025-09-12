@@ -113,7 +113,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   enum class ValenceType : std::uint8_t {
     IMPLICIT = 0,
-    EXPLICIT
+    EXPLICIT,
+    LEGACY_EXPLICIT,  //!< equivalent to legacy "getExplicitValence()" call
+    LEGACY_IMPLICIT   //!< equivalents to legacy "getImplicitValence()" call
   };
 
   Atom();
@@ -191,10 +193,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getValence(ValenceType which) const;
 
   //! returns the explicit valence (including Hs) of this atom
-  [[deprecated("please use getValence(true)")]] int getExplicitValence() const;
+  [[deprecated("please use getValence(ValenceType::LEGACY_EXPLICIT)")]] int
+  getExplicitValence() const;
 
   //! returns the implicit valence for this Atom
-  [[deprecated("please use getValence(false)")]] int getImplicitValence() const;
+  [[deprecated(
+      "please use getValence(getValence(ValenceType::LEGACY_IMPLICIT))")]] int
+  getImplicitValence() const;
 
   //! returns whether the atom has a valency violation or not
   bool hasValenceViolation() const;
@@ -215,9 +220,20 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   bool getNoImplicit() const { return df_noImplicit; }
 
   //! sets our number of explicit Hs
-  void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; }
+  [[deprecated("please use setNumExplicitHs()")]]
+  void setNumExplicitHs(unsigned int what) {
+    d_numSpecifiedHs = what;
+  }
   //! returns our number of explicit Hs
-  unsigned int getNumExplicitHs() const { return d_numExplicitHs; }
+  [[deprecated("please use getNumExplicitHs()")]]
+  unsigned int getNumExplicitHs() const {
+    return d_numSpecifiedHs;
+  }
+
+  //! sets our number of specified Hs
+  void setNumSpecifiedHs(unsigned int what) { d_numSpecifiedHs = what; }
+  //! returns our number of specified Hs
+  unsigned int getNumSpecifiedHs() const { return d_numSpecifiedHs; }
 
   //! sets our \c isAromatic flag, indicating whether or not we are aromatic
   void setIsAromatic(bool what) { df_isAromatic = what; }
@@ -393,7 +409,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   bool df_isAromatic;
   bool df_noImplicit;
-  std::uint8_t d_numExplicitHs;
+  std::uint8_t d_numSpecifiedHs;
   std::int8_t d_formalCharge;
   std::uint8_t d_atomicNum;
   // NOTE that these cannot be signed, they are calculated using
