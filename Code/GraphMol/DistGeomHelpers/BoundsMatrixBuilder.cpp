@@ -964,10 +964,13 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
   return false;
 }
 
-void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
-                       const Bond *bnd3, ComputedData &accumData,
-                       DistGeom::BoundsMatPtr mmat, double *,
-                       bool forceTransAmides) {
+void _setChain14Bounds(
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
+    ComputedData &accumData, DistGeom::BoundsMatPtr mmat, double *,
+    bool forceTransAmides,
+    bool bondIsConstrained  //< set if the middle bond is
+                            // constrained by, e.g. an ET term
+) {
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -1093,7 +1096,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         //   ranges for the distances, but a single bounds matrix doesn't
         //   support this kind of fanciness.
         //
-        if (forceTransAmides) {
+        if (!bondIsConstrained && forceTransAmides) {
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
                atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
@@ -1139,7 +1142,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         // out of here we need to set some reasonably smart bounds between 1
         // and 5 (ref Issue355):
 
-        if (forceTransAmides) {
+        if (!bondIsConstrained && forceTransAmides) {
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
                atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
@@ -1514,9 +1517,13 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   }
 }
 
-void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                 ComputedData &accumData, double *distMatrix,
-                 bool useMacrocycle14config, bool forceTransAmides) {
+void set14Bounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat, ComputedData &accumData,
+    double *distMatrix, bool useMacrocycle14config, bool forceTransAmides,
+    const std::unordered_set<unsigned int>
+        &constrainedBonds  // < the bonds that are constrained by, e.g. ET
+                           // terms. The values are idx1*nAtoms+idx2
+) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
@@ -1577,6 +1584,9 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
     auto aid3 = bond->getEndAtomIdx();
+    auto hsh = std::min(aid2, aid3) * npt + std::max(aid2, aid3);
+    bool bondIsConstrained =
+        (constrainedBonds.find(hsh) != constrainedBonds.end());
     for (const auto bnd1 : mol.atomBonds(mol.getAtomWithIdx(aid2))) {
       auto bid1 = bnd1->getIdx();
       if (bid1 != bid2) {
@@ -1632,7 +1642,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               } else {
                 // middle bond not a ring
                 _setChain14Bounds(mol, bnd1, bond, bnd3, accumData, mmat,
-                                  distMatrix, forceTransAmides);
+                                  distMatrix, forceTransAmides,
+                                  bondIsConstrained);
               }
             }
           }
@@ -1683,8 +1694,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
 
+  std::unordered_set<unsigned int> constrainedBonds;
   set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+              forceTransAmides, constrainedBonds);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1751,8 +1763,9 @@ void collectBondsAndAngles(const ROMol &mol,
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
-                    std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config,
+                    std::vector<std::vector<int>> &angles,
+                    const std::unordered_set<unsigned int> &constrainedBonds,
+                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
                     bool forceTransAmides) {
   PRECONDITION(mmat.get(), "bad pointer");
   bonds.clear();
@@ -1769,7 +1782,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
   set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+              forceTransAmides, constrainedBonds);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);

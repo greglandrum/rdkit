@@ -19,6 +19,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -1244,5 +1245,118 @@ TEST_CASE("Github #8559: seg fault in setTopolBounds") {
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
+  }
+}
+
+TEST_CASE("amines always trans") {
+  SECTION("basics1") {
+    auto m = "FNC(=O)F"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    bool set15 = true;
+    bool scaleVDW = false;
+    bool useMacrocycles = false;
+    bool forceTransAmides = false;
+    DGeomHelpers::setTopolBounds(*m, bm, set15, scaleVDW, useMacrocycles,
+                                 forceTransAmides);
+    std::cerr << "3-5 " << bm->getLowerBound(3, 5) << " "
+              << bm->getUpperBound(3, 5) << std::endl;
+    std::cerr << "4-5 " << bm->getLowerBound(4, 5) << " "
+              << bm->getUpperBound(4, 5) << std::endl;
+    std::cerr << "3-0 " << bm->getLowerBound(3, 0) << " "
+              << bm->getUpperBound(3, 0) << std::endl;
+    std::cerr << "4-0 " << bm->getLowerBound(4, 0) << " "
+              << bm->getUpperBound(4, 0) << std::endl;
+
+    std::cerr << "-----------------------" << std::endl;
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    forceTransAmides = true;
+    DGeomHelpers::setTopolBounds(*m, bm, set15, scaleVDW, useMacrocycles,
+                                 forceTransAmides);
+    std::cerr << "3-5 " << bm->getLowerBound(3, 5) << " "
+              << bm->getUpperBound(3, 5) << std::endl;
+    std::cerr << "4-5 " << bm->getLowerBound(4, 5) << " "
+              << bm->getUpperBound(4, 5) << std::endl;
+    std::cerr << "3-0 " << bm->getLowerBound(3, 0) << " "
+              << bm->getUpperBound(3, 0) << std::endl;
+    std::cerr << "4-0 " << bm->getLowerBound(4, 0) << " "
+              << bm->getUpperBound(4, 0) << std::endl;
+  }
+  SECTION("basics2") {
+    auto m = "CNC(=O)NC(=O)C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    bool set15 = true;
+    bool scaleVDW = false;
+    bool useMacrocycles = false;
+    bool forceTransAmides = false;
+    DGeomHelpers::setTopolBounds(*m, bm, set15, scaleVDW, useMacrocycles,
+                                 forceTransAmides);
+    std::cerr << "3-11 " << bm->getLowerBound(3, 11) << " "
+              << bm->getUpperBound(3, 11) << std::endl;
+    std::cerr << "3-12 " << bm->getLowerBound(3, 12) << " "
+              << bm->getUpperBound(3, 12) << std::endl;
+    std::cerr << "6-12 " << bm->getLowerBound(6, 12) << " "
+              << bm->getUpperBound(6, 12) << std::endl;
+
+    std::cerr << "-----------------------" << std::endl;
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    forceTransAmides = true;
+    DGeomHelpers::setTopolBounds(*m, bm, set15, scaleVDW, useMacrocycles,
+                                 forceTransAmides);
+    std::cerr << "3-11 " << bm->getLowerBound(3, 11) << " "
+              << bm->getUpperBound(3, 11) << std::endl;
+    std::cerr << "3-12 " << bm->getLowerBound(3, 12) << " "
+              << bm->getUpperBound(3, 12) << std::endl;
+    std::cerr << "6-12 " << bm->getLowerBound(6, 12) << " "
+              << bm->getUpperBound(6, 12) << std::endl;
+    std::cerr << "-----------------------" << std::endl;
+
+    {
+      DGeomHelpers::EmbedParameters params = DGeomHelpers::ETKDGv3;
+      params.randomSeed = 0xf00d;
+      params.pruneRmsThresh = 0.5;
+      params.enableSequentialRandomSeeds = true;
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*m, 100, params);
+      CHECK(!cids.empty());
+      SDWriter w("testAmideTrans.sdf");
+      for (auto cid : cids) {
+        w.write(*m, cid);
+      }
+      w.close();
+    }
+    {
+      DGeomHelpers::EmbedParameters params;
+      params.randomSeed = 0xf00d;
+      params.pruneRmsThresh = 0.5;
+      params.forceTransAmides = false;
+      params.enableSequentialRandomSeeds = true;
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*m, 100, params);
+      CHECK(!cids.empty());
+      SDWriter w("testAmideTrans.DG.sdf");
+      for (auto cid : cids) {
+        w.write(*m, cid);
+      }
+      w.close();
+    }
+    {
+      DGeomHelpers::EmbedParameters params = DGeomHelpers::ETDGv2;
+      params.randomSeed = 0xf00d;
+      params.pruneRmsThresh = 0.5;
+      params.enableSequentialRandomSeeds = true;
+      auto cids = DGeomHelpers::EmbedMultipleConfs(*m, 100, params);
+      CHECK(!cids.empty());
+      SDWriter w("testAmideTrans.ETDG.sdf");
+      std::cerr<<"  distances " << std::endl;
+      for (auto cid : cids) {
+        w.write(*m, cid);
+
+      }
+      w.close();
+    }
   }
 }

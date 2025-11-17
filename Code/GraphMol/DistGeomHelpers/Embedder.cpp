@@ -39,6 +39,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
+#include <unordered_set>
 #include <chrono>  // for time-related functions
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -1158,8 +1159,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1260,8 +1261,14 @@ bool setupInitialBoundsMatrix(
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
-                   false, params.useMacrocycle14config,
+    std::unordered_set<unsigned int> etBonds;
+    for (const auto &tpl : etkdgDetails.expTorsionAtoms) {
+      std::pair<int, int> bond{std::min(tpl[1], tpl[2]),
+                               std::max(tpl[1], tpl[2])};
+      etBonds.insert(bond.first * nAtoms + bond.second);
+    }
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, etBonds,
+                   true, false, params.useMacrocycle14config,
                    params.forceTransAmides);
   } else {
     setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
@@ -1611,6 +1618,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                             etkdgDetails.angles);
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
+
+    std::cerr << " MMAT " << std::endl;
+    std::cerr << "5-12 " << mmat->getLowerBound(5, 12) << " "
+              << mmat->getUpperBound(5, 12) << std::endl;
+    std::cerr << "2-12 " << mmat->getLowerBound(2, 12) << " "
+              << mmat->getUpperBound(2, 12) << std::endl;
 
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);

@@ -62,10 +62,17 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
  */
 RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-    std::vector<std::pair<int, int>> &bonds,
-    std::vector<std::vector<int>> &angles, bool set15bounds = true,
-    bool scaleVDW = false, bool useMacrocycle14config = false,
-    bool forceTransAmides = true);
+    std::vector<std::pair<int, int>>
+        &bonds,  // < used to return the bonds that were set
+    std::vector<std::vector<int>>
+        &angles,  // < used to return the angles that were set
+    const std::unordered_set<unsigned int>
+        &constrainedBonds,  // < set of bonds where 1-4 contacts should not be
+                            // constrained (e.g. the ET bonds). Each bond is
+                            // stored as a single integer: min(i, j) * nAtoms +
+                            // max(i, j)
+    bool set15bounds = true, bool scaleVDW = false,
+    bool useMacrocycle14config = false, bool forceTransAmides = true);
 
 //! generate the vectors of bonds and angles used by (ET)KDG
 RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
