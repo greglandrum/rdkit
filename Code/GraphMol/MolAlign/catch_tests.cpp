@@ -265,3 +265,25 @@ TEST_CASE("ignoring Hs") {
     }
   }
 }
+
+TEST_CASE("QCP") {
+  v2::SmilesParse::SmilesParserParams ps;
+  std::string smi1 = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|";
+  auto m1 = v2::SmilesParse::MolFromSmiles(smi1, ps);
+  REQUIRE(m1);
+  std::string smi2 = "CCCC |(0,1,0;1,0,0;2,0,0;3,0,0)|";
+  auto m2 = v2::SmilesParse::MolFromSmiles(smi2, ps);
+  REQUIRE(m2);
+  SECTION("basics") {
+    {
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.useQCP = true;
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1, bap);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+  }
+}

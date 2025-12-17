@@ -53,7 +53,8 @@ struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
                                    /// If not provided, these will be
                                    /// generated using a substructure search.
   const RDNumeric::DoubleVector *weights =
-      nullptr;  //< weights for each pair of atoms
+      nullptr;          //< weights for each pair of atoms
+  bool useQCP = false;  //< use QCP algorithm for alignment
 };
 
 //! Alignment functions
@@ -382,7 +383,8 @@ RDKIT_MOLALIGN_EXPORT double CalcRMS(ROMol &prbMol, const ROMol &refMol,
                                      int prbCid, int refCid,
                                      const std::vector<MatchVectType> &map,
                                      int maxMatches,
-                                     const RDNumeric::DoubleVector *weights);
+                                     const RDNumeric::DoubleVector *weights,
+                                     bool useQCP = false);
 
 //! Align the conformations of a molecule using a common set of atoms. If
 /// the molecules contains queries, then the queries must also match exactly.

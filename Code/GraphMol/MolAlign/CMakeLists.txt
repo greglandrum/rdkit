@@ -1,5 +1,5 @@
 
-rdkit_library(MolAlign AlignMolecules.cpp 
+rdkit_library(MolAlign AlignMolecules.cpp qcprot.c
               LINK_LIBRARIES MolTransforms SmilesParse SubstructMatch Alignment GraphMol RDGeneral)
 target_compile_definitions(MolAlign PRIVATE RDKIT_MOLALIGN_BUILD)
 

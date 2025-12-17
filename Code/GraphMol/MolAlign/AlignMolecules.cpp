@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "AlignMolecules.h"
+#include "qcprot.h"
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -136,11 +137,56 @@ double calcMSDInternal(const Conformer &prbCnf, const Conformer &refCnf,
   return ssr / static_cast<double>(npt);
 }
 
+double doQCPAlignment(const Conformer &prbCnf, const Conformer &refCnf,
+                      const MatchVectType &atomMap,
+                      const RDNumeric::DoubleVector *weights,
+                      RDGeom::Transform3D *trans) {
+  // double CalcRMSDRotationalMatrix(double **coords1, double **coords2, const
+  // int len, double *rot, const double *weight);
+  PRECONDITION(!weights || weights->size() == atomMap.size(),
+               "weight size mismatch");
+  std::unique_ptr<double[]> prbCoordsHolder(new double[3 * atomMap.size()]);
+  std::unique_ptr<double[]> refCoordsHolder(new double[3 * atomMap.size()]);
+  std::unique_ptr<double *[]> prbCoords(new double *[atomMap.size()]);
+  std::unique_ptr<double *[]> refCoords(new double *[atomMap.size()]);
+  for (auto i = 0u; i < atomMap.size(); ++i) {
+    const auto &mi = atomMap[i];
+    const auto &prbPos = prbCnf.getAtomPos(mi.first);
+    const auto &refPos = refCnf.getAtomPos(mi.second);
+    prbCoordsHolder[3 * i] = prbPos.x;
+    prbCoordsHolder[3 * i + 1] = prbPos.y;
+    prbCoordsHolder[3 * i + 2] = prbPos.z;
+    refCoordsHolder[3 * i] = refPos.x;
+    refCoordsHolder[3 * i + 1] = refPos.y;
+    refCoordsHolder[3 * i + 2] = refPos.z;
+    prbCoords[i] = &(prbCoordsHolder[3 * i]);
+    refCoords[i] = &(refCoordsHolder[3 * i]);
+  }
+
+  std::unique_ptr<double[]> rotMat(new double[9]);
+  auto res =
+      CalcRMSDRotationalMatrix(reinterpret_cast<double **>(refCoords.get()),
+                               reinterpret_cast<double **>(prbCoords.get()),
+                               static_cast<int>(atomMap.size()), rotMat.get(),
+                               weights ? weights->getData() : nullptr);
+  if (trans) {
+    // copy rotMat into trans:
+    for (auto i = 0; i < 3; ++i) {
+      for (auto j = 0; j < 3; ++j) {
+        trans->setValUnchecked(i, j, rotMat[i * 3 + j]);
+      }
+    }
+  }
+  std::cerr << "QCP! " << res << std::endl;
+  return res * res;
+}
+
 double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
                           int refCid, const std::vector<MatchVectType> &matches,
                           RDGeom::Transform3D *trans, MatchVectType *bestMatch,
                           const RDNumeric::DoubleVector *weights, bool reflect,
-                          unsigned int maxIters, unsigned int numThreads) {
+                          unsigned int maxIters, unsigned int numThreads,
+                          bool useQCP) {
   PRECONDITION(!matches.empty(), "matches must not be empty");
 #ifndef RDK_BUILD_THREADSAFE_SSS
   numThreads = 1;
@@ -153,15 +199,21 @@ double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
   if (numThreads == 1) {
     for (const auto &matche : matches) {
       RDGeom::Transform3D tmpTrans;
-      double msd = trans ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
-                                               weights, reflect, maxIters)
-                         : calcMSDInternal(prbCnf, refCnf, matche, weights);
+      double msd;
+      if (useQCP && trans) {
+        msd = doQCPAlignment(prbCnf, refCnf, matche, weights, &tmpTrans);
+      } else {
+        msd = trans ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
+                                          weights, reflect, maxIters)
+                    : calcMSDInternal(prbCnf, refCnf, matche, weights);
+      }
       if (msd < msdBest) {
         msdBest = msd;
         bestMatchPtr = &matche;
         if (trans) {
           trans->assign(tmpTrans);
         }
+        std::cerr << "!!!!! " << *trans << std::endl;
       }
     }
   }
@@ -264,9 +316,10 @@ double getBestAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
                         params.ignoreHs);
   }
   const auto &matches = params.map.empty() ? allMatches : params.map;
-  auto bestRMS = getBestRMSInternal(
-      prbMol, refMol, prbCid, refCid, matches, &bestTrans, &bestMatch,
-      params.weights, reflect, maxIters, getNumThreadsToUse(params.numThreads));
+  auto bestRMS =
+      getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches, &bestTrans,
+                         &bestMatch, params.weights, reflect, maxIters,
+                         getNumThreadsToUse(params.numThreads), false);
   return bestRMS;
 }
 
@@ -297,7 +350,7 @@ double getBestRMS(ROMol &prbMol, const ROMol &refMol,
   unsigned int maxIters = 50;
   auto bestRMS = getBestRMSInternal(
       prbMol, refMol, prbCid, refCid, matches, &trans, nullptr, params.weights,
-      reflect, maxIters, getNumThreadsToUse(params.numThreads));
+      reflect, maxIters, getNumThreadsToUse(params.numThreads), params.useQCP);
 
   // Perform a final alignment to the best alignment...
   MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
@@ -328,7 +381,7 @@ std::vector<double> getAllConformerBestRMS(const ROMol &mol,
       for (auto cj = 0u; cj < ci; ++cj) {
         res.push_back(getBestRMSInternal(mol, mol, cids[ci], cids[cj], matches,
                                          &trans, nullptr, params.weights,
-                                         reflect, maxIters, 1));
+                                         reflect, maxIters, 1, params.useQCP));
       }
     }
   }
@@ -348,7 +401,7 @@ std::vector<double> getAllConformerBestRMS(const ROMol &mol,
       for (auto i = tidx; i < pairs.size(); i += numThreads) {
         auto rms = getBestRMSInternal(mol, mol, pairs[i].first, pairs[i].second,
                                       matches, &trans, nullptr, params.weights,
-                                      reflect, maxIters, 1);
+                                      reflect, maxIters, 1, params.useQCP);
         rmsds[tidx].emplace_back(i, rms);
       }
     };
@@ -375,7 +428,7 @@ std::vector<double> getAllConformerBestRMS(const ROMol &mol,
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                const std::vector<MatchVectType> &map, int maxMatches,
                bool symmetrizeConjugatedTerminalGroups,
-               const RDNumeric::DoubleVector *weights) {
+               const RDNumeric::DoubleVector *weights, bool useQCP) {
   std::vector<MatchVectType> allMatches;
   if (map.empty()) {
     getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
@@ -386,14 +439,15 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   unsigned int maxIters = 50;
   unsigned int numThreads = 1;
   return getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches, nullptr,
-                            nullptr, weights, reflect, maxIters, numThreads);
+                            nullptr, weights, reflect, maxIters, numThreads,
+                            useQCP);
 }
 
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                const std::vector<MatchVectType> &map, int maxMatches,
-               const RDNumeric::DoubleVector *weights) {
+               const RDNumeric::DoubleVector *weights, bool useQCP) {
   return CalcRMS(prbMol, refMol, prbCid, refCid, map, maxMatches, false,
-                 weights);
+                 weights, useQCP);
 }
 
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
