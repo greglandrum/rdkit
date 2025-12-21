@@ -65,17 +65,21 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
     \brief construct a new AtomPairArguments object
 
     \param countSimulation  if set, use count simulation while generating
-    the fingerprint \param includeChirality if set, chirality will be used
-    in the atom invariants, this is ignored if atomInvariantsGenerator is
-    present for the /c FingerprintGenerator that uses this \param use2D if
-    set, the 2D (topological) distance matrix will be used \param
-    minDistance      minimum distance between atoms to be considered in a
-    pair, default is 1 bond
+    the fingerprint
+    \param includeChirality if set, chirality will be used in the atom
+    invariants, this is ignored if atomInvariantsGenerator is
+    present for the /c FingerprintGenerator that uses this
+    \param use2D            if set, the 2D (topological) distance matrix
+    will be used
+    \param minDistance      minimum distance between atoms to be considered
+    in a pair, default is 1 bond
     \param maxDistance      maximum distance between atoms to be considered
-    in a pair, default is maxPathLen-1 bonds \param countBounds boundaries
-    for count simulation, corresponding bit will be set if the count is
-    higher than the number provided for that spot \param fpSize size of the
-    generated fingerprint, does not affect the sparse versions
+    in a pair, default is maxPathLen-1 bonds
+    \param countBounds      boundaries for count simulation, corresponding
+    bit will be set if the count is higher than the number provided for
+    that spot
+    \param fpSize           size of the generated fingerprint, does not
+    affect the sparse versions
 
    */
   AtomPairArguments(const bool countSimulation = true,
