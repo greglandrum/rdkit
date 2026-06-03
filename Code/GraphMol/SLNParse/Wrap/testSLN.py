@@ -64,6 +64,21 @@ class TestCase(unittest.TestCase):
     ms = m.GetSubstructMatches(patt)
     self.assertTrue(len(ms) == 1)
 
+  def testPickle(self):
+    import pickle
+    m1 = rdSLNParse.MolFromSLN('C[1]H:CH:CH:CH:CH:CH:@1')
+    m1.SetProp('foo', 'bar')
+    self.assertTrue(m1.HasProp('foo'))
+    self.assertTrue(m1.GetProp('foo') == 'bar')
+    self.assertTrue(m1)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+
+    s = pickle.dumps(m1)
+    m2 = pickle.loads(s)
+    self.assertTrue(m2)
+    self.assertTrue(m2.GetNumAtoms() == 6)
+    self.assertTrue(m2.GetProp('foo') == 'bar')
+
 
 if __name__ == '__main__':
   unittest.main()
