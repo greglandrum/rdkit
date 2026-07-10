@@ -37,14 +37,8 @@ import unittest
 import tempfile
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem, rdChemReactions
+from rdkit.Chem import AllChem, FilterCatalog, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
-
-try:
-  from rdkit.Chem import FilterCatalog
-  haveFilterCatalog = True
-except (ImportError, AttributeError):
-  haveFilterCatalog = False
 
 
 def feq(v1, v2, tol2=1e-4):
@@ -488,7 +482,6 @@ M  END
     self.assertTrue(len(labels), 1)
 
   def test17bAddRecursiveQueriesToReaction(self):
-    from rdkit.Chem import FilterCatalog
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
     self.assertTrue(rxn)
     rxn.Initialize()

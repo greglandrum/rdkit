@@ -3,16 +3,9 @@ from os import environ
 from pathlib import Path
 import re
 
-from rdkit import rdBase
 from rdkit import Chem, DataStructs
-from rdkit.Chem import Descriptors
+from rdkit.Chem import AllChem, Descriptors
 from rdkit.Chem import rdMolDescriptors as rdMD
-
-try:
-  from rdkit.Chem import AllChem
-  haveAllChem = True
-except ImportError:
-  haveAllChem = False
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 
@@ -273,7 +266,6 @@ class TestCase(unittest.TestCase):
     contribs = rdMD._CalcCrippenContribs(mol, force=True, atomTypeLabels=ls)
     self.assertEqual(ls, ['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
 
-  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testUSR(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
@@ -315,7 +307,6 @@ class TestCase(unittest.TestCase):
     m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
     self.assertAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
 
-  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testUSRCAT(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
@@ -531,24 +522,13 @@ class TestCase(unittest.TestCase):
 
   def testPythonDescriptorFunctor(self):
 
-    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
+    class NumAtoms(Descriptors.PropertyFunctor):
 
-      def numAtoms(mol):
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
+
+      def __call__(self, mol):
         return mol.GetNumAtoms()
-
-      class NumAtoms(rdMD.PythonPropertyFunctor):
-
-        def __init__(self):
-          rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
-    else:
-
-      class NumAtoms(Descriptors.PropertyFunctor):
-
-        def __init__(self):
-          Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
-
-        def __call__(self, mol):
-          return mol.GetNumAtoms()
 
     numAtoms = NumAtoms()
     # numAtoms2 = NumAtoms()
@@ -656,7 +636,6 @@ class TestCase(unittest.TestCase):
     _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, fromAtoms=[0, 1, 2], bitInfo=bi)
     self.assertTrue(1066 in bi)
 
-  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testCustomVSA(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
     peoe_vsa = rdMD.PEOE_VSA_(mol)

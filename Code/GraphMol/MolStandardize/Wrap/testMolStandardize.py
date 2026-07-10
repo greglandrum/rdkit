@@ -11,7 +11,6 @@ from rdkit import Chem, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import inchi
 
-haveInchi = hasattr(inchi, 'MolToInchi')
 from rdkit.Chem import rdCIPLabeler
 from rdkit.Chem.rdchem import Atom
 
@@ -1900,7 +1899,7 @@ M  END
       ctaut = enumerator.Canonicalize(m2, score_func2)
       self.assertEqual(Chem.MolToSmiles(ctaut), Chem.CanonSmiles("C1(=CCCCC1)O"))
 
-  @unittest.skipUnless(haveInchi, 'Inchi required')
+  @unittest.skipUnless(inchi.INCHI_AVAILABLE, 'Inchi required')
   def testTautomerCanonicalizeNoInchiBondStereoFrom2DCoords(self):
 
     molblock = """

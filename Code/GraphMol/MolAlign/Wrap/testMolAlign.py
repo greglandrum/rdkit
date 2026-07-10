@@ -13,16 +13,6 @@ import numpy
 from rdkit import Chem, RDConfig
 from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
 
-# In nanobind mode, rdMolAlign exposes MMFFGetMoleculeProperties directly.
-# Use it when available so we don't pass boost Python objects to nanobind functions.
-haveNbMMFFProps = hasattr(rdMolAlign, 'MMFFGetMoleculeProperties')
-
-
-def getMMFFProps(mol):
-  if haveNbMMFFProps:
-    return rdMolAlign.MMFFGetMoleculeProperties(mol)
-  return ChemicalForceFields.MMFFGetMoleculeProperties(mol)
-
 
 def lstFeq(l1, l2, tol=1.e-4):
   if (len(list(l1)) != len(list(l2))):
@@ -143,9 +133,9 @@ class TestCase(unittest.TestCase):
     refMol = molS[refNum]
     cumScore = 0.0
     cumMsd = 0.0
-    refPyMP = getMMFFProps(refMol)
+    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
     for prbMol in molS:
-      prbPyMP = getMMFFProps(prbMol)
+      prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
       pyO3A = rdMolAlign.GetO3A(prbMol, refMol, prbPyMP, refPyMP)
       cumScore += pyO3A.Score()
       rmsd = pyO3A.Align()
@@ -234,8 +224,8 @@ class TestCase(unittest.TestCase):
     prbNum = 32
     refMol = molS[refNum]
     prbMol = molS[prbNum]
-    refPyMP = getMMFFProps(refMol)
-    prbPyMP = getMMFFProps(prbMol)
+    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+    prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
     refSIdx = refMol.GetSubstructMatch(Chem.MolFromSmarts('S'))[0]
     prbOIdx = prbMol.GetSubstructMatch(Chem.MolFromSmarts('O'))[0]
     # molW = Chem.SDWriter(alignedSdf)
@@ -398,8 +388,8 @@ class TestCase(unittest.TestCase):
     idea1_mols = _confsToAlignedMolsList(idea1)
     cids = [idea1.GetConformer(i).GetId() for i in range(idea1.GetNumConformers())]
 
-    refParams = getMMFFProps(reference)
-    prbParams = getMMFFProps(idea1)
+    refParams = ChemicalForceFields.MMFFGetMoleculeProperties(reference)
+    prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(idea1)
 
     for i in range(len(cids)):
       o3a1 = rdMolAlign.GetO3A(idea1_mols[i], reference, prbParams, refParams)
@@ -424,8 +414,8 @@ class TestCase(unittest.TestCase):
       prbMol.AddConformer(tm.GetConformer(), True)
     self.assertEqual(prbMol.GetNumConformers(), 50)
 
-    refParams = getMMFFProps(refMol)
-    prbParams = getMMFFProps(prbMol)
+    refParams = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+    prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
     cp = Chem.Mol(prbMol)
     o3s = rdMolAlign.GetO3AForProbeConfs(cp, refMol, 1, prbParams, refParams)
     for i in range(prbMol.GetNumConformers()):
