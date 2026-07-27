@@ -3929,6 +3929,10 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCentersHelper(
       }
     }
   }
+
+  // FIX: make sure that there are no chiral centers in the molecule that are
+  // not part of a meso pair. If there are, then the molecule is not meso.
+
   // if we found more than one pair of meso centers, we need to make sure that
   // they each stand on their own.
   if (canRecurse && res.size() > 1) {
