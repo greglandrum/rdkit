@@ -20,6 +20,7 @@
 #include <GraphMol/Fingerprints/nbWrap/AtomPairWrapper.cpp>
 #include <GraphMol/Fingerprints/nbWrap/MorganWrapper.cpp>
 #include <GraphMol/Fingerprints/nbWrap/RDKitFPWrapper.cpp>
+#include <GraphMol/Fingerprints/nbWrap/AvalonWrapper.cpp>
 #include <GraphMol/Fingerprints/nbWrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
@@ -698,6 +699,7 @@ NB_MODULE(rdFingerprintGenerator, m) {
   AtomPairWrapper::exportAtompair(m);
   MorganWrapper::exportMorgan(m);
   RDKitFPWrapper::exportRDKit(m);
+  AvalonWrapper::exportAvalon(m);
   TopologicalTorsionWrapper::exportTopologicalTorsion(m);
 }
 

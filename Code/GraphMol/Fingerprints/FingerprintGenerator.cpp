@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/Fingerprints/AvalonGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -247,6 +248,8 @@ std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
       fpArgs.reset(new MorganFingerprint::MorganArguments());
     } else if (*typ == "RDKitFPArguments") {
       fpArgs.reset(new RDKitFP::RDKitFPArguments());
+    } else if (*typ == "AvalonArguments") {
+      fpArgs.reset(new AvalonFP::AvalonArguments());
     } else if (*typ == "AtomPairArguments") {
       fpArgs.reset(new AtomPair::AtomPairArguments());
     } else if (*typ == "TopologicalTorsionArguments") {
@@ -267,6 +270,8 @@ std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
       envGen.reset(new MorganFingerprint::MorganEnvGenerator<std::uint64_t>());
     } else if (*typ == "RDKitFPEnvGenerator") {
       envGen.reset(new RDKitFP::RDKitFPEnvGenerator<std::uint64_t>());
+    } else if (*typ == "AvalonEnvGenerator") {
+      envGen.reset(new AvalonFP::AvalonEnvGenerator<std::uint64_t>());
     } else if (*typ == "AtomPairEnvGenerator") {
       envGen.reset(new AtomPair::AtomPairEnvGenerator<std::uint64_t>());
     } else if (*typ == "TopologicalTorsionEnvGenerator") {

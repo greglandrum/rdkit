@@ -20,6 +20,7 @@
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/RDKitFPWrapper.cpp>
+#include <GraphMol/Fingerprints/Wrap/AvalonWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
@@ -768,6 +769,7 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();
   RDKitFPWrapper::exportRDKit();
+  AvalonWrapper::exportAvalon();
   TopologicalTorsionWrapper::exportTopologicalTorsion();
 }
 

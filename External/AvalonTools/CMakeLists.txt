@@ -91,6 +91,9 @@ rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
            LINK_LIBRARIES AvalonLib SubstructMatch )
 
+rdkit_catch_test(testAvalonGenerator testAvalonGenerator.cpp
+           LINK_LIBRARIES AvalonLib Fingerprints SmilesParse )
+
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()

@@ -424,6 +424,48 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 0)
 
+  def testAvalonGenerator(self):
+    m = Chem.MolFromSmiles('OC(=O)CCc1c[nH]c2ccccc12')
+    g = rdFingerprintGenerator.GetAvalonGenerator(fpSize=512)
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumBits(), 512)
+    self.assertGreater(fp.GetNumOnBits(), 0)
+    cfp = g.GetCountFingerprint(m)
+    self.assertEqual(cfp.GetLength(), 512)
+    self.assertEqual(len(cfp.GetNonzeroElements()), fp.GetNumOnBits())
+    scfp = g.GetSparseCountFingerprint(m)
+    self.assertGreater(len(scfp.GetNonzeroElements()), 0)
+
+    g2 = rdFingerprintGenerator.FingerprintGeneratorFromJSON(g.ToJSON())
+    self.assertEqual(g2.GetFingerprint(m), fp)
+
+    g1024 = rdFingerprintGenerator.GetAvalonGenerator(fpSize=1024)
+    self.assertEqual(g1024.GetFingerprint(m).GetNumBits(), 1024)
+
+    # bits match the Avalon toolkit when it is available
+    try:
+      from rdkit.Avalon import pyAvalonTools
+    except ImportError:
+      return
+    flags = pyAvalonTools.avalonSimilarityBits
+    g = rdFingerprintGenerator.GetAvalonGenerator(fpSize=512, bitFlags=flags)
+    # the Python GetAvalonCountFP() ignores its bitFlags argument (the C++
+    # overload takes resetVect in that position), so it always uses the SSS bits
+    gc = rdFingerprintGenerator.GetAvalonGenerator(fpSize=512,
+                                                   bitFlags=pyAvalonTools.avalonSSSBits,
+                                                   accumulateAsQuery=True)
+    for smi in ('c1ccccc1', 'CCCCCCCC', 'c1ccncc1', 'CC(=O)Nc1ccc(O)cc1',
+                'OC(=O)CCc1c[nH]c2ccccc12'):
+      mol = Chem.MolFromSmiles(smi)
+      ref = pyAvalonTools.GetAvalonFP(mol, 512, bitFlags=flags)
+      self.assertEqual(g.GetFingerprint(mol), ref)
+      refc = pyAvalonTools.GetAvalonCountFP(mol, 512)
+      self.assertEqual(gc.GetCountFingerprint(mol).GetNonzeroElements(),
+                       refc.GetNonzeroElements())
+
+    with self.assertRaises(Exception):
+      g.GetFingerprint(m, fromAtoms=[1])
+
 
 if __name__ == '__main__':
   unittest.main()

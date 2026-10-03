@@ -2,7 +2,7 @@
 rdkit_library(Fingerprints
               Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp
               AtomPairs.cpp MACCS.cpp MHFP.cpp FingerprintGenerator.cpp 
-              AtomPairGenerator.cpp MorganGenerator.cpp RDKitFPGenerator.cpp 
+              AtomPairGenerator.cpp MorganGenerator.cpp RDKitFPGenerator.cpp AvalonGenerator.cpp 
               FingerprintUtil.cpp TopologicalTorsionGenerator.cpp
               LINK_LIBRARIES CIPLabeler DataStructs Subgraphs SubstructMatch SmilesParse GraphMol RDGeneral
               )
@@ -16,7 +16,7 @@ rdkit_headers(AtomPairs.h
               FingerprintGenerator.h
               AtomPairGenerator.h
               MorganGenerator.h
-              RDKitFPGenerator.h
+              RDKitFPGenerator.h AvalonGenerator.h
               TopologicalTorsionGenerator.h
               FingerprintUtil.h
               DEST GraphMol/Fingerprints)
@@ -33,6 +33,7 @@ rdkit_test(testFingerprintGenerators testFingerprintGenerators.cpp LINK_LIBRARIE
 rdkit_catch_test(fpTestCatch catch_tests.cpp LINK_LIBRARIES Fingerprints FileParsers)
 
 rdkit_catch_test(fpGenTestCatch fpgen_catch_tests.cpp LINK_LIBRARIES Fingerprints FileParsers)
+rdkit_catch_test(avalonGenTestCatch avalon_gen_catch_tests.cpp LINK_LIBRARIES Fingerprints SmilesParse)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
