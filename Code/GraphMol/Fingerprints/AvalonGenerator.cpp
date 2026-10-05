@@ -37,43 +37,38 @@ namespace AvalonFP {
 namespace {
 
 // ---- minimal stand-ins for the data structures used by the Avalon code ----
-#define TRUE 1
-#define FALSE 0
-#define NONE 0
-#define ZERO_COUNT 1
-#define SINGLE 1
-#define DOUBLE 2
-#define TRIPLE 3
-#define AROMATIC 4
-#define ANY_BOND 8
-#define SUB_ONE 1
-#define SUB_MORE 6
-#define SUB_AS_IS -2
+constexpr int TRUE = 1;
+constexpr int FALSE = 0;
+constexpr int NONE = 0;
+constexpr int ZERO_COUNT = 1;
+constexpr int SINGLE = 1;
+constexpr int DOUBLE = 2;
+constexpr int TRIPLE = 3;
+constexpr int AROMATIC = 4;
+constexpr int ANY_BOND = 8;
+constexpr int SUB_ONE = 1;
+constexpr int SUB_MORE = 6;
+constexpr int SUB_AS_IS = -2;
 
-#define USE_RING_PATTERN 0x000001
-#define USE_RING_PATH 0x000002
-#define USE_ATOM_SYMBOL_PATH 0x000004
-#define USE_ATOM_CLASS_PATH 0x000008
-#define USE_ATOM_COUNT 0x000010
-#define USE_AUGMENTED_ATOM 0x000020
-#define USE_HCOUNT_PATH 0x000040
-#define USE_HCOUNT_CLASS_PATH 0x000080
-#define USE_HCOUNT_PAIR 0x000100
-#define USE_BOND_PATH 0x000200
-#define USE_AUGMENTED_BOND 0x000400
-#define USE_RING_SIZE_COUNTS 0x000800
-#define USE_DEGREE_PATH 0x001000
-#define USE_CLASS_SPIDERS 0x002000
-#define USE_FEATURE_PAIRS 0x004000
-#define USE_SCAFFOLD_IDS 0x100000
-#define USE_SCAFFOLD_COLORS 0x200000
-#define USE_SCAFFOLD_LINKS 0x400000
-#define USE_NON_SSS_BITS 0xF00000
-
-#undef SINGLE
-#undef DOUBLE
-#undef TRIPLE
-#undef AROMATIC
+constexpr int USE_RING_PATTERN = 0x000001;
+constexpr int USE_RING_PATH = 0x000002;
+constexpr int USE_ATOM_SYMBOL_PATH = 0x000004;
+constexpr int USE_ATOM_CLASS_PATH = 0x000008;
+constexpr int USE_ATOM_COUNT = 0x000010;
+constexpr int USE_AUGMENTED_ATOM = 0x000020;
+constexpr int USE_HCOUNT_PATH = 0x000040;
+constexpr int USE_HCOUNT_CLASS_PATH = 0x000080;
+constexpr int USE_HCOUNT_PAIR = 0x000100;
+constexpr int USE_BOND_PATH = 0x000200;
+constexpr int USE_AUGMENTED_BOND = 0x000400;
+constexpr int USE_RING_SIZE_COUNTS = 0x000800;
+constexpr int USE_DEGREE_PATH = 0x001000;
+constexpr int USE_CLASS_SPIDERS = 0x002000;
+constexpr int USE_FEATURE_PAIRS = 0x004000;
+constexpr int USE_SCAFFOLD_IDS = 0x100000;
+constexpr int USE_SCAFFOLD_COLORS = 0x200000;
+constexpr int USE_SCAFFOLD_LINKS = 0x400000;
+constexpr int USE_NON_SSS_BITS = 0xF00000;
 
 struct AvalonState {
   explicit AvalonState(const ROMol &mol) {
@@ -114,11 +109,6 @@ struct AvalonState {
   std::vector<int> bondColors;
   std::vector<int> bondRingFlags;
 };
-
-#define SINGLE 1
-#define DOUBLE 2
-#define TRIPLE 3
-#define AROMATIC 4
 
 int &atomColor(AvalonState &state, const Atom *atom) {
   return state.atomColors[atom->getIdx()];
@@ -195,22 +185,22 @@ int AtomSymbolMatch(std::string_view symbol, std::string_view list) {
 }
 
 // ---- the Avalon algorithm ----
-#define RING_PATTERN_SEED 11
-#define RING_PATH_SEED 13
-#define ATOM_SYMBOL_PATH_SEED 17
-#define ATOM_CLASS_PATH_SEED 23
-#define ATOM_COUNT_SEED 31
-#define AUGMENTED_ATOM_SEED 37
-#define HCOUNT_PATH_SEED 41
-#define HCOUNT_CLASS_PATH_SEED 43
-#define HCOUNT_PAIR_SEED 47
-#define BOND_PATH_SEED 53
-#define AUGMENTED_BOND_SEED 61
-#define RING_SIZE_SEED 67
-#define DEGREE_PATH_SEED 71
-#define CLASS_SPIDER_SEED 79
-#define RING_CLOSURE_SEED 101
-#define NON_SSS_SEED 179
+constexpr int RING_PATTERN_SEED = 11;
+constexpr int RING_PATH_SEED = 13;
+constexpr int ATOM_SYMBOL_PATH_SEED = 17;
+constexpr int ATOM_CLASS_PATH_SEED = 23;
+constexpr int ATOM_COUNT_SEED = 31;
+constexpr int AUGMENTED_ATOM_SEED = 37;
+constexpr int HCOUNT_PATH_SEED = 41;
+constexpr int HCOUNT_CLASS_PATH_SEED = 43;
+constexpr int HCOUNT_PAIR_SEED = 47;
+constexpr int BOND_PATH_SEED = 53;
+constexpr int AUGMENTED_BOND_SEED = 61;
+constexpr int RING_SIZE_SEED = 67;
+constexpr int DEGREE_PATH_SEED = 71;
+constexpr int CLASS_SPIDER_SEED = 79;
+constexpr int RING_CLOSURE_SEED = 101;
+constexpr int NON_SSS_SEED = 179;
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* new macro to convert the current seed value into the 'incremented' one */
@@ -222,22 +212,22 @@ int AtomSymbolMatch(std::string_view symbol, std::string_view list) {
   (bytes[((seed) / 8) % nbytes] |= 0xFF & (1 << ((seed) % 8)))
 
 /* Flags to be used to control recursive processing */
-#define PROCESS_RING_CLOSURES 0x0001
-#define PROCESS_CHAINS 0x0002
-#define FORCED_HETERO_END 0x0004
-#define IGNORE_PATH_SYMBOL 0x0008
-#define IGNORE_TERM_SYMBOL 0x0010
-#define FORCED_RING_PATH 0x0020
-#define STOP_AT_HEAVY_ATOM 0x0040
-#define DEBUG_PATH 0x0100
+constexpr int PROCESS_RING_CLOSURES = 0x0001;
+constexpr int PROCESS_CHAINS = 0x0002;
+constexpr int FORCED_HETERO_END = 0x0004;
+constexpr int IGNORE_PATH_SYMBOL = 0x0008;
+constexpr int IGNORE_TERM_SYMBOL = 0x0010;
+constexpr int FORCED_RING_PATH = 0x0020;
+constexpr int STOP_AT_HEAVY_ATOM = 0x0040;
+constexpr int DEBUG_PATH = 0x0100;
 
-#define ANY_COLOR 113
+constexpr int ANY_COLOR = 113;
 
-#define CSP3 19
-#define HETERO 23
-#define GENERIC (-1)
+constexpr int CSP3 = 19;
+constexpr int HETERO = 23;
+constexpr int GENERIC = -1;
 
-#define SPECIAL_RING (0xFC & ~(1 << 6))
+constexpr int SPECIAL_RING = (0xFC & ~(1 << 6));
 
 static void SetPathLengthFlags(const ROMol &mol, AvalonState &state,
                                std::vector<int> &touched_indices, int start_index,
@@ -439,18 +429,18 @@ int SetPathBitsRec(const ROMol &mol, AvalonState &state,
   return result;
 }
 
-#define HETERO_FLAG 0x0100
-#define RING_SUBST_FLAG 0x0200
-#define QUART_FLAG 0x0400
-#define CSP3_FLAG 0x0800
-#define RS_SPECIAL_FLAG 0x1000
-#define TYPE_MASK 0x00FF
-#define C_FLAG 0x0001
-#define O_FLAG 0x0002
-#define N_FLAG 0x0003
-#define S_FLAG 0x0004
-#define P_FLAG 0x0005
-#define X_FLAG 0x0006
+constexpr int HETERO_FLAG = 0x0100;
+constexpr int RING_SUBST_FLAG = 0x0200;
+constexpr int QUART_FLAG = 0x0400;
+constexpr int CSP3_FLAG = 0x0800;
+constexpr int RS_SPECIAL_FLAG = 0x1000;
+constexpr int TYPE_MASK = 0x00FF;
+constexpr int C_FLAG = 0x0001;
+constexpr int O_FLAG = 0x0002;
+constexpr int N_FLAG = 0x0003;
+constexpr int S_FLAG = 0x0004;
+constexpr int P_FLAG = 0x0005;
+constexpr int X_FLAG = 0x0006;
 
 int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
                    int ncounts,
@@ -2976,14 +2966,6 @@ int CountFingerprintPatterns(
   // "SetFingerprintCountsWithFocus");
   return (result);
 }
-
-#undef SINGLE
-#undef DOUBLE
-#undef TRIPLE
-#undef AROMATIC
-#undef NONE
-#undef TRUE
-#undef FALSE
 
 // Enumerates the rings through ring atoms/bonds (up to max_size) and sets the
 // ring size flags (bit k: member of a ring of size k; bit 0: any ring)
