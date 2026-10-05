@@ -25,11 +25,11 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace RDKit {
@@ -71,7 +71,7 @@ namespace {
 #define USE_NON_SSS_BITS 0xF00000
 
 struct reaccs_atom_t {
-  char atom_symbol[4] = {0, 0, 0, 0};
+  std::string atom_symbol;
   int color = 0;
   int rsize_flags = 0;
   int sub_desc = NONE;
@@ -79,7 +79,7 @@ struct reaccs_atom_t {
 };
 
 struct reaccs_bond_t {
-  int atoms[2] = {0, 0};  // 1-based atom numbers
+  std::array<int, 2> atoms{};  // 1-based atom numbers
   int bond_type = 0;
   int color = 0;
   int rsize_flags = 0;
@@ -98,29 +98,6 @@ struct neighbourhood_t {
   std::vector<int> bonds;  // 0-based bond indices
 };
 
-// zero-initialized scratch memory that is released when the arena goes away
-class Arena {
- public:
-  Arena() = default;
-  Arena(const Arena &) = delete;
-  Arena &operator=(const Arena &) = delete;
-  ~Arena() {
-    for (auto p : d_ptrs) {
-      std::free(p);
-    }
-  }
-  void *alloc(size_t n, size_t size) {
-    void *res = std::calloc(n ? n : 1, size);
-    PRECONDITION(res, "out of memory");
-    d_ptrs.push_back(res);
-    return res;
-  }
-
- private:
-  std::vector<void *> d_ptrs;
-};
-#define TypeAlloc(n, type) ((type *)arena_.alloc((n), sizeof(type)))
-
 // ---- hashing ----
 uint64_t next_hash(uint64_t hash, uint64_t data) {
   hash += data;
@@ -136,27 +113,24 @@ uint64_t hash_position(uint64_t hash, int nslots) {
   return (hash % (uint64_t)nslots);
 }
 
-int AtomicNumberFromSymbol(const char *symbol) {
-  if (!std::strcmp(symbol, "*")) {
+int AtomicNumberFromSymbol(const std::string &symbol) {
+  if (symbol == "*") {
     return 0;
   }
-  return PeriodicTable::getTable()->getAtomicNumber(symbol);
+  return PeriodicTable::getTable()->getAtomicNumber(symbol.c_str());
 }
 
 // true if symbol is one of the comma separated tokens in list
-int AtomSymbolMatch(const char *symbol, const char *list) {
-  const size_t len = std::strlen(symbol);
-  const char *p = list;
-  while (*p) {
-    const char *end = std::strchr(p, ',');
-    size_t tlen = end ? static_cast<size_t>(end - p) : std::strlen(p);
-    if (tlen == len && !std::strncmp(p, symbol, len)) {
+int AtomSymbolMatch(std::string_view symbol, std::string_view list) {
+  while (!list.empty()) {
+    const auto comma = list.find(',');
+    if (list.substr(0, comma) == symbol) {
       return TRUE;
     }
-    if (!end) {
+    if (comma == std::string_view::npos) {
       break;
     }
-    p = end + 1;
+    list.remove_prefix(comma + 1);
   }
   return FALSE;
 }
@@ -207,9 +181,10 @@ int AtomSymbolMatch(const char *symbol, const char *list) {
 #define SPECIAL_RING (0xFC & ~(1 << 6))
 
 static void SetPathLengthFlags(struct reaccs_molecule_t *mp,
-                               int touched_indices[], int start_index,
+                               std::vector<int> &touched_indices, int start_index,
                                int path_length, int current_index, int max_size,
-                               int **length_matrix, neighbourhood_t nbp[],
+                               std::vector<std::vector<int>> &length_matrix,
+                               const std::vector<neighbourhood_t> &nbp,
                                int exclude_atom)
 /*
  * Recursively traces the neighbouring of an atom (start_index+1)
@@ -239,12 +214,13 @@ static void SetPathLengthFlags(struct reaccs_molecule_t *mp,
 }
 
 static void SpecialNeighboursRec(
-    struct reaccs_molecule_t *mp, int touched_indices[], int path_length,
+    struct reaccs_molecule_t *mp, std::vector<int> &touched_indices,
+    int path_length,
     int current_index, int max_size,
     /* count of sp3 carbons with >= 3 C neighbours */
     int csp3[],
     /* count of hetero atoms */
-    int hetero[], neighbourhood_t nbp[], int exclude_atom)
+    int hetero[], const std::vector<neighbourhood_t> &nbp, int exclude_atom)
 /*
  * Recursively traces the neighbouring of an atom collecting
  * counts of special atoms at certain graph distances.
@@ -281,11 +257,12 @@ static void SpecialNeighboursRec(
     touched_indices[ai] = 0; /* down-dating */
   }
 }
-int SetPathBitsRec(struct reaccs_molecule_t *mp, neighbourhood_t *nbp,
+int SetPathBitsRec(struct reaccs_molecule_t *mp,
+                   const std::vector<neighbourhood_t> &nbp,
                    int *fp_counts, int ncounts, uint64_t seed,
-                   int *touched_indices, int nbonds, int minbonds, int maxbonds,
-                   int sprout_index, int first_index, int last_index, int flags,
-                   int exclude_atom)
+                   std::vector<int> &touched_indices, int nbonds,
+                   int minbonds, int maxbonds, int sprout_index,
+                   int first_index, int last_index, int flags, int exclude_atom)
 /*
  * Recursively enumerates the paths through *mp. The next sprouting
  * step is done on the atom (sprout_index+1). seed represents the
@@ -417,15 +394,13 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp, neighbourhood_t *nbp,
 
 int SetFeatureBits(struct reaccs_molecule_t *mp, int *fp_counts, int ncounts,
                    int start_flags, int end_flags, int path_min, int path_max,
-                   int use_counts, int use_atom_types, int **length_matrix,
+                   int use_counts, int use_atom_types,
+                   const std::vector<std::vector<int>> &length_matrix,
                    uint64_t start_seed, int exclude_atom) {
   int result = 0;
   int coli, colj;
   uint64_t seed_i, seed;
-  int *counts;
-  Arena arena_;
-
-  counts = TypeAlloc(ncounts * 4, int); /* allocate tmp array for counts */
+  std::vector<int> counts(ncounts * 4, 0);
   for (int i = 0; i < mp->n_atoms; i++) {
     if (i + 1 == exclude_atom) {
       continue;
@@ -493,13 +468,19 @@ int SetFeatureBits(struct reaccs_molecule_t *mp, int *fp_counts, int ncounts,
   }
   return (result);
 }
-int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
-                             int *H_count, int *atom_status, int *bond_status,
-                             int *fp_counts, int ncounts, int which_bits,
-                             int as_query, int exclude_atom) {
-  Arena arena_;
+int CountFingerprintPatterns(
+    reaccs_molecule_t *mp, const std::vector<neighbourhood_t> &nbp,
+    int *H_count, int *atom_status, int *bond_status, int *fp_counts,
+    int ncounts, int which_bits, int as_query, int exclude_atom) {
   uint64_t seed, old_seed;
-  int *touched_indices; /* this array is up- and down-dated during recursion */
+  std::vector<int> touched_indices(mp->n_atoms, 0);
+  std::vector<int> degree(mp->n_atoms, 0);
+  std::vector<int> cdegree(mp->n_atoms, 0);
+  std::vector<int> unsaturated(mp->n_atoms, 0);
+  std::vector<int> nspecial(mp->n_atoms, 0);
+  std::vector<int> extcon;
+  std::vector<int> extcon2;
+  std::vector<std::vector<int>> length_matrix;
   reaccs_atom_t *ap, *ap1, *ap2, *ap3;
   reaccs_bond_t *bp;
   int tmp;
@@ -517,29 +498,19 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
   int result; /* the number of paths enumerated */
   constexpr int NCOUNT_HASH = 128;
   constexpr int NCOUNT_SEED_HASH = 128 * 128;
-  int atom_type_count_hash[NCOUNT_HASH];
-  int atom_type_count_seed_hash[NCOUNT_SEED_HASH];
-  int *degree{nullptr}, *cdegree{nullptr}, *unsaturated{nullptr},
-      *nspecial{nullptr};
+  std::array<int, NCOUNT_HASH> atom_type_count_hash{};
+  std::array<int, NCOUNT_SEED_HASH> atom_type_count_seed_hash{};
   constexpr int MAX_SPIDER = 7;
-  int csp3[MAX_SPIDER + 1], hetero[MAX_SPIDER + 1];
+  std::array<int, MAX_SPIDER + 1> csp3{};
+  std::array<int, MAX_SPIDER + 1> hetero{};
   int tmp1, tmp2;
   int ndouble, naromatic;
-  int rscounts[15][15];
+  std::array<std::array<int, 15>, 15> rscounts{};
   int nringch2, nfusionch, nspiro, nfusionb;
-  int *length_tmp{nullptr};
-  int *extcon{nullptr}, *extcon2{nullptr};
-  int **length_matrix{nullptr};
   int flags;
   int changed;
 
   result = 0;
-  touched_indices = TypeAlloc(mp->n_atoms, int);
-  degree = TypeAlloc(mp->n_atoms, int);
-  cdegree = TypeAlloc(mp->n_atoms, int);
-  nspecial = TypeAlloc(mp->n_atoms, int);
-  unsaturated = TypeAlloc(mp->n_atoms, int);
-
   nrare_atoms = 0;
   /* Set the color property to represent all different atom types */
   ap = mp->atom_array;
@@ -553,7 +524,7 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
     if (ap->color > 115) {
       ap->color = -1;
     }
-    if (0 == strcmp("A", ap->atom_symbol)) {
+    if (ap->atom_symbol == "A") {
       ap->color = -1;
     }
     is_rare =
@@ -637,12 +608,9 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
 
   if (which_bits & USE_ATOM_COUNT) {
     /* Collect hashed counts of atom types with hydrogen counts */
-    for (int i = 0; i < NCOUNT_HASH; i++) {
-      atom_type_count_hash[i] = 0;
-    }
-    for (int i = 0; i < NCOUNT_SEED_HASH; i++) {
-      atom_type_count_seed_hash[i] = 0;
-    }
+    std::fill(atom_type_count_hash.begin(), atom_type_count_hash.end(), 0);
+    std::fill(atom_type_count_seed_hash.begin(),
+              atom_type_count_seed_hash.end(), 0);
     nringch2 = 0;
     nfusionch = 0;
     nspiro = 0;
@@ -1708,23 +1676,23 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
       continue;
     }
     {
-      if (0 == strcmp("H", ap->atom_symbol)) {
+      if (ap->atom_symbol == "H") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("D", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "D") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("T", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "T") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("C", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "C") {
         ap->color = 6; /* carbon second row elements are one class */
-      } else if (0 == strcmp("N", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "N") {
         ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (0 == strcmp("O", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "O") {
         ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (0 == strcmp("S", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "S") {
         ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (0 == strcmp("Q", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "Q") {
         ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (0 == strcmp("A", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "A") {
         ap->color = 0;
       } else {
         tmp = AtomicNumberFromSymbol(ap->atom_symbol);
@@ -2030,7 +1998,7 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
     ap = mp->atom_array;
     for (int i = 0; i < mp->n_atoms; i++, ap++) {
       /* add 'A' atom to standard class */
-      if (0 == strcmp("A", ap->atom_symbol)) {
+      if (ap->atom_symbol == "A") {
         ap->color = 9;
       }
       if (i + 1 == exclude_atom) {
@@ -2203,7 +2171,7 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
     if (ap->color > 115) {
       ap->color = -1;
     }
-    if (0 == strcmp("A", ap->atom_symbol)) {
+    if (ap->atom_symbol == "A") {
       ap->color = -1;
     }
     if (i + 1 == exclude_atom) {
@@ -2257,7 +2225,7 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
         continue;
       }
       /* only keep terminals if methyl */
-      if (degree[i] == 1 && 0 != strcmp(ap->atom_symbol, "C")) {
+      if (degree[i] == 1 && ap->atom_symbol != "C") {
         continue;
       }
       // ap->atom_symbol, i+1, degree[i], atom_status[i]);
@@ -2318,12 +2286,8 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
     /* Collect length_matrix */
     /* allocate storage length_matrix */
-    length_tmp = TypeAlloc(mp->n_atoms * mp->n_atoms, int);
-    /* allocat indices */
-    length_matrix = TypeAlloc(mp->n_atoms, int *);
+    length_matrix.assign(mp->n_atoms, std::vector<int>(mp->n_atoms, 0));
     for (int i = 0; i < mp->n_atoms; i++) {
-      /* set relative pointers */
-      length_matrix[i] = length_tmp + i * mp->n_atoms;
       touched_indices[i] = 0;
     }
     ap = mp->atom_array;
@@ -2349,19 +2313,19 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
     ap = mp->atom_array;
     for (int i = 0; i < mp->n_atoms; i++, ap++) {
       ap->color = AtomicNumberFromSymbol(ap->atom_symbol);
-      if (0 == strcmp("H", ap->atom_symbol)) {
+      if (ap->atom_symbol == "H") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("D", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "D") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("T", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "T") {
         ap->color = 0; /* ignore hydrogens */
-      } else if (0 == strcmp("Q", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "Q") {
         ap->color = HETERO;
-      } else if (0 == strcmp("A", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "A") {
         ap->color = GENERIC;
-      } else if (0 == strcmp("L", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "L") {
         ap->color = GENERIC;
-      } else if (0 == strcmp("C", ap->atom_symbol)) {
+      } else if (ap->atom_symbol == "C") {
         ap->color = 6; /* carbon second row elements are one class */
         if (cdegree[i] >= 3) {
           ap->color = CSP3;
@@ -2395,12 +2359,11 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
         continue;
       }
       touched_indices[i] = 1; /* updating */
-      for (int j = 0; j <= MAX_SPIDER; j++) {
-        hetero[j] = csp3[j] = 0;
-      }
+      std::fill(csp3.begin(), csp3.end(), 0);
+      std::fill(hetero.begin(), hetero.end(), 0);
       if (which_bits & USE_CLASS_SPIDERS) {
-        SpecialNeighboursRec(mp, touched_indices, 1, i, MAX_SPIDER, csp3,
-                             hetero, nbp, exclude_atom);
+        SpecialNeighboursRec(mp, touched_indices, 1, i, MAX_SPIDER, csp3.data(),
+                             hetero.data(), nbp, exclude_atom);
       }
       touched_indices[i] = 0; /* down-dating */
 
@@ -2506,15 +2469,15 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
       /* set feature flags in atom colors */
       ap = mp->atom_array;
       for (int i = 0; i < mp->n_atoms; i++, ap++) {
-        if (0 == strcmp(ap->atom_symbol, "C")) {
+        if (ap->atom_symbol == "C") {
           flags = C_FLAG;
-        } else if (0 == strcmp(ap->atom_symbol, "O")) {
+        } else if (ap->atom_symbol == "O") {
           flags = O_FLAG;
-        } else if (0 == strcmp(ap->atom_symbol, "N")) {
+        } else if (ap->atom_symbol == "N") {
           flags = N_FLAG;
-        } else if (0 == strcmp(ap->atom_symbol, "S")) {
+        } else if (ap->atom_symbol == "S") {
           flags = S_FLAG;
-        } else if (0 == strcmp(ap->atom_symbol, "P")) {
+        } else if (ap->atom_symbol == "P") {
           flags = P_FLAG;
         } else if (AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I,At")) {
           flags = X_FLAG;
@@ -2738,8 +2701,8 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
   /* previously collected length_matrix. */
   if (!as_query && (which_bits & (USE_NON_SSS_BITS))) {
     seed = NON_SSS_SEED;
-    extcon = TypeAlloc(mp->n_atoms, int);
-    extcon2 = TypeAlloc(mp->n_atoms, int);
+    extcon.assign(mp->n_atoms, 0);
+    extcon2.assign(mp->n_atoms, 0);
     /* initialized extended connectivity */
     ap = mp->atom_array;
     for (int j = 0; j < mp->n_atoms; j++, ap++) {
@@ -2880,15 +2843,15 @@ int CountFingerprintPatterns(reaccs_molecule_t *mp, neighbourhood_t *nbp,
           continue;
         }
         tmp1 = 0;
-        if (0 == strcmp(ap->atom_symbol, "C")) {
+        if (ap->atom_symbol == "C") {
           tmp1 = 101;
-        } else if (0 == strcmp(ap->atom_symbol, "O")) {
+        } else if (ap->atom_symbol == "O") {
           tmp1 = 301;
-        } else if (0 == strcmp(ap->atom_symbol, "N")) {
+        } else if (ap->atom_symbol == "N") {
           tmp1 = 401;
-        } else if (0 == strcmp(ap->atom_symbol, "S")) {
+        } else if (ap->atom_symbol == "S") {
           tmp1 = 601;
-        } else if (0 == strcmp(ap->atom_symbol, "P")) {
+        } else if (ap->atom_symbol == "P") {
           tmp1 = 701;
         } else if (AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I,At")) {
           tmp1 = 901;
@@ -3197,7 +3160,7 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
   std::vector<char> atomInRing(nAtoms, 0);
   std::vector<char> candidate(nAtoms, 0);
   for (int i = 0; i < nAtoms; ++i) {
-    candidate[i] = std::strcmp("C", atoms[i].atom_symbol) != 0;
+    candidate[i] = atoms[i].atom_symbol != "C";
   }
   for (int b = 0; b < nBonds; ++b) {
     if (bonds[b].bond_type > kSingle && bonds[b].bond_type != kTriple) {
@@ -3271,7 +3234,7 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
               ++inRingDouble;
             }
           } else if (bonds[bi].bond_type == kDouble) {
-            if (std::strcmp(atoms[i].atom_symbol, "C") == 0 &&
+            if (atoms[i].atom_symbol == "C" &&
                 !bondInRing[bi] && isSym(ai, "O,S,P,N,L")) {
               exoPull = true;
             }
@@ -3282,14 +3245,14 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
         }
         if ((inRingAromatic >= 1 || inRingDouble == 1) &&
             (isSym(i, "C,N,A,*") ||
-             std::strcmp(atoms[i].atom_symbol, "L") == 0)) {
+             atoms[i].atom_symbol == "L")) {
           localPi = 1;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
                    atoms[i].charge == 0 && isSym(i, "N,S,O")) {
           localPi = 2;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
                    atoms[i].charge == 0 && exoPull &&
-                   std::strcmp(atoms[i].atom_symbol, "C") == 0) {
+                   atoms[i].atom_symbol == "C") {
           localPi = 0;
         } else {
           conjugated = false;
@@ -3333,7 +3296,7 @@ void guessSubstitution(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
   for (size_t i = 0; i < atoms.size(); ++i) {
     if (atoms[i].charge != 0 ||
         mol.getAtomWithIdx(i)->getNumRadicalElectrons() != 0 ||
-        std::strcmp(atoms[i].atom_symbol, "C") != 0) {
+        atoms[i].atom_symbol != "C") {
       continue;
     }
     int nsingle = 0, ndouble = 0, ntriple = 0, naromatic = 0, nother = 0;
@@ -3421,11 +3384,10 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
     auto &a = atoms[atom->getIdx()];
     const auto anum = atom->getAtomicNum();
     if (anum == 0) {
-      std::strcpy(a.atom_symbol, "*");
+      a.atom_symbol = "*";
     } else {
-      std::strncpy(a.atom_symbol,
-                   PeriodicTable::getTable()->getElementSymbol(anum).c_str(),
-                   3);
+      a.atom_symbol =
+          PeriodicTable::getTable()->getElementSymbol(anum);
     }
     a.charge = atom->getFormalCharge();
   }
@@ -3517,7 +3479,7 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
     } else {
       perceiveAromaticBonds(*lmol, bonds, nAtoms);
     }
-    CountFingerprintPatterns(&mp, nbp.data(), hCount.data(), atomStatus.data(),
+    CountFingerprintPatterns(&mp, nbp, hCount.data(), atomStatus.data(),
                              bondStatus.data(), counts.data(), fpSize, bitFlags,
                              queryMode, focusAtom + 1);
   }
