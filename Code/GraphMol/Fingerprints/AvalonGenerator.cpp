@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2025 RDKit contributors
+//  Copyright (C) 2026 RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +12,8 @@
 //  ssmatch.c). The feature enumeration and hashing follow the original code
 //  as closely as possible, but molecule perception (aromaticity, rings,
 //  hydrogen counts) is done with RDKit's own machinery.
+//  Comments were mainly preserved from the original Avalon code.
+//  Github Copilot was used to assist in the porting process.
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
@@ -37,8 +39,6 @@ namespace AvalonFP {
 namespace {
 
 // ---- minimal stand-ins for the data structures used by the Avalon code ----
-constexpr int TRUE = 1;
-constexpr int FALSE = 0;
 constexpr int NONE = 0;
 constexpr int ZERO_COUNT = 1;
 constexpr int SINGLE = 1;
@@ -162,26 +162,13 @@ uint64_t hash_position(uint64_t hash, int nslots) {
   return (hash % (uint64_t)nslots);
 }
 
-int AtomicNumberFromSymbol(const std::string &symbol) {
-  if (symbol == "*") {
-    return 0;
-  }
-  return PeriodicTable::getTable()->getAtomicNumber(symbol.c_str());
-}
-
 // true if symbol is one of the comma separated tokens in list
-int AtomSymbolMatch(std::string_view symbol, std::string_view list) {
-  while (!list.empty()) {
-    const auto comma = list.find(',');
-    if (list.substr(0, comma) == symbol) {
-      return TRUE;
-    }
-    if (comma == std::string_view::npos) {
-      break;
-    }
-    list.remove_prefix(comma + 1);
-  }
-  return FALSE;
+bool AtomSymbolMatch(const std::string &symbol,
+                     const std::vector<const char *> &list) {
+  const auto symbol_cstr = symbol.c_str();
+  return std::ranges::find_if(list, [symbol_cstr](const auto a) {
+           return std::strcmp(a, symbol_cstr) == 0;
+         }) != list.end();
 }
 
 // ---- the Avalon algorithm ----
@@ -440,7 +427,7 @@ constexpr int X_FLAG = 0x0006;
 
 int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
                    int ncounts, int start_flags, int end_flags, int path_min,
-                   int path_max, int use_counts, int use_atom_types,
+                   int path_max, bool use_counts, bool use_atom_types,
                    const std::vector<std::vector<int>> &length_matrix,
                    uint64_t start_seed, int exclude_atom) {
   int result = 0;
@@ -1692,7 +1679,7 @@ int countScaffoldFeatures(AvalonState &state,
             continue;
           }
           if (extcon[j] < extcon[nbp[j].atoms[jj]]) {
-            changed = TRUE;
+            changed = true;
             extcon[nbp[j].atoms[jj]] = extcon[j];
           }
         }
@@ -1790,7 +1777,8 @@ int countScaffoldFeatures(AvalonState &state,
           tmp1 = 601;
         } else if ((*ap)->getSymbol() == "P") {
           tmp1 = 701;
-        } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
+        } else if (AtomSymbolMatch((*ap)->getSymbol(),
+                                   {"F", "Cl", "Br", "I", "At"})) {
           tmp1 = 901;
         }
         extcon[j] = atomRingFlags(state, *ap) + tmp1;
@@ -1837,7 +1825,7 @@ int countScaffoldFeatures(AvalonState &state,
               continue;
             }
             if (extcon[j] < extcon[nbp[j].atoms[jj]]) {
-              changed = TRUE;
+              changed = true;
               extcon[nbp[j].atoms[jj]] = extcon[j];
             }
           }
@@ -1887,7 +1875,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
         flags = S_FLAG;
       } else if ((*ap)->getSymbol() == "P") {
         flags = P_FLAG;
-      } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
+      } else if (AtomSymbolMatch((*ap)->getSymbol(),
+                                 {"F", "Cl", "Br", "I", "At"})) {
         flags = X_FLAG;
       } else {
         flags = 0;
@@ -1917,8 +1906,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
       result += SetFeatureBits(mol, state, fp_counts, ncounts, CSP3_FLAG,
                                HETERO_FLAG, /* to hetero or ring subst */
                                2, 3,        /* with path length 1 to 9 */
-                               FALSE,       /* don't use count */
-                               TRUE,        /* use atom type flags */
+                               false,       /* don't use count */
+                               true,        /* use atom type flags */
                                length_matrix, 1237, /* seed = 1237 */
                                exclude_atom);
     }
@@ -1927,8 +1916,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                                HETERO_FLAG, /* from ring substitution */
                                HETERO_FLAG, /* to hetero or ring subst */
                                1, 12,       /* with path length 1 to 10 */
-                               TRUE,        /* use count */
-                               TRUE,        /* use atom type flags */
+                               true,        /* use count */
+                               true,        /* use atom type flags */
                                length_matrix, 1237, /* seed = 1237 */
                                exclude_atom);
     }
@@ -1937,8 +1926,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                                RING_SUBST_FLAG, /* from ring substitution */
                                RING_SUBST_FLAG, /* to ring substitution */
                                5, 7,            /* with path length 1 to 12 */
-                               FALSE,           /* don't use count */
-                               TRUE,            /* use atom type flags */
+                               false,           /* don't use count */
+                               true,            /* use atom type flags */
                                length_matrix, 2237, /* seed = 2237 */
                                exclude_atom);
     }
@@ -1948,8 +1937,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                          RS_SPECIAL_FLAG, /* from special ring substitution */
                          HETERO_FLAG,     /* to hetero atom */
                          2, 4,            /* with path length 1 to 5 */
-                         TRUE,            /* don't use count */
-                         FALSE,           /* use atom type flags */
+                         true,            /* don't use count */
+                         false,           /* use atom type flags */
                          length_matrix, 3237, /* seed = 3237 */
                          exclude_atom);
     }
@@ -1958,8 +1947,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                                QUART_FLAG,  /* from quartenary atom */
                                HETERO_FLAG, /* to hetero or ring subst */
                                1, 8,        /* with path length 1 to 8 */
-                               FALSE,       /* don't use count */
-                               TRUE,        /* use atom type flags */
+                               false,       /* don't use count */
+                               true,        /* use atom type flags */
                                length_matrix, 4237, /* seed = 4237 */
                                exclude_atom);
     }
@@ -1967,8 +1956,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
       result += SetFeatureBits(
           mol, state, fp_counts, ncounts, QUART_FLAG, /* from quartenary atom */
           RING_SUBST_FLAG, 1, 6, /* with path length 1 to 8 */
-          FALSE,                 /* don't use count */
-          TRUE,                  /* use atom type flags */
+          false,                 /* don't use count */
+          true,                  /* use atom type flags */
           length_matrix, 5237,   /* seed = 4237 */
           exclude_atom);
     }
@@ -1976,8 +1965,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
       result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                X_FLAG,          /* from halogen atom */
                                CSP3_FLAG, 1, 1, /* with path length 1 to 1 */
-                               FALSE,           /* don't use count */
-                               TRUE,            /* use atom type flags */
+                               false,           /* don't use count */
+                               true,            /* use atom type flags */
                                length_matrix, 15237, /* seed = 15237 */
                                exclude_atom);
     }
@@ -1987,8 +1976,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                          RS_SPECIAL_FLAG, /* from special ring substitution */
                          RING_SUBST_FLAG, /* to hetero atom */
                          2, 4,            /* with path length 1 to 5 */
-                         TRUE,            /* don't use count */
-                         FALSE,           /* use atom type flags */
+                         true,            /* don't use count */
+                         false,           /* use atom type flags */
                          length_matrix, 6237, /* seed = 6237 */
                          exclude_atom);
     }
@@ -1997,8 +1986,8 @@ int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
                                HETERO_FLAG,     /* from hetero */
                                RING_SUBST_FLAG, /* to ring substitution */
                                1, 6,            /* with path length 1 to 8 */
-                               FALSE,           /* don't use count */
-                               TRUE,            /* use atom type flags */
+                               false,           /* don't use count */
+                               true,            /* use atom type flags */
                                length_matrix, 7237, /* seed = 4237 */
                                exclude_atom);
     }
@@ -2113,8 +2102,11 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
   /* Set the color property to represent all different atom types */
   auto ap = state.atoms.data();
   for (int i = 0; i < nAtoms; i++, ap++) {
-    unsaturated[i] = FALSE;
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    unsaturated[i] = false;
+    const auto symbol = (*ap)->getSymbol();
+    atomColor(state, *ap) =
+        symbol == "*" ? 0
+                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) <= 1) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
@@ -2127,7 +2119,8 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
     }
     const auto is_rare =
         atomColor(state, *ap) > 0 &&
-        !AtomSymbolMatch((*ap)->getSymbol(), "C,H,O,N,S,P,Cl,F");
+        !AtomSymbolMatch((*ap)->getSymbol(),
+                         {"C", "H", "O", "N", "S", "P", "Cl", "F"});
     if (is_rare) {
       if (exclude_atom != i + 1 || exclude_atom <= 0) {
         nrare_atoms++;
@@ -2161,8 +2154,8 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
       bondColor(state, *bp) = 0;
     }
     if (bondColor(state, *bp) > 1) {
-      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] = TRUE;
-      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] = TRUE;
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] = true;
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] = true;
     }
 
     /* Count non-hydrogen degree */
@@ -2298,7 +2291,10 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
   /* Set the color property to represent all different atom types */
   ap = state.atoms.data();
   for (int i = 0; i < nAtoms; i++, ap++) {
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    const auto symbol = (*ap)->getSymbol();
+    atomColor(state, *ap) =
+        symbol == "*" ? 0
+                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) == 1 || i + 1 == exclude_atom) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     } else {
@@ -2427,7 +2423,10 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
       } else if ((*ap)->getSymbol() == "A") {
         atomColor(state, *ap) = 0;
       } else {
-        const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+        const auto symbol = (*ap)->getSymbol();
+        const auto tmp =
+            symbol == "*" ? 0
+                          : PeriodicTable::getTable()->getAtomicNumber(symbol);
         if (1 < tmp && tmp < 115) {
           atomColor(state, *ap) = 8; /* non-carbon is the only second class */
         } else { /* This could be R atoms or other odd things */
@@ -2812,7 +2811,10 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
   /* Set the color property to represent all different atom types */
   ap = state.atoms.data();
   for (int i = 0; i < nAtoms; i++, ap++) {
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    const auto symbol = (*ap)->getSymbol();
+    atomColor(state, *ap) =
+        symbol == "*" ? 0
+                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) <= 1) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
@@ -2907,7 +2909,10 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
       if (i + 1 == exclude_atom) {
         continue;
       }
-      const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+      const auto symbol = (*ap)->getSymbol();
+      const auto tmp =
+          symbol == "*" ? 0
+                        : PeriodicTable::getTable()->getAtomicNumber(symbol);
       if (1 >= tmp || tmp >= 115) {
         continue;
       }
@@ -2948,7 +2953,7 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
         continue;
       }
       touched_indices[i] = 1; /* updating */
-      // if (FALSE) fprintf(stderr, "starting path search at atom %d(%d)\n",
+      // if (false) fprintf(stderr, "starting path search at atom %d(%d)\n",
       // i+1, atomColor(state, *ap));
       SetPathLengthFlags(mol, state, touched_indices, i, 0, i,
                          12, /* path perception distance <= 12 */
@@ -2967,7 +2972,10 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
     std::array<int, MAX_SPIDER + 1> hetero{};
     ap = state.atoms.data();
     for (int i = 0; i < nAtoms; i++, ap++) {
-      atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+      const auto symbol = (*ap)->getSymbol();
+      atomColor(state, *ap) =
+          symbol == "*" ? 0
+                        : PeriodicTable::getTable()->getAtomicNumber(symbol);
       if ((*ap)->getSymbol() == "H") {
         atomColor(state, *ap) = 0; /* ignore hydrogens */
       } else if ((*ap)->getSymbol() == "D") {
@@ -3405,7 +3413,7 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
     }
   }
 
-  const auto isSym = [&](int ai, const char *list) {
+  const auto isSym = [&](int ai, const std::vector<const char *> &list) {
     return AtomSymbolMatch(mol.getAtomWithIdx(ai)->getSymbol(), list);
   };
   bool changed;
@@ -3434,7 +3442,7 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
             }
           } else if (state.bondTypes[bi] == kDouble) {
             if (mol.getAtomWithIdx(i)->getSymbol() == "C" && !bondInRing[bi] &&
-                isSym(ai, "O,S,P,N,L")) {
+                isSym(ai, {"O", "S", "P", "N", "L"})) {
               exoPull = true;
             }
           }
@@ -3443,12 +3451,12 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
           continue;
         }
         if ((inRingAromatic >= 1 || inRingDouble == 1) &&
-            (isSym(i, "C,N,A,*") ||
+            (isSym(i, {"C", "N", "A", "*"}) ||
              mol.getAtomWithIdx(i)->getSymbol() == "L")) {
           localPi = 1;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
                    mol.getAtomWithIdx(i)->getFormalCharge() == 0 &&
-                   isSym(i, "N,S,O")) {
+                   isSym(i, {"N", "S", "O"})) {
           localPi = 2;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
                    mol.getAtomWithIdx(i)->getFormalCharge() == 0 && exoPull &&
@@ -3457,7 +3465,8 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
         } else {
           conjugated = false;
         }
-        if (mol.getAtomWithIdx(i)->getFormalCharge() < 0 && isSym(i, "C,N")) {
+        if (mol.getAtomWithIdx(i)->getFormalCharge() < 0 &&
+            isSym(i, {"C", "N"})) {
           conjugated = false;
         }
         npi += localPi;
