@@ -134,11 +134,11 @@ int &bondRingFlags(AvalonState &state, const Bond *bond) {
   return state.bondRingFlags[bond->getIdx()];
 }
 
-int bondEndpoint(const AvalonState &state, unsigned int bondIdx, unsigned int end) {
+int bondEndpoint(const AvalonState &state, unsigned int bondIdx,
+                 unsigned int end) {
   const auto bond = state.bonds[bondIdx];
-  return static_cast<int>((end == 0 ? bond->getBeginAtomIdx()
-                                    : bond->getEndAtomIdx()) +
-                          1);
+  return static_cast<int>(
+      (end == 0 ? bond->getBeginAtomIdx() : bond->getEndAtomIdx()) + 1);
 }
 
 struct neighbourhood_t {
@@ -230,8 +230,9 @@ constexpr int GENERIC = -1;
 constexpr int SPECIAL_RING = (0xFC & ~(1 << 6));
 
 static void SetPathLengthFlags(const ROMol &mol, AvalonState &state,
-                               std::vector<int> &touched_indices, int start_index,
-                               int path_length, int current_index, int max_size,
+                               std::vector<int> &touched_indices,
+                               int start_index, int path_length,
+                               int current_index, int max_size,
                                std::vector<std::vector<int>> &length_matrix,
                                const std::vector<neighbourhood_t> &nbp,
                                int exclude_atom)
@@ -256,16 +257,16 @@ static void SetPathLengthFlags(const ROMol &mol, AvalonState &state,
     }
     touched_indices[ai] = 1; /* updating */
     length_matrix[start_index][ai] |= 1 << (path_length + 1);
-    SetPathLengthFlags(mol, state, touched_indices, start_index, path_length + 1, ai,
-                       max_size, length_matrix, nbp, exclude_atom);
+    SetPathLengthFlags(mol, state, touched_indices, start_index,
+                       path_length + 1, ai, max_size, length_matrix, nbp,
+                       exclude_atom);
     touched_indices[ai] = 0; /* down-dating */
   }
 }
 
 static void SpecialNeighboursRec(
     const ROMol &mol, AvalonState &state, std::vector<int> &touched_indices,
-    int path_length,
-    int current_index, int max_size,
+    int path_length, int current_index, int max_size,
     /* count of sp3 carbons with >= 3 C neighbours */
     int csp3[],
     /* count of hetero atoms */
@@ -301,17 +302,17 @@ static void SpecialNeighboursRec(
       continue;
     }
     touched_indices[ai] = 1; /* updating */
-    SpecialNeighboursRec(mol, state, touched_indices, path_length + 1, ai, max_size,
-                         csp3, hetero, nbp, exclude_atom);
+    SpecialNeighboursRec(mol, state, touched_indices, path_length + 1, ai,
+                         max_size, csp3, hetero, nbp, exclude_atom);
     touched_indices[ai] = 0; /* down-dating */
   }
 }
 int SetPathBitsRec(const ROMol &mol, AvalonState &state,
-                   const std::vector<neighbourhood_t> &nbp,
-                   int *fp_counts, int ncounts, uint64_t seed,
-                   std::vector<int> &touched_indices, int nbonds,
-                   int minbonds, int maxbonds, int sprout_index,
-                   int first_index, int last_index, int flags, int exclude_atom)
+                   const std::vector<neighbourhood_t> &nbp, int *fp_counts,
+                   int ncounts, uint64_t seed,
+                   std::vector<int> &touched_indices, int nbonds, int minbonds,
+                   int maxbonds, int sprout_index, int first_index,
+                   int last_index, int flags, int exclude_atom)
 /*
  * Recursively enumerates the paths through *mp. The next sprouting
  * step is done on the atom (sprout_index+1). seed represents the
@@ -410,9 +411,9 @@ int SetPathBitsRec(const ROMol &mol, AvalonState &state,
       if (nbonds + 1 <= maxbonds) /* continue recursion */
       {
         result +=
-            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                           nbonds + 1, minbonds, maxbonds, ai, first_index,
-                           sprout_index, flags, exclude_atom);
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                           touched_indices, nbonds + 1, minbonds, maxbonds, ai,
+                           first_index, sprout_index, flags, exclude_atom);
       }
 
       /* restoring and down dating */
@@ -438,9 +439,8 @@ constexpr int P_FLAG = 0x0005;
 constexpr int X_FLAG = 0x0006;
 
 int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
-                   int ncounts,
-                   int start_flags, int end_flags, int path_min, int path_max,
-                   int use_counts, int use_atom_types,
+                   int ncounts, int start_flags, int end_flags, int path_min,
+                   int path_max, int use_counts, int use_atom_types,
                    const std::vector<std::vector<int>> &length_matrix,
                    uint64_t start_seed, int exclude_atom) {
   int result = 0;
@@ -470,9 +470,8 @@ int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
       if (use_atom_types && 0 == (colj & TYPE_MASK)) {
         continue;  // ignore generic atoms
       }
-      const auto seed = use_atom_types
-                            ? NEXT_SEED(seed_i, colj & TYPE_MASK)
-                            : seed_i;
+      const auto seed =
+          use_atom_types ? NEXT_SEED(seed_i, colj & TYPE_MASK) : seed_i;
       for (int k = path_min; k <= path_max; k++) {
         if ((1 << k) & length_matrix[i][j]) {
           counts[(k * 19 + seed) % (ncounts * 4)]++;
@@ -506,114 +505,13 @@ int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
   }
   return (result);
 }
-int CountFingerprintPatterns(
-    const ROMol &mol, AvalonState &state,
-    const std::vector<neighbourhood_t> &nbp,
-    int *H_count, int *atom_status, int *bond_status, int *fp_counts,
-    int ncounts, int which_bits, int as_query, int exclude_atom) {
-  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
-  const auto nBonds = static_cast<int>(mol.getNumBonds());
-  std::vector<int> touched_indices(nAtoms, 0);
-  std::vector<int> degree(nAtoms, 0);
-  std::vector<int> cdegree(nAtoms, 0);
-  std::vector<int> unsaturated(nAtoms, 0);
-  std::vector<int> nspecial(nAtoms, 0);
-  int nrare_atoms = 0;
-  /* Set the color property to represent all different atom types */
-  auto ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    unsaturated[i] = FALSE;
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
-    if (atomColor(state, *ap) <= 1) {
-      atomColor(state, *ap) = 0; /* ignore hydrogens */
-    }
-    /* mark special atom types */
-    if (atomColor(state, *ap) > 115) {
-      atomColor(state, *ap) = -1;
-    }
-    if ((*ap)->getSymbol() == "A") {
-      atomColor(state, *ap) = -1;
-    }
-    const auto is_rare =
-        atomColor(state, *ap) > 0 && !AtomSymbolMatch((*ap)->getSymbol(), "C,H,O,N,S,P,Cl,F");
-    if (is_rare) {
-      if (exclude_atom != i + 1 || exclude_atom <= 0) {
-        nrare_atoms++;
-      }
-    }
-  }
-
-  int ndouble = 0;
-  int naromatic = 0;
-  int nfusionb = 0;
-  /* Set the color property to represent the different bond type classes */
-  auto bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (bondType(state, *bp) == SINGLE) {
-      bondColor(state, *bp) = 1;
-    } else if (bondType(state, *bp) == DOUBLE) {
-      bondColor(state, *bp) = 2;
-      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
-        ndouble++;
-      }
-    } else if (bondType(state, *bp) == TRIPLE) {
-      bondColor(state, *bp) = 3;
-    } else if (bondType(state, *bp) == AROMATIC) {
-      bondColor(state, *bp) = 4;
-      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
-        naromatic++;
-      }
-    } else {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondColor(state, *bp) > 1) {
-      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] = TRUE;
-      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] = TRUE;
-    }
-
-    /* Count non-hydrogen degree */
-    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
-        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0) {
-      degree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
-      degree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
-    }
-    /* Count carbon degree */
-    if (bondType(state, *bp) == DOUBLE) {
-      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
-      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
-    } else if (bondType(state, *bp) == TRIPLE) {
-      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] += 2;
-      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] += 2;
-    }
-    if (bondType(state, *bp) != SINGLE) {
-      continue;
-    }
-    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
-        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6) {
-      cdegree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
-    }
-    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0 &&
-        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 6) {
-      cdegree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
-    }
-
-    if (exclude_atom <= 0 ||
-        (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom)) {
-      if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] > 2 &&
-          atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] > 2) {  // ring fusion
-        nfusionb++;
-      }
-    }
-  }
-  /* ignore special atom types for further processing */
-  ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    if (atomColor(state, *ap) < 0) {
-      atomColor(state, *ap) = 0;
-    }
-  }
-
+int countAtomCountFeatures(AvalonState &state, const int *H_count,
+                           const int *atom_status, int *fp_counts, int nAtoms,
+                           int ncounts, int exclude_atom, int nrare_atoms,
+                           int ndouble, int naromatic, int nfusionb,
+                           int which_bits) {
   int result = 0;
+  auto ap = state.atoms.data();
   if (which_bits & USE_ATOM_COUNT) {
     constexpr int NCOUNT_HASH = 128;
     constexpr int NCOUNT_SEED_HASH = 128 * 128;
@@ -659,7 +557,8 @@ int CountFingerprintPatterns(
       seed = NEXT_SEED(seed, atomColor(state, *ap) + 17);
       atom_type_count_seed_hash[seed % NCOUNT_SEED_HASH]++;
       /* normal hetero only with hydrogen */
-      if ((atomColor(state, *ap) == 7 || atomColor(state, *ap) == 8) && H_count[i + 1] <= 0) {
+      if ((atomColor(state, *ap) == 7 || atomColor(state, *ap) == 8) &&
+          H_count[i + 1] <= 0) {
         continue;
       }
       hash = hash * 7 + atomColor(state, *ap) + 13;
@@ -891,8 +790,23 @@ int CountFingerprintPatterns(
     result += nbits;
   }
 
+  return result;
+}
+
+int countAtomSymbolPathFeatures(const ROMol &mol, AvalonState &state,
+                                const std::vector<neighbourhood_t> &nbp,
+                                int *fp_counts, int ncounts,
+                                std::vector<int> &touched_indices,
+                                const std::vector<int> &degree,
+                                const std::vector<int> &cdegree,
+                                const int *atom_status, int which_bits,
+                                int as_query, int exclude_atom) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  int result = 0;
   uint64_t seed = 0;
   uint64_t old_seed = 0;
+  auto ap = state.atoms.data();
+  auto bp = state.bonds.data();
   if (which_bits & USE_ATOM_SYMBOL_PATH) {
     seed = ATOM_SYMBOL_PATH_SEED;
     ap = state.atoms.data();
@@ -907,7 +821,8 @@ int CountFingerprintPatterns(
       old_seed = seed;
       seed = NEXT_SEED(seed, atomColor(state, *ap));
       /* Ignore common atom types */
-      if (atomColor(state, *ap) != 6 && atomColor(state, *ap) != 7 && atomColor(state, *ap) != 8) {
+      if (atomColor(state, *ap) != 6 && atomColor(state, *ap) != 7 &&
+          atomColor(state, *ap) != 8) {
         ADD_BIT(fp_counts, ncounts, seed);
         result++;
       }
@@ -915,19 +830,24 @@ int CountFingerprintPatterns(
       if (1) {  // [TODO] 1
         if (atomColor(state, *ap) != 6 &&
             (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
-             (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
+             (atomSubDescriptor(state, *ap) != NONE &&
+              atomSubDescriptor(state, *ap) != SUB_MORE &&
               atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed + 12347, touched_indices, 1, 1,
-              1, /* path length 1 to 1 */
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed + 12347,
+              touched_indices, 1, 1, 1, /* path length 1 to 1 */
               i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
         }
       }
       /* 2 bond paths for not very common starts */
       if (1) {  // [TODO] 2
-        if (atomColor(state, *ap) >= 10 || (atomColor(state, *ap) == 7 && degree[i] > 0) ||
+        if (atomColor(state, *ap) >= 10 ||
+            (atomColor(state, *ap) == 7 && degree[i] > 0) ||
             (atomColor(state, *ap) == 8 && degree[i] > 1) ||
-            (atomColor(state, *ap) == 6 && degree[i] > 2 && atom_status[i] > 0)) {
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 1,
+            (atomColor(state, *ap) == 6 && degree[i] > 2 &&
+             atom_status[i] > 0)) {
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 1,
               2, /* path length 1 to 2 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -938,8 +858,10 @@ int CountFingerprintPatterns(
       /* Add more paths starting at special atoms */
       if (1) {  // [TODO] 3
         if (atomColor(state, *ap) > 6) {
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 217 * atomColor(state, *ap) + seed,
-              touched_indices, 1, 3, 4, /* path length 3 to 4 */
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts,
+              217 * atomColor(state, *ap) + seed, touched_indices, 1, 3,
+              4, /* path length 3 to 4 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES |
                   STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -947,9 +869,11 @@ int CountFingerprintPatterns(
               exclude_atom);
 
           if (atomColor(state, *ap) > 10 &&
-              atomColor(state, *ap) <= 18) {  // only third row of periodic table
-            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 17 + seed, touched_indices, 1, 5,
-                7, i, 0, -1,
+              atomColor(state, *ap) <=
+                  18) {  // only third row of periodic table
+            result += SetPathBitsRec(
+                mol, state, nbp, fp_counts, ncounts, 17 + seed, touched_indices,
+                1, 5, 7, i, 0, -1,
                 FORCED_HETERO_END | IGNORE_PATH_SYMBOL |
                     STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
                     // PROCESS_RING_CLOSURES |      // rings containing metal
@@ -961,10 +885,12 @@ int CountFingerprintPatterns(
       }
       if (1) {  // [TODO] 4
         if ((atomColor(state, *ap) == 7 ||
-             atomColor(state, *ap) == 8) &&  // only do this for common hetero elements
+             atomColor(state, *ap) ==
+                 8) &&  // only do this for common hetero elements
             cdegree[i] > 2) {
           seed = NEXT_SEED(seed, atomColor(state, *ap) * 23);
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
               6, /* path length 1 to 4 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -977,13 +903,15 @@ int CountFingerprintPatterns(
 
       seed = old_seed;
       /* Add another set of bits for paths starting at more crowded atoms */
-      if (1) {                                   // [TODO] 5
-        if (degree[i] >= 4 && atomColor(state, *ap) != 5 &&  // don't do it for boron
-            atomColor(state, *ap) < 18)  // don't do it for transition metals
+      if (1) {  // [TODO] 5
+        if (degree[i] >= 4 &&
+            atomColor(state, *ap) != 5 &&  // don't do it for boron
+            atomColor(state, *ap) < 18)    // don't do it for transition metals
         {
           seed = NEXT_SEED(seed, atomColor(state, *ap));
           if (1) {
-            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 107),
+            result += SetPathBitsRec(
+                mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 107),
                 touched_indices, 1, 2, 4, /* path length 2 to 4 */
                 i, 0, -1,
                 STOP_AT_HEAVY_ATOM |     // don't cross very heavy atoms
@@ -996,13 +924,15 @@ int CountFingerprintPatterns(
 
       seed = old_seed;
       /* Add another set of bits for paths starting at spiro atoms */
-      if (1) {                                        // [TODO] 6
-        if (atom_status[i] >= 4 && atomColor(state, *ap) != 5 &&  // don't do it for boron
-            atomColor(state, *ap) < 18)  // don't do it for transition metals
+      if (1) {  // [TODO] 6
+        if (atom_status[i] >= 4 &&
+            atomColor(state, *ap) != 5 &&  // don't do it for boron
+            atomColor(state, *ap) < 18)    // don't do it for transition metals
         {
           seed = NEXT_SEED(seed, atomColor(state, *ap) + 55);
           // if (1)
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 109),
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 109),
               touched_indices, 1, 2, 4, /* path length 1 to 4 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -1024,15 +954,17 @@ int CountFingerprintPatterns(
           if (bondColor(state, *bp) == 0) {
             continue;
           }
-          if (bondType(state, *bp) != DOUBLE && bondType(state, *bp) != TRIPLE) {
+          if (bondType(state, *bp) != DOUBLE &&
+              bondType(state, *bp) != TRIPLE) {
             continue;
           }
           seed = old_seed;
           seed = NEXT_SEED(seed, atomColor(state, *ap));
           seed = NEXT_SEED(seed, bondColor(state, *bp) * 613);
           touched_indices[ai] = 1; /* updating */
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 5, 5, ai,
-              0, i,
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 5,
+              5, ai, 0, i,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
                   IGNORE_PATH_SYMBOL |
                   // IGNORE_TERM_SYMBOL |
@@ -1046,7 +978,20 @@ int CountFingerprintPatterns(
       touched_indices[i] = 0; /* down-dating */
     }
   }
+  return result;
+}
 
+int countAugmentedAtomFeatures(const ROMol &mol, AvalonState &state,
+                               const std::vector<neighbourhood_t> &nbp,
+                               int *fp_counts, int ncounts,
+                               const std::vector<int> &degree,
+                               const std::vector<int> &nspecial,
+                               const int *H_count, int which_bits, int as_query,
+                               int exclude_atom, uint64_t &seed,
+                               uint64_t &old_seed) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  int result = 0;
+  auto ap = state.atoms.data();
   if (which_bits & USE_AUGMENTED_ATOM) {
     /* Set bits for all triples of atoms connected to a common atom */
     ap = state.atoms.data();
@@ -1069,7 +1014,8 @@ int CountFingerprintPatterns(
       old_seed = seed;
       // Add some bits for hydrogen counted or hetero central atoms with
       // hetero neighbours
-      if ((H_count[i + 1] > 0 || atomColor(state, *ap) != 6) && degree[i] >= 2) {
+      if ((H_count[i + 1] > 0 || atomColor(state, *ap) != 6) &&
+          degree[i] >= 2) {
         for (int i1 = 0; i1 < nbp[i].n_ligands; i1++) {
           if (state.atomColors[nbp[i].atoms[i1]] == 0) {
             continue;
@@ -1123,7 +1069,8 @@ int CountFingerprintPatterns(
             // degree>1 is well-defined => catch e.g. nitroso vs. nitro
             if (atomColor(state, *ap) != 6 && nmulti > 0 &&
                 (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
-                 (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
+                 (atomSubDescriptor(state, *ap) != NONE &&
+                  atomSubDescriptor(state, *ap) != SUB_MORE &&
                   atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
               ADD_BIT(fp_counts, ncounts,
                       NEXT_SEED(seed, nmulti + 173 * degree[i]));
@@ -1225,7 +1172,8 @@ int CountFingerprintPatterns(
             seed = NEXT_SEED(seed, (sum * prod) & 0xFFF);
             ADD_BIT(fp_counts, ncounts, seed);
             result++;
-            if (nmulti >= 2 || atomColor(state, *ap) > 6)  // make sure R-NO2 is covered
+            if (nmulti >= 2 ||
+                atomColor(state, *ap) > 6)  // make sure R-NO2 is covered
             {
               ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, 53));
               result++;
@@ -1235,7 +1183,17 @@ int CountFingerprintPatterns(
       }
     }
   }
+  return result;
+}
 
+int countAugmentedBondFeatures(AvalonState &state,
+                               const std::vector<neighbourhood_t> &nbp,
+                               int *fp_counts, int ncounts,
+                               const std::vector<int> &degree, int nBonds,
+                               int which_bits, int exclude_atom,
+                               uint64_t &seed) {
+  int result = 0;
+  auto bp = state.bonds.data();
   if (which_bits & USE_AUGMENTED_BOND) {
     /* Set bits for all bonds with both end-degrees > 2 */
     bp = state.bonds.data();
@@ -1346,12 +1304,22 @@ int CountFingerprintPatterns(
       }
     }
   }
+  return result;
+}
 
+int countHydrogenPairFeatures(AvalonState &state, int *fp_counts, int ncounts,
+                              const int *H_count,
+                              const std::vector<int> &unsaturated, int nBonds,
+                              int which_bits, int exclude_atom,
+                              uint64_t &seed) {
+  int result = 0;
+  auto bp = state.bonds.data();
   if (1 * which_bits & USE_HCOUNT_PAIR) {
     /* generate bits for hydrogen counted described bonds */
     bp = state.bonds.data();
     for (int i = 0; i < nBonds; i++, bp++) {
-      if (H_count[bondEndpoint(state, (*bp)->getIdx(), 0)] == 0 && H_count[bondEndpoint(state, (*bp)->getIdx(), 1)] == 0) {
+      if (H_count[bondEndpoint(state, (*bp)->getIdx(), 0)] == 0 &&
+          H_count[bondEndpoint(state, (*bp)->getIdx(), 1)] == 0) {
         continue;
       }
       if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
@@ -1362,7 +1330,8 @@ int CountFingerprintPatterns(
       }
       /* Don't consider CC single bonds */
       if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 6 &&
-          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6 && bondColor(state, *bp) == 1) {
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6 &&
+          bondColor(state, *bp) == 1) {
         continue;
       }
       /* Don't consider explicit AH bonds */
@@ -1372,15 +1341,17 @@ int CountFingerprintPatterns(
       if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
         continue;
       }
-      for (int j1 = 0; j1 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 0)]; j1++) {
-        for (int j2 = 0; j2 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 1)]; j2++) {
+      for (int j1 = 0; j1 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 0)];
+           j1++) {
+        for (int j2 = 0; j2 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 1)];
+             j2++) {
           if (j1 + j2 == 0) {
             continue; /* at least one hydrogen */
           }
           // unsaturation triggers bit like a hydrogen
           if (!unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] &&
-              !unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] && j1 * j2 == 0 &&
-              bondColor(state, *bp) <= 1) {
+              !unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] &&
+              j1 * j2 == 0 && bondColor(state, *bp) <= 1) {
             continue;
           }
           if (j1 + j2 > 3) {
@@ -1390,10 +1361,16 @@ int CountFingerprintPatterns(
           seed = NEXT_SEED(HCOUNT_PAIR_SEED, 7 * (j1 + 1) * (j2 + 1));
           seed = NEXT_SEED(seed, 53 * (j1 + j2));
           seed = NEXT_SEED(seed, bondColor(state, *bp));
-          seed = NEXT_SEED(seed, state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] +
-                                     state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
-          seed = NEXT_SEED(seed, state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] *
-                                     state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
+          seed = NEXT_SEED(
+              seed,
+              state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] +
+                  state
+                      .atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
+          seed = NEXT_SEED(
+              seed,
+              state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] *
+                  state
+                      .atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
           ADD_BIT(fp_counts, ncounts, seed);
           result++;
           if (bondColor(state, *bp) > 1) {
@@ -1402,8 +1379,10 @@ int CountFingerprintPatterns(
             result++;
             /* Add more bits for really special pairs */
             if (j1 + j2 == 1 &&
-                (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 6 ||
-                 state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 6) &&
+                (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) -
+                                  1] != 6 ||
+                 state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) -
+                                  1] != 6) &&
                 bondColor(state, *bp) <= 3) {
               seed = NEXT_SEED(seed, 91);
               ADD_BIT(fp_counts, ncounts, seed);
@@ -1418,7 +1397,20 @@ int CountFingerprintPatterns(
       }
     }
   }
+  return result;
+}
 
+int countHydrogenPathFeatures(const ROMol &mol, AvalonState &state,
+                              const std::vector<neighbourhood_t> &nbp,
+                              int *fp_counts, int ncounts,
+                              std::vector<int> &touched_indices,
+                              const std::vector<int> &degree,
+                              const int *H_count, int which_bits,
+                              int exclude_atom, uint64_t &seed,
+                              uint64_t &old_seed) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  int result = 0;
+  auto ap = state.atoms.data();
   if (which_bits & USE_HCOUNT_PATH) {
     /* generate a short path for each atom that has a hydrogen */
     seed = HCOUNT_PATH_SEED;
@@ -1442,25 +1434,27 @@ int CountFingerprintPatterns(
       old_seed = seed;
       seed = NEXT_SEED(seed, atomColor(state, *ap));
       if (atomColor(state, *ap) != 6) {
-        result +=
-            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                           1, 2, 5, /* path length 2 to 4 */  // EVG
-                           i, 0, -1,
-                           IGNORE_PATH_SYMBOL |
-                               // IGNORE_TERM_SYMBOL |
-                               PROCESS_CHAINS,
-                           exclude_atom);
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                                 touched_indices, 1, 2, 5,
+                                 /* path length 2 to 4 */  // EVG
+                                 i, 0, -1,
+                                 IGNORE_PATH_SYMBOL |
+                                     // IGNORE_TERM_SYMBOL |
+                                     PROCESS_CHAINS,
+                                 exclude_atom);
       } else {
         if (degree[i] > 2)  // tertiary hydrogen
         {
           if (0) {  // Class disabled to save bit density
-            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 101),
+            result += SetPathBitsRec(
+                mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 101),
                 touched_indices, 1, 2, 2, /* path length 2 to 3 */
                 i, 0, -1,
                 IGNORE_PATH_SYMBOL | IGNORE_TERM_SYMBOL | PROCESS_CHAINS,
                 exclude_atom);
           }
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 103),
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 103),
               touched_indices, 1, 2, 5, /* path length 2 to 3 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | FORCED_HETERO_END | /* i-Pr...Q */
@@ -1470,11 +1464,13 @@ int CountFingerprintPatterns(
         if (H_count[i + 1] >= 3)  // methyl
         {
           if (0) {  // Class disabled to save bit density
-            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1103),
+            result += SetPathBitsRec(
+                mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1103),
                 touched_indices, 1, 2, 3, /* path length 2 to 3 */
                 i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
           }
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1105),
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1105),
               touched_indices, 1, 3, 6, /* path length 4 to 4 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | FORCED_HETERO_END | /* Me...Q */
@@ -1495,8 +1491,8 @@ int CountFingerprintPatterns(
         seed = NEXT_SEED(seed, 113);
         seed = NEXT_SEED(seed, atomColor(state, *ap));
         result +=
-            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                           1, 1, 5, /* path length 1 to 5 */
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                           touched_indices, 1, 1, 5, /* path length 1 to 5 */
                            i, 0, -1,
                            // FORCED_HETERO_END |
                            IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
@@ -1513,562 +1509,14 @@ int CountFingerprintPatterns(
       seed = old_seed;
     }
   }
+  return result;
+}
 
-  /* Compute ring paths */
-  ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    if (atom_status[i] <= 0) {
-      atomColor(state, *ap) = 0;
-    }
-    if (i + 1 == exclude_atom) {
-      atomColor(state, *ap) = 0;
-    }
-    if (atomColor(state, *ap) == 0) {
-      continue;
-    }
-  }
-
-  /* remove all bonds with only non-ring atoms from consideration */
-  bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (bond_status[i] <= 0 && atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
-        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-  }
-
-  if (which_bits & USE_RING_PATH) {
-    seed = RING_PATH_SEED;
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      if (0) {  // Class disabled to save bit density
-        result +=
-            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                           1, 2, 3, i, 0, -1, PROCESS_CHAINS, exclude_atom);
-      }
-
-      if (atomColor(state, *ap) > 5 && atomColor(state, *ap) < 10 &&
-          atom_status[i] > 2)  // only start at common light atoms
-      {
-        seed = NEXT_SEED(seed, 61);
-        result +=
-            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                           1, 3, 8, /* 3 to 8 */
-                           i, 0, -1,
-                           STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
-                               PROCESS_RING_CLOSURES,
-                           exclude_atom);
-      }
-      seed = old_seed;
-
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
-  /* Set the color property to represent all different atom types */
-  ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
-    if (atomColor(state, *ap) == 1 || i + 1 == exclude_atom) {
-      atomColor(state, *ap) = 0; /* ignore hydrogens */
-    } else {
-      atomColor(state, *ap) = ANY_COLOR; /* treat all other atoms alike */
-    }
-  }
-
-  /* Set the color property to represent the different bond type classes */
-  bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (bondType(state, *bp) == SINGLE) {
-      bondColor(state, *bp) = 1;
-    } else if (bondType(state, *bp) == DOUBLE) {
-      bondColor(state, *bp) = 2;
-    } else if (bondType(state, *bp) == TRIPLE) {
-      bondColor(state, *bp) = 3;
-    } else if (bondType(state, *bp) == AROMATIC) {
-      bondColor(state, *bp) = 4;
-    } else {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-  }
-
-  // Here, we have all non-trivial atoms mapped to ANY_COLOR while the
-  // bond type is retained.
-  if (which_bits & USE_BOND_PATH) {
-    seed = BOND_PATH_SEED;
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      // start at branch node on ring
-      if (degree[i] > 2 && atom_status[i] > 1) {
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
-                                 touched_indices, 1, 4, 4, /* was 4 to 4 */
-                                 i, 0, -1, PROCESS_CHAINS, exclude_atom);
-        if (atomRingFlags(state, *ap) & SPECIAL_RING) {
-          result +=
-              SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 217),
-                             touched_indices, 1, 5, 5, i, 0, -1,
-                             IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
-        }
-      }
-      /* Add other bits to catch poorly specified ring closures */
-      seed = old_seed;
-      seed = NEXT_SEED(seed, 11);
-      result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
-          6, /* was 5 to 6 */
-          i, 0, -1,
-          // DEBUG_PATH |
-          FORCED_RING_PATH | IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
-          exclude_atom);
-      /* Add bits for paths starting with rare bond orders */
-      for (int j = 0; j < nbp[i].n_ligands; j++) {
-        bp = &state.bonds[nbp[i].bonds[j]];
-        const auto ai = nbp[i].atoms[j];
-        if (ai + 1 == exclude_atom) {
-          continue;
-        }
-        if (bondColor(state, *bp) == 0) {
-          continue;
-        }
-        if (bondType(state, *bp) != DOUBLE && bondType(state, *bp) != TRIPLE) {
-          continue;
-        }
-        if (atom_status[i] <= 0 && bondType(state, *bp) != TRIPLE) {
-          continue;
-        }
-        seed = old_seed;
-        seed = NEXT_SEED(seed, bondColor(state, *bp) * 413);
-        touched_indices[ai] = 1; /* updating */
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 4, 5, ai, 0,
-            i, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
-            exclude_atom);
-        touched_indices[ai] = 0; /* down-dating */
-      }
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
-  /* Set the color property to represent the different atom type classes */
-  ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    if (i + 1 == exclude_atom) {
-      atomColor(state, *ap) = 0;
-      continue;
-    }
-    {
-      if ((*ap)->getSymbol() == "H") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "D") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "T") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "C") {
-        atomColor(state, *ap) = 6; /* carbon second row elements are one class */
-      } else if ((*ap)->getSymbol() == "N") {
-        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if ((*ap)->getSymbol() == "O") {
-        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if ((*ap)->getSymbol() == "S") {
-        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if ((*ap)->getSymbol() == "Q") {
-        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if ((*ap)->getSymbol() == "A") {
-        atomColor(state, *ap) = 0;
-      } else {
-        const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
-        if (1 < tmp && tmp < 115) {
-          atomColor(state, *ap) = 8; /* non-carbon is the only second class */
-        } else {         /* This could be R atoms or other odd things */
-          atomColor(state, *ap) = 0;
-        }
-      }
-    }
-    if (atomColor(state, *ap) > 115) {
-      atomColor(state, *ap) = 0; /* ignore special atom types */
-    }
-  }
-
-  // Here, we unify atom types to carbon/hetero distinction
-  if (which_bits & USE_HCOUNT_CLASS_PATH) {
-    /* generate a short path for each atom that has a hydrogen */
-    seed = HCOUNT_CLASS_PATH_SEED;
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      if (H_count[i + 1] == 0) {
-        continue;
-      }
-      if (atomColor(state, *ap) == 6 && H_count[i + 1] < 2) {
-        continue;
-      }
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      touched_indices[i] = 1; /* updating */
-      if (atomColor(state, *ap) == 6) {
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
-            4, /* path length 1 to 3 */
-            i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
-      } else {
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
-            -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
-            exclude_atom);
-      }
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
-  /* Do a small first pass with defined bond types */
-  if (which_bits & USE_ATOM_CLASS_PATH) {
-    // seed = ATOM_CLASS_PATH_SEED+117;
-    seed = NEXT_SEED(ATOM_CLASS_PATH_SEED, 117);
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      if (atomColor(state, *ap) == 6 && degree[i] < 3) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      if (atomColor(state, *ap) == 6) {
-        if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
-              4, /* path length 3 to 4 */
-              i, 0, -1, FORCED_HETERO_END | IGNORE_PATH_SYMBOL | PROCESS_CHAINS,
-              exclude_atom);
-        }
-      } else {
-        if (0) {  // Class disabled to save bit density
-          result +=
-              SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
-                             1, 2, 3, /* path length 3 to 3 */
-                             i, 0, -1,
-                             // IGNORE_PATH_SYMBOL |
-                             PROCESS_CHAINS, exclude_atom);
-        }
-        if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
-              5, /* path length 4 to 5 */
-              i, 0, -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
-              exclude_atom);
-        }
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
-            4, /* path length 4 to 7 */
-            i, 0, -1, FORCED_RING_PATH | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
-            exclude_atom);
-      }
-      touched_indices[i] = 0;
-      seed = old_seed;
-    }
-  }
-
-  /* Set the color property to only a single class */
-  bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
-      bondColor(state, *bp) = 5;
-    } else {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-  }
-
-  // Here, we've unified atom types to carbon/hetero and made all bond types
-  // identical
-  if (which_bits & USE_ATOM_CLASS_PATH) {
-    seed = ATOM_CLASS_PATH_SEED;
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      if (atomColor(state, *ap) == 6) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      // if (atomColor(state, *ap) == 6)
-      {
-        if (0 * degree[i] > 2) {  // Class disabled to save bit density
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
-              3, /* path length 3 to 3 */
-              i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
-        }
-      }
-      // else
-      {
-        if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
-              4, /* path length 3 to 4 */
-              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
-        }
-        seed = NEXT_SEED(seed, 23 + atomColor(state, *ap) * 19);
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
-            9, /* path length 3 to 9 */
-            i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
-      }
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-    /* Q-Q and Q-C ring bond count */
-    int qq_count = 0;
-    int qc_count = 0;
-    bp = state.bonds.data();
-    for (int i = 0; i < nBonds; i++, bp++) {
-      if (bond_status[i] == 0) {
-        continue;
-      }
-      if (bondColor(state, *bp) == 0) {
-        continue;
-      }
-      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-        continue;
-      }
-      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-        continue;
-      }
-      const auto ai1 =
-          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
-      const auto ai2 =
-          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
-      if (ai1 == 0 || ai2 == 0) {
-        continue;
-      }
-      if (ai1 == 6 && ai2 == 6) {
-        continue;
-      }
-      if (ai1 != 6 && ai2 != 6) {
-        qq_count++;
-        for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
-          if (bondRingFlags(state, *bp) & (1 << j)) {
-            ADD_BIT(fp_counts, ncounts,
-                    NEXT_SEED(ATOM_CLASS_PATH_SEED * 17, j * 8));
-            result++;
-          }
-        }
-      } else {
-        qc_count++;
-        for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
-          if (bondRingFlags(state, *bp) & (1 << j)) {
-            ADD_BIT(fp_counts, ncounts,
-                    NEXT_SEED(ATOM_CLASS_PATH_SEED * 19, j * 8));
-            result++;
-          }
-        }
-      }
-    }
-    seed = 2 * ATOM_CLASS_PATH_SEED + 3;
-    for (int i = 1; i <= qq_count; i = (int)(1 + i * 1.5)) {
-      seed = NEXT_SEED(seed, i * 153);
-      ADD_BIT(fp_counts, ncounts, seed);
-      result++;
-      seed = NEXT_SEED(seed, 53);
-      if (i <= 1) {
-        ADD_BIT(fp_counts, ncounts, seed);
-        result++;
-      }
-    }
-    seed = 3 * ATOM_CLASS_PATH_SEED + 5;
-    for (int i = 1; i <= MIN(qc_count, 2); i++) {
-      seed = NEXT_SEED(seed, i * 157);
-      ADD_BIT(fp_counts, ncounts, seed);
-      result++;
-    }
-    for (int i = 3; i <= qc_count; i = (int)(i * 1.8)) {
-      seed = NEXT_SEED(seed, i * 157);
-      ADD_BIT(fp_counts, ncounts, seed);
-      result++;
-    }
-  }
-
-  /* Compute ring patters with at least one cycle */
-  /* remove bonds from consideration that don't have at least one ring atom */
-  bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-      continue;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-      continue;
-    }
-    bondColor(state, *bp) = 5;
-    /* ignore non-ring bonds */
-    if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
-        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
-      bondColor(state, *bp) = 0;
-    } else {
-      // may be redundant since atom types have already been unified
-      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
-      if (atomColor(state, *ap) != 0) {
-        if (atomColor(state, *ap) != 6) {
-          atomColor(state, *ap) = 8; /* non-carbons in one class */
-        }
-        if (atomRingFlags(state, *ap) == 0) {
-          atomColor(state, *ap) = 0;
-        }
-      }
-      // may be redundant since atom types have already been unified
-      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
-      if (atomColor(state, *ap) != 0) {
-        if (atomColor(state, *ap) != 6) {
-          atomColor(state, *ap) = 8; /* non-carbons in one class */
-        }
-        if (atomRingFlags(state, *ap) == 0) {
-          atomColor(state, *ap) = 0;
-        }
-      }
-    }
-  }
-
-  // Here, we have bond type ignored and atom types mapped to C and Q
-  if (which_bits & USE_RING_PATTERN) {
-    /* first process ring bond paths with atom classes */
-    seed = RING_PATTERN_SEED;
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      /* Don't process fragments starting at carbon in 6-ring only */
-      if (atomColor(state, *ap) == 6 && 0 == (atomRingFlags(state, *ap) & SPECIAL_RING)) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      result +=
-          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
-                         3, 3, /* ring bond path size 3 to 3 */
-                         i, 0, -1, PROCESS_CHAINS, exclude_atom);
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-
-    /* Now, we only include complete rings but ignore atom-type */
-    /* 'A' atoms are now included nodes */
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      /* add 'A' atom to standard class */
-      if ((*ap)->getSymbol() == "A") {
-        atomColor(state, *ap) = 9;
-      }
-      if (i + 1 == exclude_atom) {
-        atomColor(state, *ap) = 0;
-      }
-      if (atomColor(state, *ap) == 0) {
-        continue;
-      }
-      atomColor(state, *ap) = 9; /* all ring atoms in same class */
-    }
-    bp = state.bonds.data();
-    for (int i = 0; i < nBonds; i++, bp++) {
-      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-        bondColor(state, *bp) = 0;
-      }
-      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-        bondColor(state, *bp) = 0;
-      }
-      if (bond_status[i] <= 0) {
-        bondColor(state, *bp) = 0;
-      }
-    }
-    // seed = RING_PATTERN_SEED+23;
-    seed = NEXT_SEED(RING_PATTERN_SEED, 23);
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) == 0) {
-        continue;
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      if (0) {  // Class disabled to save bit density
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
-            17, /* ring size 4 to 17 */
-            i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
-      }
-
-      seed = old_seed;
-      if (0) {                   // Class disabled to save bit density
-        if (atom_status[i] > 2)  // start at ring fusion
-        {
-          seed = NEXT_SEED(seed, 61);
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
-              17, /* ring path size 6 to 17 */
-              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
-              exclude_atom);
-        }
-      }
-
-      seed = old_seed;
-      if (0) {  // Class disabled to save bit density
-        if (degree[i] > 2 && atom_status[i] >= 2)  // start at ring substituents
-        {
-          seed = NEXT_SEED(seed, 67);
-          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
-              17, /* ring path size 6 to 17 */
-              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
-              exclude_atom);
-        }
-      }
-      seed = old_seed;
-
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
+int countRingSizeFeatures(AvalonState &state, int *fp_counts, int ncounts,
+                          int nBonds, int which_bits, int exclude_atom) {
+  int result = 0;
+  uint64_t seed = 0;
+  auto bp = state.bonds.data();
   if (which_bits & USE_RING_SIZE_COUNTS) {
     std::array<std::array<int, 15>, 15> rscounts{};
     for (int j = 3; j < 10; j++) /* loop through ring_sizes */
@@ -2076,7 +1524,8 @@ int CountFingerprintPatterns(
       int nrbonds = 0;
       bp = state.bonds.data();
       for (int i = 0; i < nBonds; i++, bp++) {
-        if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom &&
+        if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom &&
+            bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom &&
             (bondRingFlags(state, *bp) & (1 << j))) {
           nrbonds++;
         }
@@ -2123,8 +1572,12 @@ int CountFingerprintPatterns(
           if (j == k) {
             continue;
           }
-          if ((state.atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] & (1 << j)) &&
-              (state.atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] & (1 << k))) {
+          if ((state
+                   .atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] &
+               (1 << j)) &&
+              (state
+                   .atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] &
+               (1 << k))) {
             rscounts[j][k]++;
             rscounts[k][j]++;
           }
@@ -2132,8 +1585,9 @@ int CountFingerprintPatterns(
       }
     }
     /* set bits */
-    for (int j = 3; j < 9; j++) {     /* loop through not too large ring_sizes */
-      for (int k = j + 1; k < 9; k++) /* loop through not too large ring_sizes */
+    for (int j = 3; j < 9; j++) { /* loop through not too large ring_sizes */
+      for (int k = j + 1; k < 9;
+           k++) /* loop through not too large ring_sizes */
       {
         if (rscounts[j][k] == 0) {
           continue;
@@ -2157,538 +1611,20 @@ int CountFingerprintPatterns(
       }
     }
   }
+  return result;
+}
 
-  /* Set the color property to represent all different atom types */
-  ap = state.atoms.data();
-  for (int i = 0; i < nAtoms; i++, ap++) {
-    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
-    if (atomColor(state, *ap) <= 1) {
-      atomColor(state, *ap) = 0; /* ignore hydrogens */
-    }
-    /* mark special atom types */
-    if (atomColor(state, *ap) > 115) {
-      atomColor(state, *ap) = -1;
-    }
-    if ((*ap)->getSymbol() == "A") {
-      atomColor(state, *ap) = -1;
-    }
-    if (i + 1 == exclude_atom) {
-      atomColor(state, *ap) = 0;
-    }
-    if (atomColor(state, *ap) > 1 && (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
-                          (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
-                           atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
-      atomColor(state, *ap) += 32 * degree[i];
-    } else {
-      atomColor(state, *ap) = 0;
-    }
-  }
-  bp = state.bonds.data();
-  for (int i = 0; i < nBonds; i++, bp++) {
-    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
-      bondColor(state, *bp) = 5;
-    } else {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
-      bondColor(state, *bp) = 0;
-    }
-  }
-
-  /*
-   * add special bits for paths starting at atoms with >= 4 neighbours or
-   * methyl atoms
-   *
-   * atom color represent degree bond color identical for all bonds to non-H
-   */
-  if (which_bits & USE_DEGREE_PATH) {
-    seed = DEGREE_PATH_SEED;
-
-    // set bits for degree paths starting with special carbon atoms
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (atomColor(state, *ap) <= 0) {
-        continue;  // only process if degree defined
-      }
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      /* don't start on usual atoms */
-      if (degree[i] <= 3 &&       // include if high degree
-          atom_status[i] <= 2 &&  // include if ring fusion
-          degree[i] != 1) {       // include if terminal atom
-        continue;
-      }
-      /* only keep terminals if methyl */
-      if (degree[i] == 1 && (*ap)->getSymbol() != "C") {
-        continue;
-      }
-      // (*ap)->getSymbol(), i+1, degree[i], atom_status[i]);
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, atomColor(state, *ap));
-      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
-      result +=
-          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
-                         2, 4, /* path length 1 to 3 */
-                         i, 0, -1,
-                         // IGNORE_TERM_SYMBOL |
-                         IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
-      /* special CH fusion atoms */
-      if (atom_status[i] > 2 && H_count[i + 1] >= 1) {
-        seed = NEXT_SEED(seed, 219);
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
-            -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
-      }
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-
-    // set bits for degree paths starting with hetero atoms
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
-      if (1 >= tmp || tmp >= 115) {
-        continue;
-      }
-      if (tmp == 6) {
-        continue;
-      }
-      if (tmp < 10) {
-        continue;  // exclude common hetero atoms
-      }
-      touched_indices[i] = 1; /* updating */
-      old_seed = seed;
-      seed = NEXT_SEED(seed, tmp);
-      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
-      result +=
-          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
-                         2, 2, i, 0, -1, PROCESS_CHAINS, exclude_atom);
-      if (0) {  // might overly populate complexes
-        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 101 + seed, touched_indices, 1, 2, 2,
-            i, 0, -1, FORCED_RING_PATH | PROCESS_CHAINS, exclude_atom);
-      }
-      seed = old_seed;
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
-  std::vector<std::vector<int>> length_matrix;
-  if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
-    /* Collect length_matrix */
-    /* allocate storage length_matrix */
-    length_matrix.assign(nAtoms, std::vector<int>(nAtoms, 0));
-    for (int i = 0; i < nAtoms; i++) {
-      touched_indices[i] = 0;
-    }
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      // if (FALSE) fprintf(stderr, "starting path search at atom %d(%d)\n",
-      // i+1, atomColor(state, *ap));
-      SetPathLengthFlags(mol, state, touched_indices, i, 0, i,
-                         12, /* path perception distance <= 12 */
-                         length_matrix, nbp, exclude_atom);
-      touched_indices[i] = 0; /* down-dating */
-    }
-  }
-
-  /*
-   * This screen class will catch non-linear fragments composed of rather
-   * frequent linear sub-fragments
-   */
-  if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS)) {
-    constexpr int MAX_SPIDER = 7;
-    std::array<int, MAX_SPIDER + 1> csp3{};
-    std::array<int, MAX_SPIDER + 1> hetero{};
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
-      if ((*ap)->getSymbol() == "H") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "D") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "T") {
-        atomColor(state, *ap) = 0; /* ignore hydrogens */
-      } else if ((*ap)->getSymbol() == "Q") {
-        atomColor(state, *ap) = HETERO;
-      } else if ((*ap)->getSymbol() == "A") {
-        atomColor(state, *ap) = GENERIC;
-      } else if ((*ap)->getSymbol() == "L") {
-        atomColor(state, *ap) = GENERIC;
-      } else if ((*ap)->getSymbol() == "C") {
-        atomColor(state, *ap) = 6; /* carbon second row elements are one class */
-        if (cdegree[i] >= 3) {
-          atomColor(state, *ap) = CSP3;
-        }
-      } else if (atomColor(state, *ap) > 1 && atomColor(state, *ap) < 115) {
-        atomColor(state, *ap) = HETERO;
-      } else { /* This could be R atoms or other odd things */
-        atomColor(state, *ap) = 0;
-      }
-      if (i + 1 == exclude_atom) {
-        atomColor(state, *ap) = 0;
-      }
-    }
-    /*
-     * Bond colors are already set OK, i.e. equal for A-H bonds
-     */
-    /* NOP */
-
-    /* Now we start setting bits */
-    ap = state.atoms.data();
-    for (int i = 0; i < nAtoms; i++, ap++) {
-      if (i + 1 == exclude_atom) {
-        continue;
-      }
-      /* Spiders have at least three legs (;-) */
-      if (degree[i] < 3) {
-        continue;
-      }
-      /* Spider needs to be special atom or carbon */
-      if (atomColor(state, *ap) != CSP3 && atomColor(state, *ap) != 6) {
-        continue;
-      }
-      touched_indices[i] = 1; /* updating */
-      std::fill(csp3.begin(), csp3.end(), 0);
-      std::fill(hetero.begin(), hetero.end(), 0);
-      if (which_bits & USE_CLASS_SPIDERS) {
-        SpecialNeighboursRec(mol, state, touched_indices, 1, i, MAX_SPIDER,
-                             csp3.data(),
-                             hetero.data(), nbp, exclude_atom);
-      }
-      touched_indices[i] = 0; /* down-dating */
-
-      /* set bits for spiders with one CSP3 atom and two heteros */
-      if (which_bits & USE_CLASS_SPIDERS) {
-        for (int j = 1; j <= MAX_SPIDER; j++) {
-          if (csp3[j] == 0) {
-            continue;
-          }
-          seed = CLASS_SPIDER_SEED;
-          if (atomColor(state, *ap) == HETERO) {
-            // seed = CLASS_SPIDER_SEED+HETERO*8+CSP3*11;
-            seed = NEXT_SEED(seed, HETERO * 8);
-            seed = NEXT_SEED(seed, CSP3 * 11);
-          } else {
-            // seed = CLASS_SPIDER_SEED+6*8+CSP3*11;
-            seed = NEXT_SEED(seed, 6 * 8);
-            seed = NEXT_SEED(seed, CSP3 * 11);
-          }
-          for (int j1 = 1; j1 <= MAX_SPIDER; j1++) {
-            const auto tmp1 = hetero[j1];
-            if (tmp1 <= 0) {
-              continue;
-            }
-            for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
-              auto tmp2 = hetero[j2];
-              if (j2 == j1) {
-                tmp2--; /* consumed in outer loop */
-              }
-              if (tmp2 <= 0) {
-                continue;
-              }
-              old_seed = seed;
-              seed = NEXT_SEED(seed, j);
-              seed = NEXT_SEED(seed, j1 + j2);
-              ADD_BIT(fp_counts, ncounts, seed);
-              result++;
-              seed = old_seed;
-            }
-          }
-        }
-      }
-
-      /* don't hetero-spider normal carbons */
-      if (atomColor(state, *ap) != CSP3) {
-        continue;
-      }
-      /* set bits for spiders with three defined HETERO atoms */
-      if (which_bits & USE_CLASS_SPIDERS) {
-        for (int j = 1; j <= MAX_SPIDER; j++) {
-          if (hetero[j] == 0) {
-            continue;
-          }
-          seed = CLASS_SPIDER_SEED;
-          if (atomColor(state, *ap) == HETERO) {
-            // seed = CLASS_SPIDER_SEED+HETERO*8+HETERO*11;
-            seed = NEXT_SEED(seed, HETERO * 8);
-            seed = NEXT_SEED(seed, HETERO * 11);
-          } else {
-            // seed = CLASS_SPIDER_SEED+6*8+HETERO*11;
-            seed = NEXT_SEED(seed, 6 * 8);
-            seed = NEXT_SEED(seed, HETERO * 11);
-          }
-          for (int j1 = j; j1 <= MAX_SPIDER; j1++) {
-            auto tmp1 = hetero[j1];
-            if (j1 == j) {
-              tmp1--; /* we've consumed this one in outer loop */
-            }
-            if (tmp1 <= 0) {
-              continue;
-            }
-            for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
-              auto tmp2 = hetero[j2];
-              if (j2 == j) {
-                tmp2--; /* consumed in outer loop */
-              }
-              if (j2 == j1) {
-                tmp2--; /* consumed in outer loop */
-              }
-              if (tmp2 <= 0) {
-                continue;
-              }
-              old_seed = seed;
-              seed = NEXT_SEED(seed, j * j1 * j2);
-              ADD_BIT(fp_counts, ncounts, seed);
-              result++;
-              // Additional bits for quarternary centers
-              if (degree[i] > 3) {
-                ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, 501));
-                result++;
-              }
-              seed = old_seed;
-            }
-          }
-        }
-      }
-    }
-
-    /**
-     * Collect bits that represent feature/path_length/feature triples.
-     */
-    if (which_bits & USE_FEATURE_PAIRS) {
-      /* set feature flags in atom colors */
-      ap = state.atoms.data();
-      for (int i = 0; i < nAtoms; i++, ap++) {
-        int flags = 0;
-        if ((*ap)->getSymbol() == "C") {
-          flags = C_FLAG;
-        } else if ((*ap)->getSymbol() == "O") {
-          flags = O_FLAG;
-        } else if ((*ap)->getSymbol() == "N") {
-          flags = N_FLAG;
-        } else if ((*ap)->getSymbol() == "S") {
-          flags = S_FLAG;
-        } else if ((*ap)->getSymbol() == "P") {
-          flags = P_FLAG;
-        } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
-          flags = X_FLAG;
-        } else {
-          flags = 0;
-        }
-        if (atomColor(state, *ap) == HETERO) {
-          flags |= HETERO_FLAG;
-        }
-        if (cdegree[i] >= 3) {
-          flags |= CSP3_FLAG;
-        }
-        if (degree[i] >= 4) {
-          flags |= QUART_FLAG;
-        }
-        if (atom_status[i] > 0 && degree[i] >= 3) {
-          flags |= RING_SUBST_FLAG;
-          if (0 != (atomRingFlags(state, *ap) & SPECIAL_RING)) {
-            flags |= RS_SPECIAL_FLAG;
-          }
-        }
-        if (i + 1 == exclude_atom) {
-          flags = 0;
-        }
-        atomColor(state, *ap) = flags;
-      }
-      /* collect bits for selected feature pairs */
-      if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mol, state, fp_counts, ncounts, CSP3_FLAG,
-                                 HETERO_FLAG, /* to hetero or ring subst */
-                                 2, 3,        /* with path length 1 to 9 */
-                                 FALSE,       /* don't use count */
-                                 TRUE,        /* use atom type flags */
-                                 length_matrix, 1237, /* seed = 1237 */
-                                 exclude_atom);
-      }
-      if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mol, state, fp_counts, ncounts,
-                                 HETERO_FLAG, /* from ring substitution */
-                                 HETERO_FLAG, /* to hetero or ring subst */
-                                 1, 12,       /* with path length 1 to 10 */
-                                 TRUE,        /* use count */
-                                 TRUE,        /* use atom type flags */
-                                 length_matrix, 1237, /* seed = 1237 */
-                                 exclude_atom);
-      }
-      if (1) {
-        result += SetFeatureBits(mol, state, fp_counts, ncounts,
-                                 RING_SUBST_FLAG, /* from ring substitution */
-                                 RING_SUBST_FLAG, /* to ring substitution */
-                                 5, 7,            /* with path length 1 to 12 */
-                                 FALSE,           /* don't use count */
-                                 TRUE,            /* use atom type flags */
-                                 length_matrix, 2237, /* seed = 2237 */
-                                 exclude_atom);
-      }
-      if (0) {  // Class disabled to save bit density
-        result +=
-            SetFeatureBits(mol, state, fp_counts, ncounts,
-                           RS_SPECIAL_FLAG, /* from special ring substitution */
-                           HETERO_FLAG,     /* to hetero atom */
-                           2, 4,            /* with path length 1 to 5 */
-                           TRUE,            /* don't use count */
-                           FALSE,           /* use atom type flags */
-                           length_matrix, 3237, /* seed = 3237 */
-                           exclude_atom);
-      }
-      if (1) {
-        result += SetFeatureBits(mol, state, fp_counts, ncounts,
-                                 QUART_FLAG,  /* from quartenary atom */
-                                 HETERO_FLAG, /* to hetero or ring subst */
-                                 1, 8,        /* with path length 1 to 8 */
-                                 FALSE,       /* don't use count */
-                                 TRUE,        /* use atom type flags */
-                                 length_matrix, 4237, /* seed = 4237 */
-                                 exclude_atom);
-      }
-      if (1) {
-        result += SetFeatureBits(mol, state, fp_counts, ncounts, QUART_FLAG, /* from quartenary atom */
-            RING_SUBST_FLAG, 1, 6,              /* with path length 1 to 8 */
-            FALSE,                              /* don't use count */
-            TRUE,                               /* use atom type flags */
-            length_matrix, 5237,                /* seed = 4237 */
-            exclude_atom);
-      }
-      if (1) {
-        result += SetFeatureBits(mol, state, fp_counts, ncounts,
-                                 X_FLAG,          /* from halogen atom */
-                                 CSP3_FLAG, 1, 1, /* with path length 1 to 1 */
-                                 FALSE,           /* don't use count */
-                                 TRUE,            /* use atom type flags */
-                                 length_matrix, 15237, /* seed = 15237 */
-                                 exclude_atom);
-      }
-      if (0) {  // Class disabled to save bit density
-        result +=
-            SetFeatureBits(mol, state, fp_counts, ncounts,
-                           RS_SPECIAL_FLAG, /* from special ring substitution */
-                           RING_SUBST_FLAG, /* to hetero atom */
-                           2, 4,            /* with path length 1 to 5 */
-                           TRUE,            /* don't use count */
-                           FALSE,           /* use atom type flags */
-                           length_matrix, 6237, /* seed = 6237 */
-                           exclude_atom);
-      }
-      if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mol, state, fp_counts, ncounts,
-                                 HETERO_FLAG,     /* from hetero */
-                                 RING_SUBST_FLAG, /* to ring substitution */
-                                 1, 6,            /* with path length 1 to 8 */
-                                 FALSE,           /* don't use count */
-                                 TRUE,            /* use atom type flags */
-                                 length_matrix, 7237, /* seed = 4237 */
-                                 exclude_atom);
-      }
-
-      /* Set bits for ring-subst/ring-subst/hetero triples */
-      if (0)  // too many spurious bits
-      {
-        auto ap1 = state.atoms.data();
-        for (int i1 = 0; i1 < nAtoms; i1++, ap1++) {
-          if (i1 + 1 == exclude_atom) {
-            continue;
-          }
-          if (0 == (atomColor(state, *ap1) & RING_SUBST_FLAG)) {
-            continue;
-          }
-          /* first atom must be in a non-sixmembered ring */
-          if (!(atomRingFlags(state, *ap1) & SPECIAL_RING)) {
-            continue;
-          }
-          auto ap2 = state.atoms.data();
-          for (int i2 = 0; i2 < nAtoms; i2++, ap2++) {
-            if (i1 == i2) {
-              continue;
-            }
-            if (i2 + 1 == exclude_atom) {
-              continue;
-            }
-            if (0 == (atomColor(state, *ap2) & RING_SUBST_FLAG)) {
-              continue;
-            }
-            auto ap3 = state.atoms.data();
-            for (int i3 = 0; i3 < nAtoms; i3++, ap3++) {
-              if (i1 == i3) {
-                continue;
-              }
-              if (i2 == i3) {
-                continue;
-              }
-              if (i3 + 1 == exclude_atom) {
-                continue;
-              }
-              if (0 == (atomColor(state, *ap3) & HETERO_FLAG)) {
-                continue;
-              }
-              for (int j = 2; j <= 6; j++) {
-                if (0 == (length_matrix[i1][i2] & (1 << j))) {
-                  continue;
-                }
-                for (int j1 = 2; j1 <= 5; j1++) {
-                  if (0 == (length_matrix[i2][i3] & (1 << j1))) {
-                    continue;
-                  }
-                  for (int j2 = 2; j2 <= 5; j2++) {
-                    if (0 == (length_matrix[i3][i1] & (1 << j2))) {
-                      continue;
-                    }
-                    // Make sure we have a real triangle
-                    if (j + j1 == j2) {
-                      continue;
-                    }
-                    if (j + j2 == j1) {
-                      continue;
-                    }
-                    if (j1 + j1 == j) {
-                      continue;
-                    }
-                    if (j + j1 + j2 > 11) {
-                      continue;  // spider too large
-                    }
-                    if (j + j1 + j2 < 8) {
-                      continue;  // spider too small
-                    }
-                    seed = CLASS_SPIDER_SEED;
-                    seed = NEXT_SEED(seed, j + j1 + j2);
-                    seed = NEXT_SEED(seed, j * j1 * j2);
-                    // distinguish ring sizes of second ring-subst
-                    // for (k=3; k<15; k++)
-                    for (int k = 3; k < 9; k++) {
-                      if (!(atomRingFlags(state, *ap2) & (1 << k))) {
-                        continue;
-                      }
-                      ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, k * 213));
-                      result++;
-                    }
-                    // i1+1, atomRingFlags(state, *ap1), j,
-                    // i2+1, atomRingFlags(state, *ap2), j1,
-                    // i3+1, (*ap3)->getSymbol(), j2);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
+int countScaffoldFeatures(AvalonState &state,
+                          const std::vector<neighbourhood_t> &nbp,
+                          int *fp_counts, int ncounts, const int *atom_status,
+                          const int *bond_status,
+                          const std::vector<int> &degree,
+                          const std::vector<std::vector<int>> &length_matrix,
+                          int nAtoms, int which_bits, int as_query,
+                          int exclude_atom) {
+  int result = 0;
+  uint64_t seed = 0;
+  auto ap = state.atoms.data();
   /* Collect bits that describe scaffolds. Those bits cannot (yet?) be used for
    * SSS screening */
   /* The method first collects a variant of the extended connectivity but
@@ -2923,7 +1859,1275 @@ int CountFingerprintPatterns(
       }
     }
   }
+  return result;
+}
 
+int countFeaturePairFeatures(const ROMol &mol, AvalonState &state,
+                             int *fp_counts, int ncounts, int nAtoms,
+                             const int *atom_status,
+                             const std::vector<int> &degree,
+                             const std::vector<int> &cdegree,
+                             const std::vector<std::vector<int>> &length_matrix,
+                             int which_bits, int exclude_atom) {
+  int result = 0;
+  uint64_t seed = 0;
+  auto ap = state.atoms.data();
+  if (which_bits & USE_FEATURE_PAIRS) {
+    /* set feature flags in atom colors */
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      int flags = 0;
+      if ((*ap)->getSymbol() == "C") {
+        flags = C_FLAG;
+      } else if ((*ap)->getSymbol() == "O") {
+        flags = O_FLAG;
+      } else if ((*ap)->getSymbol() == "N") {
+        flags = N_FLAG;
+      } else if ((*ap)->getSymbol() == "S") {
+        flags = S_FLAG;
+      } else if ((*ap)->getSymbol() == "P") {
+        flags = P_FLAG;
+      } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
+        flags = X_FLAG;
+      } else {
+        flags = 0;
+      }
+      if (atomColor(state, *ap) == HETERO) {
+        flags |= HETERO_FLAG;
+      }
+      if (cdegree[i] >= 3) {
+        flags |= CSP3_FLAG;
+      }
+      if (degree[i] >= 4) {
+        flags |= QUART_FLAG;
+      }
+      if (atom_status[i] > 0 && degree[i] >= 3) {
+        flags |= RING_SUBST_FLAG;
+        if (0 != (atomRingFlags(state, *ap) & SPECIAL_RING)) {
+          flags |= RS_SPECIAL_FLAG;
+        }
+      }
+      if (i + 1 == exclude_atom) {
+        flags = 0;
+      }
+      atomColor(state, *ap) = flags;
+    }
+    /* collect bits for selected feature pairs */
+    if (0) {  // Class disabled to save bit density
+      result += SetFeatureBits(mol, state, fp_counts, ncounts, CSP3_FLAG,
+                               HETERO_FLAG, /* to hetero or ring subst */
+                               2, 3,        /* with path length 1 to 9 */
+                               FALSE,       /* don't use count */
+                               TRUE,        /* use atom type flags */
+                               length_matrix, 1237, /* seed = 1237 */
+                               exclude_atom);
+    }
+    if (0) {  // Class disabled to save bit density
+      result += SetFeatureBits(mol, state, fp_counts, ncounts,
+                               HETERO_FLAG, /* from ring substitution */
+                               HETERO_FLAG, /* to hetero or ring subst */
+                               1, 12,       /* with path length 1 to 10 */
+                               TRUE,        /* use count */
+                               TRUE,        /* use atom type flags */
+                               length_matrix, 1237, /* seed = 1237 */
+                               exclude_atom);
+    }
+    if (1) {
+      result += SetFeatureBits(mol, state, fp_counts, ncounts,
+                               RING_SUBST_FLAG, /* from ring substitution */
+                               RING_SUBST_FLAG, /* to ring substitution */
+                               5, 7,            /* with path length 1 to 12 */
+                               FALSE,           /* don't use count */
+                               TRUE,            /* use atom type flags */
+                               length_matrix, 2237, /* seed = 2237 */
+                               exclude_atom);
+    }
+    if (0) {  // Class disabled to save bit density
+      result +=
+          SetFeatureBits(mol, state, fp_counts, ncounts,
+                         RS_SPECIAL_FLAG, /* from special ring substitution */
+                         HETERO_FLAG,     /* to hetero atom */
+                         2, 4,            /* with path length 1 to 5 */
+                         TRUE,            /* don't use count */
+                         FALSE,           /* use atom type flags */
+                         length_matrix, 3237, /* seed = 3237 */
+                         exclude_atom);
+    }
+    if (1) {
+      result += SetFeatureBits(mol, state, fp_counts, ncounts,
+                               QUART_FLAG,  /* from quartenary atom */
+                               HETERO_FLAG, /* to hetero or ring subst */
+                               1, 8,        /* with path length 1 to 8 */
+                               FALSE,       /* don't use count */
+                               TRUE,        /* use atom type flags */
+                               length_matrix, 4237, /* seed = 4237 */
+                               exclude_atom);
+    }
+    if (1) {
+      result += SetFeatureBits(
+          mol, state, fp_counts, ncounts, QUART_FLAG, /* from quartenary atom */
+          RING_SUBST_FLAG, 1, 6, /* with path length 1 to 8 */
+          FALSE,                 /* don't use count */
+          TRUE,                  /* use atom type flags */
+          length_matrix, 5237,   /* seed = 4237 */
+          exclude_atom);
+    }
+    if (1) {
+      result += SetFeatureBits(mol, state, fp_counts, ncounts,
+                               X_FLAG,          /* from halogen atom */
+                               CSP3_FLAG, 1, 1, /* with path length 1 to 1 */
+                               FALSE,           /* don't use count */
+                               TRUE,            /* use atom type flags */
+                               length_matrix, 15237, /* seed = 15237 */
+                               exclude_atom);
+    }
+    if (0) {  // Class disabled to save bit density
+      result +=
+          SetFeatureBits(mol, state, fp_counts, ncounts,
+                         RS_SPECIAL_FLAG, /* from special ring substitution */
+                         RING_SUBST_FLAG, /* to hetero atom */
+                         2, 4,            /* with path length 1 to 5 */
+                         TRUE,            /* don't use count */
+                         FALSE,           /* use atom type flags */
+                         length_matrix, 6237, /* seed = 6237 */
+                         exclude_atom);
+    }
+    if (0) {  // Class disabled to save bit density
+      result += SetFeatureBits(mol, state, fp_counts, ncounts,
+                               HETERO_FLAG,     /* from hetero */
+                               RING_SUBST_FLAG, /* to ring substitution */
+                               1, 6,            /* with path length 1 to 8 */
+                               FALSE,           /* don't use count */
+                               TRUE,            /* use atom type flags */
+                               length_matrix, 7237, /* seed = 4237 */
+                               exclude_atom);
+    }
+
+    /* Set bits for ring-subst/ring-subst/hetero triples */
+    if (0)  // too many spurious bits
+    {
+      auto ap1 = state.atoms.data();
+      for (int i1 = 0; i1 < nAtoms; i1++, ap1++) {
+        if (i1 + 1 == exclude_atom) {
+          continue;
+        }
+        if (0 == (atomColor(state, *ap1) & RING_SUBST_FLAG)) {
+          continue;
+        }
+        /* first atom must be in a non-sixmembered ring */
+        if (!(atomRingFlags(state, *ap1) & SPECIAL_RING)) {
+          continue;
+        }
+        auto ap2 = state.atoms.data();
+        for (int i2 = 0; i2 < nAtoms; i2++, ap2++) {
+          if (i1 == i2) {
+            continue;
+          }
+          if (i2 + 1 == exclude_atom) {
+            continue;
+          }
+          if (0 == (atomColor(state, *ap2) & RING_SUBST_FLAG)) {
+            continue;
+          }
+          auto ap3 = state.atoms.data();
+          for (int i3 = 0; i3 < nAtoms; i3++, ap3++) {
+            if (i1 == i3) {
+              continue;
+            }
+            if (i2 == i3) {
+              continue;
+            }
+            if (i3 + 1 == exclude_atom) {
+              continue;
+            }
+            if (0 == (atomColor(state, *ap3) & HETERO_FLAG)) {
+              continue;
+            }
+            for (int j = 2; j <= 6; j++) {
+              if (0 == (length_matrix[i1][i2] & (1 << j))) {
+                continue;
+              }
+              for (int j1 = 2; j1 <= 5; j1++) {
+                if (0 == (length_matrix[i2][i3] & (1 << j1))) {
+                  continue;
+                }
+                for (int j2 = 2; j2 <= 5; j2++) {
+                  if (0 == (length_matrix[i3][i1] & (1 << j2))) {
+                    continue;
+                  }
+                  // Make sure we have a real triangle
+                  if (j + j1 == j2) {
+                    continue;
+                  }
+                  if (j + j2 == j1) {
+                    continue;
+                  }
+                  if (j1 + j1 == j) {
+                    continue;
+                  }
+                  if (j + j1 + j2 > 11) {
+                    continue;  // spider too large
+                  }
+                  if (j + j1 + j2 < 8) {
+                    continue;  // spider too small
+                  }
+                  seed = CLASS_SPIDER_SEED;
+                  seed = NEXT_SEED(seed, j + j1 + j2);
+                  seed = NEXT_SEED(seed, j * j1 * j2);
+                  // distinguish ring sizes of second ring-subst
+                  // for (k=3; k<15; k++)
+                  for (int k = 3; k < 9; k++) {
+                    if (!(atomRingFlags(state, *ap2) & (1 << k))) {
+                      continue;
+                    }
+                    ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, k * 213));
+                    result++;
+                  }
+                  // i1+1, atomRingFlags(state, *ap1), j,
+                  // i2+1, atomRingFlags(state, *ap2), j1,
+                  // i3+1, (*ap3)->getSymbol(), j2);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
+                             const std::vector<neighbourhood_t> &nbp,
+                             int *H_count, int *atom_status, int *bond_status,
+                             int *fp_counts, int ncounts, int which_bits,
+                             int as_query, int exclude_atom) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  const auto nBonds = static_cast<int>(mol.getNumBonds());
+  std::vector<int> touched_indices(nAtoms, 0);
+  std::vector<int> degree(nAtoms, 0);
+  std::vector<int> cdegree(nAtoms, 0);
+  std::vector<int> unsaturated(nAtoms, 0);
+  std::vector<int> nspecial(nAtoms, 0);
+  int nrare_atoms = 0;
+  /* Set the color property to represent all different atom types */
+  auto ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    unsaturated[i] = FALSE;
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) <= 1) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
+    }
+    /* mark special atom types */
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = -1;
+    }
+    if ((*ap)->getSymbol() == "A") {
+      atomColor(state, *ap) = -1;
+    }
+    const auto is_rare =
+        atomColor(state, *ap) > 0 &&
+        !AtomSymbolMatch((*ap)->getSymbol(), "C,H,O,N,S,P,Cl,F");
+    if (is_rare) {
+      if (exclude_atom != i + 1 || exclude_atom <= 0) {
+        nrare_atoms++;
+      }
+    }
+  }
+
+  int ndouble = 0;
+  int naromatic = 0;
+  int nfusionb = 0;
+  /* Set the color property to represent the different bond type classes */
+  auto bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondType(state, *bp) == SINGLE) {
+      bondColor(state, *bp) = 1;
+    } else if (bondType(state, *bp) == DOUBLE) {
+      bondColor(state, *bp) = 2;
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom &&
+          bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
+        ndouble++;
+      }
+    } else if (bondType(state, *bp) == TRIPLE) {
+      bondColor(state, *bp) = 3;
+    } else if (bondType(state, *bp) == AROMATIC) {
+      bondColor(state, *bp) = 4;
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom &&
+          bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
+        naromatic++;
+      }
+    } else {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondColor(state, *bp) > 1) {
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] = TRUE;
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] = TRUE;
+    }
+
+    /* Count non-hydrogen degree */
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0) {
+      degree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
+      degree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
+    }
+    /* Count carbon degree */
+    if (bondType(state, *bp) == DOUBLE) {
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
+    } else if (bondType(state, *bp) == TRIPLE) {
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] += 2;
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] += 2;
+    }
+    if (bondType(state, *bp) != SINGLE) {
+      continue;
+    }
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6) {
+      cdegree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
+    }
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 6) {
+      cdegree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
+    }
+
+    if (exclude_atom <= 0 ||
+        (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom &&
+         bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom)) {
+      if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] > 2 &&
+          atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] >
+              2) {  // ring fusion
+        nfusionb++;
+      }
+    }
+  }
+  /* ignore special atom types for further processing */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    if (atomColor(state, *ap) < 0) {
+      atomColor(state, *ap) = 0;
+    }
+  }
+
+  int result = 0;
+  if (which_bits & USE_ATOM_COUNT) {
+    result += countAtomCountFeatures(state, H_count, atom_status, fp_counts,
+                                     nAtoms, ncounts, exclude_atom, nrare_atoms,
+                                     ndouble, naromatic, nfusionb, which_bits);
+  }
+  uint64_t seed = 0;
+  uint64_t old_seed = 0;
+  result += countAtomSymbolPathFeatures(
+      mol, state, nbp, fp_counts, ncounts, touched_indices, degree, cdegree,
+      atom_status, which_bits, as_query, exclude_atom);
+  result += countAugmentedAtomFeatures(mol, state, nbp, fp_counts, ncounts,
+                                       degree, nspecial, H_count, which_bits,
+                                       as_query, exclude_atom, seed, old_seed);
+  result += countAugmentedBondFeatures(state, nbp, fp_counts, ncounts, degree,
+                                       nBonds, which_bits, exclude_atom, seed);
+  result +=
+      countHydrogenPairFeatures(state, fp_counts, ncounts, H_count, unsaturated,
+                                nBonds, which_bits, exclude_atom, seed);
+  result += countHydrogenPathFeatures(mol, state, nbp, fp_counts, ncounts,
+                                      touched_indices, degree, H_count,
+                                      which_bits, exclude_atom, seed, old_seed);
+  /* Compute ring paths */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    if (atom_status[i] <= 0) {
+      atomColor(state, *ap) = 0;
+    }
+    if (i + 1 == exclude_atom) {
+      atomColor(state, *ap) = 0;
+    }
+    if (atomColor(state, *ap) == 0) {
+      continue;
+    }
+  }
+
+  /* remove all bonds with only non-ring atoms from consideration */
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bond_status[i] <= 0 &&
+        atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
+        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+  }
+
+  if (which_bits & USE_RING_PATH) {
+    seed = RING_PATH_SEED;
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      if (0) {  // Class disabled to save bit density
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                                 touched_indices, 1, 2, 3, i, 0, -1,
+                                 PROCESS_CHAINS, exclude_atom);
+      }
+
+      if (atomColor(state, *ap) > 5 && atomColor(state, *ap) < 10 &&
+          atom_status[i] > 2)  // only start at common light atoms
+      {
+        seed = NEXT_SEED(seed, 61);
+        result +=
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                           touched_indices, 1, 3, 8, /* 3 to 8 */
+                           i, 0, -1,
+                           STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
+                               PROCESS_RING_CLOSURES,
+                           exclude_atom);
+      }
+      seed = old_seed;
+
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  /* Set the color property to represent all different atom types */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) == 1 || i + 1 == exclude_atom) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
+    } else {
+      atomColor(state, *ap) = ANY_COLOR; /* treat all other atoms alike */
+    }
+  }
+
+  /* Set the color property to represent the different bond type classes */
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondType(state, *bp) == SINGLE) {
+      bondColor(state, *bp) = 1;
+    } else if (bondType(state, *bp) == DOUBLE) {
+      bondColor(state, *bp) = 2;
+    } else if (bondType(state, *bp) == TRIPLE) {
+      bondColor(state, *bp) = 3;
+    } else if (bondType(state, *bp) == AROMATIC) {
+      bondColor(state, *bp) = 4;
+    } else {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+  }
+
+  // Here, we have all non-trivial atoms mapped to ANY_COLOR while the
+  // bond type is retained.
+  if (which_bits & USE_BOND_PATH) {
+    seed = BOND_PATH_SEED;
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      // start at branch node on ring
+      if (degree[i] > 2 && atom_status[i] > 1) {
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                                 touched_indices, 1, 4, 4, /* was 4 to 4 */
+                                 i, 0, -1, PROCESS_CHAINS, exclude_atom);
+        if (atomRingFlags(state, *ap) & SPECIAL_RING) {
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 217),
+              touched_indices, 1, 5, 5, i, 0, -1,
+              IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
+        }
+      }
+      /* Add other bits to catch poorly specified ring closures */
+      seed = old_seed;
+      seed = NEXT_SEED(seed, 11);
+      result += SetPathBitsRec(
+          mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+          6, /* was 5 to 6 */
+          i, 0, -1,
+          // DEBUG_PATH |
+          FORCED_RING_PATH | IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
+          exclude_atom);
+      /* Add bits for paths starting with rare bond orders */
+      for (int j = 0; j < nbp[i].n_ligands; j++) {
+        bp = &state.bonds[nbp[i].bonds[j]];
+        const auto ai = nbp[i].atoms[j];
+        if (ai + 1 == exclude_atom) {
+          continue;
+        }
+        if (bondColor(state, *bp) == 0) {
+          continue;
+        }
+        if (bondType(state, *bp) != DOUBLE && bondType(state, *bp) != TRIPLE) {
+          continue;
+        }
+        if (atom_status[i] <= 0 && bondType(state, *bp) != TRIPLE) {
+          continue;
+        }
+        seed = old_seed;
+        seed = NEXT_SEED(seed, bondColor(state, *bp) * 413);
+        touched_indices[ai] = 1; /* updating */
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 4, 5,
+            ai, 0, i,
+            IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
+            exclude_atom);
+        touched_indices[ai] = 0; /* down-dating */
+      }
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  /* Set the color property to represent the different atom type classes */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    if (i + 1 == exclude_atom) {
+      atomColor(state, *ap) = 0;
+      continue;
+    }
+    {
+      if ((*ap)->getSymbol() == "H") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "D") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "T") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "C") {
+        atomColor(state, *ap) =
+            6; /* carbon second row elements are one class */
+      } else if ((*ap)->getSymbol() == "N") {
+        atomColor(state, *ap) =
+            8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "O") {
+        atomColor(state, *ap) =
+            8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "S") {
+        atomColor(state, *ap) =
+            8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "Q") {
+        atomColor(state, *ap) =
+            8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = 0;
+      } else {
+        const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+        if (1 < tmp && tmp < 115) {
+          atomColor(state, *ap) = 8; /* non-carbon is the only second class */
+        } else { /* This could be R atoms or other odd things */
+          atomColor(state, *ap) = 0;
+        }
+      }
+    }
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = 0; /* ignore special atom types */
+    }
+  }
+
+  // Here, we unify atom types to carbon/hetero distinction
+  if (which_bits & USE_HCOUNT_CLASS_PATH) {
+    /* generate a short path for each atom that has a hydrogen */
+    seed = HCOUNT_CLASS_PATH_SEED;
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      if (H_count[i + 1] == 0) {
+        continue;
+      }
+      if (atomColor(state, *ap) == 6 && H_count[i + 1] < 2) {
+        continue;
+      }
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      touched_indices[i] = 1; /* updating */
+      if (atomColor(state, *ap) == 6) {
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
+            4, /* path length 1 to 3 */
+            i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
+      } else {
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5,
+            i, 0, -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
+            exclude_atom);
+      }
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  /* Do a small first pass with defined bond types */
+  if (which_bits & USE_ATOM_CLASS_PATH) {
+    // seed = ATOM_CLASS_PATH_SEED+117;
+    seed = NEXT_SEED(ATOM_CLASS_PATH_SEED, 117);
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      if (atomColor(state, *ap) == 6 && degree[i] < 3) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      if (atomColor(state, *ap) == 6) {
+        if (0) {  // Class disabled to save bit density
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+              4, /* path length 3 to 4 */
+              i, 0, -1, FORCED_HETERO_END | IGNORE_PATH_SYMBOL | PROCESS_CHAINS,
+              exclude_atom);
+        }
+      } else {
+        if (0) {  // Class disabled to save bit density
+          result +=
+              SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                             touched_indices, 1, 2, 3, /* path length 3 to 3 */
+                             i, 0, -1,
+                             // IGNORE_PATH_SYMBOL |
+                             PROCESS_CHAINS, exclude_atom);
+        }
+        if (0) {  // Class disabled to save bit density
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+              5, /* path length 4 to 5 */
+              i, 0, -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
+              exclude_atom);
+        }
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+            4, /* path length 4 to 7 */
+            i, 0, -1, FORCED_RING_PATH | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
+            exclude_atom);
+      }
+      touched_indices[i] = 0;
+      seed = old_seed;
+    }
+  }
+
+  /* Set the color property to only a single class */
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
+      bondColor(state, *bp) = 5;
+    } else {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+  }
+
+  // Here, we've unified atom types to carbon/hetero and made all bond types
+  // identical
+  if (which_bits & USE_ATOM_CLASS_PATH) {
+    seed = ATOM_CLASS_PATH_SEED;
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      if (atomColor(state, *ap) == 6) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      // if (atomColor(state, *ap) == 6)
+      {
+        if (0 * degree[i] > 2) {  // Class disabled to save bit density
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+              3, /* path length 3 to 3 */
+              i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
+        }
+      }
+      // else
+      {
+        if (0) {  // Class disabled to save bit density
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+              4, /* path length 3 to 4 */
+              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
+        }
+        seed = NEXT_SEED(seed, 23 + atomColor(state, *ap) * 19);
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+            9, /* path length 3 to 9 */
+            i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
+      }
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+    /* Q-Q and Q-C ring bond count */
+    int qq_count = 0;
+    int qc_count = 0;
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (bond_status[i] == 0) {
+        continue;
+      }
+      if (bondColor(state, *bp) == 0) {
+        continue;
+      }
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+        continue;
+      }
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+        continue;
+      }
+      const auto ai1 =
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
+      const auto ai2 =
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
+      if (ai1 == 0 || ai2 == 0) {
+        continue;
+      }
+      if (ai1 == 6 && ai2 == 6) {
+        continue;
+      }
+      if (ai1 != 6 && ai2 != 6) {
+        qq_count++;
+        for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
+          if (bondRingFlags(state, *bp) & (1 << j)) {
+            ADD_BIT(fp_counts, ncounts,
+                    NEXT_SEED(ATOM_CLASS_PATH_SEED * 17, j * 8));
+            result++;
+          }
+        }
+      } else {
+        qc_count++;
+        for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
+          if (bondRingFlags(state, *bp) & (1 << j)) {
+            ADD_BIT(fp_counts, ncounts,
+                    NEXT_SEED(ATOM_CLASS_PATH_SEED * 19, j * 8));
+            result++;
+          }
+        }
+      }
+    }
+    seed = 2 * ATOM_CLASS_PATH_SEED + 3;
+    for (int i = 1; i <= qq_count; i = (int)(1 + i * 1.5)) {
+      seed = NEXT_SEED(seed, i * 153);
+      ADD_BIT(fp_counts, ncounts, seed);
+      result++;
+      seed = NEXT_SEED(seed, 53);
+      if (i <= 1) {
+        ADD_BIT(fp_counts, ncounts, seed);
+        result++;
+      }
+    }
+    seed = 3 * ATOM_CLASS_PATH_SEED + 5;
+    for (int i = 1; i <= MIN(qc_count, 2); i++) {
+      seed = NEXT_SEED(seed, i * 157);
+      ADD_BIT(fp_counts, ncounts, seed);
+      result++;
+    }
+    for (int i = 3; i <= qc_count; i = (int)(i * 1.8)) {
+      seed = NEXT_SEED(seed, i * 157);
+      ADD_BIT(fp_counts, ncounts, seed);
+      result++;
+    }
+  }
+
+  /* Compute ring patters with at least one cycle */
+  /* remove bonds from consideration that don't have at least one ring atom */
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      continue;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      continue;
+    }
+    bondColor(state, *bp) = 5;
+    /* ignore non-ring bonds */
+    if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
+        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
+      bondColor(state, *bp) = 0;
+    } else {
+      // may be redundant since atom types have already been unified
+      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
+      if (atomColor(state, *ap) != 0) {
+        if (atomColor(state, *ap) != 6) {
+          atomColor(state, *ap) = 8; /* non-carbons in one class */
+        }
+        if (atomRingFlags(state, *ap) == 0) {
+          atomColor(state, *ap) = 0;
+        }
+      }
+      // may be redundant since atom types have already been unified
+      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
+      if (atomColor(state, *ap) != 0) {
+        if (atomColor(state, *ap) != 6) {
+          atomColor(state, *ap) = 8; /* non-carbons in one class */
+        }
+        if (atomRingFlags(state, *ap) == 0) {
+          atomColor(state, *ap) = 0;
+        }
+      }
+    }
+  }
+
+  // Here, we have bond type ignored and atom types mapped to C and Q
+  if (which_bits & USE_RING_PATTERN) {
+    /* first process ring bond paths with atom classes */
+    seed = RING_PATTERN_SEED;
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      /* Don't process fragments starting at carbon in 6-ring only */
+      if (atomColor(state, *ap) == 6 &&
+          0 == (atomRingFlags(state, *ap) & SPECIAL_RING)) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                               touched_indices, 1, 3,
+                               3, /* ring bond path size 3 to 3 */
+                               i, 0, -1, PROCESS_CHAINS, exclude_atom);
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+
+    /* Now, we only include complete rings but ignore atom-type */
+    /* 'A' atoms are now included nodes */
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      /* add 'A' atom to standard class */
+      if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = 9;
+      }
+      if (i + 1 == exclude_atom) {
+        atomColor(state, *ap) = 0;
+      }
+      if (atomColor(state, *ap) == 0) {
+        continue;
+      }
+      atomColor(state, *ap) = 9; /* all ring atoms in same class */
+    }
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+        bondColor(state, *bp) = 0;
+      }
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+        bondColor(state, *bp) = 0;
+      }
+      if (bond_status[i] <= 0) {
+        bondColor(state, *bp) = 0;
+      }
+    }
+    // seed = RING_PATTERN_SEED+23;
+    seed = NEXT_SEED(RING_PATTERN_SEED, 23);
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) == 0) {
+        continue;
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      if (0) {  // Class disabled to save bit density
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+            17, /* ring size 4 to 17 */
+            i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
+      }
+
+      seed = old_seed;
+      if (0) {                   // Class disabled to save bit density
+        if (atom_status[i] > 2)  // start at ring fusion
+        {
+          seed = NEXT_SEED(seed, 61);
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
+              17, /* ring path size 6 to 17 */
+              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
+              exclude_atom);
+        }
+      }
+
+      seed = old_seed;
+      if (0) {  // Class disabled to save bit density
+        if (degree[i] > 2 && atom_status[i] >= 2)  // start at ring substituents
+        {
+          seed = NEXT_SEED(seed, 67);
+          result += SetPathBitsRec(
+              mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
+              17, /* ring path size 6 to 17 */
+              i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
+              exclude_atom);
+        }
+      }
+      seed = old_seed;
+
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  result += countRingSizeFeatures(state, fp_counts, ncounts, nBonds, which_bits,
+                                  exclude_atom);
+  /* Set the color property to represent all different atom types */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) <= 1) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
+    }
+    /* mark special atom types */
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = -1;
+    }
+    if ((*ap)->getSymbol() == "A") {
+      atomColor(state, *ap) = -1;
+    }
+    if (i + 1 == exclude_atom) {
+      atomColor(state, *ap) = 0;
+    }
+    if (atomColor(state, *ap) > 1 &&
+        (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
+         (atomSubDescriptor(state, *ap) != NONE &&
+          atomSubDescriptor(state, *ap) != SUB_MORE &&
+          atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
+      atomColor(state, *ap) += 32 * degree[i];
+    } else {
+      atomColor(state, *ap) = 0;
+    }
+  }
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
+      bondColor(state, *bp) = 5;
+    } else {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
+    }
+  }
+
+  /*
+   * add special bits for paths starting at atoms with >= 4 neighbours or
+   * methyl atoms
+   *
+   * atom color represent degree bond color identical for all bonds to non-H
+   */
+  if (which_bits & USE_DEGREE_PATH) {
+    seed = DEGREE_PATH_SEED;
+
+    // set bits for degree paths starting with special carbon atoms
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
+        continue;  // only process if degree defined
+      }
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      /* don't start on usual atoms */
+      if (degree[i] <= 3 &&       // include if high degree
+          atom_status[i] <= 2 &&  // include if ring fusion
+          degree[i] != 1) {       // include if terminal atom
+        continue;
+      }
+      /* only keep terminals if methyl */
+      if (degree[i] == 1 && (*ap)->getSymbol() != "C") {
+        continue;
+      }
+      // (*ap)->getSymbol(), i+1, degree[i], atom_status[i]);
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
+      result +=
+          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                         touched_indices, 1, 2, 4, /* path length 1 to 3 */
+                         i, 0, -1,
+                         // IGNORE_TERM_SYMBOL |
+                         IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
+      /* special CH fusion atoms */
+      if (atom_status[i] > 2 && H_count[i + 1] >= 1) {
+        seed = NEXT_SEED(seed, 219);
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5,
+            i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
+      }
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+
+    // set bits for degree paths starting with hetero atoms
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+      if (1 >= tmp || tmp >= 115) {
+        continue;
+      }
+      if (tmp == 6) {
+        continue;
+      }
+      if (tmp < 10) {
+        continue;  // exclude common hetero atoms
+      }
+      touched_indices[i] = 1; /* updating */
+      old_seed = seed;
+      seed = NEXT_SEED(seed, tmp);
+      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
+      result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
+                               touched_indices, 1, 2, 2, i, 0, -1,
+                               PROCESS_CHAINS, exclude_atom);
+      if (0) {  // might overly populate complexes
+        result += SetPathBitsRec(
+            mol, state, nbp, fp_counts, ncounts, 101 + seed, touched_indices, 1,
+            2, 2, i, 0, -1, FORCED_RING_PATH | PROCESS_CHAINS, exclude_atom);
+      }
+      seed = old_seed;
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  std::vector<std::vector<int>> length_matrix;
+  if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
+    /* Collect length_matrix */
+    /* allocate storage length_matrix */
+    length_matrix.assign(nAtoms, std::vector<int>(nAtoms, 0));
+    for (int i = 0; i < nAtoms; i++) {
+      touched_indices[i] = 0;
+    }
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      // if (FALSE) fprintf(stderr, "starting path search at atom %d(%d)\n",
+      // i+1, atomColor(state, *ap));
+      SetPathLengthFlags(mol, state, touched_indices, i, 0, i,
+                         12, /* path perception distance <= 12 */
+                         length_matrix, nbp, exclude_atom);
+      touched_indices[i] = 0; /* down-dating */
+    }
+  }
+
+  /*
+   * This screen class will catch non-linear fragments composed of rather
+   * frequent linear sub-fragments
+   */
+  if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS)) {
+    constexpr int MAX_SPIDER = 7;
+    std::array<int, MAX_SPIDER + 1> csp3{};
+    std::array<int, MAX_SPIDER + 1> hetero{};
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+      if ((*ap)->getSymbol() == "H") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "D") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "T") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "Q") {
+        atomColor(state, *ap) = HETERO;
+      } else if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = GENERIC;
+      } else if ((*ap)->getSymbol() == "L") {
+        atomColor(state, *ap) = GENERIC;
+      } else if ((*ap)->getSymbol() == "C") {
+        atomColor(state, *ap) =
+            6; /* carbon second row elements are one class */
+        if (cdegree[i] >= 3) {
+          atomColor(state, *ap) = CSP3;
+        }
+      } else if (atomColor(state, *ap) > 1 && atomColor(state, *ap) < 115) {
+        atomColor(state, *ap) = HETERO;
+      } else { /* This could be R atoms or other odd things */
+        atomColor(state, *ap) = 0;
+      }
+      if (i + 1 == exclude_atom) {
+        atomColor(state, *ap) = 0;
+      }
+    }
+    /*
+     * Bond colors are already set OK, i.e. equal for A-H bonds
+     */
+    /* NOP */
+
+    /* Now we start setting bits */
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (i + 1 == exclude_atom) {
+        continue;
+      }
+      /* Spiders have at least three legs (;-) */
+      if (degree[i] < 3) {
+        continue;
+      }
+      /* Spider needs to be special atom or carbon */
+      if (atomColor(state, *ap) != CSP3 && atomColor(state, *ap) != 6) {
+        continue;
+      }
+      touched_indices[i] = 1; /* updating */
+      std::fill(csp3.begin(), csp3.end(), 0);
+      std::fill(hetero.begin(), hetero.end(), 0);
+      if (which_bits & USE_CLASS_SPIDERS) {
+        SpecialNeighboursRec(mol, state, touched_indices, 1, i, MAX_SPIDER,
+                             csp3.data(), hetero.data(), nbp, exclude_atom);
+      }
+      touched_indices[i] = 0; /* down-dating */
+
+      /* set bits for spiders with one CSP3 atom and two heteros */
+      if (which_bits & USE_CLASS_SPIDERS) {
+        for (int j = 1; j <= MAX_SPIDER; j++) {
+          if (csp3[j] == 0) {
+            continue;
+          }
+          seed = CLASS_SPIDER_SEED;
+          if (atomColor(state, *ap) == HETERO) {
+            // seed = CLASS_SPIDER_SEED+HETERO*8+CSP3*11;
+            seed = NEXT_SEED(seed, HETERO * 8);
+            seed = NEXT_SEED(seed, CSP3 * 11);
+          } else {
+            // seed = CLASS_SPIDER_SEED+6*8+CSP3*11;
+            seed = NEXT_SEED(seed, 6 * 8);
+            seed = NEXT_SEED(seed, CSP3 * 11);
+          }
+          for (int j1 = 1; j1 <= MAX_SPIDER; j1++) {
+            const auto tmp1 = hetero[j1];
+            if (tmp1 <= 0) {
+              continue;
+            }
+            for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
+              auto tmp2 = hetero[j2];
+              if (j2 == j1) {
+                tmp2--; /* consumed in outer loop */
+              }
+              if (tmp2 <= 0) {
+                continue;
+              }
+              old_seed = seed;
+              seed = NEXT_SEED(seed, j);
+              seed = NEXT_SEED(seed, j1 + j2);
+              ADD_BIT(fp_counts, ncounts, seed);
+              result++;
+              seed = old_seed;
+            }
+          }
+        }
+      }
+
+      /* don't hetero-spider normal carbons */
+      if (atomColor(state, *ap) != CSP3) {
+        continue;
+      }
+      /* set bits for spiders with three defined HETERO atoms */
+      if (which_bits & USE_CLASS_SPIDERS) {
+        for (int j = 1; j <= MAX_SPIDER; j++) {
+          if (hetero[j] == 0) {
+            continue;
+          }
+          seed = CLASS_SPIDER_SEED;
+          if (atomColor(state, *ap) == HETERO) {
+            // seed = CLASS_SPIDER_SEED+HETERO*8+HETERO*11;
+            seed = NEXT_SEED(seed, HETERO * 8);
+            seed = NEXT_SEED(seed, HETERO * 11);
+          } else {
+            // seed = CLASS_SPIDER_SEED+6*8+HETERO*11;
+            seed = NEXT_SEED(seed, 6 * 8);
+            seed = NEXT_SEED(seed, HETERO * 11);
+          }
+          for (int j1 = j; j1 <= MAX_SPIDER; j1++) {
+            auto tmp1 = hetero[j1];
+            if (j1 == j) {
+              tmp1--; /* we've consumed this one in outer loop */
+            }
+            if (tmp1 <= 0) {
+              continue;
+            }
+            for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
+              auto tmp2 = hetero[j2];
+              if (j2 == j) {
+                tmp2--; /* consumed in outer loop */
+              }
+              if (j2 == j1) {
+                tmp2--; /* consumed in outer loop */
+              }
+              if (tmp2 <= 0) {
+                continue;
+              }
+              old_seed = seed;
+              seed = NEXT_SEED(seed, j * j1 * j2);
+              ADD_BIT(fp_counts, ncounts, seed);
+              result++;
+              // Additional bits for quarternary centers
+              if (degree[i] > 3) {
+                ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, 501));
+                result++;
+              }
+              seed = old_seed;
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Collect bits that represent feature/path_length/feature triples.
+     */
+    result += countFeaturePairFeatures(mol, state, fp_counts, ncounts, nAtoms,
+                                       atom_status, degree, cdegree,
+                                       length_matrix, which_bits, exclude_atom);
+  }
+  result += countScaffoldFeatures(state, nbp, fp_counts, ncounts, atom_status,
+                                  bond_status, degree, length_matrix, nAtoms,
+                                  which_bits, as_query, exclude_atom);
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
     /* de-allocate length_matrix */
   }
@@ -3170,9 +3374,8 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
     }
     atomInRing[bondEndpoint(state, b, 0) - 1] = 1;
     atomInRing[bondEndpoint(state, b, 1) - 1] = 1;
-    usable[b] =
-        candidate[bondEndpoint(state, b, 0) - 1] &&
-        candidate[bondEndpoint(state, b, 1) - 1];
+    usable[b] = candidate[bondEndpoint(state, b, 0) - 1] &&
+                candidate[bondEndpoint(state, b, 1) - 1];
   }
   auto rs = findRingSets(mol, usable);
   if (rs.base.empty()) {
@@ -3230,8 +3433,8 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
               ++inRingDouble;
             }
           } else if (state.bondTypes[bi] == kDouble) {
-            if (mol.getAtomWithIdx(i)->getSymbol() == "C" &&
-                !bondInRing[bi] && isSym(ai, "O,S,P,N,L")) {
+            if (mol.getAtomWithIdx(i)->getSymbol() == "C" && !bondInRing[bi] &&
+                isSym(ai, "O,S,P,N,L")) {
               exoPull = true;
             }
           }
@@ -3240,7 +3443,8 @@ void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
           continue;
         }
         if ((inRingAromatic >= 1 || inRingDouble == 1) &&
-            (isSym(i, "C,N,A,*") || mol.getAtomWithIdx(i)->getSymbol() == "L")) {
+            (isSym(i, "C,N,A,*") ||
+             mol.getAtomWithIdx(i)->getSymbol() == "L")) {
           localPi = 1;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
                    mol.getAtomWithIdx(i)->getFormalCharge() == 0 &&
@@ -3430,8 +3634,8 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
       state.bondTypes[i] = kekuleBondTypes[i];
     }
     auto hCount = explicitH;
-    std::fill(state.atomSubDescriptors.begin(),
-              state.atomSubDescriptors.end(), 0);
+    std::fill(state.atomSubDescriptors.begin(), state.atomSubDescriptors.end(),
+              0);
     if (!queryMode) {
       for (const auto atom : lmol->atoms()) {
         hCount[atom->getIdx() + 1] += atom->getTotalNumHs();
@@ -3444,9 +3648,9 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
     } else {
       perceiveAromaticBonds(*lmol, state);
     }
-    CountFingerprintPatterns(*lmol, state, nbp, hCount.data(), atomStatus.data(),
-                             bondStatus.data(), counts.data(), fpSize, bitFlags,
-                             queryMode, focusAtom + 1);
+    CountFingerprintPatterns(
+        *lmol, state, nbp, hCount.data(), atomStatus.data(), bondStatus.data(),
+        counts.data(), fpSize, bitFlags, queryMode, focusAtom + 1);
   }
   for (unsigned int i = 0; i < fpSize; ++i) {
     res[i] = counts[i] > 0 ? counts[i] : 0;
