@@ -188,7 +188,6 @@ constexpr int DEGREE_PATH_SEED = 71;
 constexpr int CLASS_SPIDER_SEED = 79;
 constexpr int RING_CLOSURE_SEED = 101;
 constexpr int NON_SSS_SEED = 179;
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* new macro to convert the current seed value into the 'incremented' one */
 #define NEXT_SEED(seed, increment) next_hash(seed, increment)
@@ -2105,8 +2104,7 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
     unsaturated[i] = false;
     const auto symbol = (*ap)->getSymbol();
     atomColor(state, *ap) =
-        symbol == "*" ? 0
-                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
+        symbol == "*" ? 0 : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) <= 1) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
@@ -2293,8 +2291,7 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
   for (int i = 0; i < nAtoms; i++, ap++) {
     const auto symbol = (*ap)->getSymbol();
     atomColor(state, *ap) =
-        symbol == "*" ? 0
-                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
+        symbol == "*" ? 0 : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) == 1 || i + 1 == exclude_atom) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     } else {
@@ -2648,7 +2645,7 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
       }
     }
     seed = 3 * ATOM_CLASS_PATH_SEED + 5;
-    for (int i = 1; i <= MIN(qc_count, 2); i++) {
+    for (int i = 1; i <= std::min(qc_count, 2); i++) {
       seed = NEXT_SEED(seed, i * 157);
       ADD_BIT(fp_counts, ncounts, seed);
       result++;
@@ -2813,8 +2810,7 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
   for (int i = 0; i < nAtoms; i++, ap++) {
     const auto symbol = (*ap)->getSymbol();
     atomColor(state, *ap) =
-        symbol == "*" ? 0
-                      : PeriodicTable::getTable()->getAtomicNumber(symbol);
+        symbol == "*" ? 0 : PeriodicTable::getTable()->getAtomicNumber(symbol);
     if (atomColor(state, *ap) <= 1) {
       atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
@@ -2910,9 +2906,9 @@ int CountFingerprintPatterns(const ROMol &mol, AvalonState &state,
         continue;
       }
       const auto symbol = (*ap)->getSymbol();
-      const auto tmp =
-          symbol == "*" ? 0
-                        : PeriodicTable::getTable()->getAtomicNumber(symbol);
+      const auto tmp = symbol == "*"
+                           ? 0
+                           : PeriodicTable::getTable()->getAtomicNumber(symbol);
       if (1 >= tmp || tmp >= 115) {
         continue;
       }
