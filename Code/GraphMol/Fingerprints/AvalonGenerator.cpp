@@ -321,26 +321,21 @@ int SetPathBitsRec(const ROMol &mol, AvalonState &state,
  * Paths through exclude_atom are terminated.
  */
 {
-  int result;
-  int ai, bi, acolor, bcolor;
-  uint64_t old_seed;
-  const Atom *ap;
-
-  result = 0;
-  old_seed = seed;
+  int result = 0;
+  auto old_seed = seed;
   if (nbonds > maxbonds) {
-    return (result);
+    return result;
   }
   for (int i = 0; i < nbp[sprout_index].n_ligands; i++) {
-    ai = nbp[sprout_index].atoms[i];
+    const auto ai = nbp[sprout_index].atoms[i];
     if (ai == last_index) {
       continue;
     }
     if (ai + 1 == exclude_atom) {
       continue;
     }
-    bi = nbp[sprout_index].bonds[i];
-    ap = mol.getAtomWithIdx(ai);
+    const auto bi = nbp[sprout_index].bonds[i];
+    const auto ap = mol.getAtomWithIdx(ai);
     if ((flags & FORCED_RING_PATH) &&
         bondRingFlags(state, mol.getBondWithIdx(bi)) == 0) {
       continue;
@@ -357,11 +352,11 @@ int SetPathBitsRec(const ROMol &mol, AvalonState &state,
       if (touched_indices[ai] > 1) {
         continue;  // not just a plain ring
       }
-      bcolor = bondColor(state, mol.getBondWithIdx(bi));
+      const auto bcolor = bondColor(state, mol.getBondWithIdx(bi));
       if (bcolor == 0) {
         continue;
       }
-      acolor = atomColor(state, mol.getAtomWithIdx(ai));
+      const auto acolor = atomColor(state, mol.getAtomWithIdx(ai));
       if (acolor == 0 && 0 == (flags & IGNORE_PATH_SYMBOL)) {
         continue;
       }
@@ -381,11 +376,11 @@ int SetPathBitsRec(const ROMol &mol, AvalonState &state,
       seed = old_seed;
     } else /* normal path */
     {
-      bcolor = bondColor(state, mol.getBondWithIdx(bi));
+      const auto bcolor = bondColor(state, mol.getBondWithIdx(bi));
       if (bcolor == 0) {
         continue;
       }
-      acolor = atomColor(state, mol.getAtomWithIdx(ai));
+      const auto acolor = atomColor(state, mol.getAtomWithIdx(ai));
       if (acolor == 0 && 0 == (flags & IGNORE_PATH_SYMBOL)) {
         continue;
       }
@@ -450,46 +445,37 @@ int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
                    uint64_t start_seed, int exclude_atom) {
   int result = 0;
   const auto nAtoms = static_cast<int>(mol.getNumAtoms());
-  int coli, colj;
-  uint64_t seed_i, seed;
   std::vector<int> counts(ncounts * 4, 0);
   for (int i = 0; i < nAtoms; i++) {
     if (i + 1 == exclude_atom) {
       continue;
     }
-    coli = atomColor(state, mol.getAtomWithIdx(i));
+    const auto coli = atomColor(state, mol.getAtomWithIdx(i));
     if (0 == (coli & start_flags)) {
       continue;
     }
-    if (use_atom_types) {
-      if (0 == (coli & TYPE_MASK)) {
-        continue;  // ignore generic atoms
-      }
-      seed_i = NEXT_SEED(start_seed, coli & TYPE_MASK);
-    } else {
-      seed_i = start_seed;
+    if (use_atom_types && 0 == (coli & TYPE_MASK)) {
+      continue;  // ignore generic atoms
     }
+    const auto seed_i =
+        use_atom_types ? NEXT_SEED(start_seed, coli & TYPE_MASK) : start_seed;
     for (int j = 0; j < nAtoms; j++) {
       if (j + 1 == exclude_atom) {
         continue;
       }
-      colj = atomColor(state, mol.getAtomWithIdx(j));
+      const auto colj = atomColor(state, mol.getAtomWithIdx(j));
       if (0 == (colj & end_flags)) {
         continue;
       }
-      if (use_atom_types) {
-        if (0 == (colj & TYPE_MASK)) {
-          continue;  // ignore generic atoms
-        }
-        seed = NEXT_SEED(seed_i, colj & TYPE_MASK);
-      } else {
-        seed = seed_i;
+      if (use_atom_types && 0 == (colj & TYPE_MASK)) {
+        continue;  // ignore generic atoms
       }
+      const auto seed = use_atom_types
+                            ? NEXT_SEED(seed_i, colj & TYPE_MASK)
+                            : seed_i;
       for (int k = path_min; k <= path_max; k++) {
         if ((1 << k) & length_matrix[i][j]) {
-          /* count the features */
           counts[(k * 19 + seed) % (ncounts * 4)]++;
-          // ADD_BIT(fp_counts, ncounts, k*19+seed);
           result++;
         }
       }
@@ -527,51 +513,14 @@ int CountFingerprintPatterns(
     int ncounts, int which_bits, int as_query, int exclude_atom) {
   const auto nAtoms = static_cast<int>(mol.getNumAtoms());
   const auto nBonds = static_cast<int>(mol.getNumBonds());
-  uint64_t seed, old_seed;
   std::vector<int> touched_indices(nAtoms, 0);
   std::vector<int> degree(nAtoms, 0);
   std::vector<int> cdegree(nAtoms, 0);
   std::vector<int> unsaturated(nAtoms, 0);
   std::vector<int> nspecial(nAtoms, 0);
-  std::vector<int> extcon;
-  std::vector<int> extcon2;
-  std::vector<std::vector<int>> length_matrix;
-  const Atom *const *ap;
-  const Atom *const *ap1;
-  const Atom *const *ap2;
-  const Atom *const *ap3;
-  const Bond *const *bp;
-  int tmp;
-
-  uint64_t prod, sum, sumi, prodi, sumj, prodj;
-  int ai, ai1, ai2;
-  int qq_count;
-  int qc_count;
-  int nrbonds;
-  int nrare_atoms;
-  int is_rare;
-  int nqtmp, nmulti;
-  int hash;
-  int nbits;
-  int result; /* the number of paths enumerated */
-  constexpr int NCOUNT_HASH = 128;
-  constexpr int NCOUNT_SEED_HASH = 128 * 128;
-  std::array<int, NCOUNT_HASH> atom_type_count_hash{};
-  std::array<int, NCOUNT_SEED_HASH> atom_type_count_seed_hash{};
-  constexpr int MAX_SPIDER = 7;
-  std::array<int, MAX_SPIDER + 1> csp3{};
-  std::array<int, MAX_SPIDER + 1> hetero{};
-  int tmp1, tmp2;
-  int ndouble, naromatic;
-  std::array<std::array<int, 15>, 15> rscounts{};
-  int nringch2, nfusionch, nspiro, nfusionb;
-  int flags;
-  int changed;
-
-  result = 0;
-  nrare_atoms = 0;
+  int nrare_atoms = 0;
   /* Set the color property to represent all different atom types */
-  ap = state.atoms.data();
+  auto ap = state.atoms.data();
   for (int i = 0; i < nAtoms; i++, ap++) {
     unsaturated[i] = FALSE;
     atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
@@ -585,7 +534,7 @@ int CountFingerprintPatterns(
     if ((*ap)->getSymbol() == "A") {
       atomColor(state, *ap) = -1;
     }
-    is_rare =
+    const auto is_rare =
         atomColor(state, *ap) > 0 && !AtomSymbolMatch((*ap)->getSymbol(), "C,H,O,N,S,P,Cl,F");
     if (is_rare) {
       if (exclude_atom != i + 1 || exclude_atom <= 0) {
@@ -594,11 +543,11 @@ int CountFingerprintPatterns(
     }
   }
 
-  ndouble = 0;
-  naromatic = 0;
-  nfusionb = 0;
+  int ndouble = 0;
+  int naromatic = 0;
+  int nfusionb = 0;
   /* Set the color property to represent the different bond type classes */
-  bp = state.bonds.data();
+  auto bp = state.bonds.data();
   for (int i = 0; i < nBonds; i++, bp++) {
     if (bondType(state, *bp) == SINGLE) {
       bondColor(state, *bp) = 1;
@@ -664,7 +613,18 @@ int CountFingerprintPatterns(
     }
   }
 
+  int result = 0;
   if (which_bits & USE_ATOM_COUNT) {
+    constexpr int NCOUNT_HASH = 128;
+    constexpr int NCOUNT_SEED_HASH = 128 * 128;
+    std::array<int, NCOUNT_HASH> atom_type_count_hash{};
+    std::array<int, NCOUNT_SEED_HASH> atom_type_count_seed_hash{};
+    uint64_t seed = 0;
+    int nbits = 0;
+    int nringch2 = 0;
+    int nfusionch = 0;
+    int nspiro = 0;
+    int hash = 0;
     /* Collect hashed counts of atom types with hydrogen counts */
     std::fill(atom_type_count_hash.begin(), atom_type_count_hash.end(), 0);
     std::fill(atom_type_count_seed_hash.begin(),
@@ -931,6 +891,8 @@ int CountFingerprintPatterns(
     result += nbits;
   }
 
+  uint64_t seed = 0;
+  uint64_t old_seed = 0;
   if (which_bits & USE_ATOM_SYMBOL_PATH) {
     seed = ATOM_SYMBOL_PATH_SEED;
     ap = state.atoms.data();
@@ -1055,7 +1017,7 @@ int CountFingerprintPatterns(
       if (1) {
         for (int j = 0; j < nbp[i].n_ligands; j++) {
           bp = &state.bonds[nbp[i].bonds[j]];
-          ai = nbp[i].atoms[j];
+          const auto ai = nbp[i].atoms[j];
           if (ai + 1 == exclude_atom) {
             continue;
           }
@@ -1134,12 +1096,12 @@ int CountFingerprintPatterns(
                 state.atomColors[nbp[i].atoms[i2]] == 6) {
               continue;
             }
-            sum = 0;
+            int sum = 0;
             sum += state.atomColors[nbp[i].atoms[i1]] *
                    state.bondColors[nbp[i].bonds[i1]];
             sum += state.atomColors[nbp[i].atoms[i2]] *
                    state.bondColors[nbp[i].bonds[i2]];
-            prod = 1;
+            int prod = 1;
             prod *= state.atomColors[nbp[i].atoms[i1]];
             prod &= 0xFFF;
             prod *= state.atomColors[nbp[i].atoms[i2]];
@@ -1150,7 +1112,7 @@ int CountFingerprintPatterns(
             // seed = NEXT_SEED(seed, (sum*prod)&0xFFF);
             // ADD_BIT(fp_counts, ncounts, seed);
             result += 1;
-            nmulti = 0;
+            int nmulti = 0;
             if (state.bondColors[nbp[i].bonds[i1]] >= 2) {
               nmulti++;
             }
@@ -1207,7 +1169,7 @@ int CountFingerprintPatterns(
               continue;
             }
             /* count hetero neighbours */
-            nqtmp = 0;
+            int nqtmp = 0;
             if (state.atomColors[nbp[i].atoms[i1]] != 6) {
               nqtmp++;
             }
@@ -1219,7 +1181,7 @@ int CountFingerprintPatterns(
             }
 
             /* make sure to add some bits for really odd ones */
-            nmulti = 0;
+            int nmulti = 0;
             if (state.bondColors[nbp[i].bonds[i1]] == 2) {
               nmulti++;
             }
@@ -1239,14 +1201,14 @@ int CountFingerprintPatterns(
               nmulti++;
             }
 
-            sum = 0;
+            int sum = 0;
             sum += state.atomColors[nbp[i].atoms[i1]] *
                    state.bondColors[nbp[i].bonds[i1]];
             sum += state.atomColors[nbp[i].atoms[i2]] *
                    state.bondColors[nbp[i].bonds[i2]];
             sum += state.atomColors[nbp[i].atoms[i3]] *
                    state.bondColors[nbp[i].bonds[i3]];
-            prod = 1;
+            int prod = 1;
             prod *= state.atomColors[nbp[i].atoms[i1]];
             prod &= 0xFFF;
             prod *= state.atomColors[nbp[i].atoms[i2]];
@@ -1284,8 +1246,8 @@ int CountFingerprintPatterns(
       if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
-      ai1 = bondEndpoint(state, (*bp)->getIdx(), 0) - 1;
-      ai2 = bondEndpoint(state, (*bp)->getIdx(), 1) - 1;
+      const auto ai1 = bondEndpoint(state, (*bp)->getIdx(), 0) - 1;
+      const auto ai2 = bondEndpoint(state, (*bp)->getIdx(), 1) - 1;
       if (degree[ai1] <= 2) {
         continue;
       }
@@ -1320,12 +1282,12 @@ int CountFingerprintPatterns(
           if (state.bondColors[nbp[ai1].bonds[i2]] == 0) {
             continue;
           }
-          sumi = 0;
+          int sumi = 0;
           sumi += state.atomColors[nbp[ai1].atoms[i1]] *
                   state.bondColors[nbp[ai1].bonds[i1]];
           sumi += state.atomColors[nbp[ai1].atoms[i2]] *
                   state.bondColors[nbp[ai1].bonds[i2]];
-          prodi = 1;
+          int prodi = 1;
           prodi *= state.atomColors[nbp[ai1].atoms[i1]] +
                    state.bondColors[nbp[ai1].bonds[i1]];
           prodi *= state.atomColors[nbp[ai1].atoms[i2]] +
@@ -1360,12 +1322,12 @@ int CountFingerprintPatterns(
               if (state.bondColors[nbp[ai2].bonds[j2]] == 0) {
                 continue;
               }
-              sumj = 0;
+              int sumj = 0;
               sumj += state.atomColors[nbp[ai2].atoms[j1]] *
                       state.bondColors[nbp[ai2].bonds[j1]];
               sumj += state.atomColors[nbp[ai2].atoms[j2]] *
                       state.bondColors[nbp[ai2].bonds[j2]];
-              prodj = 1;
+              int prodj = 1;
               prodj *= state.atomColors[nbp[ai2].atoms[j1]] +
                        state.bondColors[nbp[ai2].bonds[j1]];
               prodj *= state.atomColors[nbp[ai2].atoms[j2]] +
@@ -1686,7 +1648,7 @@ int CountFingerprintPatterns(
       /* Add bits for paths starting with rare bond orders */
       for (int j = 0; j < nbp[i].n_ligands; j++) {
         bp = &state.bonds[nbp[i].bonds[j]];
-        ai = nbp[i].atoms[j];
+        const auto ai = nbp[i].atoms[j];
         if (ai + 1 == exclude_atom) {
           continue;
         }
@@ -1739,7 +1701,7 @@ int CountFingerprintPatterns(
       } else if ((*ap)->getSymbol() == "A") {
         atomColor(state, *ap) = 0;
       } else {
-        tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+        const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
         if (1 < tmp && tmp < 115) {
           atomColor(state, *ap) = 8; /* non-carbon is the only second class */
         } else {         /* This could be R atoms or other odd things */
@@ -1895,8 +1857,8 @@ int CountFingerprintPatterns(
       touched_indices[i] = 0; /* down-dating */
     }
     /* Q-Q and Q-C ring bond count */
-    qq_count = 0;
-    qc_count = 0;
+    int qq_count = 0;
+    int qc_count = 0;
     bp = state.bonds.data();
     for (int i = 0; i < nBonds; i++, bp++) {
       if (bond_status[i] == 0) {
@@ -1911,8 +1873,10 @@ int CountFingerprintPatterns(
       if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
-      ai1 = state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
-      ai2 = state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
+      const auto ai1 =
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
+      const auto ai2 =
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
       if (ai1 == 0 || ai2 == 0) {
         continue;
       }
@@ -2106,9 +2070,10 @@ int CountFingerprintPatterns(
   }
 
   if (which_bits & USE_RING_SIZE_COUNTS) {
+    std::array<std::array<int, 15>, 15> rscounts{};
     for (int j = 3; j < 10; j++) /* loop through ring_sizes */
     {
-      nrbonds = 0;
+      int nrbonds = 0;
       bp = state.bonds.data();
       for (int i = 0; i < nBonds; i++, bp++) {
         if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom &&
@@ -2288,7 +2253,7 @@ int CountFingerprintPatterns(
       if (i + 1 == exclude_atom) {
         continue;
       }
-      tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
+      const auto tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
       if (1 >= tmp || tmp >= 115) {
         continue;
       }
@@ -2314,6 +2279,7 @@ int CountFingerprintPatterns(
     }
   }
 
+  std::vector<std::vector<int>> length_matrix;
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
     /* Collect length_matrix */
     /* allocate storage length_matrix */
@@ -2341,6 +2307,9 @@ int CountFingerprintPatterns(
    * frequent linear sub-fragments
    */
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS)) {
+    constexpr int MAX_SPIDER = 7;
+    std::array<int, MAX_SPIDER + 1> csp3{};
+    std::array<int, MAX_SPIDER + 1> hetero{};
     ap = state.atoms.data();
     for (int i = 0; i < nAtoms; i++, ap++) {
       atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
@@ -2416,12 +2385,12 @@ int CountFingerprintPatterns(
             seed = NEXT_SEED(seed, CSP3 * 11);
           }
           for (int j1 = 1; j1 <= MAX_SPIDER; j1++) {
-            tmp1 = hetero[j1];
+            const auto tmp1 = hetero[j1];
             if (tmp1 <= 0) {
               continue;
             }
             for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
-              tmp2 = hetero[j2];
+              auto tmp2 = hetero[j2];
               if (j2 == j1) {
                 tmp2--; /* consumed in outer loop */
               }
@@ -2460,7 +2429,7 @@ int CountFingerprintPatterns(
             seed = NEXT_SEED(seed, HETERO * 11);
           }
           for (int j1 = j; j1 <= MAX_SPIDER; j1++) {
-            tmp1 = hetero[j1];
+            auto tmp1 = hetero[j1];
             if (j1 == j) {
               tmp1--; /* we've consumed this one in outer loop */
             }
@@ -2468,7 +2437,7 @@ int CountFingerprintPatterns(
               continue;
             }
             for (int j2 = j1; j2 <= MAX_SPIDER; j2++) {
-              tmp2 = hetero[j2];
+              auto tmp2 = hetero[j2];
               if (j2 == j) {
                 tmp2--; /* consumed in outer loop */
               }
@@ -2501,6 +2470,7 @@ int CountFingerprintPatterns(
       /* set feature flags in atom colors */
       ap = state.atoms.data();
       for (int i = 0; i < nAtoms; i++, ap++) {
+        int flags = 0;
         if ((*ap)->getSymbol() == "C") {
           flags = C_FLAG;
         } else if ((*ap)->getSymbol() == "O") {
@@ -2629,7 +2599,7 @@ int CountFingerprintPatterns(
       /* Set bits for ring-subst/ring-subst/hetero triples */
       if (0)  // too many spurious bits
       {
-        ap1 = state.atoms.data();
+        auto ap1 = state.atoms.data();
         for (int i1 = 0; i1 < nAtoms; i1++, ap1++) {
           if (i1 + 1 == exclude_atom) {
             continue;
@@ -2641,7 +2611,7 @@ int CountFingerprintPatterns(
           if (!(atomRingFlags(state, *ap1) & SPECIAL_RING)) {
             continue;
           }
-          ap2 = state.atoms.data();
+          auto ap2 = state.atoms.data();
           for (int i2 = 0; i2 < nAtoms; i2++, ap2++) {
             if (i1 == i2) {
               continue;
@@ -2652,7 +2622,7 @@ int CountFingerprintPatterns(
             if (0 == (atomColor(state, *ap2) & RING_SUBST_FLAG)) {
               continue;
             }
-            ap3 = state.atoms.data();
+            auto ap3 = state.atoms.data();
             for (int i3 = 0; i3 < nAtoms; i3++, ap3++) {
               if (i1 == i3) {
                 continue;
@@ -2731,9 +2701,9 @@ int CountFingerprintPatterns(
    * the             */
   /* previously collected length_matrix. */
   if (!as_query && (which_bits & (USE_NON_SSS_BITS))) {
+    std::vector<int> extcon(nAtoms, 0);
+    std::vector<int> extcon2(nAtoms, 0);
     seed = NON_SSS_SEED;
-    extcon.assign(nAtoms, 0);
-    extcon2.assign(nAtoms, 0);
     /* initialized extended connectivity */
     ap = state.atoms.data();
     for (int j = 0; j < nAtoms; j++, ap++) {
@@ -2753,8 +2723,8 @@ int CountFingerprintPatterns(
           continue;
         }
         extcon2[j] = atom_status[j] * 3 + (extcon[j] * 0xF);
-        sum = 0;
-        prod = 0;
+        int sum = 0;
+        int prod = 0;
         for (int jj = 0; jj < nbp[j].n_ligands; jj++) {
           // only propagate through ring bonds
           if (bond_status[nbp[j].bonds[jj]] <= 0) {
@@ -2774,7 +2744,7 @@ int CountFingerprintPatterns(
 
     /* propagate smallest hash to all members of ring system */
     for (;;) {
-      changed = FALSE;
+      bool changed = false;
       for (int j = 0; j < nAtoms; j++) {
         /* skip non-ring atoms */
         if (atom_status[j] <= 0) {
@@ -2873,7 +2843,7 @@ int CountFingerprintPatterns(
         if (atom_status[j] <= 0) {
           continue;
         }
-        tmp1 = 0;
+        int tmp1 = 0;
         if ((*ap)->getSymbol() == "C") {
           tmp1 = 101;
         } else if ((*ap)->getSymbol() == "O") {
@@ -2899,8 +2869,8 @@ int CountFingerprintPatterns(
             continue;
           }
           extcon2[j] = atom_status[j] * 3 + (extcon[j] * 0xF);
-          sum = 0;
-          prod = 0;
+          int sum = 0;
+          int prod = 0;
           for (int jj = 0; jj < nbp[j].n_ligands; jj++) {
             // only propagate through ring bonds
             if (bond_status[nbp[j].bonds[jj]] <= 0) {
@@ -2919,7 +2889,7 @@ int CountFingerprintPatterns(
       }
       /* propagate smallest hash to all members of ring system */
       for (;;) {
-        changed = FALSE;
+        bool changed = false;
         for (int j = 0; j < nAtoms; j++) {
           /* skip non-ring atoms */
           if (atom_status[j] <= 0) {
