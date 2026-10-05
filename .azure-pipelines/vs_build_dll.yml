@@ -67,6 +67,7 @@ steps:
 - script: |
     call activate rdkit_build
     set RDBASE=%cd%
+    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -E shard -T Test
@@ -74,6 +75,7 @@ steps:
 - script: |
     call activate rdkit_build
     set RDBASE=%cd%
+    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -R shard -T Test
