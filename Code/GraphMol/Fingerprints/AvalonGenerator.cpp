@@ -70,27 +70,86 @@ namespace {
 #define USE_SCAFFOLD_LINKS 0x400000
 #define USE_NON_SSS_BITS 0xF00000
 
-struct reaccs_atom_t {
-  std::string atom_symbol;
-  int color = 0;
-  int rsize_flags = 0;
-  int sub_desc = NONE;
-  int charge = 0;
+#undef SINGLE
+#undef DOUBLE
+#undef TRIPLE
+#undef AROMATIC
+
+struct AvalonState {
+  explicit AvalonState(const ROMol &mol) {
+    atoms.reserve(mol.getNumAtoms());
+    atomColors.resize(mol.getNumAtoms());
+    atomRingFlags.resize(mol.getNumAtoms());
+    atomSubDescriptors.resize(mol.getNumAtoms());
+    for (const auto atom : mol.atoms()) {
+      atoms.push_back(atom);
+    }
+
+    bonds.reserve(mol.getNumBonds());
+    bondTypes.resize(mol.getNumBonds());
+    bondColors.resize(mol.getNumBonds());
+    bondRingFlags.resize(mol.getNumBonds());
+    for (const auto bond : mol.bonds()) {
+      bonds.push_back(bond);
+      if (bond->getIsAromatic() || bond->getBondType() == Bond::AROMATIC) {
+        bondTypes[bond->getIdx()] = 4;
+      } else if (bond->getBondType() == Bond::SINGLE) {
+        bondTypes[bond->getIdx()] = 1;
+      } else if (bond->getBondType() == Bond::DOUBLE) {
+        bondTypes[bond->getIdx()] = 2;
+      } else if (bond->getBondType() == Bond::TRIPLE) {
+        bondTypes[bond->getIdx()] = 3;
+      } else {
+        bondTypes[bond->getIdx()] = ANY_BOND;
+      }
+    }
+  }
+
+  std::vector<const Atom *> atoms;
+  std::vector<const Bond *> bonds;
+  std::vector<int> atomColors;
+  std::vector<int> atomRingFlags;
+  std::vector<int> atomSubDescriptors;
+  std::vector<int> bondTypes;
+  std::vector<int> bondColors;
+  std::vector<int> bondRingFlags;
 };
 
-struct reaccs_bond_t {
-  std::array<int, 2> atoms{};  // 1-based atom numbers
-  int bond_type = 0;
-  int color = 0;
-  int rsize_flags = 0;
-};
+#define SINGLE 1
+#define DOUBLE 2
+#define TRIPLE 3
+#define AROMATIC 4
 
-struct reaccs_molecule_t {
-  int n_atoms = 0;
-  int n_bonds = 0;
-  reaccs_atom_t *atom_array = nullptr;
-  reaccs_bond_t *bond_array = nullptr;
-};
+int &atomColor(AvalonState &state, const Atom *atom) {
+  return state.atomColors[atom->getIdx()];
+}
+
+int &atomRingFlags(AvalonState &state, const Atom *atom) {
+  return state.atomRingFlags[atom->getIdx()];
+}
+
+int &atomSubDescriptor(AvalonState &state, const Atom *atom) {
+  return state.atomSubDescriptors[atom->getIdx()];
+}
+
+int &bondColor(AvalonState &state, const Bond *bond) {
+  return state.bondColors[bond->getIdx()];
+}
+
+int &bondType(AvalonState &state, const Bond *bond) {
+  return state.bondTypes[bond->getIdx()];
+}
+
+int &bondRingFlags(AvalonState &state, const Bond *bond) {
+  return state.bondRingFlags[bond->getIdx()];
+}
+
+int bondEndpoint(const AvalonState &state, unsigned int bondIdx, unsigned int end) {
+  const auto bond = state.bonds[bondIdx];
+  return static_cast<int>((end == 0 ? bond->getBeginAtomIdx()
+                                    : bond->getEndAtomIdx()) +
+                          1);
+}
 
 struct neighbourhood_t {
   int n_ligands = 0;
@@ -180,7 +239,7 @@ int AtomSymbolMatch(std::string_view symbol, std::string_view list) {
 
 #define SPECIAL_RING (0xFC & ~(1 << 6))
 
-static void SetPathLengthFlags(struct reaccs_molecule_t *mp,
+static void SetPathLengthFlags(const ROMol &mol, AvalonState &state,
                                std::vector<int> &touched_indices, int start_index,
                                int path_length, int current_index, int max_size,
                                std::vector<std::vector<int>> &length_matrix,
@@ -202,19 +261,19 @@ static void SetPathLengthFlags(struct reaccs_molecule_t *mp,
     if (touched_indices[ai]) {
       continue; /* don't walk backwards */
     }
-    if (mp->atom_array[ai].color == 0) {
+    if (atomColor(state, state.atoms[ai]) == 0) {
       continue;
     }
     touched_indices[ai] = 1; /* updating */
     length_matrix[start_index][ai] |= 1 << (path_length + 1);
-    SetPathLengthFlags(mp, touched_indices, start_index, path_length + 1, ai,
+    SetPathLengthFlags(mol, state, touched_indices, start_index, path_length + 1, ai,
                        max_size, length_matrix, nbp, exclude_atom);
     touched_indices[ai] = 0; /* down-dating */
   }
 }
 
 static void SpecialNeighboursRec(
-    struct reaccs_molecule_t *mp, std::vector<int> &touched_indices,
+    const ROMol &mol, AvalonState &state, std::vector<int> &touched_indices,
     int path_length,
     int current_index, int max_size,
     /* count of sp3 carbons with >= 3 C neighbours */
@@ -239,25 +298,25 @@ static void SpecialNeighboursRec(
     if (touched_indices[ai]) {
       continue; /* don't walk backwards */
     }
-    if (mp->atom_array[ai].color <= 0) {
+    if (atomColor(state, state.atoms[ai]) <= 0) {
       continue;
     }
-    if (mp->atom_array[ai].color == CSP3) {
+    if (atomColor(state, state.atoms[ai]) == CSP3) {
       csp3[path_length]++;
-    } else if (mp->atom_array[ai].color == HETERO) {
+    } else if (atomColor(state, state.atoms[ai]) == HETERO) {
       hetero[path_length]++;
     }
     /* only carbon-connected SPIDERS (beta atoms are always included) */
-    if (mp->atom_array[ai].color == HETERO && path_length > 1) {
+    if (atomColor(state, state.atoms[ai]) == HETERO && path_length > 1) {
       continue;
     }
     touched_indices[ai] = 1; /* updating */
-    SpecialNeighboursRec(mp, touched_indices, path_length + 1, ai, max_size,
+    SpecialNeighboursRec(mol, state, touched_indices, path_length + 1, ai, max_size,
                          csp3, hetero, nbp, exclude_atom);
     touched_indices[ai] = 0; /* down-dating */
   }
 }
-int SetPathBitsRec(struct reaccs_molecule_t *mp,
+int SetPathBitsRec(const ROMol &mol, AvalonState &state,
                    const std::vector<neighbourhood_t> &nbp,
                    int *fp_counts, int ncounts, uint64_t seed,
                    std::vector<int> &touched_indices, int nbonds,
@@ -275,7 +334,7 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
   int result;
   int ai, bi, acolor, bcolor;
   uint64_t old_seed;
-  struct reaccs_atom_t *ap;
+  const Atom *ap;
 
   result = 0;
   old_seed = seed;
@@ -291,11 +350,12 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
       continue;
     }
     bi = nbp[sprout_index].bonds[i];
-    ap = mp->atom_array + ai;
-    if ((flags & FORCED_RING_PATH) && mp->bond_array[bi].rsize_flags == 0) {
+    ap = mol.getAtomWithIdx(ai);
+    if ((flags & FORCED_RING_PATH) &&
+        bondRingFlags(state, mol.getBondWithIdx(bi)) == 0) {
       continue;
     }
-    if (ap->color >= 18 && ap->color != ANY_COLOR &&
+    if (atomColor(state, ap) >= 18 && atomColor(state, ap) != ANY_COLOR &&
         0 != (flags & STOP_AT_HEAVY_ATOM)) {
       continue;
     }
@@ -307,11 +367,11 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
       if (touched_indices[ai] > 1) {
         continue;  // not just a plain ring
       }
-      bcolor = mp->bond_array[bi].color;
+      bcolor = bondColor(state, mol.getBondWithIdx(bi));
       if (bcolor == 0) {
         continue;
       }
-      acolor = mp->atom_array[ai].color;
+      acolor = atomColor(state, mol.getAtomWithIdx(ai));
       if (acolor == 0 && 0 == (flags & IGNORE_PATH_SYMBOL)) {
         continue;
       }
@@ -331,11 +391,11 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
       seed = old_seed;
     } else /* normal path */
     {
-      bcolor = mp->bond_array[bi].color;
+      bcolor = bondColor(state, mol.getBondWithIdx(bi));
       if (bcolor == 0) {
         continue;
       }
-      acolor = mp->atom_array[ai].color;
+      acolor = atomColor(state, mol.getAtomWithIdx(ai));
       if (acolor == 0 && 0 == (flags & IGNORE_PATH_SYMBOL)) {
         continue;
       }
@@ -365,7 +425,7 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
       if (nbonds + 1 <= maxbonds) /* continue recursion */
       {
         result +=
-            SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                            nbonds + 1, minbonds, maxbonds, ai, first_index,
                            sprout_index, flags, exclude_atom);
       }
@@ -392,20 +452,22 @@ int SetPathBitsRec(struct reaccs_molecule_t *mp,
 #define P_FLAG 0x0005
 #define X_FLAG 0x0006
 
-int SetFeatureBits(struct reaccs_molecule_t *mp, int *fp_counts, int ncounts,
+int SetFeatureBits(const ROMol &mol, AvalonState &state, int *fp_counts,
+                   int ncounts,
                    int start_flags, int end_flags, int path_min, int path_max,
                    int use_counts, int use_atom_types,
                    const std::vector<std::vector<int>> &length_matrix,
                    uint64_t start_seed, int exclude_atom) {
   int result = 0;
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
   int coli, colj;
   uint64_t seed_i, seed;
   std::vector<int> counts(ncounts * 4, 0);
-  for (int i = 0; i < mp->n_atoms; i++) {
+  for (int i = 0; i < nAtoms; i++) {
     if (i + 1 == exclude_atom) {
       continue;
     }
-    coli = mp->atom_array[i].color;
+    coli = atomColor(state, mol.getAtomWithIdx(i));
     if (0 == (coli & start_flags)) {
       continue;
     }
@@ -417,11 +479,11 @@ int SetFeatureBits(struct reaccs_molecule_t *mp, int *fp_counts, int ncounts,
     } else {
       seed_i = start_seed;
     }
-    for (int j = 0; j < mp->n_atoms; j++) {
+    for (int j = 0; j < nAtoms; j++) {
       if (j + 1 == exclude_atom) {
         continue;
       }
-      colj = mp->atom_array[j].color;
+      colj = atomColor(state, mol.getAtomWithIdx(j));
       if (0 == (colj & end_flags)) {
         continue;
       }
@@ -469,20 +531,26 @@ int SetFeatureBits(struct reaccs_molecule_t *mp, int *fp_counts, int ncounts,
   return (result);
 }
 int CountFingerprintPatterns(
-    reaccs_molecule_t *mp, const std::vector<neighbourhood_t> &nbp,
+    const ROMol &mol, AvalonState &state,
+    const std::vector<neighbourhood_t> &nbp,
     int *H_count, int *atom_status, int *bond_status, int *fp_counts,
     int ncounts, int which_bits, int as_query, int exclude_atom) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  const auto nBonds = static_cast<int>(mol.getNumBonds());
   uint64_t seed, old_seed;
-  std::vector<int> touched_indices(mp->n_atoms, 0);
-  std::vector<int> degree(mp->n_atoms, 0);
-  std::vector<int> cdegree(mp->n_atoms, 0);
-  std::vector<int> unsaturated(mp->n_atoms, 0);
-  std::vector<int> nspecial(mp->n_atoms, 0);
+  std::vector<int> touched_indices(nAtoms, 0);
+  std::vector<int> degree(nAtoms, 0);
+  std::vector<int> cdegree(nAtoms, 0);
+  std::vector<int> unsaturated(nAtoms, 0);
+  std::vector<int> nspecial(nAtoms, 0);
   std::vector<int> extcon;
   std::vector<int> extcon2;
   std::vector<std::vector<int>> length_matrix;
-  reaccs_atom_t *ap, *ap1, *ap2, *ap3;
-  reaccs_bond_t *bp;
+  const Atom *const *ap;
+  const Atom *const *ap1;
+  const Atom *const *ap2;
+  const Atom *const *ap3;
+  const Bond *const *bp;
   int tmp;
 
   uint64_t prod, sum, sumi, prodi, sumj, prodj;
@@ -513,22 +581,22 @@ int CountFingerprintPatterns(
   result = 0;
   nrare_atoms = 0;
   /* Set the color property to represent all different atom types */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
     unsaturated[i] = FALSE;
-    ap->color = AtomicNumberFromSymbol(ap->atom_symbol);
-    if (ap->color <= 1) {
-      ap->color = 0; /* ignore hydrogens */
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) <= 1) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
     /* mark special atom types */
-    if (ap->color > 115) {
-      ap->color = -1;
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = -1;
     }
-    if (ap->atom_symbol == "A") {
-      ap->color = -1;
+    if ((*ap)->getSymbol() == "A") {
+      atomColor(state, *ap) = -1;
     }
     is_rare =
-        ap->color > 0 && !AtomSymbolMatch(ap->atom_symbol, "C,H,O,N,S,P,Cl,F");
+        atomColor(state, *ap) > 0 && !AtomSymbolMatch((*ap)->getSymbol(), "C,H,O,N,S,P,Cl,F");
     if (is_rare) {
       if (exclude_atom != i + 1 || exclude_atom <= 0) {
         nrare_atoms++;
@@ -540,69 +608,69 @@ int CountFingerprintPatterns(
   naromatic = 0;
   nfusionb = 0;
   /* Set the color property to represent the different bond type classes */
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (bp->bond_type == SINGLE) {
-      bp->color = 1;
-    } else if (bp->bond_type == DOUBLE) {
-      bp->color = 2;
-      if (bp->atoms[0] != exclude_atom && bp->atoms[1] != exclude_atom) {
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondType(state, *bp) == SINGLE) {
+      bondColor(state, *bp) = 1;
+    } else if (bondType(state, *bp) == DOUBLE) {
+      bondColor(state, *bp) = 2;
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
         ndouble++;
       }
-    } else if (bp->bond_type == TRIPLE) {
-      bp->color = 3;
-    } else if (bp->bond_type == AROMATIC) {
-      bp->color = 4;
-      if (bp->atoms[0] != exclude_atom && bp->atoms[1] != exclude_atom) {
+    } else if (bondType(state, *bp) == TRIPLE) {
+      bondColor(state, *bp) = 3;
+    } else if (bondType(state, *bp) == AROMATIC) {
+      bondColor(state, *bp) = 4;
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom) {
         naromatic++;
       }
     } else {
-      bp->color = 0;
+      bondColor(state, *bp) = 0;
     }
-    if (bp->color > 1) {
-      unsaturated[bp->atoms[0] - 1] = TRUE;
-      unsaturated[bp->atoms[1] - 1] = TRUE;
+    if (bondColor(state, *bp) > 1) {
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] = TRUE;
+      unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] = TRUE;
     }
 
     /* Count non-hydrogen degree */
-    if (mp->atom_array[bp->atoms[0] - 1].color != 0 &&
-        mp->atom_array[bp->atoms[1] - 1].color != 0) {
-      degree[bp->atoms[0] - 1]++;
-      degree[bp->atoms[1] - 1]++;
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0) {
+      degree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
+      degree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
     }
     /* Count carbon degree */
-    if (bp->bond_type == DOUBLE) {
-      nspecial[bp->atoms[0] - 1]++;
-      nspecial[bp->atoms[1] - 1]++;
-    } else if (bp->bond_type == TRIPLE) {
-      nspecial[bp->atoms[0] - 1] += 2;
-      nspecial[bp->atoms[1] - 1] += 2;
+    if (bondType(state, *bp) == DOUBLE) {
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
+    } else if (bondType(state, *bp) == TRIPLE) {
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] += 2;
+      nspecial[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] += 2;
     }
-    if (bp->bond_type != SINGLE) {
+    if (bondType(state, *bp) != SINGLE) {
       continue;
     }
-    if (mp->atom_array[bp->atoms[0] - 1].color != 0 &&
-        mp->atom_array[bp->atoms[1] - 1].color == 6) {
-      cdegree[bp->atoms[0] - 1]++;
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6) {
+      cdegree[bondEndpoint(state, (*bp)->getIdx(), 0) - 1]++;
     }
-    if (mp->atom_array[bp->atoms[1] - 1].color != 0 &&
-        mp->atom_array[bp->atoms[0] - 1].color == 6) {
-      cdegree[bp->atoms[1] - 1]++;
+    if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 0 &&
+        state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 6) {
+      cdegree[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]++;
     }
 
     if (exclude_atom <= 0 ||
-        (bp->atoms[0] != exclude_atom && bp->atoms[1] != exclude_atom)) {
-      if (atom_status[bp->atoms[0] - 1] > 2 &&
-          atom_status[bp->atoms[1] - 1] > 2) {  // ring fusion
+        (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom)) {
+      if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] > 2 &&
+          atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] > 2) {  // ring fusion
         nfusionb++;
       }
     }
   }
   /* ignore special atom types for further processing */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
-    if (ap->color < 0) {
-      ap->color = 0;
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    if (atomColor(state, *ap) < 0) {
+      atomColor(state, *ap) = 0;
     }
   }
 
@@ -614,15 +682,15 @@ int CountFingerprintPatterns(
     nringch2 = 0;
     nfusionch = 0;
     nspiro = 0;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       if (i + 1 == exclude_atom) {
         continue;
       }
-      if (ap->color == 0) {
+      if (atomColor(state, *ap) == 0) {
         continue;
       }
-      if (ap->color == 6) {
+      if (atomColor(state, *ap) == 6) {
         /* count CH2 in ring */
         if (atom_status[i] > 0 && H_count[i + 1] >= 2) {
           nringch2++;
@@ -638,21 +706,21 @@ int CountFingerprintPatterns(
       }
       hash = 0;
       seed = NEXT_SEED(317 * ATOM_COUNT_SEED, 507);
-      seed = NEXT_SEED(seed, ap->color + 17);
+      seed = NEXT_SEED(seed, atomColor(state, *ap) + 17);
       atom_type_count_seed_hash[seed % NCOUNT_SEED_HASH]++;
       /* normal hetero only with hydrogen */
-      if ((ap->color == 7 || ap->color == 8) && H_count[i + 1] <= 0) {
+      if ((atomColor(state, *ap) == 7 || atomColor(state, *ap) == 8) && H_count[i + 1] <= 0) {
         continue;
       }
-      hash = hash * 7 + ap->color + 13;
+      hash = hash * 7 + atomColor(state, *ap) + 13;
       atom_type_count_hash[hash % NCOUNT_HASH]++;
-      seed = NEXT_SEED(seed, ap->color + 13);
+      seed = NEXT_SEED(seed, atomColor(state, *ap) + 13);
       atom_type_count_seed_hash[seed % NCOUNT_SEED_HASH]++;
       /* one more bit for rare types */
-      if (ap->color != 7 && ap->color != 8) {
-        hash = hash * 7 + ap->color + 2 * 13;
+      if (atomColor(state, *ap) != 7 && atomColor(state, *ap) != 8) {
+        hash = hash * 7 + atomColor(state, *ap) + 2 * 13;
         atom_type_count_hash[hash % NCOUNT_HASH]++;
-        seed = NEXT_SEED(seed, ap->color + 2 * 13);
+        seed = NEXT_SEED(seed, atomColor(state, *ap) + 2 * 13);
         atom_type_count_seed_hash[seed % NCOUNT_SEED_HASH]++;
       }
     }
@@ -875,41 +943,39 @@ int CountFingerprintPatterns(
 
   if (which_bits & USE_ATOM_SYMBOL_PATH) {
     seed = ATOM_SYMBOL_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       if (i + 1 == exclude_atom) {
         continue;
       }
-      if (ap->color <= 0) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
       /* Ignore common atom types */
-      if (ap->color != 6 && ap->color != 7 && ap->color != 8) {
+      if (atomColor(state, *ap) != 6 && atomColor(state, *ap) != 7 && atomColor(state, *ap) != 8) {
         ADD_BIT(fp_counts, ncounts, seed);
         result++;
       }
       /* fingerprint two atom pairs if substitution count is defined */
       if (1) {  // [TODO] 1
-        if (ap->color != 6 &&
-            (!as_query || ap->sub_desc == SUB_AS_IS ||
-             (ap->sub_desc != NONE && ap->sub_desc != SUB_MORE &&
-              ap->sub_desc == degree[i] + SUB_ONE - 1))) {
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed + 12347, touched_indices, 1, 1,
+        if (atomColor(state, *ap) != 6 &&
+            (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
+             (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
+              atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed + 12347, touched_indices, 1, 1,
               1, /* path length 1 to 1 */
               i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
         }
       }
       /* 2 bond paths for not very common starts */
       if (1) {  // [TODO] 2
-        if (ap->color >= 10 || (ap->color == 7 && degree[i] > 0) ||
-            (ap->color == 8 && degree[i] > 1) ||
-            (ap->color == 6 && degree[i] > 2 && atom_status[i] > 0)) {
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 1,
+        if (atomColor(state, *ap) >= 10 || (atomColor(state, *ap) == 7 && degree[i] > 0) ||
+            (atomColor(state, *ap) == 8 && degree[i] > 1) ||
+            (atomColor(state, *ap) == 6 && degree[i] > 2 && atom_status[i] > 0)) {
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 1,
               2, /* path length 1 to 2 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -919,9 +985,8 @@ int CountFingerprintPatterns(
       }
       /* Add more paths starting at special atoms */
       if (1) {  // [TODO] 3
-        if (ap->color > 6) {
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, 217 * ap->color + seed,
+        if (atomColor(state, *ap) > 6) {
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 217 * atomColor(state, *ap) + seed,
               touched_indices, 1, 3, 4, /* path length 3 to 4 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES |
@@ -929,10 +994,9 @@ int CountFingerprintPatterns(
                   PROCESS_CHAINS,
               exclude_atom);
 
-          if (ap->color > 10 &&
-              ap->color <= 18) {  // only third row of periodic table
-            result += SetPathBitsRec(
-                mp, nbp, fp_counts, ncounts, 17 + seed, touched_indices, 1, 5,
+          if (atomColor(state, *ap) > 10 &&
+              atomColor(state, *ap) <= 18) {  // only third row of periodic table
+            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 17 + seed, touched_indices, 1, 5,
                 7, i, 0, -1,
                 FORCED_HETERO_END | IGNORE_PATH_SYMBOL |
                     STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -944,12 +1008,11 @@ int CountFingerprintPatterns(
         }
       }
       if (1) {  // [TODO] 4
-        if ((ap->color == 7 ||
-             ap->color == 8) &&  // only do this for common hetero elements
+        if ((atomColor(state, *ap) == 7 ||
+             atomColor(state, *ap) == 8) &&  // only do this for common hetero elements
             cdegree[i] > 2) {
-          seed = NEXT_SEED(seed, ap->color * 23);
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
+          seed = NEXT_SEED(seed, atomColor(state, *ap) * 23);
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
               6, /* path length 1 to 4 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -963,13 +1026,12 @@ int CountFingerprintPatterns(
       seed = old_seed;
       /* Add another set of bits for paths starting at more crowded atoms */
       if (1) {                                   // [TODO] 5
-        if (degree[i] >= 4 && ap->color != 5 &&  // don't do it for boron
-            ap->color < 18)  // don't do it for transition metals
+        if (degree[i] >= 4 && atomColor(state, *ap) != 5 &&  // don't do it for boron
+            atomColor(state, *ap) < 18)  // don't do it for transition metals
         {
-          seed = NEXT_SEED(seed, ap->color);
+          seed = NEXT_SEED(seed, atomColor(state, *ap));
           if (1) {
-            result += SetPathBitsRec(
-                mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 107),
+            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 107),
                 touched_indices, 1, 2, 4, /* path length 2 to 4 */
                 i, 0, -1,
                 STOP_AT_HEAVY_ATOM |     // don't cross very heavy atoms
@@ -983,13 +1045,12 @@ int CountFingerprintPatterns(
       seed = old_seed;
       /* Add another set of bits for paths starting at spiro atoms */
       if (1) {                                        // [TODO] 6
-        if (atom_status[i] >= 4 && ap->color != 5 &&  // don't do it for boron
-            ap->color < 18)  // don't do it for transition metals
+        if (atom_status[i] >= 4 && atomColor(state, *ap) != 5 &&  // don't do it for boron
+            atomColor(state, *ap) < 18)  // don't do it for transition metals
         {
-          seed = NEXT_SEED(seed, ap->color + 55);
+          seed = NEXT_SEED(seed, atomColor(state, *ap) + 55);
           // if (1)
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 109),
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 3 * 109),
               touched_indices, 1, 2, 4, /* path length 1 to 4 */
               i, 0, -1,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -1003,23 +1064,22 @@ int CountFingerprintPatterns(
       /* Add bits for paths starting with rare bond orders */
       if (1) {
         for (int j = 0; j < nbp[i].n_ligands; j++) {
-          bp = &mp->bond_array[nbp[i].bonds[j]];
+          bp = &state.bonds[nbp[i].bonds[j]];
           ai = nbp[i].atoms[j];
           if (ai + 1 == exclude_atom) {
             continue;
           }
-          if (bp->color == 0) {
+          if (bondColor(state, *bp) == 0) {
             continue;
           }
-          if (bp->bond_type != DOUBLE && bp->bond_type != TRIPLE) {
+          if (bondType(state, *bp) != DOUBLE && bondType(state, *bp) != TRIPLE) {
             continue;
           }
           seed = old_seed;
-          seed = NEXT_SEED(seed, ap->color);
-          seed = NEXT_SEED(seed, bp->color * 613);
+          seed = NEXT_SEED(seed, atomColor(state, *ap));
+          seed = NEXT_SEED(seed, bondColor(state, *bp) * 613);
           touched_indices[ai] = 1; /* updating */
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 2, 5, 5, ai,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 5, 5, ai,
               0, i,
               STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
                   IGNORE_PATH_SYMBOL |
@@ -1037,9 +1097,9 @@ int CountFingerprintPatterns(
 
   if (which_bits & USE_AUGMENTED_ATOM) {
     /* Set bits for all triples of atoms connected to a common atom */
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
@@ -1049,50 +1109,50 @@ int CountFingerprintPatterns(
       /* Set bit for atoms with more than one double or a triple bond */
       if (nspecial[i] >= 2) {
         ADD_BIT(fp_counts, ncounts,
-                NEXT_SEED(ap->color * AUGMENTED_ATOM_SEED, 101));
+                NEXT_SEED(atomColor(state, *ap) * AUGMENTED_ATOM_SEED, 101));
         // ADD_BIT(fp_counts, ncounts,
-        // NEXT_SEED(ap->color*AUGMENTED_ATOM_SEED,301));
+        // NEXT_SEED(atomColor(state, *ap)*AUGMENTED_ATOM_SEED,301));
         result += 1;
       }
       old_seed = seed;
       // Add some bits for hydrogen counted or hetero central atoms with
       // hetero neighbours
-      if ((H_count[i + 1] > 0 || ap->color != 6) && degree[i] >= 2) {
+      if ((H_count[i + 1] > 0 || atomColor(state, *ap) != 6) && degree[i] >= 2) {
         for (int i1 = 0; i1 < nbp[i].n_ligands; i1++) {
-          if (mp->atom_array[nbp[i].atoms[i1]].color == 0) {
+          if (state.atomColors[nbp[i].atoms[i1]] == 0) {
             continue;
           }
           if (nbp[i].atoms[i1] + 1 == exclude_atom) {
             continue;
           }
-          if (mp->bond_array[nbp[i].bonds[i1]].color == 0) {
+          if (state.bondColors[nbp[i].bonds[i1]] == 0) {
             continue;
           }
           for (int i2 = i1 + 1; i2 < nbp[i].n_ligands; i2++) {
             seed = NEXT_SEED(AUGMENTED_ATOM_SEED, 97);
-            seed = NEXT_SEED(seed, ap->color);
-            if (mp->atom_array[nbp[i].atoms[i2]].color == 0) {
+            seed = NEXT_SEED(seed, atomColor(state, *ap));
+            if (state.atomColors[nbp[i].atoms[i2]] == 0) {
               continue;
             }
             if (nbp[i].atoms[i2] + 1 == exclude_atom) {
               continue;
             }
-            if (mp->bond_array[nbp[i].bonds[i2]].color == 0) {
+            if (state.bondColors[nbp[i].bonds[i2]] == 0) {
               continue;
             }
-            if (mp->atom_array[nbp[i].atoms[i1]].color == 6 &&
-                mp->atom_array[nbp[i].atoms[i2]].color == 6) {
+            if (state.atomColors[nbp[i].atoms[i1]] == 6 &&
+                state.atomColors[nbp[i].atoms[i2]] == 6) {
               continue;
             }
             sum = 0;
-            sum += mp->atom_array[nbp[i].atoms[i1]].color *
-                   mp->bond_array[nbp[i].bonds[i1]].color;
-            sum += mp->atom_array[nbp[i].atoms[i2]].color *
-                   mp->bond_array[nbp[i].bonds[i2]].color;
+            sum += state.atomColors[nbp[i].atoms[i1]] *
+                   state.bondColors[nbp[i].bonds[i1]];
+            sum += state.atomColors[nbp[i].atoms[i2]] *
+                   state.bondColors[nbp[i].bonds[i2]];
             prod = 1;
-            prod *= mp->atom_array[nbp[i].atoms[i1]].color;
+            prod *= state.atomColors[nbp[i].atoms[i1]];
             prod &= 0xFFF;
-            prod *= mp->atom_array[nbp[i].atoms[i2]].color;
+            prod *= state.atomColors[nbp[i].atoms[i2]];
             prod &= 0xFFF;
             seed = NEXT_SEED(seed, sum);
             seed = NEXT_SEED(seed, prod);
@@ -1101,18 +1161,18 @@ int CountFingerprintPatterns(
             // ADD_BIT(fp_counts, ncounts, seed);
             result += 1;
             nmulti = 0;
-            if (mp->bond_array[nbp[i].bonds[i1]].color >= 2) {
+            if (state.bondColors[nbp[i].bonds[i1]] >= 2) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i2]].color >= 2) {
+            if (state.bondColors[nbp[i].bonds[i2]] >= 2) {
               nmulti++;
             }
             // add bit for hetero-substituted unsaturated hetero atom if
             // degree>1 is well-defined => catch e.g. nitroso vs. nitro
-            if (ap->color != 6 && nmulti > 0 &&
-                (!as_query || ap->sub_desc == SUB_AS_IS ||
-                 (ap->sub_desc != NONE && ap->sub_desc != SUB_MORE &&
-                  ap->sub_desc == degree[i] + SUB_ONE - 1))) {
+            if (atomColor(state, *ap) != 6 && nmulti > 0 &&
+                (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
+                 (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
+                  atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
               ADD_BIT(fp_counts, ncounts,
                       NEXT_SEED(seed, nmulti + 173 * degree[i]));
               result += 1;
@@ -1137,75 +1197,75 @@ int CountFingerprintPatterns(
               continue;
             }
             seed = AUGMENTED_ATOM_SEED;
-            seed = NEXT_SEED(seed, ap->color);
-            if (mp->atom_array[nbp[i].atoms[i1]].color == 0) {
+            seed = NEXT_SEED(seed, atomColor(state, *ap));
+            if (state.atomColors[nbp[i].atoms[i1]] == 0) {
               continue;
             }
-            if (mp->atom_array[nbp[i].atoms[i2]].color == 0) {
+            if (state.atomColors[nbp[i].atoms[i2]] == 0) {
               continue;
             }
-            if (mp->atom_array[nbp[i].atoms[i3]].color == 0) {
+            if (state.atomColors[nbp[i].atoms[i3]] == 0) {
               continue;
             }
-            if (mp->bond_array[nbp[i].bonds[i1]].color == 0) {
+            if (state.bondColors[nbp[i].bonds[i1]] == 0) {
               continue;
             }
-            if (mp->bond_array[nbp[i].bonds[i2]].color == 0) {
+            if (state.bondColors[nbp[i].bonds[i2]] == 0) {
               continue;
             }
-            if (mp->bond_array[nbp[i].bonds[i3]].color == 0) {
+            if (state.bondColors[nbp[i].bonds[i3]] == 0) {
               continue;
             }
             /* count hetero neighbours */
             nqtmp = 0;
-            if (mp->atom_array[nbp[i].atoms[i1]].color != 6) {
+            if (state.atomColors[nbp[i].atoms[i1]] != 6) {
               nqtmp++;
             }
-            if (mp->atom_array[nbp[i].atoms[i2]].color != 6) {
+            if (state.atomColors[nbp[i].atoms[i2]] != 6) {
               nqtmp++;
             }
-            if (mp->atom_array[nbp[i].atoms[i3]].color != 6) {
+            if (state.atomColors[nbp[i].atoms[i3]] != 6) {
               nqtmp++;
             }
 
             /* make sure to add some bits for really odd ones */
             nmulti = 0;
-            if (mp->bond_array[nbp[i].bonds[i1]].color == 2) {
+            if (state.bondColors[nbp[i].bonds[i1]] == 2) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i1]].color == 3) {
+            if (state.bondColors[nbp[i].bonds[i1]] == 3) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i2]].color == 2) {
+            if (state.bondColors[nbp[i].bonds[i2]] == 2) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i2]].color == 3) {
+            if (state.bondColors[nbp[i].bonds[i2]] == 3) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i3]].color == 2) {
+            if (state.bondColors[nbp[i].bonds[i3]] == 2) {
               nmulti++;
             }
-            if (mp->bond_array[nbp[i].bonds[i3]].color == 3) {
+            if (state.bondColors[nbp[i].bonds[i3]] == 3) {
               nmulti++;
             }
 
             sum = 0;
-            sum += mp->atom_array[nbp[i].atoms[i1]].color *
-                   mp->bond_array[nbp[i].bonds[i1]].color;
-            sum += mp->atom_array[nbp[i].atoms[i2]].color *
-                   mp->bond_array[nbp[i].bonds[i2]].color;
-            sum += mp->atom_array[nbp[i].atoms[i3]].color *
-                   mp->bond_array[nbp[i].bonds[i3]].color;
+            sum += state.atomColors[nbp[i].atoms[i1]] *
+                   state.bondColors[nbp[i].bonds[i1]];
+            sum += state.atomColors[nbp[i].atoms[i2]] *
+                   state.bondColors[nbp[i].bonds[i2]];
+            sum += state.atomColors[nbp[i].atoms[i3]] *
+                   state.bondColors[nbp[i].bonds[i3]];
             prod = 1;
-            prod *= mp->atom_array[nbp[i].atoms[i1]].color;
+            prod *= state.atomColors[nbp[i].atoms[i1]];
             prod &= 0xFFF;
-            prod *= mp->atom_array[nbp[i].atoms[i2]].color;
+            prod *= state.atomColors[nbp[i].atoms[i2]];
             prod &= 0xFFF;
-            prod *= mp->atom_array[nbp[i].atoms[i3]].color;
+            prod *= state.atomColors[nbp[i].atoms[i3]];
             prod &= 0xFFF;
             seed = NEXT_SEED(seed, sum);
             seed = NEXT_SEED(seed, prod);
-            if ((nqtmp > 2 || nmulti >= 2) && ap->color == 6) {
+            if ((nqtmp > 2 || nmulti >= 2) && atomColor(state, *ap) == 6) {
               ADD_BIT(fp_counts, ncounts, seed);
               ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, 73));
               result += 2;
@@ -1213,7 +1273,7 @@ int CountFingerprintPatterns(
             seed = NEXT_SEED(seed, (sum * prod) & 0xFFF);
             ADD_BIT(fp_counts, ncounts, seed);
             result++;
-            if (nmulti >= 2 || ap->color > 6)  // make sure R-NO2 is covered
+            if (nmulti >= 2 || atomColor(state, *ap) > 6)  // make sure R-NO2 is covered
             {
               ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, 53));
               result++;
@@ -1226,16 +1286,16 @@ int CountFingerprintPatterns(
 
   if (which_bits & USE_AUGMENTED_BOND) {
     /* Set bits for all bonds with both end-degrees > 2 */
-    bp = mp->bond_array;
-    for (int i = 0; i < mp->n_bonds; i++, bp++) {
-      if (bp->atoms[0] == exclude_atom) {
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
         continue;
       }
-      if (bp->atoms[1] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
-      ai1 = bp->atoms[0] - 1;
-      ai2 = bp->atoms[1] - 1;
+      ai1 = bondEndpoint(state, (*bp)->getIdx(), 0) - 1;
+      ai2 = bondEndpoint(state, (*bp)->getIdx(), 1) - 1;
       if (degree[ai1] <= 2) {
         continue;
       }
@@ -1258,28 +1318,28 @@ int CountFingerprintPatterns(
             continue;
           }
           /* don't use masked atoms/bonds */
-          if (mp->atom_array[nbp[ai1].atoms[i1]].color == 0) {
+          if (state.atomColors[nbp[ai1].atoms[i1]] == 0) {
             continue;
           }
-          if (mp->atom_array[nbp[ai1].atoms[i2]].color == 0) {
+          if (state.atomColors[nbp[ai1].atoms[i2]] == 0) {
             continue;
           }
-          if (mp->bond_array[nbp[ai1].bonds[i1]].color == 0) {
+          if (state.bondColors[nbp[ai1].bonds[i1]] == 0) {
             continue;
           }
-          if (mp->bond_array[nbp[ai1].bonds[i2]].color == 0) {
+          if (state.bondColors[nbp[ai1].bonds[i2]] == 0) {
             continue;
           }
           sumi = 0;
-          sumi += mp->atom_array[nbp[ai1].atoms[i1]].color *
-                  mp->bond_array[nbp[ai1].bonds[i1]].color;
-          sumi += mp->atom_array[nbp[ai1].atoms[i2]].color *
-                  mp->bond_array[nbp[ai1].bonds[i2]].color;
+          sumi += state.atomColors[nbp[ai1].atoms[i1]] *
+                  state.bondColors[nbp[ai1].bonds[i1]];
+          sumi += state.atomColors[nbp[ai1].atoms[i2]] *
+                  state.bondColors[nbp[ai1].bonds[i2]];
           prodi = 1;
-          prodi *= mp->atom_array[nbp[ai1].atoms[i1]].color +
-                   mp->bond_array[nbp[ai1].bonds[i1]].color;
-          prodi *= mp->atom_array[nbp[ai1].atoms[i2]].color +
-                   mp->bond_array[nbp[ai1].bonds[i2]].color;
+          prodi *= state.atomColors[nbp[ai1].atoms[i1]] +
+                   state.bondColors[nbp[ai1].bonds[i1]];
+          prodi *= state.atomColors[nbp[ai1].atoms[i2]] +
+                   state.bondColors[nbp[ai1].bonds[i2]];
           sumi &= 0x0FFF;
           prodi &= 0x0FFF;
           for (int j1 = 0; j1 < nbp[ai2].n_ligands; j1++) {
@@ -1298,32 +1358,32 @@ int CountFingerprintPatterns(
                 continue;
               }
               /* don't use masked atoms/bonds */
-              if (mp->atom_array[nbp[ai2].atoms[j1]].color == 0) {
+              if (state.atomColors[nbp[ai2].atoms[j1]] == 0) {
                 continue;
               }
-              if (mp->atom_array[nbp[ai2].atoms[j2]].color == 0) {
+              if (state.atomColors[nbp[ai2].atoms[j2]] == 0) {
                 continue;
               }
-              if (mp->bond_array[nbp[ai2].bonds[j1]].color == 0) {
+              if (state.bondColors[nbp[ai2].bonds[j1]] == 0) {
                 continue;
               }
-              if (mp->bond_array[nbp[ai2].bonds[j2]].color == 0) {
+              if (state.bondColors[nbp[ai2].bonds[j2]] == 0) {
                 continue;
               }
               sumj = 0;
-              sumj += mp->atom_array[nbp[ai2].atoms[j1]].color *
-                      mp->bond_array[nbp[ai2].bonds[j1]].color;
-              sumj += mp->atom_array[nbp[ai2].atoms[j2]].color *
-                      mp->bond_array[nbp[ai2].bonds[j2]].color;
+              sumj += state.atomColors[nbp[ai2].atoms[j1]] *
+                      state.bondColors[nbp[ai2].bonds[j1]];
+              sumj += state.atomColors[nbp[ai2].atoms[j2]] *
+                      state.bondColors[nbp[ai2].bonds[j2]];
               prodj = 1;
-              prodj *= mp->atom_array[nbp[ai2].atoms[j1]].color +
-                       mp->bond_array[nbp[ai2].bonds[j1]].color;
-              prodj *= mp->atom_array[nbp[ai2].atoms[j2]].color +
-                       mp->bond_array[nbp[ai2].bonds[j2]].color;
+              prodj *= state.atomColors[nbp[ai2].atoms[j1]] +
+                       state.bondColors[nbp[ai2].bonds[j1]];
+              prodj *= state.atomColors[nbp[ai2].atoms[j2]] +
+                       state.bondColors[nbp[ai2].bonds[j2]];
               sumj &= 0x0FFF;
               prodj &= 0x0FFF;
               seed = AUGMENTED_BOND_SEED;
-              seed = NEXT_SEED(seed, bp->color);
+              seed = NEXT_SEED(seed, bondColor(state, *bp));
               seed = NEXT_SEED(seed, prodi + prodj);
               seed = NEXT_SEED(seed, sumi * sumj);
               ADD_BIT(fp_counts, ncounts, seed);
@@ -1337,38 +1397,38 @@ int CountFingerprintPatterns(
 
   if (1 * which_bits & USE_HCOUNT_PAIR) {
     /* generate bits for hydrogen counted described bonds */
-    bp = mp->bond_array;
-    for (int i = 0; i < mp->n_bonds; i++, bp++) {
-      if (H_count[bp->atoms[0]] == 0 && H_count[bp->atoms[1]] == 0) {
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (H_count[bondEndpoint(state, (*bp)->getIdx(), 0)] == 0 && H_count[bondEndpoint(state, (*bp)->getIdx(), 1)] == 0) {
         continue;
       }
-      if (bp->atoms[0] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
         continue;
       }
-      if (bp->atoms[1] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
       /* Don't consider CC single bonds */
-      if (mp->atom_array[bp->atoms[0] - 1].color == 6 &&
-          mp->atom_array[bp->atoms[1] - 1].color == 6 && bp->color == 1) {
+      if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 6 &&
+          state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 6 && bondColor(state, *bp) == 1) {
         continue;
       }
       /* Don't consider explicit AH bonds */
-      if (mp->atom_array[bp->atoms[0] - 1].color == 0) {
+      if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0) {
         continue;
       }
-      if (mp->atom_array[bp->atoms[1] - 1].color == 0) {
+      if (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
         continue;
       }
-      for (int j1 = 0; j1 <= H_count[bp->atoms[0]]; j1++) {
-        for (int j2 = 0; j2 <= H_count[bp->atoms[1]]; j2++) {
+      for (int j1 = 0; j1 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 0)]; j1++) {
+        for (int j2 = 0; j2 <= H_count[bondEndpoint(state, (*bp)->getIdx(), 1)]; j2++) {
           if (j1 + j2 == 0) {
             continue; /* at least one hydrogen */
           }
           // unsaturation triggers bit like a hydrogen
-          if (!unsaturated[bp->atoms[0] - 1] &&
-              !unsaturated[bp->atoms[1] - 1] && j1 * j2 == 0 &&
-              bp->color <= 1) {
+          if (!unsaturated[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] &&
+              !unsaturated[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] && j1 * j2 == 0 &&
+              bondColor(state, *bp) <= 1) {
             continue;
           }
           if (j1 + j2 > 3) {
@@ -1377,22 +1437,22 @@ int CountFingerprintPatterns(
           // seed = HCOUNT_PAIR_SEED + 53*(j1+j2) + 7*(j1+1)*(j2+1);
           seed = NEXT_SEED(HCOUNT_PAIR_SEED, 7 * (j1 + 1) * (j2 + 1));
           seed = NEXT_SEED(seed, 53 * (j1 + j2));
-          seed = NEXT_SEED(seed, bp->color);
-          seed = NEXT_SEED(seed, mp->atom_array[bp->atoms[0] - 1].color +
-                                     mp->atom_array[bp->atoms[1] - 1].color);
-          seed = NEXT_SEED(seed, mp->atom_array[bp->atoms[0] - 1].color *
-                                     mp->atom_array[bp->atoms[1] - 1].color);
+          seed = NEXT_SEED(seed, bondColor(state, *bp));
+          seed = NEXT_SEED(seed, state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] +
+                                     state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
+          seed = NEXT_SEED(seed, state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] *
+                                     state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1]);
           ADD_BIT(fp_counts, ncounts, seed);
           result++;
-          if (bp->color > 1) {
+          if (bondColor(state, *bp) > 1) {
             seed = NEXT_SEED(seed, 83);
             ADD_BIT(fp_counts, ncounts, seed);
             result++;
             /* Add more bits for really special pairs */
             if (j1 + j2 == 1 &&
-                (mp->atom_array[bp->atoms[0] - 1].color != 6 ||
-                 mp->atom_array[bp->atoms[1] - 1].color != 6) &&
-                bp->color <= 3) {
+                (state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] != 6 ||
+                 state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] != 6) &&
+                bondColor(state, *bp) <= 3) {
               seed = NEXT_SEED(seed, 91);
               ADD_BIT(fp_counts, ncounts, seed);
               seed = NEXT_SEED(seed, 97);
@@ -1410,9 +1470,9 @@ int CountFingerprintPatterns(
   if (which_bits & USE_HCOUNT_PATH) {
     /* generate a short path for each atom that has a hydrogen */
     seed = HCOUNT_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
@@ -1422,16 +1482,16 @@ int CountFingerprintPatterns(
         continue;
       }
       /* don't consider non methyl carbon atoms */
-      if (ap->color == 6 && H_count[i + 1] < 3 && degree[i] < 3) {
+      if (atomColor(state, *ap) == 6 && H_count[i + 1] < 3 && degree[i] < 3) {
         continue;
       }
 
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
-      if (ap->color != 6) {
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      if (atomColor(state, *ap) != 6) {
         result +=
-            SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                            1, 2, 5, /* path length 2 to 4 */  // EVG
                            i, 0, -1,
                            IGNORE_PATH_SYMBOL |
@@ -1442,15 +1502,13 @@ int CountFingerprintPatterns(
         if (degree[i] > 2)  // tertiary hydrogen
         {
           if (0) {  // Class disabled to save bit density
-            result += SetPathBitsRec(
-                mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 101),
+            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 101),
                 touched_indices, 1, 2, 2, /* path length 2 to 3 */
                 i, 0, -1,
                 IGNORE_PATH_SYMBOL | IGNORE_TERM_SYMBOL | PROCESS_CHAINS,
                 exclude_atom);
           }
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 103),
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 103),
               touched_indices, 1, 2, 5, /* path length 2 to 3 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | FORCED_HETERO_END | /* i-Pr...Q */
@@ -1460,13 +1518,11 @@ int CountFingerprintPatterns(
         if (H_count[i + 1] >= 3)  // methyl
         {
           if (0) {  // Class disabled to save bit density
-            result += SetPathBitsRec(
-                mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1103),
+            result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1103),
                 touched_indices, 1, 2, 3, /* path length 2 to 3 */
                 i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
           }
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1105),
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 1105),
               touched_indices, 1, 3, 6, /* path length 4 to 4 */
               i, 0, -1,
               IGNORE_PATH_SYMBOL | FORCED_HETERO_END | /* Me...Q */
@@ -1476,7 +1532,7 @@ int CountFingerprintPatterns(
       }
       touched_indices[i] = 0; /* down-dating */
       seed = old_seed;
-      if (ap->color == 6) {
+      if (atomColor(state, *ap) == 6) {
         continue;
       }
 
@@ -1485,9 +1541,9 @@ int CountFingerprintPatterns(
         touched_indices[i] = 1; /* updating */
         old_seed = seed;
         seed = NEXT_SEED(seed, 113);
-        seed = NEXT_SEED(seed, ap->color);
+        seed = NEXT_SEED(seed, atomColor(state, *ap));
         result +=
-            SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                            1, 1, 5, /* path length 1 to 5 */
                            i, 0, -1,
                            // FORCED_HETERO_END |
@@ -1498,7 +1554,7 @@ int CountFingerprintPatterns(
 
       for (int j = 1; j < H_count[i + 1]; j++) {
         seed = NEXT_SEED(seed, 61 * j);
-        seed = NEXT_SEED(seed, ap->color);
+        seed = NEXT_SEED(seed, atomColor(state, *ap));
         ADD_BIT(fp_counts, ncounts, seed);
         result++;
       }
@@ -1507,56 +1563,56 @@ int CountFingerprintPatterns(
   }
 
   /* Compute ring paths */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
     if (atom_status[i] <= 0) {
-      ap->color = 0;
+      atomColor(state, *ap) = 0;
     }
     if (i + 1 == exclude_atom) {
-      ap->color = 0;
+      atomColor(state, *ap) = 0;
     }
-    if (ap->color == 0) {
+    if (atomColor(state, *ap) == 0) {
       continue;
     }
   }
 
   /* remove all bonds with only non-ring atoms from consideration */
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (bond_status[i] <= 0 && atom_status[bp->atoms[0] - 1] == 0 &&
-        atom_status[bp->atoms[1] - 1] == 0) {
-      bp->color = 0;
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bond_status[i] <= 0 && atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
+        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[0] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[1] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
   }
 
   if (which_bits & USE_RING_PATH) {
     seed = RING_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
       if (0) {  // Class disabled to save bit density
         result +=
-            SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                            1, 2, 3, i, 0, -1, PROCESS_CHAINS, exclude_atom);
       }
 
-      if (ap->color > 5 && ap->color < 10 &&
+      if (atomColor(state, *ap) > 5 && atomColor(state, *ap) < 10 &&
           atom_status[i] > 2)  // only start at common light atoms
       {
         seed = NEXT_SEED(seed, 61);
         result +=
-            SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+            SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                            1, 3, 8, /* 3 to 8 */
                            i, 0, -1,
                            STOP_AT_HEAVY_ATOM |  // don't cross very heavy atoms
@@ -1570,35 +1626,35 @@ int CountFingerprintPatterns(
   }
 
   /* Set the color property to represent all different atom types */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
-    ap->color = AtomicNumberFromSymbol(ap->atom_symbol);
-    if (ap->color == 1 || i + 1 == exclude_atom) {
-      ap->color = 0; /* ignore hydrogens */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) == 1 || i + 1 == exclude_atom) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
     } else {
-      ap->color = ANY_COLOR; /* treat all other atoms alike */
+      atomColor(state, *ap) = ANY_COLOR; /* treat all other atoms alike */
     }
   }
 
   /* Set the color property to represent the different bond type classes */
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (bp->bond_type == SINGLE) {
-      bp->color = 1;
-    } else if (bp->bond_type == DOUBLE) {
-      bp->color = 2;
-    } else if (bp->bond_type == TRIPLE) {
-      bp->color = 3;
-    } else if (bp->bond_type == AROMATIC) {
-      bp->color = 4;
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondType(state, *bp) == SINGLE) {
+      bondColor(state, *bp) = 1;
+    } else if (bondType(state, *bp) == DOUBLE) {
+      bondColor(state, *bp) = 2;
+    } else if (bondType(state, *bp) == TRIPLE) {
+      bondColor(state, *bp) = 3;
+    } else if (bondType(state, *bp) == AROMATIC) {
+      bondColor(state, *bp) = 4;
     } else {
-      bp->color = 0;
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[0] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[1] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
   }
 
@@ -1606,9 +1662,9 @@ int CountFingerprintPatterns(
   // bond type is retained.
   if (which_bits & USE_BOND_PATH) {
     seed = BOND_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
@@ -1618,12 +1674,12 @@ int CountFingerprintPatterns(
       old_seed = seed;
       // start at branch node on ring
       if (degree[i] > 2 && atom_status[i] > 1) {
-        result += SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed,
                                  touched_indices, 1, 4, 4, /* was 4 to 4 */
                                  i, 0, -1, PROCESS_CHAINS, exclude_atom);
-        if (ap->rsize_flags & SPECIAL_RING) {
+        if (atomRingFlags(state, *ap) & SPECIAL_RING) {
           result +=
-              SetPathBitsRec(mp, nbp, fp_counts, ncounts, NEXT_SEED(seed, 217),
+              SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, NEXT_SEED(seed, 217),
                              touched_indices, 1, 5, 5, i, 0, -1,
                              IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
         }
@@ -1631,8 +1687,7 @@ int CountFingerprintPatterns(
       /* Add other bits to catch poorly specified ring closures */
       seed = old_seed;
       seed = NEXT_SEED(seed, 11);
-      result += SetPathBitsRec(
-          mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+      result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
           6, /* was 5 to 6 */
           i, 0, -1,
           // DEBUG_PATH |
@@ -1640,25 +1695,24 @@ int CountFingerprintPatterns(
           exclude_atom);
       /* Add bits for paths starting with rare bond orders */
       for (int j = 0; j < nbp[i].n_ligands; j++) {
-        bp = &mp->bond_array[nbp[i].bonds[j]];
+        bp = &state.bonds[nbp[i].bonds[j]];
         ai = nbp[i].atoms[j];
         if (ai + 1 == exclude_atom) {
           continue;
         }
-        if (bp->color == 0) {
+        if (bondColor(state, *bp) == 0) {
           continue;
         }
-        if (bp->bond_type != DOUBLE && bp->bond_type != TRIPLE) {
+        if (bondType(state, *bp) != DOUBLE && bondType(state, *bp) != TRIPLE) {
           continue;
         }
-        if (atom_status[i] <= 0 && bp->bond_type != TRIPLE) {
+        if (atom_status[i] <= 0 && bondType(state, *bp) != TRIPLE) {
           continue;
         }
         seed = old_seed;
-        seed = NEXT_SEED(seed, bp->color * 413);
+        seed = NEXT_SEED(seed, bondColor(state, *bp) * 413);
         touched_indices[ai] = 1; /* updating */
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 2, 4, 5, ai, 0,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 2, 4, 5, ai, 0,
             i, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
             exclude_atom);
         touched_indices[ai] = 0; /* down-dating */
@@ -1669,42 +1723,42 @@ int CountFingerprintPatterns(
   }
 
   /* Set the color property to represent the different atom type classes */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
     if (i + 1 == exclude_atom) {
-      ap->color = 0;
+      atomColor(state, *ap) = 0;
       continue;
     }
     {
-      if (ap->atom_symbol == "H") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "D") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "T") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "C") {
-        ap->color = 6; /* carbon second row elements are one class */
-      } else if (ap->atom_symbol == "N") {
-        ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (ap->atom_symbol == "O") {
-        ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (ap->atom_symbol == "S") {
-        ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (ap->atom_symbol == "Q") {
-        ap->color = 8; /* nitrogen, oxigen, and sulfur are one class */
-      } else if (ap->atom_symbol == "A") {
-        ap->color = 0;
+      if ((*ap)->getSymbol() == "H") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "D") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "T") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "C") {
+        atomColor(state, *ap) = 6; /* carbon second row elements are one class */
+      } else if ((*ap)->getSymbol() == "N") {
+        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "O") {
+        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "S") {
+        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "Q") {
+        atomColor(state, *ap) = 8; /* nitrogen, oxigen, and sulfur are one class */
+      } else if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = 0;
       } else {
-        tmp = AtomicNumberFromSymbol(ap->atom_symbol);
+        tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
         if (1 < tmp && tmp < 115) {
-          ap->color = 8; /* non-carbon is the only second class */
+          atomColor(state, *ap) = 8; /* non-carbon is the only second class */
         } else {         /* This could be R atoms or other odd things */
-          ap->color = 0;
+          atomColor(state, *ap) = 0;
         }
       }
     }
-    if (ap->color > 115) {
-      ap->color = 0; /* ignore special atom types */
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = 0; /* ignore special atom types */
     }
   }
 
@@ -1712,9 +1766,9 @@ int CountFingerprintPatterns(
   if (which_bits & USE_HCOUNT_CLASS_PATH) {
     /* generate a short path for each atom that has a hydrogen */
     seed = HCOUNT_CLASS_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
@@ -1723,20 +1777,18 @@ int CountFingerprintPatterns(
       if (H_count[i + 1] == 0) {
         continue;
       }
-      if (ap->color == 6 && H_count[i + 1] < 2) {
+      if (atomColor(state, *ap) == 6 && H_count[i + 1] < 2) {
         continue;
       }
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
       touched_indices[i] = 1; /* updating */
-      if (ap->color == 6) {
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
+      if (atomColor(state, *ap) == 6) {
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2,
             4, /* path length 1 to 3 */
             i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
       } else {
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
             -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
             exclude_atom);
       }
@@ -1749,24 +1801,23 @@ int CountFingerprintPatterns(
   if (which_bits & USE_ATOM_CLASS_PATH) {
     // seed = ATOM_CLASS_PATH_SEED+117;
     seed = NEXT_SEED(ATOM_CLASS_PATH_SEED, 117);
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
         continue;
       }
-      if (ap->color == 6 && degree[i] < 3) {
+      if (atomColor(state, *ap) == 6 && degree[i] < 3) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
-      if (ap->color == 6) {
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      if (atomColor(state, *ap) == 6) {
         if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
               4, /* path length 3 to 4 */
               i, 0, -1, FORCED_HETERO_END | IGNORE_PATH_SYMBOL | PROCESS_CHAINS,
               exclude_atom);
@@ -1774,21 +1825,19 @@ int CountFingerprintPatterns(
       } else {
         if (0) {  // Class disabled to save bit density
           result +=
-              SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices,
+              SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices,
                              1, 2, 3, /* path length 3 to 3 */
                              i, 0, -1,
                              // IGNORE_PATH_SYMBOL |
                              PROCESS_CHAINS, exclude_atom);
         }
         if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
               5, /* path length 4 to 5 */
               i, 0, -1, IGNORE_PATH_SYMBOL | FORCED_HETERO_END | PROCESS_CHAINS,
               exclude_atom);
         }
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
             4, /* path length 4 to 7 */
             i, 0, -1, FORCED_RING_PATH | PROCESS_RING_CLOSURES | PROCESS_CHAINS,
             exclude_atom);
@@ -1799,18 +1848,18 @@ int CountFingerprintPatterns(
   }
 
   /* Set the color property to only a single class */
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (SINGLE <= bp->bond_type && bp->bond_type <= ANY_BOND) {
-      bp->color = 5;
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
+      bondColor(state, *bp) = 5;
     } else {
-      bp->color = 0;
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[0] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[1] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
   }
 
@@ -1818,25 +1867,24 @@ int CountFingerprintPatterns(
   // identical
   if (which_bits & USE_ATOM_CLASS_PATH) {
     seed = ATOM_CLASS_PATH_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
         continue;
       }
-      if (ap->color == 6) {
+      if (atomColor(state, *ap) == 6) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
-      // if (ap->color == 6)
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      // if (atomColor(state, *ap) == 6)
       {
         if (0 * degree[i] > 2) {  // Class disabled to save bit density
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
               3, /* path length 3 to 3 */
               i, 0, -1, FORCED_HETERO_END | PROCESS_CHAINS, exclude_atom);
         }
@@ -1844,14 +1892,12 @@ int CountFingerprintPatterns(
       // else
       {
         if (0) {  // Class disabled to save bit density
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
               4, /* path length 3 to 4 */
               i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
         }
-        seed = NEXT_SEED(seed, 23 + ap->color * 19);
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
+        seed = NEXT_SEED(seed, 23 + atomColor(state, *ap) * 19);
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 3,
             9, /* path length 3 to 9 */
             i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
       }
@@ -1861,22 +1907,22 @@ int CountFingerprintPatterns(
     /* Q-Q and Q-C ring bond count */
     qq_count = 0;
     qc_count = 0;
-    bp = mp->bond_array;
-    for (int i = 0; i < mp->n_bonds; i++, bp++) {
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
       if (bond_status[i] == 0) {
         continue;
       }
-      if (bp->color == 0) {
+      if (bondColor(state, *bp) == 0) {
         continue;
       }
-      if (bp->atoms[0] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
         continue;
       }
-      if (bp->atoms[1] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
-      ai1 = mp->atom_array[bp->atoms[0] - 1].color;
-      ai2 = mp->atom_array[bp->atoms[1] - 1].color;
+      ai1 = state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
+      ai2 = state.atomColors[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
       if (ai1 == 0 || ai2 == 0) {
         continue;
       }
@@ -1886,7 +1932,7 @@ int CountFingerprintPatterns(
       if (ai1 != 6 && ai2 != 6) {
         qq_count++;
         for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
-          if (bp->rsize_flags & (1 << j)) {
+          if (bondRingFlags(state, *bp) & (1 << j)) {
             ADD_BIT(fp_counts, ncounts,
                     NEXT_SEED(ATOM_CLASS_PATH_SEED * 17, j * 8));
             result++;
@@ -1895,7 +1941,7 @@ int CountFingerprintPatterns(
       } else {
         qc_count++;
         for (int j = 3; j < 9; j++) { /* set bits for not too large ring size */
-          if (bp->rsize_flags & (1 << j)) {
+          if (bondRingFlags(state, *bp) & (1 << j)) {
             ADD_BIT(fp_counts, ncounts,
                     NEXT_SEED(ATOM_CLASS_PATH_SEED * 19, j * 8));
             result++;
@@ -1929,38 +1975,38 @@ int CountFingerprintPatterns(
 
   /* Compute ring patters with at least one cycle */
   /* remove bonds from consideration that don't have at least one ring atom */
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (bp->atoms[0] == exclude_atom) {
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
       continue;
     }
-    if (bp->atoms[1] == exclude_atom) {
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
       continue;
     }
-    bp->color = 5;
+    bondColor(state, *bp) = 5;
     /* ignore non-ring bonds */
-    if (atom_status[bp->atoms[0] - 1] == 0 &&
-        atom_status[bp->atoms[1] - 1] == 0) {
-      bp->color = 0;
+    if (atom_status[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] == 0 &&
+        atom_status[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] == 0) {
+      bondColor(state, *bp) = 0;
     } else {
       // may be redundant since atom types have already been unified
-      ap = &mp->atom_array[bp->atoms[0] - 1];
-      if (ap->color != 0) {
-        if (ap->color != 6) {
-          ap->color = 8; /* non-carbons in one class */
+      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 0) - 1];
+      if (atomColor(state, *ap) != 0) {
+        if (atomColor(state, *ap) != 6) {
+          atomColor(state, *ap) = 8; /* non-carbons in one class */
         }
-        if (ap->rsize_flags == 0) {
-          ap->color = 0;
+        if (atomRingFlags(state, *ap) == 0) {
+          atomColor(state, *ap) = 0;
         }
       }
       // may be redundant since atom types have already been unified
-      ap = &mp->atom_array[bp->atoms[1] - 1];
-      if (ap->color != 0) {
-        if (ap->color != 6) {
-          ap->color = 8; /* non-carbons in one class */
+      ap = &state.atoms[bondEndpoint(state, (*bp)->getIdx(), 1) - 1];
+      if (atomColor(state, *ap) != 0) {
+        if (atomColor(state, *ap) != 6) {
+          atomColor(state, *ap) = 8; /* non-carbons in one class */
         }
-        if (ap->rsize_flags == 0) {
-          ap->color = 0;
+        if (atomRingFlags(state, *ap) == 0) {
+          atomColor(state, *ap) = 0;
         }
       }
     }
@@ -1970,23 +2016,23 @@ int CountFingerprintPatterns(
   if (which_bits & USE_RING_PATTERN) {
     /* first process ring bond paths with atom classes */
     seed = RING_PATTERN_SEED;
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
         continue;
       }
       /* Don't process fragments starting at carbon in 6-ring only */
-      if (ap->color == 6 && 0 == (ap->rsize_flags & SPECIAL_RING)) {
+      if (atomColor(state, *ap) == 6 && 0 == (atomRingFlags(state, *ap) & SPECIAL_RING)) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
       result +=
-          SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices, 1,
+          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
                          3, 3, /* ring bond path size 3 to 3 */
                          i, 0, -1, PROCESS_CHAINS, exclude_atom);
       seed = old_seed;
@@ -1995,37 +2041,37 @@ int CountFingerprintPatterns(
 
     /* Now, we only include complete rings but ignore atom-type */
     /* 'A' atoms are now included nodes */
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       /* add 'A' atom to standard class */
-      if (ap->atom_symbol == "A") {
-        ap->color = 9;
+      if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = 9;
       }
       if (i + 1 == exclude_atom) {
-        ap->color = 0;
+        atomColor(state, *ap) = 0;
       }
-      if (ap->color == 0) {
+      if (atomColor(state, *ap) == 0) {
         continue;
       }
-      ap->color = 9; /* all ring atoms in same class */
+      atomColor(state, *ap) = 9; /* all ring atoms in same class */
     }
-    bp = mp->bond_array;
-    for (int i = 0; i < mp->n_bonds; i++, bp++) {
-      if (bp->atoms[0] == exclude_atom) {
-        bp->color = 0;
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+        bondColor(state, *bp) = 0;
       }
-      if (bp->atoms[1] == exclude_atom) {
-        bp->color = 0;
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+        bondColor(state, *bp) = 0;
       }
       if (bond_status[i] <= 0) {
-        bp->color = 0;
+        bondColor(state, *bp) = 0;
       }
     }
     // seed = RING_PATTERN_SEED+23;
     seed = NEXT_SEED(RING_PATTERN_SEED, 23);
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color == 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) == 0) {
         continue;
       }
       if (i + 1 == exclude_atom) {
@@ -2033,10 +2079,9 @@ int CountFingerprintPatterns(
       }
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
       if (0) {  // Class disabled to save bit density
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 4,
             17, /* ring size 4 to 17 */
             i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES, exclude_atom);
       }
@@ -2046,8 +2091,7 @@ int CountFingerprintPatterns(
         if (atom_status[i] > 2)  // start at ring fusion
         {
           seed = NEXT_SEED(seed, 61);
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
               17, /* ring path size 6 to 17 */
               i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
               exclude_atom);
@@ -2059,8 +2103,7 @@ int CountFingerprintPatterns(
         if (degree[i] > 2 && atom_status[i] >= 2)  // start at ring substituents
         {
           seed = NEXT_SEED(seed, 67);
-          result += SetPathBitsRec(
-              mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
+          result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 6,
               17, /* ring path size 6 to 17 */
               i, 0, -1, IGNORE_PATH_SYMBOL | PROCESS_RING_CLOSURES,
               exclude_atom);
@@ -2076,10 +2119,10 @@ int CountFingerprintPatterns(
     for (int j = 3; j < 10; j++) /* loop through ring_sizes */
     {
       nrbonds = 0;
-      bp = mp->bond_array;
-      for (int i = 0; i < mp->n_bonds; i++, bp++) {
-        if (bp->atoms[0] != exclude_atom && bp->atoms[1] != exclude_atom &&
-            (bp->rsize_flags & (1 << j))) {
+      bp = state.bonds.data();
+      for (int i = 0; i < nBonds; i++, bp++) {
+        if (bondEndpoint(state, (*bp)->getIdx(), 0) != exclude_atom && bondEndpoint(state, (*bp)->getIdx(), 1) != exclude_atom &&
+            (bondRingFlags(state, *bp) & (1 << j))) {
           nrbonds++;
         }
       }
@@ -2111,12 +2154,12 @@ int CountFingerprintPatterns(
       }
     }
     /* count connections */
-    bp = mp->bond_array;
-    for (int i = 0; i < mp->n_bonds; i++, bp++) {
-      if (bp->atoms[0] == exclude_atom) {
+    bp = state.bonds.data();
+    for (int i = 0; i < nBonds; i++, bp++) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
         continue;
       }
-      if (bp->atoms[1] == exclude_atom) {
+      if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
         continue;
       }
       for (int j = 3; j < 15; j++) { /* loop through ring_sizes */
@@ -2125,8 +2168,8 @@ int CountFingerprintPatterns(
           if (j == k) {
             continue;
           }
-          if ((mp->atom_array[bp->atoms[0] - 1].rsize_flags & (1 << j)) &&
-              (mp->atom_array[bp->atoms[1] - 1].rsize_flags & (1 << k))) {
+          if ((state.atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 0) - 1] & (1 << j)) &&
+              (state.atomRingFlags[bondEndpoint(state, (*bp)->getIdx(), 1) - 1] & (1 << k))) {
             rscounts[j][k]++;
             rscounts[k][j]++;
           }
@@ -2161,42 +2204,42 @@ int CountFingerprintPatterns(
   }
 
   /* Set the color property to represent all different atom types */
-  ap = mp->atom_array;
-  for (int i = 0; i < mp->n_atoms; i++, ap++) {
-    ap->color = AtomicNumberFromSymbol(ap->atom_symbol);
-    if (ap->color <= 1) {
-      ap->color = 0; /* ignore hydrogens */
+  ap = state.atoms.data();
+  for (int i = 0; i < nAtoms; i++, ap++) {
+    atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+    if (atomColor(state, *ap) <= 1) {
+      atomColor(state, *ap) = 0; /* ignore hydrogens */
     }
     /* mark special atom types */
-    if (ap->color > 115) {
-      ap->color = -1;
+    if (atomColor(state, *ap) > 115) {
+      atomColor(state, *ap) = -1;
     }
-    if (ap->atom_symbol == "A") {
-      ap->color = -1;
+    if ((*ap)->getSymbol() == "A") {
+      atomColor(state, *ap) = -1;
     }
     if (i + 1 == exclude_atom) {
-      ap->color = 0;
+      atomColor(state, *ap) = 0;
     }
-    if (ap->color > 1 && (!as_query || ap->sub_desc == SUB_AS_IS ||
-                          (ap->sub_desc != NONE && ap->sub_desc != SUB_MORE &&
-                           ap->sub_desc == degree[i] + SUB_ONE - 1))) {
-      ap->color += 32 * degree[i];
+    if (atomColor(state, *ap) > 1 && (!as_query || atomSubDescriptor(state, *ap) == SUB_AS_IS ||
+                          (atomSubDescriptor(state, *ap) != NONE && atomSubDescriptor(state, *ap) != SUB_MORE &&
+                           atomSubDescriptor(state, *ap) == degree[i] + SUB_ONE - 1))) {
+      atomColor(state, *ap) += 32 * degree[i];
     } else {
-      ap->color = 0;
+      atomColor(state, *ap) = 0;
     }
   }
-  bp = mp->bond_array;
-  for (int i = 0; i < mp->n_bonds; i++, bp++) {
-    if (SINGLE <= bp->bond_type && bp->bond_type <= ANY_BOND) {
-      bp->color = 5;
+  bp = state.bonds.data();
+  for (int i = 0; i < nBonds; i++, bp++) {
+    if (SINGLE <= bondType(state, *bp) && bondType(state, *bp) <= ANY_BOND) {
+      bondColor(state, *bp) = 5;
     } else {
-      bp->color = 0;
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[0] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 0) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
-    if (bp->atoms[1] == exclude_atom) {
-      bp->color = 0;
+    if (bondEndpoint(state, (*bp)->getIdx(), 1) == exclude_atom) {
+      bondColor(state, *bp) = 0;
     }
   }
 
@@ -2210,9 +2253,9 @@ int CountFingerprintPatterns(
     seed = DEGREE_PATH_SEED;
 
     // set bits for degree paths starting with special carbon atoms
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      if (ap->color <= 0) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      if (atomColor(state, *ap) <= 0) {
         continue;  // only process if degree defined
       }
       if (i + 1 == exclude_atom) {
@@ -2225,16 +2268,16 @@ int CountFingerprintPatterns(
         continue;
       }
       /* only keep terminals if methyl */
-      if (degree[i] == 1 && ap->atom_symbol != "C") {
+      if (degree[i] == 1 && (*ap)->getSymbol() != "C") {
         continue;
       }
-      // ap->atom_symbol, i+1, degree[i], atom_status[i]);
+      // (*ap)->getSymbol(), i+1, degree[i], atom_status[i]);
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
-      seed = NEXT_SEED(seed, ap->color);
-      // ap->atom_symbol, i+1, degree[i], ap->sub_desc);
+      seed = NEXT_SEED(seed, atomColor(state, *ap));
+      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
       result +=
-          SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices, 1,
+          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
                          2, 4, /* path length 1 to 3 */
                          i, 0, -1,
                          // IGNORE_TERM_SYMBOL |
@@ -2242,8 +2285,7 @@ int CountFingerprintPatterns(
       /* special CH fusion atoms */
       if (atom_status[i] > 2 && H_count[i + 1] >= 1) {
         seed = NEXT_SEED(seed, 219);
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1, 2, 5, i, 0,
             -1, IGNORE_PATH_SYMBOL | PROCESS_CHAINS, exclude_atom);
       }
       seed = old_seed;
@@ -2251,12 +2293,12 @@ int CountFingerprintPatterns(
     }
 
     // set bits for degree paths starting with hetero atoms
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       if (i + 1 == exclude_atom) {
         continue;
       }
-      tmp = AtomicNumberFromSymbol(ap->atom_symbol);
+      tmp = AtomicNumberFromSymbol((*ap)->getSymbol());
       if (1 >= tmp || tmp >= 115) {
         continue;
       }
@@ -2269,13 +2311,12 @@ int CountFingerprintPatterns(
       touched_indices[i] = 1; /* updating */
       old_seed = seed;
       seed = NEXT_SEED(seed, tmp);
-      // ap->atom_symbol, i+1, degree[i], ap->sub_desc);
+      // (*ap)->getSymbol(), i+1, degree[i], atomSubDescriptor(state, *ap));
       result +=
-          SetPathBitsRec(mp, nbp, fp_counts, ncounts, seed, touched_indices, 1,
+          SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, seed, touched_indices, 1,
                          2, 2, i, 0, -1, PROCESS_CHAINS, exclude_atom);
       if (0) {  // might overly populate complexes
-        result += SetPathBitsRec(
-            mp, nbp, fp_counts, ncounts, 101 + seed, touched_indices, 1, 2, 2,
+        result += SetPathBitsRec(mol, state, nbp, fp_counts, ncounts, 101 + seed, touched_indices, 1, 2, 2,
             i, 0, -1, FORCED_RING_PATH | PROCESS_CHAINS, exclude_atom);
       }
       seed = old_seed;
@@ -2286,19 +2327,19 @@ int CountFingerprintPatterns(
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS | USE_NON_SSS_BITS)) {
     /* Collect length_matrix */
     /* allocate storage length_matrix */
-    length_matrix.assign(mp->n_atoms, std::vector<int>(mp->n_atoms, 0));
-    for (int i = 0; i < mp->n_atoms; i++) {
+    length_matrix.assign(nAtoms, std::vector<int>(nAtoms, 0));
+    for (int i = 0; i < nAtoms; i++) {
       touched_indices[i] = 0;
     }
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       if (i + 1 == exclude_atom) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       // if (FALSE) fprintf(stderr, "starting path search at atom %d(%d)\n",
-      // i+1, ap->color);
-      SetPathLengthFlags(mp, touched_indices, i, 0, i,
+      // i+1, atomColor(state, *ap));
+      SetPathLengthFlags(mol, state, touched_indices, i, 0, i,
                          12, /* path perception distance <= 12 */
                          length_matrix, nbp, exclude_atom);
       touched_indices[i] = 0; /* down-dating */
@@ -2310,33 +2351,33 @@ int CountFingerprintPatterns(
    * frequent linear sub-fragments
    */
   if (which_bits & (USE_CLASS_SPIDERS | USE_FEATURE_PAIRS)) {
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
-      ap->color = AtomicNumberFromSymbol(ap->atom_symbol);
-      if (ap->atom_symbol == "H") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "D") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "T") {
-        ap->color = 0; /* ignore hydrogens */
-      } else if (ap->atom_symbol == "Q") {
-        ap->color = HETERO;
-      } else if (ap->atom_symbol == "A") {
-        ap->color = GENERIC;
-      } else if (ap->atom_symbol == "L") {
-        ap->color = GENERIC;
-      } else if (ap->atom_symbol == "C") {
-        ap->color = 6; /* carbon second row elements are one class */
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
+      atomColor(state, *ap) = AtomicNumberFromSymbol((*ap)->getSymbol());
+      if ((*ap)->getSymbol() == "H") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "D") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "T") {
+        atomColor(state, *ap) = 0; /* ignore hydrogens */
+      } else if ((*ap)->getSymbol() == "Q") {
+        atomColor(state, *ap) = HETERO;
+      } else if ((*ap)->getSymbol() == "A") {
+        atomColor(state, *ap) = GENERIC;
+      } else if ((*ap)->getSymbol() == "L") {
+        atomColor(state, *ap) = GENERIC;
+      } else if ((*ap)->getSymbol() == "C") {
+        atomColor(state, *ap) = 6; /* carbon second row elements are one class */
         if (cdegree[i] >= 3) {
-          ap->color = CSP3;
+          atomColor(state, *ap) = CSP3;
         }
-      } else if (ap->color > 1 && ap->color < 115) {
-        ap->color = HETERO;
+      } else if (atomColor(state, *ap) > 1 && atomColor(state, *ap) < 115) {
+        atomColor(state, *ap) = HETERO;
       } else { /* This could be R atoms or other odd things */
-        ap->color = 0;
+        atomColor(state, *ap) = 0;
       }
       if (i + 1 == exclude_atom) {
-        ap->color = 0;
+        atomColor(state, *ap) = 0;
       }
     }
     /*
@@ -2345,8 +2386,8 @@ int CountFingerprintPatterns(
     /* NOP */
 
     /* Now we start setting bits */
-    ap = mp->atom_array;
-    for (int i = 0; i < mp->n_atoms; i++, ap++) {
+    ap = state.atoms.data();
+    for (int i = 0; i < nAtoms; i++, ap++) {
       if (i + 1 == exclude_atom) {
         continue;
       }
@@ -2355,14 +2396,15 @@ int CountFingerprintPatterns(
         continue;
       }
       /* Spider needs to be special atom or carbon */
-      if (ap->color != CSP3 && ap->color != 6) {
+      if (atomColor(state, *ap) != CSP3 && atomColor(state, *ap) != 6) {
         continue;
       }
       touched_indices[i] = 1; /* updating */
       std::fill(csp3.begin(), csp3.end(), 0);
       std::fill(hetero.begin(), hetero.end(), 0);
       if (which_bits & USE_CLASS_SPIDERS) {
-        SpecialNeighboursRec(mp, touched_indices, 1, i, MAX_SPIDER, csp3.data(),
+        SpecialNeighboursRec(mol, state, touched_indices, 1, i, MAX_SPIDER,
+                             csp3.data(),
                              hetero.data(), nbp, exclude_atom);
       }
       touched_indices[i] = 0; /* down-dating */
@@ -2374,7 +2416,7 @@ int CountFingerprintPatterns(
             continue;
           }
           seed = CLASS_SPIDER_SEED;
-          if (ap->color == HETERO) {
+          if (atomColor(state, *ap) == HETERO) {
             // seed = CLASS_SPIDER_SEED+HETERO*8+CSP3*11;
             seed = NEXT_SEED(seed, HETERO * 8);
             seed = NEXT_SEED(seed, CSP3 * 11);
@@ -2408,7 +2450,7 @@ int CountFingerprintPatterns(
       }
 
       /* don't hetero-spider normal carbons */
-      if (ap->color != CSP3) {
+      if (atomColor(state, *ap) != CSP3) {
         continue;
       }
       /* set bits for spiders with three defined HETERO atoms */
@@ -2418,7 +2460,7 @@ int CountFingerprintPatterns(
             continue;
           }
           seed = CLASS_SPIDER_SEED;
-          if (ap->color == HETERO) {
+          if (atomColor(state, *ap) == HETERO) {
             // seed = CLASS_SPIDER_SEED+HETERO*8+HETERO*11;
             seed = NEXT_SEED(seed, HETERO * 8);
             seed = NEXT_SEED(seed, HETERO * 11);
@@ -2467,24 +2509,24 @@ int CountFingerprintPatterns(
      */
     if (which_bits & USE_FEATURE_PAIRS) {
       /* set feature flags in atom colors */
-      ap = mp->atom_array;
-      for (int i = 0; i < mp->n_atoms; i++, ap++) {
-        if (ap->atom_symbol == "C") {
+      ap = state.atoms.data();
+      for (int i = 0; i < nAtoms; i++, ap++) {
+        if ((*ap)->getSymbol() == "C") {
           flags = C_FLAG;
-        } else if (ap->atom_symbol == "O") {
+        } else if ((*ap)->getSymbol() == "O") {
           flags = O_FLAG;
-        } else if (ap->atom_symbol == "N") {
+        } else if ((*ap)->getSymbol() == "N") {
           flags = N_FLAG;
-        } else if (ap->atom_symbol == "S") {
+        } else if ((*ap)->getSymbol() == "S") {
           flags = S_FLAG;
-        } else if (ap->atom_symbol == "P") {
+        } else if ((*ap)->getSymbol() == "P") {
           flags = P_FLAG;
-        } else if (AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I,At")) {
+        } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
           flags = X_FLAG;
         } else {
           flags = 0;
         }
-        if (ap->color == HETERO) {
+        if (atomColor(state, *ap) == HETERO) {
           flags |= HETERO_FLAG;
         }
         if (cdegree[i] >= 3) {
@@ -2495,18 +2537,18 @@ int CountFingerprintPatterns(
         }
         if (atom_status[i] > 0 && degree[i] >= 3) {
           flags |= RING_SUBST_FLAG;
-          if (0 != (ap->rsize_flags & SPECIAL_RING)) {
+          if (0 != (atomRingFlags(state, *ap) & SPECIAL_RING)) {
             flags |= RS_SPECIAL_FLAG;
           }
         }
         if (i + 1 == exclude_atom) {
           flags = 0;
         }
-        ap->color = flags;
+        atomColor(state, *ap) = flags;
       }
       /* collect bits for selected feature pairs */
       if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mp, fp_counts, ncounts, CSP3_FLAG,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts, CSP3_FLAG,
                                  HETERO_FLAG, /* to hetero or ring subst */
                                  2, 3,        /* with path length 1 to 9 */
                                  FALSE,       /* don't use count */
@@ -2515,7 +2557,7 @@ int CountFingerprintPatterns(
                                  exclude_atom);
       }
       if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mp, fp_counts, ncounts,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                  HETERO_FLAG, /* from ring substitution */
                                  HETERO_FLAG, /* to hetero or ring subst */
                                  1, 12,       /* with path length 1 to 10 */
@@ -2525,7 +2567,7 @@ int CountFingerprintPatterns(
                                  exclude_atom);
       }
       if (1) {
-        result += SetFeatureBits(mp, fp_counts, ncounts,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                  RING_SUBST_FLAG, /* from ring substitution */
                                  RING_SUBST_FLAG, /* to ring substitution */
                                  5, 7,            /* with path length 1 to 12 */
@@ -2536,7 +2578,7 @@ int CountFingerprintPatterns(
       }
       if (0) {  // Class disabled to save bit density
         result +=
-            SetFeatureBits(mp, fp_counts, ncounts,
+            SetFeatureBits(mol, state, fp_counts, ncounts,
                            RS_SPECIAL_FLAG, /* from special ring substitution */
                            HETERO_FLAG,     /* to hetero atom */
                            2, 4,            /* with path length 1 to 5 */
@@ -2546,7 +2588,7 @@ int CountFingerprintPatterns(
                            exclude_atom);
       }
       if (1) {
-        result += SetFeatureBits(mp, fp_counts, ncounts,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                  QUART_FLAG,  /* from quartenary atom */
                                  HETERO_FLAG, /* to hetero or ring subst */
                                  1, 8,        /* with path length 1 to 8 */
@@ -2556,8 +2598,7 @@ int CountFingerprintPatterns(
                                  exclude_atom);
       }
       if (1) {
-        result += SetFeatureBits(
-            mp, fp_counts, ncounts, QUART_FLAG, /* from quartenary atom */
+        result += SetFeatureBits(mol, state, fp_counts, ncounts, QUART_FLAG, /* from quartenary atom */
             RING_SUBST_FLAG, 1, 6,              /* with path length 1 to 8 */
             FALSE,                              /* don't use count */
             TRUE,                               /* use atom type flags */
@@ -2565,7 +2606,7 @@ int CountFingerprintPatterns(
             exclude_atom);
       }
       if (1) {
-        result += SetFeatureBits(mp, fp_counts, ncounts,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                  X_FLAG,          /* from halogen atom */
                                  CSP3_FLAG, 1, 1, /* with path length 1 to 1 */
                                  FALSE,           /* don't use count */
@@ -2575,7 +2616,7 @@ int CountFingerprintPatterns(
       }
       if (0) {  // Class disabled to save bit density
         result +=
-            SetFeatureBits(mp, fp_counts, ncounts,
+            SetFeatureBits(mol, state, fp_counts, ncounts,
                            RS_SPECIAL_FLAG, /* from special ring substitution */
                            RING_SUBST_FLAG, /* to hetero atom */
                            2, 4,            /* with path length 1 to 5 */
@@ -2585,7 +2626,7 @@ int CountFingerprintPatterns(
                            exclude_atom);
       }
       if (0) {  // Class disabled to save bit density
-        result += SetFeatureBits(mp, fp_counts, ncounts,
+        result += SetFeatureBits(mol, state, fp_counts, ncounts,
                                  HETERO_FLAG,     /* from hetero */
                                  RING_SUBST_FLAG, /* to ring substitution */
                                  1, 6,            /* with path length 1 to 8 */
@@ -2598,31 +2639,31 @@ int CountFingerprintPatterns(
       /* Set bits for ring-subst/ring-subst/hetero triples */
       if (0)  // too many spurious bits
       {
-        ap1 = mp->atom_array;
-        for (int i1 = 0; i1 < mp->n_atoms; i1++, ap1++) {
+        ap1 = state.atoms.data();
+        for (int i1 = 0; i1 < nAtoms; i1++, ap1++) {
           if (i1 + 1 == exclude_atom) {
             continue;
           }
-          if (0 == (ap1->color & RING_SUBST_FLAG)) {
+          if (0 == (atomColor(state, *ap1) & RING_SUBST_FLAG)) {
             continue;
           }
           /* first atom must be in a non-sixmembered ring */
-          if (!(ap1->rsize_flags & SPECIAL_RING)) {
+          if (!(atomRingFlags(state, *ap1) & SPECIAL_RING)) {
             continue;
           }
-          ap2 = mp->atom_array;
-          for (int i2 = 0; i2 < mp->n_atoms; i2++, ap2++) {
+          ap2 = state.atoms.data();
+          for (int i2 = 0; i2 < nAtoms; i2++, ap2++) {
             if (i1 == i2) {
               continue;
             }
             if (i2 + 1 == exclude_atom) {
               continue;
             }
-            if (0 == (ap2->color & RING_SUBST_FLAG)) {
+            if (0 == (atomColor(state, *ap2) & RING_SUBST_FLAG)) {
               continue;
             }
-            ap3 = mp->atom_array;
-            for (int i3 = 0; i3 < mp->n_atoms; i3++, ap3++) {
+            ap3 = state.atoms.data();
+            for (int i3 = 0; i3 < nAtoms; i3++, ap3++) {
               if (i1 == i3) {
                 continue;
               }
@@ -2632,7 +2673,7 @@ int CountFingerprintPatterns(
               if (i3 + 1 == exclude_atom) {
                 continue;
               }
-              if (0 == (ap3->color & HETERO_FLAG)) {
+              if (0 == (atomColor(state, *ap3) & HETERO_FLAG)) {
                 continue;
               }
               for (int j = 2; j <= 6; j++) {
@@ -2669,15 +2710,15 @@ int CountFingerprintPatterns(
                     // distinguish ring sizes of second ring-subst
                     // for (k=3; k<15; k++)
                     for (int k = 3; k < 9; k++) {
-                      if (!(ap2->rsize_flags & (1 << k))) {
+                      if (!(atomRingFlags(state, *ap2) & (1 << k))) {
                         continue;
                       }
                       ADD_BIT(fp_counts, ncounts, NEXT_SEED(seed, k * 213));
                       result++;
                     }
-                    // i1+1, ap1->rsize_flags, j,
-                    // i2+1, ap2->rsize_flags, j1,
-                    // i3+1, ap3->atom_symbol, j2);
+                    // i1+1, atomRingFlags(state, *ap1), j,
+                    // i2+1, atomRingFlags(state, *ap2), j1,
+                    // i3+1, (*ap3)->getSymbol(), j2);
                   }
                 }
               }
@@ -2701,22 +2742,22 @@ int CountFingerprintPatterns(
   /* previously collected length_matrix. */
   if (!as_query && (which_bits & (USE_NON_SSS_BITS))) {
     seed = NON_SSS_SEED;
-    extcon.assign(mp->n_atoms, 0);
-    extcon2.assign(mp->n_atoms, 0);
+    extcon.assign(nAtoms, 0);
+    extcon2.assign(nAtoms, 0);
     /* initialized extended connectivity */
-    ap = mp->atom_array;
-    for (int j = 0; j < mp->n_atoms; j++, ap++) {
+    ap = state.atoms.data();
+    for (int j = 0; j < nAtoms; j++, ap++) {
       if (atom_status[j] <= 0) {
         continue;
       }
-      extcon[j] = ap->rsize_flags;
+      extcon[j] = atomRingFlags(state, *ap);
     }
     /* propagate extended connectivity to neighbours for a few cycles */
     for (int i = 0; i < 32; i++) {
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         extcon2[j] = 0;
       }
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         /* skip non-ring atoms */
         if (atom_status[j] <= 0) {
           continue;
@@ -2736,7 +2777,7 @@ int CountFingerprintPatterns(
                      ((extcon2[j] & 0xFF0000) >> 16);
         extcon2[j] &= 0xFFFFFF;
       }
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         extcon[j] = extcon2[j];
       }
     }
@@ -2744,7 +2785,7 @@ int CountFingerprintPatterns(
     /* propagate smallest hash to all members of ring system */
     for (;;) {
       changed = FALSE;
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         /* skip non-ring atoms */
         if (atom_status[j] <= 0) {
           continue;
@@ -2766,8 +2807,8 @@ int CountFingerprintPatterns(
     }
 
     /* Now, use extcon to set bits */
-    ap = mp->atom_array;
-    for (int j = 0; j < mp->n_atoms; j++, ap++) {
+    ap = state.atoms.data();
+    for (int j = 0; j < nAtoms; j++, ap++) {
       if (j + 1 == exclude_atom) {
         continue;
       }
@@ -2787,7 +2828,7 @@ int CountFingerprintPatterns(
         if (degree[j] <= atom_status[j]) {
           continue;
         }
-        for (int jj = 0; jj < mp->n_atoms; jj++) {
+        for (int jj = 0; jj < nAtoms; jj++) {
           if (jj + 1 == exclude_atom) {
             continue;
           }
@@ -2834,8 +2875,8 @@ int CountFingerprintPatterns(
       }
     }
     if (which_bits & USE_SCAFFOLD_COLORS) {
-      ap = mp->atom_array;
-      for (int j = 0; j < mp->n_atoms; j++, ap++) {
+      ap = state.atoms.data();
+      for (int j = 0; j < nAtoms; j++, ap++) {
         if (j + 1 == exclude_atom) {
           continue;
         }
@@ -2843,26 +2884,26 @@ int CountFingerprintPatterns(
           continue;
         }
         tmp1 = 0;
-        if (ap->atom_symbol == "C") {
+        if ((*ap)->getSymbol() == "C") {
           tmp1 = 101;
-        } else if (ap->atom_symbol == "O") {
+        } else if ((*ap)->getSymbol() == "O") {
           tmp1 = 301;
-        } else if (ap->atom_symbol == "N") {
+        } else if ((*ap)->getSymbol() == "N") {
           tmp1 = 401;
-        } else if (ap->atom_symbol == "S") {
+        } else if ((*ap)->getSymbol() == "S") {
           tmp1 = 601;
-        } else if (ap->atom_symbol == "P") {
+        } else if ((*ap)->getSymbol() == "P") {
           tmp1 = 701;
-        } else if (AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I,At")) {
+        } else if (AtomSymbolMatch((*ap)->getSymbol(), "F,Cl,Br,I,At")) {
           tmp1 = 901;
         }
-        extcon[j] = ap->rsize_flags + tmp1;
+        extcon[j] = atomRingFlags(state, *ap) + tmp1;
       }
       for (int i = 0; i < 32; i++) {
-        for (int j = 0; j < mp->n_atoms; j++) {
+        for (int j = 0; j < nAtoms; j++) {
           extcon2[j] = 0;
         }
-        for (int j = 0; j < mp->n_atoms; j++) {
+        for (int j = 0; j < nAtoms; j++) {
           /* skip non-ring atoms */
           if (atom_status[j] <= 0) {
             continue;
@@ -2882,14 +2923,14 @@ int CountFingerprintPatterns(
                        ((extcon2[j] & 0xFF0000) >> 16);
           extcon2[j] &= 0xFFFFFF;
         }
-        for (int j = 0; j < mp->n_atoms; j++) {
+        for (int j = 0; j < nAtoms; j++) {
           extcon[j] = extcon2[j];
         }
       }
       /* propagate smallest hash to all members of ring system */
       for (;;) {
         changed = FALSE;
-        for (int j = 0; j < mp->n_atoms; j++) {
+        for (int j = 0; j < nAtoms; j++) {
           /* skip non-ring atoms */
           if (atom_status[j] <= 0) {
             continue;
@@ -2909,7 +2950,7 @@ int CountFingerprintPatterns(
           break;
         }
       }
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         if (j + 1 == exclude_atom) {
           continue;
         }
@@ -2946,10 +2987,13 @@ int CountFingerprintPatterns(
 
 // Enumerates the rings through ring atoms/bonds (up to max_size) and sets the
 // ring size flags (bit k: member of a ring of size k; bit 0: any ring)
-void markRingsRecursive(reaccs_molecule_t *mp, std::vector<int> &touchedAtoms,
+void markRingsRecursive(const ROMol &mol, AvalonState &state,
+                        std::vector<int> &touchedAtoms,
                         std::vector<int> &touchedBonds, int startIndex,
                         int pathLength, int currentIndex, int maxSize,
                         const std::vector<neighbourhood_t> &nbp) {
+  const auto nAtoms = static_cast<int>(mol.getNumAtoms());
+  const auto nBonds = static_cast<int>(mol.getNumBonds());
   for (int i = 0; i < nbp[currentIndex].n_ligands; i++) {
     int ai = nbp[currentIndex].atoms[i];
     if (ai < startIndex) {
@@ -2959,14 +3003,14 @@ void markRingsRecursive(reaccs_molecule_t *mp, std::vector<int> &touchedAtoms,
       if (pathLength < 3) {
         continue;
       }
-      for (int j = 0; j < mp->n_atoms; j++) {
+      for (int j = 0; j < nAtoms; j++) {
         if (touchedAtoms[j]) {
-          mp->atom_array[j].rsize_flags |= (1 << pathLength);
+          state.atomRingFlags[j] |= (1 << pathLength);
         }
       }
-      for (int j = 0; j < mp->n_bonds; j++) {
+      for (int j = 0; j < nBonds; j++) {
         if (touchedBonds[j]) {
-          mp->bond_array[j].rsize_flags |= (1 << pathLength);
+          state.bondRingFlags[j] |= (1 << pathLength);
         }
       }
       continue;
@@ -2977,16 +3021,16 @@ void markRingsRecursive(reaccs_molecule_t *mp, std::vector<int> &touchedAtoms,
     if (pathLength + 1 > maxSize) {
       continue;
     }
-    if (mp->atom_array[ai].rsize_flags == 0) {
+    if (state.atomRingFlags[ai] == 0) {
       continue;
     }
     int bi = nbp[currentIndex].bonds[i];
-    if (mp->bond_array[bi].rsize_flags == 0) {
+    if (state.bondRingFlags[bi] == 0) {
       continue;
     }
     touchedAtoms[ai] = 1;
     touchedBonds[bi] = 1;
-    markRingsRecursive(mp, touchedAtoms, touchedBonds, startIndex,
+    markRingsRecursive(mol, state, touchedAtoms, touchedBonds, startIndex,
                        pathLength + 1, ai, maxSize, nbp);
     touchedAtoms[ai] = 0;
     touchedBonds[bi] = 0;
@@ -3066,9 +3110,9 @@ RingSets findRingSets(const ROMol &mol, const std::vector<char> &usableBond) {
 
 // port of PerceiveAromaticBonds(): six-rings (and fused rings with 4n+2
 // bonds) which only consist of sp2 atoms are aromatic
-void perceiveAromaticBonds(const ROMol &mol, std::vector<reaccs_bond_t> &bonds,
-                           int nAtoms) {
-  const int nBonds = bonds.size();
+void perceiveAromaticBonds(const ROMol &mol, AvalonState &state) {
+  const int nBonds = mol.getNumBonds();
+  const int nAtoms = mol.getNumAtoms();
   std::vector<char> allBonds(nBonds, 1);
   auto rs = findRingSets(mol, allBonds);
   std::vector<char> inRing(nBonds, 0);
@@ -3092,7 +3136,7 @@ void perceiveAromaticBonds(const ROMol &mol, std::vector<reaccs_bond_t> &bonds,
       std::fill(spCount.begin(), spCount.end(), 0);
       int ndouble = 0, nsingle = 0;
       for (int b = 0; b < nBonds; ++b) {
-        if ((*ring)[b] && bonds[b].bond_type == kSingle) {
+        if ((*ring)[b] && state.bondTypes[b] == kSingle) {
           ++nsingle;
         }
       }
@@ -3101,38 +3145,38 @@ void perceiveAromaticBonds(const ROMol &mol, std::vector<reaccs_bond_t> &bonds,
         if (!(*ring)[b]) {
           continue;
         }
-        if (bonds[b].bond_type == kDouble) {
+        if (state.bondTypes[b] == kDouble) {
           ++ndouble;
           for (int k = 0; k < 2; ++k) {
-            if (++spCount[bonds[b].atoms[k]] > 1) {
+            if (++spCount[bondEndpoint(state, b, k)] > 1) {
               isCumulene = true;
             }
           }
-        } else if (bonds[b].bond_type == kTriple) {
+        } else if (state.bondTypes[b] == kTriple) {
           isCumulene = true;
         }
       }
       for (int b = 0; b < nBonds; ++b) {
-        if ((*ring)[b] && bonds[b].bond_type == kAromatic) {
+        if ((*ring)[b] && state.bondTypes[b] == kAromatic) {
           for (int k = 0; k < 2; ++k) {
-            if (spCount[bonds[b].atoms[k]] == 0) {
-              ++spCount[bonds[b].atoms[k]];
+            if (spCount[bondEndpoint(state, b, k)] == 0) {
+              ++spCount[bondEndpoint(state, b, k)];
             }
           }
         }
       }
       bool isAromatic = !isCumulene && ((cardinality(*ring) - 2) % 4) == 0;
       for (int b = 0; b < nBonds; ++b) {
-        if ((*ring)[b] && (spCount[bonds[b].atoms[0]] != 1 ||
-                           spCount[bonds[b].atoms[1]] != 1)) {
+        if ((*ring)[b] && (spCount[bondEndpoint(state, b, 0)] != 1 ||
+                           spCount[bondEndpoint(state, b, 1)] != 1)) {
           isAromatic = false;
         }
       }
       if (isAromatic && (ndouble > 0 || nsingle > 0)) {
         for (int b = 0; b < nBonds; ++b) {
-          if ((*ring)[b] && inRing[b] && bonds[b].bond_type != kAromatic) {
+          if ((*ring)[b] && inRing[b] && state.bondTypes[b] != kAromatic) {
             changed = true;
-            bonds[b].bond_type = kAromatic;
+            state.bondTypes[b] = kAromatic;
           }
         }
       }
@@ -3141,11 +3185,10 @@ void perceiveAromaticBonds(const ROMol &mol, std::vector<reaccs_bond_t> &bonds,
 }
 
 // port of PerceiveDYAromaticity(): Daylight-like aromaticity
-void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
-                           std::vector<reaccs_bond_t> &bonds,
+void perceiveDYAromaticity(const ROMol &mol, AvalonState &state,
                            const std::vector<neighbourhood_t> &nbp) {
-  const int nAtoms = atoms.size();
-  const int nBonds = bonds.size();
+  const int nAtoms = mol.getNumAtoms();
+  const int nBonds = mol.getNumBonds();
   std::vector<char> allBonds(nBonds, 1);
   auto allRings = findRingSets(mol, allBonds);
   if (allRings.base.empty()) {
@@ -3160,12 +3203,12 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
   std::vector<char> atomInRing(nAtoms, 0);
   std::vector<char> candidate(nAtoms, 0);
   for (int i = 0; i < nAtoms; ++i) {
-    candidate[i] = atoms[i].atom_symbol != "C";
+    candidate[i] = mol.getAtomWithIdx(i)->getSymbol() != "C";
   }
   for (int b = 0; b < nBonds; ++b) {
-    if (bonds[b].bond_type > kSingle && bonds[b].bond_type != kTriple) {
-      candidate[bonds[b].atoms[0] - 1] = 1;
-      candidate[bonds[b].atoms[1] - 1] = 1;
+    if (state.bondTypes[b] > kSingle && state.bondTypes[b] != kTriple) {
+      candidate[bondEndpoint(state, b, 0) - 1] = 1;
+      candidate[bondEndpoint(state, b, 1) - 1] = 1;
     }
   }
   std::vector<char> usable(nBonds, 0);
@@ -3173,10 +3216,11 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
     if (!bondInRing[b]) {
       continue;
     }
-    atomInRing[bonds[b].atoms[0] - 1] = 1;
-    atomInRing[bonds[b].atoms[1] - 1] = 1;
+    atomInRing[bondEndpoint(state, b, 0) - 1] = 1;
+    atomInRing[bondEndpoint(state, b, 1) - 1] = 1;
     usable[b] =
-        candidate[bonds[b].atoms[0] - 1] && candidate[bonds[b].atoms[1] - 1];
+        candidate[bondEndpoint(state, b, 0) - 1] &&
+        candidate[bondEndpoint(state, b, 1) - 1];
   }
   auto rs = findRingSets(mol, usable);
   if (rs.base.empty()) {
@@ -3207,7 +3251,7 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
   }
 
   const auto isSym = [&](int ai, const char *list) {
-    return AtomSymbolMatch(atoms[ai].atom_symbol, list);
+    return AtomSymbolMatch(mol.getAtomWithIdx(ai)->getSymbol(), list);
   };
   bool changed;
   do {
@@ -3227,14 +3271,14 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
           const int ai = nbp[i].atoms[j];
           if (bondInRing[bi] && ring[bi]) {
             isInRing = true;
-            if (bonds[bi].bond_type == kAromatic) {
+            if (state.bondTypes[bi] == kAromatic) {
               ++inRingAromatic;
             }
-            if (bonds[bi].bond_type == kDouble) {
+            if (state.bondTypes[bi] == kDouble) {
               ++inRingDouble;
             }
-          } else if (bonds[bi].bond_type == kDouble) {
-            if (atoms[i].atom_symbol == "C" &&
+          } else if (state.bondTypes[bi] == kDouble) {
+            if (mol.getAtomWithIdx(i)->getSymbol() == "C" &&
                 !bondInRing[bi] && isSym(ai, "O,S,P,N,L")) {
               exoPull = true;
             }
@@ -3244,20 +3288,20 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
           continue;
         }
         if ((inRingAromatic >= 1 || inRingDouble == 1) &&
-            (isSym(i, "C,N,A,*") ||
-             atoms[i].atom_symbol == "L")) {
+            (isSym(i, "C,N,A,*") || mol.getAtomWithIdx(i)->getSymbol() == "L")) {
           localPi = 1;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
-                   atoms[i].charge == 0 && isSym(i, "N,S,O")) {
+                   mol.getAtomWithIdx(i)->getFormalCharge() == 0 &&
+                   isSym(i, "N,S,O")) {
           localPi = 2;
         } else if (inRingAromatic == 0 && inRingDouble == 0 &&
-                   atoms[i].charge == 0 && exoPull &&
-                   atoms[i].atom_symbol == "C") {
+                   mol.getAtomWithIdx(i)->getFormalCharge() == 0 && exoPull &&
+                   mol.getAtomWithIdx(i)->getSymbol() == "C") {
           localPi = 0;
         } else {
           conjugated = false;
         }
-        if (atoms[i].charge < 0 && isSym(i, "C,N")) {
+        if (mol.getAtomWithIdx(i)->getFormalCharge() < 0 && isSym(i, "C,N")) {
           conjugated = false;
         }
         npi += localPi;
@@ -3266,8 +3310,8 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
         continue;
       }
       for (int b = 0; b < nBonds; ++b) {
-        if (bondInRing[b] && ring[b] && bonds[b].bond_type != kAromatic) {
-          bonds[b].bond_type = kAromatic;
+        if (bondInRing[b] && ring[b] && state.bondTypes[b] != kAromatic) {
+          state.bondTypes[b] = kAromatic;
           changed = true;
         }
       }
@@ -3275,33 +3319,34 @@ void perceiveDYAromaticity(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
   } while (changed);
 
   std::fill(candidate.begin(), candidate.end(), 0);
-  for (const auto &b : bonds) {
-    if (b.bond_type == kAromatic) {
-      candidate[b.atoms[0] - 1] = candidate[b.atoms[1] - 1] = 1;
+  for (int b = 0; b < nBonds; ++b) {
+    if (state.bondTypes[b] == kAromatic) {
+      candidate[bondEndpoint(state, b, 0) - 1] =
+          candidate[bondEndpoint(state, b, 1) - 1] = 1;
     }
   }
   for (int b = 0; b < nBonds; ++b) {
-    if (candidate[bonds[b].atoms[0] - 1] && candidate[bonds[b].atoms[1] - 1] &&
-        bondInRing[b] && bonds[b].bond_type == kSingle) {
-      bonds[b].bond_type = kAromatic;
+    if (candidate[bondEndpoint(state, b, 0) - 1] &&
+        candidate[bondEndpoint(state, b, 1) - 1] && bondInRing[b] &&
+        state.bondTypes[b] == kSingle) {
+      state.bondTypes[b] = kAromatic;
     }
   }
 }
 
 // port of the carbon part of GuessHCountsFromSubstitution() as it applies to
 // molecules without substitution-count queries
-void guessSubstitution(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
-                       const std::vector<reaccs_bond_t> &bonds,
+void guessSubstitution(const ROMol &mol, AvalonState &state,
                        const std::vector<neighbourhood_t> &nbp) {
-  for (size_t i = 0; i < atoms.size(); ++i) {
-    if (atoms[i].charge != 0 ||
+  for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
+    if (mol.getAtomWithIdx(i)->getFormalCharge() != 0 ||
         mol.getAtomWithIdx(i)->getNumRadicalElectrons() != 0 ||
-        atoms[i].atom_symbol != "C") {
+        mol.getAtomWithIdx(i)->getSymbol() != "C") {
       continue;
     }
     int nsingle = 0, ndouble = 0, ntriple = 0, naromatic = 0, nother = 0;
     for (int j = 0; j < nbp[i].n_ligands; ++j) {
-      switch (bonds[nbp[i].bonds[j]].bond_type) {
+      switch (state.bondTypes[nbp[i].bonds[j]]) {
         case kSingle:
           ++nsingle;
           break;
@@ -3330,7 +3375,7 @@ void guessSubstitution(const ROMol &mol, std::vector<reaccs_atom_t> &atoms,
       continue;
     }
     if (nsingle + 2 * ndouble + 3 * ntriple == 4) {
-      atoms[i].sub_desc = SUB_AS_IS;
+      state.atomSubDescriptors[i] = SUB_AS_IS;
     }
   }
 }
@@ -3373,42 +3418,16 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
   const auto &ri = *lmol->getRingInfo();
   const int nBonds = lmol->getNumBonds();
 
-  std::vector<reaccs_atom_t> atoms(nAtoms);
-  std::vector<reaccs_bond_t> bonds(nBonds);
+  AvalonState state(*lmol);
   std::vector<neighbourhood_t> nbp(nAtoms);
   std::vector<int> explicitH(nAtoms + 1, 0);
   std::vector<int> atomStatus(nAtoms, 0);
   std::vector<int> bondStatus(nBonds, 0);
 
-  for (const auto atom : lmol->atoms()) {
-    auto &a = atoms[atom->getIdx()];
-    const auto anum = atom->getAtomicNum();
-    if (anum == 0) {
-      a.atom_symbol = "*";
-    } else {
-      a.atom_symbol =
-          PeriodicTable::getTable()->getElementSymbol(anum);
-    }
-    a.charge = atom->getFormalCharge();
-  }
   for (const auto bond : lmol->bonds()) {
     const int bi = bond->getIdx();
     const int bai = bond->getBeginAtomIdx();
     const int eai = bond->getEndAtomIdx();
-    auto &b = bonds[bi];
-    b.atoms[0] = bai + 1;
-    b.atoms[1] = eai + 1;
-    if (bond->getIsAromatic() || bond->getBondType() == Bond::AROMATIC) {
-      b.bond_type = kAromatic;
-    } else if (bond->getBondType() == Bond::SINGLE) {
-      b.bond_type = kSingle;
-    } else if (bond->getBondType() == Bond::DOUBLE) {
-      b.bond_type = kDouble;
-    } else if (bond->getBondType() == Bond::TRIPLE) {
-      b.bond_type = kTriple;
-    } else {
-      b.bond_type = 8;
-    }
     nbp[bai].atoms.push_back(eai);
     nbp[bai].bonds.push_back(bi);
     nbp[bai].n_ligands++;
@@ -3427,28 +3446,23 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
       atomStatus[eai]++;
     }
   }
-  const auto kekuleBonds = bonds;
-
-  reaccs_molecule_t mp;
-  mp.n_atoms = nAtoms;
-  mp.n_bonds = nBonds;
-  mp.atom_array = atoms.data();
-  mp.bond_array = bonds.data();
+  const auto kekuleBondTypes = state.bondTypes;
 
   for (int i = 0; i < nAtoms; ++i) {
-    atoms[i].rsize_flags = atomStatus[i] > 0 ? 1 : 0;
+    state.atomRingFlags[i] = atomStatus[i] > 0 ? 1 : 0;
   }
   for (int i = 0; i < nBonds; ++i) {
-    bonds[i].rsize_flags = bondStatus[i] > 0 ? 1 : 0;
+    state.bondRingFlags[i] = bondStatus[i] > 0 ? 1 : 0;
   }
   std::vector<int> touchedAtoms(nAtoms, 0);
   std::vector<int> touchedBonds(nBonds, 0);
   for (int i = 0; i < nAtoms; ++i) {
-    if (atoms[i].rsize_flags == 0) {
+    if (state.atomRingFlags[i] == 0) {
       continue;
     }
     touchedAtoms[i] = 1;
-    markRingsRecursive(&mp, touchedAtoms, touchedBonds, i, 1, i, 14, nbp);
+    markRingsRecursive(*lmol, state, touchedAtoms, touchedBonds, i, 1, i, 14,
+                       nbp);
     touchedAtoms[i] = 0;
   }
 
@@ -3461,25 +3475,24 @@ std::vector<std::uint32_t> getAvalonCounts(const ROMol &mol,
     const bool dy = pass == 1;
     const bool queryMode = dy ? accumulateAsQuery : isQuery;
     for (int i = 0; i < nBonds; ++i) {
-      bonds[i].bond_type = kekuleBonds[i].bond_type;
+      state.bondTypes[i] = kekuleBondTypes[i];
     }
     auto hCount = explicitH;
-    for (auto &a : atoms) {
-      a.sub_desc = 0;
-    }
+    std::fill(state.atomSubDescriptors.begin(),
+              state.atomSubDescriptors.end(), 0);
     if (!queryMode) {
       for (const auto atom : lmol->atoms()) {
         hCount[atom->getIdx() + 1] += atom->getTotalNumHs();
       }
     } else {
-      guessSubstitution(*lmol, atoms, bonds, nbp);
+      guessSubstitution(*lmol, state, nbp);
     }
     if (dy) {
-      perceiveDYAromaticity(*lmol, atoms, bonds, nbp);
+      perceiveDYAromaticity(*lmol, state, nbp);
     } else {
-      perceiveAromaticBonds(*lmol, bonds, nAtoms);
+      perceiveAromaticBonds(*lmol, state);
     }
-    CountFingerprintPatterns(&mp, nbp, hCount.data(), atomStatus.data(),
+    CountFingerprintPatterns(*lmol, state, nbp, hCount.data(), atomStatus.data(),
                              bondStatus.data(), counts.data(), fpSize, bitFlags,
                              queryMode, focusAtom + 1);
   }
