@@ -69,7 +69,7 @@ steps:
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     cd build
-    python -c 'import os,pathlib;os.add_dll_directory(pathlib.Path(os.getcwd(),"..","lib"));from rdkit import Chem'
+    python -c "import os,pathlib;os.add_dll_directory(pathlib.Path(os.getcwd(),'..','lib'));from rdkit import Chem"
   displayName: "Test import"
 - task: PublishTestResults@2
   inputs:
