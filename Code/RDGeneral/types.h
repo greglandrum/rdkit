@@ -154,7 +154,6 @@ inline constexpr std::string_view _rgroupBonds = "_rgroupBonds";
 inline constexpr std::string_view _rgroupTargetAtoms = "_rgroupTargetAtoms";
 inline constexpr std::string_view _rgroupTargetBonds = "_rgroupTargetBonds";
 inline constexpr std::string_view dummyLabel = "dummyLabel";
-inline constexpr std::string_view extraRings = "extraRings";
 inline constexpr std::string_view isImplicit = "isImplicit";
 inline constexpr std::string_view maxAttachIdx = "maxAttachIdx";
 inline constexpr std::string_view molAtomMapNumber = "molAtomMapNumber";
@@ -213,11 +212,9 @@ typedef __int64 LONGINT;
 #undef min  // FUCK I hate this nonsense
 #endif
 
-RDKIT_RDGENERAL_EXPORT extern const double MAX_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double EPS_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double SMALL_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double MAX_INT;
-RDKIT_RDGENERAL_EXPORT extern const double MAX_LONGINT;
+inline constexpr double MAX_DOUBLE = std::numeric_limits<double>::max();
+inline constexpr double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
+inline constexpr int MAX_INT = std::numeric_limits<int>::max();
 
 typedef unsigned int UINT;
 typedef unsigned short USHORT;

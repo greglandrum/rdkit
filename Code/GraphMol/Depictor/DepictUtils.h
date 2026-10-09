@@ -32,6 +32,11 @@ RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_COLL_ITERS;
 RDKIT_DEPICTOR_EXPORT extern double HETEROATOM_COLL_SCALE;
 RDKIT_DEPICTOR_EXPORT extern unsigned int NUM_BONDS_FLIPS;
 
+// Path angle expansion parameters
+RDKIT_DEPICTOR_EXPORT extern double ANGLE_EXPANSION_INCREMENT;
+RDKIT_DEPICTOR_EXPORT extern double MAX_ANGLE_EXPANSION;
+RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_ANGLE_EXPANSION_ITERS;
+
 typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
 
 typedef std::pair<int, int> PAIR_I_I;
@@ -333,6 +338,27 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol,
 */
 RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getAllRotatableBonds(
     const RDKit::ROMol &mol);
+
+//! \brief check if an atom is a spiro center (belongs to exactly 2 rings)
+/*!
+  \param aid  index of the atom
+  \param mol  the molecule of interest
+
+  \return true if the atom is a spiro center
+*/
+RDKIT_DEPICTOR_EXPORT bool isSpiroCenter(unsigned int aid,
+                                          const RDKit::ROMol *mol);
+
+//! \brief find spiro centers on the shortest path between two atoms
+/*!
+  \param mol   the molecule of interest
+  \param aid1  index of the first atom
+  \param aid2  index of the second atom
+
+  \return a set of the indices of spiro centers
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getSpiroCenters(
+    const RDKit::ROMol &mol, unsigned int aid1, unsigned int aid2);
 
 //! Get the ids of the atoms and bonds that are connected to aid
 RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,

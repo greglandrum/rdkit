@@ -7,7 +7,6 @@
 #include <GraphMol/DetermineBonds/DetermineBonds.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/AddHs.cpp>
 #include <fstream>
 #include <algorithm>
 #include <GraphMol/Resonance.h>
@@ -498,6 +497,33 @@ TEST_CASE(
               m->getBondWithIdx(bnd->getIdx())->getBondType());
       }
     }
+  }
+}
+
+TEST_CASE("github #9114: DetermineBonds fails for thiolate") {
+  SECTION("as reported") {
+    RWMol m;
+    bool updateLabel = true;
+    bool takeOwnership = true;
+    m.addAtom(new Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new Atom(16), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
+    m.addBond(0, 1, Bond::UNSPECIFIED);
+    m.addBond(0, 2, Bond::UNSPECIFIED);
+    m.addBond(0, 3, Bond::UNSPECIFIED);
+    m.addBond(0, 4, Bond::UNSPECIFIED);
+
+    int charge = -1;
+    bool allowChargedFragments = true;
+    bool embedChiral = false; 
+    CHECK_NOTHROW(determineBondOrders(m, charge, allowChargedFragments, embedChiral));
+
+    for (auto bnd : m.bonds()) {
+      CHECK(bnd->getBondType() == Bond::SINGLE);
+    }
+    CHECK(m.getAtomWithIdx(1)->getFormalCharge() == -1);
   }
 }
 

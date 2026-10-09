@@ -45,11 +45,19 @@ enum class CDXFormat {
   AUTO = 3
 };
 
+enum class NeedsCleanPolicy {
+  TrustSource = 0,
+  TrustExplicitHydrogens = 1,
+};
+
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
   bool sanitize = true;
   bool removeHs = true;
   CDXFormat format = CDXFormat::AUTO;
-  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+  NeedsCleanPolicy needsCleanPolicy{NeedsCleanPolicy::TrustSource};
+  bool parseQueries{false};
+  bool strictQueryParsing{false};
+  bool flagPossible{false}; /**< whether to flag possible chiral centers in the
                                 result molecule */
 };
 

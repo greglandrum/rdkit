@@ -29,7 +29,8 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
 
   Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
   if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atomAndBondVecs,
-                                                 bond->getOwningMol())) {
+                                                 bond->getOwningMol()) ||
+      atomAndBondVecs[0].second.empty() || atomAndBondVecs[1].second.empty()) {
     return;  // not an atropisomer
   }
   auto atom1 = mol.getAtom(atomAndBondVecs[0].second[0]->getOtherAtomIdx(
@@ -75,10 +76,6 @@ bool AtropisomerBond::hasPrimaryLabel() const {
   return dp_bond->hasProp(common_properties::_CIPCode);
 }
 
-void AtropisomerBond::resetPrimaryLabel() const {
-  dp_bond->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor AtropisomerBond::label(const Rules &comp) {
   auto &digraph = getDigraph();
   auto root1 = digraph.getOriginalRoot();
@@ -93,6 +90,8 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
                                   const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
+
+  const bool is_constitutional = comp.getNumSubRules() == 3;
 
   d_ranked_anchors.clear();
 
@@ -110,6 +109,10 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
   removeDuplicatesAndHs(edges1);
   removeDuplicatesAndHs(edges2);
 
+  if (getCarriers().size() != 2 || edges1.empty() || edges2.empty()) {
+    return Descriptor::ns;
+  }
+
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;
 
@@ -119,7 +122,7 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
 
   digraph.changeRoot(root1);
   const auto &priority1 = comp.sort(root1, edges1);
-  if (!priority1.isUnique()) {
+  if (!priority1.isUnique() && !is_constitutional) {
     return Descriptor::UNKNOWN;
   }
   // swap
@@ -132,7 +135,7 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
   }
   digraph.changeRoot(root2);
   const auto &priority2 = comp.sort(root2, edges2);
-  if (!priority2.isUnique()) {
+  if (!priority2.isUnique() || !priority1.isUnique()) {
     return Descriptor::UNKNOWN;
   }
   // swap
@@ -168,13 +171,13 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
     }
   }
   if (config == Bond::STEREOATROPCCW) {
-    if (priority1.isPseudoAsymetric() || priority2.isPseudoAsymetric()) {
+    if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::m;
     } else {
       return Descriptor::M;
     }
   } else if (config == Bond::STEREOATROPCW) {
-    if (priority1.isPseudoAsymetric() || priority2.isPseudoAsymetric()) {
+    if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::p;
     } else {
       return Descriptor::P;

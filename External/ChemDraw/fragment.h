@@ -44,6 +44,9 @@
 #include "utils.h"
 
 namespace RDKit {
+namespace v2 {
+struct ChemDrawParserParams;
+}
 namespace ChemDraw {
 struct PageData {
   PageData()
@@ -52,7 +55,9 @@ struct PageData {
         mols(),
         fragmentLookup(),
         groupedFragments(),
-        schemes() {}
+        schemes(),
+        parseQueries(false),
+        strictQueryParsing(false) {}
 
   PageData(const PageData &) = delete;
 
@@ -63,9 +68,12 @@ struct PageData {
   std::map<unsigned int, std::vector<int>>
       groupedFragments;               // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
+  bool parseQueries;
+  bool strictQueryParsing;
 
   void clearCDXProps() {
     for (auto &mol : mols) {
+      mol->clearProp(CDXML_SANITIZATION_HINTS);
       for (auto atom : mol->atoms()) {
         atom->clearProp(CDX_ATOM_ID);
         atom->clearProp(CDX_BOND_ORDERING);
@@ -88,7 +96,8 @@ struct PageData {
 //! otherwise -1
 //!                   external node's are normally NickNames or  new Fragments
 bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
-                   int &missingFragId, int externalAttachment = -1);
+                   int &missingFragId, const v2::ChemDrawParserParams &params,
+                   int externalAttachment = -1);
 }  // namespace ChemDraw
 }  // namespace RDKit
 

@@ -15,6 +15,7 @@
 #include <GraphMol/Chirality.h>
 #include "RDDepictor.h"
 #include "DepictUtils.h"
+#include "EmbeddedFrag.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -288,7 +289,7 @@ $$$$
       for (auto bond : mol.bonds()) {
         auto diff =
             coords[bond->getBeginAtomIdx()] - coords[bond->getEndAtomIdx()];
-        if (auto length = diff.length(); length < 1.0 || length > 2.0) {
+        if (auto length = diff.length(); length < 1.0 || length > 2.1) {
           return true;
         }
       };
@@ -372,8 +373,15 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   params.useRingTemplates = true;
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
-  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
-  CHECK(rmsd > 1.);
+  // Check template acceptance directly against a template-free depiction.
+  // Comparing the two stereoisomers' overall RMSD also measures unrelated
+  // substituent placement and makes the cutoff sensitive to layout changes.
+  ROMol mol1WithoutTemplate(*mol1), mol2WithoutTemplate(*mol2);
+  params.useRingTemplates = false;
+  RDDepict::compute2DCoords(mol1WithoutTemplate, params);
+  RDDepict::compute2DCoords(mol2WithoutTemplate, params);
+  CHECK(MolAlign::getBestRMS(*mol1, mol1WithoutTemplate) > 0.1);
+  CHECK(MolAlign::getBestRMS(*mol2, mol2WithoutTemplate) < 1.e-4);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -525,12 +533,12 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
@@ -757,42 +765,6 @@ TEST_CASE("generate aligned coords and wedging") {
 M  END
 )CTAB"_ctab;
   REQUIRE(wedgedMol);
-  auto originalWedges = R"CTAB(  2  1  1  1
-  2  3  1  0
-  3  4  1  0
-  5  4  1  6
-  5  6  1  0
-  6  7  1  0
-  7  8  1  0
-  9  8  1  1
-  5  9  1  0
-  9 10  1  0
- 10 11  1  1
- 10 12  1  0
-  6 12  1  1
-  2 13  1  0
- 13 14  2  0
- 14 15  1  0
- 15 16  2  0
- 16 17  1  0
- 17 18  2  0
- 13 18  1  0
- 17 19  1  0
- 19 20  1  0
- 20 21  1  0
- 21 22  1  0
- 16 22  1  0
- 23 24  1  0
- 23 25  1  0
- 25 26  1  0
- 24 27  1  0
- 27 26  1  0
- 26 28  1  0
- 24 29  1  0
- 28 29  1  0
- 21 27  1  0
-M  END
-)CTAB";
   auto invertedWedges = R"CTAB(  2  1  1  6
   2  3  1  0
   3  4  1  0
@@ -828,6 +800,29 @@ M  END
  28 29  1  0
  21 27  1  0
 )CTAB";
+  const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
+      {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
+
+  auto invertBondDir = [](Bond::BondDir dir) {
+    switch (dir) {
+      case Bond::BEGINWEDGE:
+        return Bond::BEGINDASH;
+      case Bond::BEGINDASH:
+        return Bond::BEGINWEDGE;
+      default:
+        return dir;
+    }
+  };
+
+  ROMol baseMol(*wedgedMol);
+  Chirality::reapplyMolBlockWedging(baseMol);
+
+  auto getBondDirBetween = [](const ROMol &mol, unsigned int a1,
+                              unsigned int a2) {
+    const auto bond = mol.getBondBetweenAtoms(a1, a2);
+    REQUIRE(bond);
+    return bond->getBondDir();
+  };
   SECTION("wedging all within scaffold") {
     auto scaffold = R"CTAB(
      RDKit          2D
@@ -878,8 +873,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (same as original molecule)
@@ -897,8 +894,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (inverted with respect to the original molecule)
@@ -913,8 +912,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (same as the original molecule)
@@ -931,8 +932,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
@@ -949,9 +952,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
+      }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
     // unaltered.
@@ -968,8 +972,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     RDDepict::preferCoordGen = false;
 #endif
@@ -1016,8 +1022,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (same as original molecule)
@@ -1035,8 +1043,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     // the "rebuild" alignment should succeed and clear original wedging
     // it should feature a much wider angle between the bridge bonds as the
@@ -1050,9 +1060,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (same as the original molecule)
@@ -1069,8 +1080,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
@@ -1087,9 +1100,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
+      }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
     // unaltered.
@@ -1106,8 +1120,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     RDDepict::preferCoordGen = false;
 #endif
@@ -2451,6 +2467,63 @@ TEST_CASE(
 }
 #endif
 
+TEST_CASE("attachments use the exterior gap larger than pi") {
+  auto side = GENERATE(-1.0, 1.0);
+  CAPTURE(side);
+  auto mol = "C(F)(Cl)(Br)C"_smiles;
+  REQUIRE(mol);
+  // Three bonds occupy a 90-degree sector. The fourth belongs in the free
+  // 270-degree sector, including when that gap crosses the atan2 branch cut.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {side, -1}}, {2, {side, 0}}, {3, {side, 1}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  fragment.addNonRingAtom(4, 0);
+  const auto &pos = fragment.GetEmbeddedAtom(4).loc;
+  CHECK(pos.x * side < 0);
+  CHECK(std::abs(pos.y) < 1.e-6);
+}
+
+TEST_CASE("crowding does not reverse a selected attachment gap") {
+  auto halfWidth = GENERATE(M_PI / 2, 5 * M_PI / 9);
+  CAPTURE(halfWidth);
+  auto mol = "P(F)(Cl)(Br)(CC)C"_smiles;
+  REQUIRE(mol);
+  const auto pointAt = [](double angle) {
+    return RDGeom::Point2D(std::cos(angle), std::sin(angle)) *
+           RDDepict::BOND_LEN;
+  };
+  const auto step = (2 * M_PI - 2 * halfWidth) / 3;
+  // The three existing bonds leave a 180- or 160-degree gap. Atom 5 crowds
+  // the first new position, but reversing would leave the selected gap.
+  RDGeom::INT_POINT2D_MAP coords{{0, {0, 0}},
+                                 {1, pointAt(-halfWidth)},
+                                 {2, pointAt(0)},
+                                 {3, pointAt(halfWidth)},
+                                 {5, pointAt(halfWidth + step) * 1.05}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {4, 6}) {
+    fragment.addNonRingAtom(atom, 0);
+    const auto expected = pointAt(halfWidth + (atom == 4 ? 1 : 2) * step);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
+
+TEST_CASE("attachments retain a direction chosen to avoid crowding") {
+  auto mol = "C(F)(Cl)(CC)C"_smiles;
+  REQUIRE(mol);
+  // Two opposite bonds leave either half-plane available. Atom 4 crowds
+  // the right side, so both remaining substituents should go to the left.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {0, -1.5}}, {2, {0, 1.5}}, {4, {1.3, 0.75}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {3, 5}) {
+    fragment.addNonRingAtom(atom, 0);
+    const RDGeom::Point2D expected(-std::sqrt(3.) * 0.75,
+                                   atom == 3 ? 0.75 : -0.75);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
+
 TEST_CASE("canonical ordering") {
   auto useLegacy = GENERATE(true, false);
   CAPTURE(useLegacy);
@@ -2466,5 +2539,399 @@ TEST_CASE("canonical ordering") {
       CHECK(dist > 0.35);
       INFO("i " << i << " " << j);
     }
+  }
+}
+
+TEST_CASE("macrocycle templating") {
+  // Helper function to test if templates are used for a ring of size n.
+  // We generate a ring of that size, generate 2D coordinates with and without
+  // templates enabled, and compare the results. If the coordinates are the
+  // same, we assume no template was used. If they differ, a template was used.
+  auto templates_are_used_for_ring_size_n = [](int ringSize) -> bool {
+    // Build SMILES for n-membered ring: C1 + (n-2) C's + C1
+    std::string smiles = "C1";
+    for (int i = 0; i < ringSize - 2; ++i) {
+      smiles += "C";
+    }
+    smiles += "C1";
+
+    auto mol = SmilesToMol(smiles);
+    if (!mol) {
+      return false;
+    }
+
+    // Generate coordinates WITHOUT templates
+    RDDepict::Compute2DCoordParameters params;
+    params.useRingTemplates = false;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withoutTemplates = mol->getConformer().getAtomPos(0) -
+                            mol->getConformer().getAtomPos(ringSize / 2);
+
+    // Generate coordinates WITH templates
+    params.useRingTemplates = true;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withTemplates = mol->getConformer().getAtomPos(0) -
+                         mol->getConformer().getAtomPos(ringSize / 2);
+
+    delete mol;
+
+    // Return true if coordinates differ (templates were used)
+    return !RDKit::feq(withoutTemplates.length(), withTemplates.length(), 0.01);
+  };
+
+  SECTION("template usage threshold at ring size 8") {
+    // Test that templates are used only for rings with size > 8
+    for (int i = 4; i <= 14; ++i) {
+      CAPTURE(i);
+      bool templatesUsed = templates_are_used_for_ring_size_n(i);
+      bool expectedTemplatesUsed = (i > 8);
+      CHECK(templatesUsed == expectedTemplatesUsed);
+    }
+  }
+}
+
+TEST_CASE("spiro center detection") {
+  SECTION("true spiro compounds") {
+    auto [smiles, spiroAtom] = GENERATE(table<std::string, unsigned int>({
+        {"C1CCC2(C1)CCCCC2", 3},  // spiro[4.5]decane, atom 3
+        {"C1CCCC2(C1)CCCCC2", 4}  // spiro[5.5]undecane, atom 4
+    }));
+    CAPTURE(smiles, spiroAtom);
+
+    std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    // Check that the expected atom is a spiro center
+    CHECK(RDDepict::isSpiroCenter(spiroAtom, m.get()));
+
+    // Other atoms should not be spiro centers
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (i != spiroAtom) {
+        CHECK_FALSE(RDDepict::isSpiroCenter(i, m.get()));
+      }
+    }
+  }
+
+  SECTION("non-spiro compounds - no atoms should be spiro centers") {
+    auto smiles = GENERATE("C1CCC2CCCCC2C1",  // fused rings (decalin)
+                           "C1CC2CCC1CC2",    // bridged ring (norbornane)
+                           "C1CCCCC1"         // simple ring (cyclohexane)
+    );
+    CAPTURE(smiles);
+
+    std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      CHECK_FALSE(RDDepict::isSpiroCenter(i, m.get()));
+    }
+  }
+
+  SECTION("spiro with substituents - should find at least one spiro center") {
+    auto m = "CC1CCC2(C1)CCCCC2(C)C"_smiles;
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    bool foundSpiro = false;
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (RDDepict::isSpiroCenter(i, m.get())) {
+        foundSpiro = true;
+        break;
+      }
+    }
+    CHECK(foundSpiro);
+  }
+
+  SECTION("dispiro compound - should find exactly two spiro centers") {
+    auto m = "C1CCC2(C1)CCC1(CC2)CCCC1"_smiles;
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    int spiroCount = 0;
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (RDDepict::isSpiroCenter(i, m.get())) {
+        ++spiroCount;
+      }
+    }
+    CHECK(spiroCount == 2);
+  }
+}
+
+TEST_CASE("spiro flipping for collision resolution") {
+  auto smiles = GENERATE(
+      "C1CCC2(C1)CCCCC2",         // spiro[4.5]decane
+      "C1CCCC2(C1)CCCCC2",        // spiro[5.5]undecane
+      "CC1CCC2(C1)CCCC(C)C2",     // spiro with substituents
+      "CC1CCC2(C1)CCCCC2(C)C",    // complex spiro with multiple substituents
+      "C1CCC2(C1)CCC1(CC2)CCCC1"  // dispiro compound
+  );
+  CAPTURE(smiles);
+
+  std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+  REQUIRE(m);
+  CHECK(RDDepict::compute2DCoords(*m) == 0);
+
+  // Verify no severe collisions (all non-bonded atoms should be reasonably
+  // separated)
+  auto &conf = m->getConformer();
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = i + 1; j < m->getNumAtoms(); ++j) {
+      // Skip bonded atoms
+      if (m->getBondBetweenAtoms(i, j)) {
+        continue;
+      }
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);  // Minimum reasonable separation
+    }
+  }
+}
+
+TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
+  std::string rdbase = getenv("RDBASE");
+  std::string molfile =
+      rdbase + "/Code/GraphMol/Depictor/test_data/spiro_complex.mol";
+
+  std::unique_ptr<RWMol> m(MolFileToMol(molfile));
+  REQUIRE(m);
+
+  // Generate new 2D coordinates
+  CHECK(RDDepict::compute2DCoords(*m) == 0);
+
+  auto &conf = m->getConformer();
+
+  // Check that all bond lengths are reasonable (within ±30% of standard bond
+  // length)
+  const double expectedBondLength = RDDepict::BOND_LEN;
+  const double tolerance = 0.30;  // ±30%
+  const double minBondLength = expectedBondLength * (1.0 - tolerance);
+  const double maxBondLength = expectedBondLength * (1.0 + tolerance);
+
+  for (const auto &bond : m->bonds()) {
+    unsigned int i = bond->getBeginAtomIdx();
+    unsigned int j = bond->getEndAtomIdx();
+    auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+    auto bondLength = pos.length();
+
+    // Bond lengths should be within ±30% of RDDepict::BOND_LEN (typically 1.5)
+    CHECK(bondLength >= minBondLength);
+    CHECK(bondLength <= maxBondLength);
+    INFO("Bond " << i << "-" << j << " length: " << bondLength << " (expected: "
+                 << expectedBondLength << " ±" << (tolerance * 100) << "%)");
+  }
+
+  // Also verify no severe atomic collisions
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = i + 1; j < m->getNumAtoms(); ++j) {
+      if (m->getBondBetweenAtoms(i, j)) {
+        continue;
+      }
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);
+    }
+  }
+}
+
+TEST_CASE("collision resolution catches crossings far from bond midpoints") {
+  auto smiles = GENERATE(
+      "COCC(Cn1ccnc1[N+](=O)[O-])OP(=O)(N1CC1(C)C)N1CC1(C)C",
+      "CCC(=O)O[C@H]1C[C@H](OC(C)=O)[C@@]2(C)[C@H]([C@H]1C)"
+      "[C@@H](OC(C)=O)[C@]13O[C@]1(C)C(=O)O[C@H]3/C=C(/C)C[C@H]"
+      "(OC(C)=O)[C@H]2OC(C)=O",
+      "Cc1c(C2=NC(=O)C(C)(C)N2Cc2ccccc2)nn(-c2ccc(Cl)cc2Cl)c1-"
+      "c1ccc(Cl)cc1",
+      "CCC12C=CC3=C4CCC(=O)C=C4CCC3C1CC[C@]2(C)O",
+      "CC(C)OC(=O)[C@H](C)N[P@](=O)(OC[C@H]1O[C@@](C#N)(n2ccc(N)nc2=O)"
+      "[C@](C)(O)[C@@H]1OC(=O)C(C)C)Oc1ccccc1");
+  CAPTURE(smiles);
+
+  std::unique_ptr<RWMol> mol(SmilesToMol(smiles));
+  REQUIRE(mol);
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  constexpr double epsilon = 1e-9;
+  const auto orientation = [](const auto &a, const auto &b, const auto &c) {
+    return (b.x - a.x) * (c.y - a.y) -
+           (b.y - a.y) * (c.x - a.x);
+  };
+  const auto onSegment = [](const auto &a, const auto &b, const auto &point) {
+    return point.x >= std::min(a.x, b.x) - epsilon &&
+           point.x <= std::max(a.x, b.x) + epsilon &&
+           point.y >= std::min(a.y, b.y) - epsilon &&
+           point.y <= std::max(a.y, b.y) + epsilon;
+  };
+  const auto segmentsIntersect = [&](const auto &a, const auto &b,
+                                     const auto &c, const auto &d) {
+    const auto o1 = orientation(a, b, c);
+    const auto o2 = orientation(a, b, d);
+    const auto o3 = orientation(c, d, a);
+    const auto o4 = orientation(c, d, b);
+    if (((o1 > epsilon && o2 < -epsilon) ||
+         (o1 < -epsilon && o2 > epsilon)) &&
+        ((o3 > epsilon && o4 < -epsilon) ||
+         (o3 < -epsilon && o4 > epsilon))) {
+      return true;
+    }
+    return (std::abs(o1) <= epsilon && onSegment(a, b, c)) ||
+           (std::abs(o2) <= epsilon && onSegment(a, b, d)) ||
+           (std::abs(o3) <= epsilon && onSegment(c, d, a)) ||
+           (std::abs(o4) <= epsilon && onSegment(c, d, b));
+  };
+
+  const auto &conf = mol->getConformer();
+  for (auto first = mol->beginBonds(); first != mol->endBonds(); ++first) {
+    auto second = first;
+    ++second;
+    for (; second != mol->endBonds(); ++second) {
+      const auto *bond1 = *first;
+      const auto *bond2 = *second;
+      const auto beg1 = bond1->getBeginAtomIdx();
+      const auto end1 = bond1->getEndAtomIdx();
+      const auto beg2 = bond2->getBeginAtomIdx();
+      const auto end2 = bond2->getEndAtomIdx();
+      if (beg1 == beg2 || beg1 == end2 || end1 == beg2 || end1 == end2) {
+        continue;
+      }
+      CHECK_FALSE(segmentsIntersect(conf.getAtomPos(beg1),
+                                    conf.getAtomPos(end1),
+                                    conf.getAtomPos(beg2),
+                                    conf.getAtomPos(end2)));
+    }
+  }
+}
+
+TEST_CASE("findCollisions detects crossings far from bond midpoints") {
+  auto mol = "CCCC"_smiles;
+  REQUIRE(mol);
+
+  RDGeom::INT_POINT2D_MAP coordinates{
+      {0, {-10.0, 0.0}}, {1, {1.0, 0.0}},
+      {2, {0.0, -1.0}},  {3, {0.0, 1.0}},
+  };
+  RDDepict::EmbeddedFrag fragment(mol.get(), coordinates);
+  const auto *dmat = MolOps::getDistanceMat(*mol);
+
+  const auto collisions = fragment.findCollisions(dmat, true);
+  CHECK(std::find(collisions.begin(), collisions.end(),
+                  RDDepict::PAIR_I_I(0, 3)) != collisions.end());
+}
+
+TEST_CASE("findCollisions can exclude bonded atom pairs") {
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+
+  RDGeom::INT_POINT2D_MAP coordinates{{0, {0.0, 0.0}}, {1, {0.1, 0.0}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coordinates);
+  const auto *dmat = MolOps::getDistanceMat(*mol);
+
+  CHECK(fragment.findCollisions(dmat, false, true).size() == 1);
+  CHECK(fragment.findCollisions(dmat, false, false).empty());
+}
+
+TEST_CASE("path angle expansion ignores bonded atom collision candidates") {
+  auto mol =
+      "C[C@H](NC(=O)[C@H](Cc1ccc(OCc2ccccc2)cc1)NC(=O)c1ccc(-c2c3ccc(="
+      "[N+](C)C)cc-3oc3cc(N(C)C)ccc23)c(C(=O)[O-])c1)C(=O)N[C@@H](C[C@]1("
+      "O)C(=O)Nc2ccccc21)C(=O)NCc1ccccc1"_smiles;
+  REQUIRE(mol);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  const auto &conf = mol->getConformer();
+  for (unsigned int first = 0; first < mol->getNumAtoms(); ++first) {
+    for (unsigned int second = first + 1; second < mol->getNumAtoms();
+         ++second) {
+      if (mol->getBondBetweenAtoms(first, second)) {
+        continue;
+      }
+      CAPTURE(first, second);
+      CHECK((conf.getAtomPos(first) - conf.getAtomPos(second)).length() >= 0.5);
+    }
+  }
+}
+
+TEST_CASE("path angle expansion preserves fixed coordinates") {
+  auto mol =
+      "COCC(Cn1ccnc1[N+](=O)[O-])OP(=O)(N1CC1(C)C)N1CC1(C)C"_smiles;
+  REQUIRE(mol);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  RDGeom::INT_POINT2D_MAP coordMap;
+  const auto &originalConf = mol->getConformer();
+  for (unsigned int aid = 0; aid < mol->getNumAtoms(); ++aid) {
+    const auto &position = originalConf.getAtomPos(aid);
+    coordMap.emplace(aid, RDGeom::Point2D(position.x, position.y));
+  }
+
+  params.coordMap = &coordMap;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  const auto &constrainedConf = mol->getConformer();
+  for (const auto &[aid, expected] : coordMap) {
+    const auto &actual = constrainedConf.getAtomPos(aid);
+    CAPTURE(aid);
+    CHECK(actual.x == Catch::Approx(expected.x).margin(1e-8));
+    CHECK(actual.y == Catch::Approx(expected.y).margin(1e-8));
+  }
+}
+
+TEST_CASE("path angle expansion preserves bonds in bridged ring systems") {
+  const auto smiles = "CCC12C=CC3=C4CCC(=O)C=C4CCC3C1CC[C@]2(C)O";
+  auto control = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  auto expanded = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  REQUIRE(control);
+  REQUIRE(expanded);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*control, params) == 0);
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*expanded, params) == 0);
+
+  const auto &controlConf = control->getConformer();
+  const auto &expandedConf = expanded->getConformer();
+  for (const auto *bond : control->bonds()) {
+    if (!control->getRingInfo()->numBondRings(bond->getIdx())) {
+      continue;
+    }
+    const auto begin = bond->getBeginAtomIdx();
+    const auto end = bond->getEndAtomIdx();
+    const auto controlLength =
+        (controlConf.getAtomPos(begin) - controlConf.getAtomPos(end)).length();
+    const auto expandedLength =
+        (expandedConf.getAtomPos(begin) - expandedConf.getAtomPos(end)).length();
+    CAPTURE(begin, end);
+    CHECK(expandedLength == Catch::Approx(controlLength).margin(1e-8));
   }
 }

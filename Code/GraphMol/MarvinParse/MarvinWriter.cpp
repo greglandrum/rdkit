@@ -37,7 +37,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
-#include <RDGeneral/LocaleSwitcher.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
@@ -646,8 +645,7 @@ class MarvinCMLWriter {
           marvinDataSgroup->molID = 'm' + std::to_string(++tempMolCount);
           if (!sgroup.getPropIfPresent("FIELDNAME",
                                        marvinDataSgroup->fieldName)) {
-            throw MarvinWriterException(
-                "FIELDNAME not found for a SuperatomSgroup");
+            marvinDataSgroup->fieldName = "";  // FIELDNAME is optional
           }
 
           if (!sgroup.getPropIfPresent("QUERYTYPE",

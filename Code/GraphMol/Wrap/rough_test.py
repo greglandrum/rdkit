@@ -2235,10 +2235,10 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
-    self.assertEqual(ri.AtomRings(), ((0, 3, 2, 1), (4, 3, 2)))
-    self.assertEqual(ri.BondRings(), ((4, 2, 1, 0), (3, 2, 5)))
+    self.assertEqual(ri.AtomRings(), ((2, 3, 4), (0, 1, 2, 3)))
+    self.assertEqual(ri.BondRings(), ((2, 3, 5), (0, 1, 2, 4)))
     self.assertEqual(len(ri.AtomMembers(2)), 2)
-    self.assertEqual(ri.AtomRingSizes(2), (4, 3))
+    self.assertEqual(ri.AtomRingSizes(2), (3, 4))
     self.assertEqual(ri.AtomRingSizes(99), ())
     self.assertTrue(ri.AreAtomsInSameRing(2, 3))
     self.assertFalse(ri.AreAtomsInSameRing(1, 4))
@@ -2252,7 +2252,7 @@ CAS<~>
     self.assertTrue(ri.AreRingsFused(0, 1))
     self.assertTrue(ri.NumFusedBonds(0) == 1)
     self.assertTrue(ri.NumFusedBonds(1) == 1)
-    self.assertEqual(ri.BondRingSizes(2), (4, 3))
+    self.assertEqual(ri.BondRingSizes(2), (3, 4))
     self.assertEqual(ri.BondRingSizes(0), (4, ))
     self.assertEqual(ri.BondRingSizes(99), ())
     self.assertTrue(ri.AreBondsInSameRing(1, 2))
@@ -2263,15 +2263,12 @@ CAS<~>
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 2, 3))
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 3, 4))
 
-    if hasattr(Chem, 'FindRingFamilies'):
-      ri = m.GetRingInfo()
-      self.assertFalse(ri.AreRingFamiliesInitialized())
-      Chem.FindRingFamilies(m)
-      ri = m.GetRingInfo()
-      self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEqual(ri.NumRingFamilies(), 2)
-      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+    # ring families are initialized during symmetrizeSSSR in sanitization
+    ri = m.GetRingInfo()
+    self.assertTrue(ri.AreRingFamiliesInitialized())
+    self.assertEqual(ri.NumRingFamilies(), 2)
+    self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+    self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -3577,6 +3574,10 @@ CAS<~>
     m = Chem.MolFromSmiles('OCCCCN')
     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
+    # duplicate bond indices
+    m = Chem.MolFromSmiles('OCCN')
+    self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, (0, 2, 2)))
+
   def test88QueryAtoms(self):
     from rdkit.Chem import rdqueries
     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
@@ -4717,6 +4718,23 @@ $$$$
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int overflow"])
+
+    self.assertEqual(m.GetName(), "")
+
+    m.SetName("ethane")
+    self.assertEqual(m.GetName(), "ethane")
+    self.assertEqual(m.GetProp("_Name"), "ethane")
+
+    m.SetProp("_Name", "updated name")
+    self.assertEqual(m.GetName(), "updated name")
+
+    m.ClearProp("_Name")
+    self.assertEqual(m.GetName(), "")
+
+    rwm = Chem.RWMol(m)
+    rwm.SetName("editable ethane")
+    self.assertEqual(rwm.GetName(), "editable ethane")
+    self.assertEqual(rwm.GetProp("_Name"), "editable ethane")
 
   def testInvariantException(self):
     m = Chem.MolFromSmiles("C")
@@ -8488,6 +8506,27 @@ M  END
     Chem.CollapseAttachmentPoints(mol, markedOnly=False)
     self.assertEqual(mol.GetNumAtoms(), 2)
 
+  def testIsMarkedAttachmentPoint(self):
+    mol = Chem.MolFromSmiles("CC")
+    mol.GetAtomWithIdx(1).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    attachment = mol.GetAtomWithIdx(2)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+
+    bond = mol.GetBondBetweenAtoms(1, 2)
+    bond.SetBondDir(Chem.BondDir.BEGINWEDGE)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+    self.assertFalse(Chem.IsMarkedAttachmentPoint(mol.GetAtomWithIdx(0)))
+
+    legacy = Chem.MolFromSmiles("*C |$_AP37;$|")
+    self.assertEqual(Chem.ATTACHMENT_POINT_LABEL_PREFIX, "_AP")
+    self.assertEqual(
+      Chem.GetAttachmentPointLabelNumber(legacy.GetAtomWithIdx(0)), 37)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(legacy.GetAtomWithIdx(0)))
+    Chem.CollapseAttachmentPoints(legacy)
+    self.assertEqual(legacy.GetNumAtoms(), 1)
+    self.assertEqual(legacy.GetAtomWithIdx(0).GetIntProp("molAttchpt"), 1)
+
   def testAddStereoAnnotations(self):
     mol = Chem.MolFromSmiles(
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
@@ -8684,6 +8723,42 @@ M  END
     numWedges = sum(1 for b in m.GetBonds()
                     if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
     self.assertEqual(numWedges, 1)
+
+  def testGithub9101(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'rdkit_chunk_boundary_bug.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mols = list(sdSup)
+    self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
+    self.assertTrue(mols[1] != None)
+
+  def testGithub9125(self):
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.DOUBLE)
+
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1, canonical=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
+
+  def testLegacyRingFinding(self):
+    origVal = Chem.GetUseLegacyRingFinding()
+    try:
+      Chem.SetUseLegacyRingFinding(False)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 70)
+
+      Chem.SetUseLegacyRingFinding(True)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 24)
+    finally:
+      Chem.SetUseLegacyRingFinding(origVal)
+
+    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.LEGACY)
+    self.assertEqual(len(rings), 24)
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
+    self.assertEqual(len(rings), 70)
 
 
 if __name__ == '__main__':

@@ -466,8 +466,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
     if (mri == efrags.end()) {
       // we are out of embedded fragments, if there are any
       // non embedded atoms use them to start a fragment
-      auto mrank = static_cast<int>(RDKit::MAX_INT);
-      RDKit::INT_LIST_I mnri;
+      auto mrank = RDKit::MAX_INT;
+      auto mnri = nratms.end();
       for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
         auto rank = atomRanks.at(*nri);
         rank *= mol.getNumAtoms();
@@ -611,13 +611,18 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
           params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
           0.0, params.permuteDeg4Nodes);
     } else {
-      eri.removeCollisionsBondFlip();
+      eri.removeCollisionsBondAndSpiroFlip();
     }
   }
   for (auto &eri : efrags) {
     // if there are any remaining collisions
     eri.removeCollisionsOpenAngles();
     eri.removeCollisionsShortenBonds();
+
+    // Path angle expansion (off by default)
+    if (params.usePathAngleExpansion) {
+      eri.removeCollisionsPathAngleExpansion();
+    }
   }
   if (!params.coordMap || !params.coordMap->size()) {
     if (params.canonOrient && efrags.size()) {

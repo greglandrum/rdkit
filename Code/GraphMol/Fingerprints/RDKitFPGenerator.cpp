@@ -26,7 +26,6 @@
 #include <boost/random.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <climits>
-#include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
@@ -45,10 +44,9 @@ std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   auto *result = new std::vector<std::uint32_t>();
   result->reserve(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128) << 1 |
-                         static_cast<unsigned int>((*atomIt)->getIsAromatic());
+  for (const auto atom : mol.atoms()) {
+    unsigned int aHash = (atom->getAtomicNum() % 128) << 1 |
+                         static_cast<unsigned int>(atom->getIsAromatic());
     result->push_back(aHash);
   }
   return result;
@@ -119,7 +117,7 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
 
 template <typename OutputType>
 void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
@@ -182,9 +180,9 @@ std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *,  // ignoreAtoms
-    const int,                           // confId
-    const AdditionalOutput *,            // additionalOutput
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int,                 // confId
+    const AdditionalOutput *,  // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
@@ -198,9 +196,18 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
+
+  boost::dynamic_bitset<> ignoreAtomsBitset;
+  if (ignoreAtoms) {
+    ignoreAtomsBitset.resize(mol.getNumAtoms());
+    std::ranges::for_each(*ignoreAtoms, [&](const auto atomIdx) {
+      ignoreAtomsBitset.set(atomIdx);
+    });
+  }
   RDKitFPUtils::enumerateAllPaths(
       mol, allPaths, fromAtoms, fpArguments->df_branchedPaths,
-      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath);
+      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath,
+      ignoreAtoms ? &ignoreAtomsBitset : nullptr);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);

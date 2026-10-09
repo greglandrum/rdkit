@@ -594,7 +594,7 @@ TEST_CASE(
   auto bond1 = m1->getBondWithIdx(1);
   REQUIRE(bond1);
   REQUIRE(bond1->hasQuery());
-  auto splitM1(
+  std::unique_ptr<ROMol> splitM1(
       MolFragmenter::fragmentOnBonds(*m1, std::vector<unsigned int>{1, 5}));
   REQUIRE(splitM1);
   auto nb1 = splitM1->getBondWithIdx(11);
@@ -622,7 +622,7 @@ TEST_CASE(
   auto bond2 = m2->getBondWithIdx(1);
   REQUIRE(bond2);
   REQUIRE(!bond2->hasQuery());
-  auto splitM2(
+  std::unique_ptr<ROMol> splitM2(
       MolFragmenter::fragmentOnBonds(*m2, std::vector<unsigned int>{1}));
   REQUIRE(splitM2);
   auto nb5 = splitM2->getBondWithIdx(5);
@@ -641,8 +641,8 @@ TEST_CASE(
   auto dummyLabels =
       std::vector<std::pair<unsigned int, unsigned int>>{{25, 26}};
   auto newTypes = std::vector<Bond::BondType>{Bond::DOUBLE};
-  auto splitM3(MolFragmenter::fragmentOnBonds(*m3, std::vector<unsigned int>{1},
-                                              true, &dummyLabels, &newTypes));
+  std::unique_ptr<ROMol> splitM3(MolFragmenter::fragmentOnBonds(
+      *m3, std::vector<unsigned int>{1}, true, &dummyLabels, &newTypes));
   REQUIRE(splitM3);
   auto nb7 = splitM3->getBondWithIdx(5);
   REQUIRE(nb7);
@@ -650,6 +650,19 @@ TEST_CASE(
   auto nb8 = splitM3->getBondWithIdx(6);
   REQUIRE(nb8);
   CHECK(!nb8->hasQuery());
+}
+
+TEST_CASE("fragmentOnBonds should not segfault on duplicate bondIndices") {
+  // Basic test
+  auto mol = "NCCO"_smiles;
+  REQUIRE(mol);
+  REQUIRE(mol->getBondWithIdx(0));
+  REQUIRE(mol->getBondWithIdx(2));
+  std::unique_ptr<ROMol> splitMol;
+  CHECK_THROWS_AS(splitMol.reset(MolFragmenter::fragmentOnBonds(
+                      *mol, std::vector<unsigned int>{0, 2, 2})),
+                  ValueErrorException);
+  REQUIRE(!splitMol);
 }
 
 TEST_CASE("align fragments") {
@@ -753,6 +766,107 @@ O      3.100000    0.000000    0.000000
       CHECK_THAT(rap.x, Catch::Matchers::WithinAbs(map.x, 1e-4));
       CHECK_THAT(rap.y, Catch::Matchers::WithinAbs(map.y, 1e-4));
       CHECK_THAT(rap.z, Catch::Matchers::WithinAbs(map.z, 1e-4));
+    }
+  }
+}
+
+TEST_CASE("github #9468") {
+  SECTION("as reported") {
+    auto m = "CCCCC(=O)N1CCCC1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds{{0, 1, 2, 3}};
+    bool addDummies = false;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == m->getNumAtoms());
+    CHECK(res->getAtomWithIdx(0)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(1)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(2)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(3)->getTotalNumHs() == 4);
+  }
+  SECTION("aromaticity") {
+    auto m = "Cn1cccc1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds = {0};
+    bool addDummies = false;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == m->getNumAtoms());
+    CHECK(res->getAtomWithIdx(0)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(1)->getTotalNumHs() == 1);
+    CHECK(res->getAtomWithIdx(1)->getNumExplicitHs() == 1);
+  }
+  SECTION("no changes to H counts if dummies are added") {
+    auto m = "CCCCC(=O)N1CCCC1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds{{0, 1, 2, 3}};
+    bool addDummies = true;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() > m->getNumAtoms());
+    for (unsigned int i = 0; i < 4; ++i) {
+      CHECK(res->getAtomWithIdx(i)->getTotalNumHs() ==
+            m->getAtomWithIdx(i)->getTotalNumHs());
+    }
+    // make sure dummies have implicit props too
+    for (unsigned int i = m->getNumAtoms(); i < res->getNumAtoms(); ++i) {
+      CHECK(res->getAtomWithIdx(i)->getTotalNumHs() == 0);
+    }
+  }
+  SECTION("test case from Rachel Walker") {
+    auto mol = "c1ccccc1CC"_smiles;
+    REQUIRE(mol);
+    const auto *coreBond = mol->getBondBetweenAtoms(5, 6);
+    const auto *sidechainBond = mol->getBondBetweenAtoms(6, 7);
+    REQUIRE(coreBond);
+    REQUIRE(sidechainBond);
+    bool addDummies = false;
+    std::unique_ptr<ROMol> splitMol(MolFragmenter::fragmentOnBonds(
+        *mol, {coreBond->getIdx(), sidechainBond->getIdx()}, addDummies));
+    REQUIRE(splitMol);
+    CHECK(splitMol->getAtomWithIdx(5)->getTotalNumHs() == 1);
+    CHECK(splitMol->getAtomWithIdx(6)->getTotalNumHs() == 4);
+    CHECK(splitMol->getAtomWithIdx(7)->getTotalNumHs() == 4);
+  }
+  SECTION("breaking double bonds") {
+    auto mol = "C=CC"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> bonds{0};
+    {
+      bool addDummies = false;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+      CHECK(splitMol->getAtomWithIdx(0)->getTotalNumHs() == 4);
+      CHECK(splitMol->getAtomWithIdx(1)->getTotalNumHs() == 3);
+    }
+    {
+      bool addDummies = true;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+      CHECK(splitMol->getAtomWithIdx(0)->getTotalNumHs() == 2);
+      CHECK(splitMol->getAtomWithIdx(1)->getTotalNumHs() == 1);
+    }
+  }
+  SECTION("breaking multiple bonds with NoImplicit") {
+    // The brackets are totally redundant here, but they are required
+    // to trigger the issue
+    auto mol = "C[C](C)(C)C"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> bonds{0, 1};
+    {
+      bool addDummies = false;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+
+      auto atom = splitMol->getAtomWithIdx(1);
+      CHECK(atom->getTotalNumHs() == 2);
+      CHECK(atom->getNoImplicit() == true);
     }
   }
 }

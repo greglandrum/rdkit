@@ -145,17 +145,17 @@ void addQuery(const Q &query, bj::object &bjQuery,
     bjQuery["subquery"] = subquery;
   } else {
     auto qdetails = PicklerOps::getQueryDetails(&query);
-    switch (qdetails.which()) {
+    switch (qdetails.index()) {
       case 0:
-        bjQuery["tag"] = boost::get<MolPickler::Tags>(qdetails);
+        bjQuery["tag"] = std::get<MolPickler::Tags>(qdetails);
         break;
       case 1: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         bjQuery["tag"] = std::get<0>(v);
         bjQuery["val"] = std::get<1>(v);
       } break;
       case 2: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
             qdetails);
         bjQuery["tag"] = std::get<0>(v);
         bjQuery["val"] = std::get<1>(v);
@@ -164,7 +164,7 @@ void addQuery(const Q &query, bj::object &bjQuery,
         }
       } break;
       case 3: {
-        auto v = boost::get<
+        auto v = std::get<
             std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
             qdetails);
         bjQuery["tag"] = std::get<0>(v);
@@ -176,7 +176,7 @@ void addQuery(const Q &query, bj::object &bjQuery,
         bjQuery["ends"] = std::get<4>(v);
       } break;
       case 4: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
             qdetails);
         bjQuery["tag"] = std::get<0>(v);
         const auto &tset = std::get<1>(v);
@@ -245,9 +245,9 @@ void addBond(const Bond &bond, bj::object &bjBond, const bj::object &bjDefaults,
 template <typename T>
 void addProperties(const T &obj, const std::vector<std::string> &propNames,
                    bj::object &properties) {
-  const auto &data = obj.getDict().getData();
+  const auto &rd_dict = obj.getDict();
 
-  for (auto &rdvalue : data) {
+  for (const auto &rdvalue : rd_dict) {
     if (std::find(propNames.begin(), propNames.end(), rdvalue.key) ==
         propNames.end()) {
       continue;

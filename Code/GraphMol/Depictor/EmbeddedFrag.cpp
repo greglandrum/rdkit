@@ -20,8 +20,11 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"
-#include <list>
 #include <algorithm>
+#include <ranges>
+#include <unordered_map>
+#include <unordered_set>
+#include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -106,20 +109,29 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   PRECONDITION(aid < dp_mol->getNumAtoms(), "");
 
   PRECONDITION(doneNbrs.size() >= 3, "");
-  // we will find all the inter nbr angles, pick the one with the largest angle
-  // make those neighbors the nbr1 and nbr2 of aid
-  std::list<DOUBLE_INT_PAIR> anglePairs;
-  double ang;
-  for (auto nbi1 = doneNbrs.begin(); nbi1 != doneNbrs.end(); ++nbi1) {
-    auto nbi3 = nbi1;
-    for (auto nbi2 = nbi3++; nbi2 != doneNbrs.end(); ++nbi2) {
-      ang = computeAngle(d_eatoms[aid].loc, d_eatoms[*nbi1].loc,
-                         d_eatoms[*nbi2].loc);
-      auto nbrPair = std::make_pair((*nbi1), (*nbi2));
-      anglePairs.emplace_back(ang, nbrPair);
-    }
+  // Consecutive bond directions bound gaps containing no other bond from aid.
+  // Pairwise angles are limited to pi and can instead span existing bonds when
+  // the gap around a bridgehead is larger than a semicircle.
+  std::vector<std::pair<double, int>> directions;
+  directions.reserve(doneNbrs.size());
+  for (auto nbr : doneNbrs) {
+    const auto delta = d_eatoms[nbr].loc - d_eatoms[aid].loc;
+    directions.emplace_back(std::atan2(delta.y, delta.x), nbr);
   }
-  anglePairs.sort([](auto pr1, auto pr2) { return pr1.first < pr2.first; });
+  std::sort(directions.begin(), directions.end());
+
+  std::vector<DOUBLE_INT_PAIR> anglePairs;
+  anglePairs.reserve(directions.size());
+  for (size_t i = 0; i < directions.size(); ++i) {
+    const auto &start = directions[i];
+    const auto &end = directions[(i + 1) % directions.size()];
+    auto angle = end.first - start.first;
+    if (i + 1 == directions.size()) {
+      angle += 2 * M_PI;
+    }
+    anglePairs.emplace_back(angle, std::make_pair(start.second, end.second));
+  }
+  std::sort(anglePairs.begin(), anglePairs.end());
 
   // more pain, more pain we unfortunately cannot right away pick the largest
   // angle - it is possible that we pick an angle that is in a fused ring - see
@@ -138,7 +150,7 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   //  by checking that both our neighbors are not involved in more than one
   //  ring. Bridged systems - don't even go there
   auto winner = anglePairs.back();
-  for (auto pr : boost::adaptors::reverse(anglePairs)) {
+  for (const auto &pr : boost::adaptors::reverse(anglePairs)) {
     if ((dp_mol->getRingInfo()->numAtomRings(pr.second.first) <= 1) &&
         (dp_mol->getRingInfo()->numAtomRings(pr.second.second) <= 1)) {
       winner = pr;
@@ -146,40 +158,12 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
     }
   }
 
-  auto winPair = winner.second;
-  auto wnb1 = winPair.first;
-  auto wnb2 = winPair.second;
-
-  // now find the smallest angle that contains one of these nbrs
-  int nb2 = -1, nb1 = -1;
-  for (auto anglePair : anglePairs) {
-    auto nbrPair = anglePair.second;
-    if (wnb1 == nbrPair.first) {
-      nb2 = wnb1;
-      nb1 = nbrPair.second;
-      break;
-    } else if (wnb1 == nbrPair.second) {
-      nb2 = wnb1;
-      nb1 = nbrPair.first;
-      break;
-    } else if (wnb2 == nbrPair.first) {
-      nb2 = wnb2;
-      nb1 = nbrPair.second;
-      break;
-    } else if (wnb2 == nbrPair.second) {
-      nb2 = wnb2;
-      nb1 = nbrPair.first;
-      break;
-    }
-  }
-
-  // now find the rotation between nb1 and nb2
-  auto wAng = winner.first;
-  d_eatoms[aid].rotDir = rotationDir(d_eatoms[aid].loc, d_eatoms[nb1].loc,
-                                     d_eatoms[nb2].loc, wAng);
-  d_eatoms[aid].nbr1 = nb1;
-  d_eatoms[aid].nbr2 = nb2;
-  d_eatoms[aid].angle = 2 * M_PI - wAng;
+  // New neighbors are placed by rotating nbr2 towards nbr1 through the gap.
+  // Its direction is known, including for gaps larger than pi.
+  d_eatoms[aid].rotDir = 1;
+  d_eatoms[aid].nbr1 = winner.second.second;
+  d_eatoms[aid].nbr2 = winner.second.first;
+  d_eatoms[aid].angle = 2 * M_PI - winner.first;
 }
 
 // constructor to embed a cis/trans system
@@ -452,8 +436,7 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                                   unsigned int ring_count) {
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
   CoordinateTemplates &coordinate_templates =
       CoordinateTemplates::getRingSystemTemplates();
 
@@ -494,8 +477,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
-      continue;
-    } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
     // also check if the mol atoms have the same connectivity as the template
@@ -629,9 +610,12 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
-  if (useRingTemplates && fusedRings.size() > 1) {
+  // For single rings, only use templates for macrocycles (size > 8)
+  if (useRingTemplates &&
+      (fusedRings.size() > 1 ||
+       (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
     RDKit::Union(fusedRings, funion);
-    bool found_template = matchToTemplate(funion, fusedRings.size());
+    bool found_template = matchToTemplate(funion);
     if (found_template) {
       // we are done
       return;
@@ -653,7 +637,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
-      bool found_template = matchToTemplate(funion, coreRings.size());
+      bool found_template = matchToTemplate(funion);
       if (found_template) {
         doneRings = coreRingsIds;
       }
@@ -957,7 +941,8 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
 
   const auto &nb1 = d_eatoms.at(refAtom.nbr1).loc;
   const auto &nb2 = d_eatoms.at(refAtom.nbr2).loc;
-  if (d_eatoms[toAid].rotDir == 0) {
+  const auto canChooseDirection = refAtom.rotDir == 0;
+  if (canChooseDirection) {
     d_eatoms[toAid].rotDir = rotationDir(refLoc, nb1, nb2, remAngle);
   }
 
@@ -967,13 +952,15 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   rtrans.SetTransform(refLoc, currAngle);
   auto currLoc = nb2;
   rtrans.TransformPoint(currLoc);
-  if (fabs(remAngle) - M_PI < 1e-3) {
+  // Either direction is valid only for an unassigned half-plane. Once a gap
+  // has been selected, reversing would place the atom outside that gap.
+  if (canChooseDirection && std::abs(remAngle - M_PI) < 1e-3) {
     auto currLoc2 = nb2;
     rtrans.SetTransform(refLoc, -currAngle);
     rtrans.TransformPoint(currLoc2);
     if (findNumNeigh(currLoc, 0.5) > findNumNeigh(currLoc2, 0.5)) {
       currLoc = currLoc2;
-      currAngle *= -1;
+      d_eatoms[toAid].rotDir *= -1;
     } else {
       rtrans.SetTransform(refLoc, currAngle);
     }
@@ -1443,30 +1430,108 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
   return;
 }
 
+std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
+                                                     const RDKit::ROMol *mol) {
+  PRECONDITION(mol, "");
+  std::vector<RDKit::INT_VECT> result;
+  const auto &atomRings = mol->getRingInfo()->atomRings();
+
+  // Collect the 2 rings containing this spiro atom
+  for (const auto &ring : atomRings) {
+    if (std::find(ring.begin(), ring.end(), static_cast<int>(spiroAid)) !=
+        ring.end()) {
+      result.push_back(ring);
+    }
+  }
+
+  POSTCONDITION(result.size() == 2, "Spiro must have exactly 2 rings");
+  return result;
+}
+
 double _crossVal(const RDGeom::Point2D &v1, const RDGeom::Point2D &v2) {
   return v1.x * v2.y - v2.x * v1.y;
 }
+
+namespace {
+constexpr double SEGMENT_INTERSECTION_EPSILON = 1e-6;
+
+double _orientation(const RDGeom::Point2D &a, const RDGeom::Point2D &b,
+                    const RDGeom::Point2D &c) {
+  return _crossVal(b - a, c - a);
+}
+
+bool _pointOnSegment(const RDGeom::Point2D &a, const RDGeom::Point2D &b,
+                     const RDGeom::Point2D &point) {
+  return std::abs(_orientation(a, b, point)) <=
+             SEGMENT_INTERSECTION_EPSILON &&
+         point.x >= std::min(a.x, b.x) - SEGMENT_INTERSECTION_EPSILON &&
+         point.x <= std::max(a.x, b.x) + SEGMENT_INTERSECTION_EPSILON &&
+         point.y >= std::min(a.y, b.y) - SEGMENT_INTERSECTION_EPSILON &&
+         point.y <= std::max(a.y, b.y) + SEGMENT_INTERSECTION_EPSILON;
+}
+
+bool _segmentsIntersect(const RDGeom::Point2D &a,
+                        const RDGeom::Point2D &b,
+                        const RDGeom::Point2D &c,
+                        const RDGeom::Point2D &d) {
+  // Axis-aligned bounding boxes are a cheap, geometry-safe prefilter: two
+  // intersecting segments must have overlapping projections on both axes.
+  if (std::max(a.x, b.x) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(c.x, d.x) ||
+      std::max(c.x, d.x) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(a.x, b.x) ||
+      std::max(a.y, b.y) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(c.y, d.y) ||
+      std::max(c.y, d.y) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(a.y, b.y)) {
+    return false;
+  }
+
+  const auto o1 = _orientation(a, b, c);
+  const auto o2 = _orientation(a, b, d);
+  const auto o3 = _orientation(c, d, a);
+  const auto o4 = _orientation(c, d, b);
+  const bool firstStraddles =
+      (o1 > SEGMENT_INTERSECTION_EPSILON &&
+       o2 < -SEGMENT_INTERSECTION_EPSILON) ||
+      (o1 < -SEGMENT_INTERSECTION_EPSILON &&
+       o2 > SEGMENT_INTERSECTION_EPSILON);
+  const bool secondStraddles =
+      (o3 > SEGMENT_INTERSECTION_EPSILON &&
+       o4 < -SEGMENT_INTERSECTION_EPSILON) ||
+      (o3 < -SEGMENT_INTERSECTION_EPSILON &&
+       o4 > SEGMENT_INTERSECTION_EPSILON);
+  if (firstStraddles && secondStraddles) {
+    return true;
+  }
+
+  // Also treat collinear overlap and non-adjacent endpoint contact as bond
+  // collisions. Bonds sharing an atom are excluded by the caller.
+  return _pointOnSegment(a, b, c) || _pointOnSegment(a, b, d) ||
+         _pointOnSegment(c, d, a) || _pointOnSegment(c, d, b);
+}
+}  // namespace
 
 int _pairDIICompAscending(const PAIR_D_I_I &arg1, const PAIR_D_I_I &arg2) {
   return (arg1.first < arg2.first);
 }
 
-PAIR_I_I _findClosestPair(unsigned int beg1, unsigned int end1,
-                          unsigned int beg2, unsigned int end2,
-                          const RDKit::ROMol &mol, const double *dmat) {
+PAIR_I_I _findFarthestPair(unsigned int beg1, unsigned int end1,
+                           unsigned int beg2, unsigned int end2,
+                           const RDKit::ROMol &mol, const double *dmat) {
   auto na = mol.getNumAtoms();
   auto d1 = dmat[beg1 * na + beg2];
   auto d2 = dmat[beg1 * na + end2];
   auto d3 = dmat[end1 * na + beg2];
   auto d4 = dmat[end1 * na + end2];
-  auto minPr =
-      std::min(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)),
+  auto maxPr =
+      std::max(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)),
                PAIR_D_I_I(d2, PAIR_I_I(beg1, end2)), _pairDIICompAscending);
-  minPr = std::min(minPr, PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)),
+  maxPr = std::max(maxPr, PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)),
                    _pairDIICompAscending);
-  minPr = std::min(minPr, PAIR_D_I_I(d4, PAIR_I_I(end1, end2)),
+  maxPr = std::max(maxPr, PAIR_D_I_I(d4, PAIR_I_I(end1, end2)),
                    _pairDIICompAscending);
-  return minPr.second;
+  return maxPr.second;
 }
 
 void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
@@ -1573,7 +1638,20 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     const DOUBLE_SMART_PTR *dmat, double mimicDmatWt, bool permuteDeg4Nodes) {
   PRECONDITION(dp_mol, "");
 
-  const auto &rotBonds = getAllRotatableBonds(*dp_mol);
+  const auto &allRotBonds = getAllRotatableBonds(*dp_mol);
+
+  // Filter to only include bonds where BOTH atoms are in this fragment
+  RDKit::INT_VECT rotBonds;
+  for (auto bid : allRotBonds) {
+    auto bond = dp_mol->getBondWithIdx(bid);
+    auto aid1 = bond->getBeginAtomIdx();
+    auto aid2 = bond->getEndAtomIdx();
+    if (d_eatoms.find(aid1) != d_eatoms.end() &&
+        d_eatoms.find(aid2) != d_eatoms.end()) {
+      rotBonds.push_back(bid);
+    }
+  }
+
   auto nb = rotBonds.size();  // number of rotatable bonds that can be flipped
 
   // if we also want to permute deg 4 nodes, find out how many of these are
@@ -1612,6 +1690,11 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
   unsigned int nt = nb + nd4;
 
   unsigned int nPerSample = std::min(nt, nBondsPerSample);
+
+  // Early exit if nothing to flip
+  if (nt == 0) {
+    return;
+  }
 
   auto &generator = RDKit::getRandomGenerator();
   if (seed > 0) {
@@ -1675,7 +1758,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
 }
 
 std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
-                                                   bool includeBonds) {
+                                                   bool includeBonds,
+                                                   bool includeBondedAtoms) {
   // find a pair of atoms that are too close to each other
   std::vector<PAIR_I_I> res;
   for (auto &d_eatom : d_eatoms) {
@@ -1708,7 +1792,9 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
         efj->second.d_density += 1000.0;
       }
       d2 /= (atomTypeFactor1 * atomTypeFactor2);
-      if (d2 < colThres2) {
+      if (d2 < colThres2 &&
+          (includeBondedAtoms ||
+           !dp_mol->getBondBetweenAtoms(efi->first, efj->first))) {
         PAIR_I_I cAids(efi->first, efj->first);
         res.push_back(cAids);
       }
@@ -1716,16 +1802,12 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
   }
   if (includeBonds) {
     // now find bond collisions
-    double BOND_THRES2 = BOND_THRES * BOND_THRES;
     for (const auto b1 : dp_mol->bonds()) {
       auto bid1 = b1->getIdx();
       auto beg1 = b1->getBeginAtomIdx();
       auto end1 = b1->getEndAtomIdx();
       if ((d_eatoms.find(beg1) != d_eatoms.end()) &&
           (d_eatoms.find(end1) != d_eatoms.end())) {
-        auto v1 = d_eatoms[end1].loc - d_eatoms[beg1].loc;
-        auto avg1 = d_eatoms[end1].loc + d_eatoms[beg1].loc;
-        avg1 *= 0.5;
         for (const auto b2 : dp_mol->bonds()) {
           if (b2->getIdx() <= bid1) {
             continue;
@@ -1733,21 +1815,21 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
 
           auto beg2 = b2->getBeginAtomIdx();
           auto end2 = b2->getEndAtomIdx();
+          if (beg1 == beg2 || beg1 == end2 || end1 == beg2 || end1 == end2) {
+            continue;
+          }
           if ((d_eatoms.find(beg2) != d_eatoms.end()) &&
               (d_eatoms.find(end2) != d_eatoms.end())) {
-            auto avg2 = d_eatoms[end2].loc + d_eatoms[beg2].loc;
-            avg2 *= 0.5;
-            avg2 -= avg1;
-            if (avg2.lengthSq() < 0.5 && avg2.lengthSq() < BOND_THRES2) {
-              auto v2 = d_eatoms[beg2].loc - d_eatoms[beg1].loc;
-              auto v3 = d_eatoms[end2].loc - d_eatoms[beg1].loc;
-              auto valProd = _crossVal(v1, v2) * _crossVal(v1, v3);
-              if (valProd < -1e-6) {
-                // we have a collision, find the closest two atoms
-                auto cAids =
-                    _findClosestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
-                res.push_back(cAids);
-              }
+            if (_segmentsIntersect(d_eatoms[beg1].loc, d_eatoms[end1].loc,
+                                   d_eatoms[beg2].loc,
+                                   d_eatoms[end2].loc)) {
+              // Choose the outermost endpoints of the crossed bonds. The
+              // downstream getRotatableBonds() call deliberately skips the
+              // two outer bonds on this path, so they will not themselves be
+              // flipped; their adjacent bonds remain available as candidates.
+              auto cAids =
+                  _findFarthestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
+              res.push_back(cAids);
             }
           }
         }
@@ -1870,6 +1952,62 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   }
 }
 
+void EmbeddedFrag::flipAboutSpiroCenter(unsigned int spiroAid) {
+  PRECONDITION(dp_mol, "");
+  PRECONDITION(spiroAid < dp_mol->getNumAtoms(), "");
+  // Note: Caller validates spiroAid is a spiro center, no need to check again
+
+  // Get the two rings
+  auto rings = _getRingsForSpiroCenter(spiroAid, dp_mol);
+  CHECK_INVARIANT(rings.size() == 2, "");
+
+  // Always flip the first ring
+  const auto &targetRing = rings[0];
+
+  // Find the two neighbors of the spiro atom that are in the target ring
+  // (must be bonded to the spiro atom, not just in the same ring)
+  std::set<int> targetRingSet(targetRing.begin(), targetRing.end());
+  std::vector<unsigned int> ringNeighbors;
+
+  for (auto nbr : dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(spiroAid))) {
+    unsigned int nbrIdx = nbr->getIdx();
+    if (targetRingSet.contains(nbrIdx)) {
+      ringNeighbors.push_back(nbrIdx);
+    }
+  }
+
+  CHECK_INVARIANT(ringNeighbors.size() == 2,
+                  "Spiro atom should have exactly 2 neighbors in each ring");
+
+  // Recursively collect all atoms on this side of the spiro
+  // (includes the ring, fused rings, and all substituents - DRY approach using
+  // bond flip logic) Start from one neighbor - it will find the other neighbor
+  // through the ring
+  RDKit::INT_VECT atomsToFlip;
+  _recurseAtomOneSide(ringNeighbors[0], spiroAid, dp_mol, atomsToFlip);
+
+  // Define reflection axis: through spiro center and midpoint of its two
+  // neighbors
+  const auto &spiroLoc = d_eatoms.at(spiroAid).loc;
+
+  // Calculate midpoint of the two neighbors
+  const auto &neighbor1Loc = d_eatoms.at(ringNeighbors[0]).loc;
+  const auto &neighbor2Loc = d_eatoms.at(ringNeighbors[1]).loc;
+  RDGeom::Point2D midpoint = (neighbor1Loc + neighbor2Loc) * 0.5;
+
+  // Check for fixed atoms (cannot flip if any atoms are fixed)
+  for (auto aid : atomsToFlip) {
+    if (d_eatoms.at(aid).df_fixed) {
+      return;  // Cannot flip - has fixed atoms
+    }
+  }
+
+  // Reflect all atoms on this side of the spiro (spiro center stays in place)
+  for (auto aid : atomsToFlip) {
+    d_eatoms[aid].Reflect(spiroLoc, midpoint);
+  }
+}
+
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
   auto deg = getDepictDegree(mol->getAtomWithIdx(aid));
@@ -1974,60 +2112,138 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
   }
 }
 
-void EmbeddedFrag::removeCollisionsBondFlip() {
-  // try to remove collisions in a structure by flipping rotatable bonds along
-  // the shortest path between the colliding atoms. we will limit the number of
-  // times we are going to do this since we may fall into spiral where removing
-  // a collision may create a new one
+bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
+    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+    double prevDensity, std::map<int, unsigned int> &doneBonds,
+    const double *dmat) {
+  auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
+
+  for (auto ri : rotBonds) {
+    auto doneBondsRiIt = doneBonds.find(ri);
+    if ((doneBondsRiIt == doneBonds.end()) ||
+        (doneBondsRiIt->second < NUM_BONDS_FLIPS)) {
+      if (doneBondsRiIt == doneBonds.end()) {
+        doneBonds[ri] = 1;
+      } else {
+        doneBondsRiIt->second += 1;
+      }
+
+      flipAboutBond(ri);
+      auto colls = this->findCollisions(dmat);
+      auto newDensity = this->totalDensity();
+      if (colls.size() < ncols) {
+        doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+        return true;
+      } else if (colls.size() == ncols && newDensity < prevDensity) {
+        return true;
+      } else {
+        // we made the wrong move earlier - reject the flip move it back
+        flipAboutBond(ri);
+        // and try the other end:
+        flipAboutBond(ri, false);
+        colls = this->findCollisions(dmat);
+        newDensity = this->totalDensity();
+        if (colls.size() < ncols) {
+          doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+          return true;
+        } else if (colls.size() == ncols && newDensity < prevDensity) {
+          return true;
+        } else {
+          flipAboutBond(ri, false);
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
+    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+    double prevDensity, std::map<int, unsigned int> &doneSpiros,
+    const boost::dynamic_bitset<> &spiroCenters, const double *dmat) {
+  // Find spiro centers on the path using our cached bitset (avoid expensive
+  // re-checks)
+  RDKit::INT_LIST path =
+      RDKit::MolOps::getShortestPath(*dp_mol, cAids.first, cAids.second);
+  std::vector<unsigned int> spiros;
+  for (auto aid : path) {
+    if (spiroCenters.test(aid)) {
+      spiros.push_back(aid);
+    }
+  }
+
+  for (auto spiroAid : spiros) {
+    auto doneSpiroIt = doneSpiros.find(spiroAid);
+
+    // Skip if already flipped NUM_BONDS_FLIPS times
+    if (doneSpiroIt != doneSpiros.end() &&
+        doneSpiroIt->second >= NUM_BONDS_FLIPS) {
+      continue;
+    }
+    // Flip the first ring
+    flipAboutSpiroCenter(spiroAid);
+    auto colls = this->findCollisions(dmat);
+    auto newDensity = this->totalDensity();
+
+    if (colls.size() < ncols) {
+      // Success! Lock this spiro
+      doneSpiros[spiroAid] = NUM_BONDS_FLIPS;
+      return true;
+    } else if (colls.size() == ncols && newDensity < prevDensity) {
+      // Same collisions but better density - keep it
+      if (doneSpiroIt == doneSpiros.end()) {
+        doneSpiros[spiroAid] = 1;
+      } else {
+        doneSpiroIt->second++;
+      }
+      return true;
+    } else {
+      // Didn't help - undo the flip
+      flipAboutSpiroCenter(spiroAid);
+    }
+  }
+  return false;
+}
+
+void EmbeddedFrag::removeCollisionsBondAndSpiroFlip() {
+  // Pre-compute which atoms are spiro centers (expensive check, so cache it)
+  boost::dynamic_bitset<> spiroCenters(dp_mol->getNumAtoms());
+  for (unsigned int aid = 0; aid < dp_mol->getNumAtoms(); ++aid) {
+    if (isSpiroCenter(aid, dp_mol)) {
+      spiroCenters.set(aid);
+    }
+  }
+
+  // try to remove collisions in a structure by flipping rotatable bonds and
+  // spiro centers along the shortest path between the colliding atoms. we will
+  // limit the number of times we are going to do this since we may fall into
+  // spiral where removing a collision may create a new one
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   auto colls = this->findCollisions(dmat);
   std::map<int, unsigned int> doneBonds;
+  std::map<int, unsigned int> doneSpiros;
   unsigned int iter = 0;
+
   while (iter < MAX_COLL_ITERS && colls.size()) {
     auto ncols = colls.size();
     if (ncols > 0) {
       // we have a collision
       auto cAids = colls[0];
-      auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
       auto prevDensity = this->totalDensity();
-      for (auto ri : rotBonds) {
-        auto doneBondsRiIt = doneBonds.find(ri);
-        if ((doneBondsRiIt == doneBonds.end()) ||
-            (doneBondsRiIt->second < NUM_BONDS_FLIPS)) {
-          if (doneBondsRiIt == doneBonds.end()) {
-            doneBonds[ri] = 1;
-          } else {
-            doneBondsRiIt->second += 1;
-          }
+      bool resolved = false;
 
-          flipAboutBond(ri);
-          colls = this->findCollisions(dmat);
-          auto newDensity = this->totalDensity();
-          if (colls.size() < ncols) {
-            doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
-            break;
-          } else if (colls.size() == ncols && newDensity < prevDensity) {
-            break;
-          } else {
-            // we made the wrong move earlier - reject the flip move it back
-            flipAboutBond(ri);
-            colls = this->findCollisions(dmat);
-            // and try the other end:
-            flipAboutBond(ri, false);
-            colls = this->findCollisions(dmat);
-            newDensity = this->totalDensity();
-            if (colls.size() < ncols) {
-              doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
-              break;
-            } else if (colls.size() == ncols && newDensity < prevDensity) {
-              break;
-            } else {
-              flipAboutBond(ri, false);
-              colls = this->findCollisions(dmat);
-            }
-          }
-        }
+      // Try bond flipping first
+      resolved = tryResolvingCollisionWithBondFlip(cAids, ncols, prevDensity,
+                                                   doneBonds, dmat);
+
+      // Try spiro flipping if bond flipping didn't resolve the collision
+      if (!resolved) {
+        resolved = tryResolvingCollisionWithSpiroFlip(
+            cAids, ncols, prevDensity, doneSpiros, spiroCenters, dmat);
       }
+
+      // Re-check collisions after flipping
+      colls = this->findCollisions(dmat);
     }
     ++iter;
   }
@@ -2152,4 +2368,366 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
     ++iter;
   }
 }
+
+// ============================================================================
+// Path Angle Expansion Collision Resolution
+// ============================================================================
+
+std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
+                                                       unsigned int sideStart,
+                                                       unsigned int exclude) {
+  //
+  // Use BFS to collect all atoms on one side of a bond/angle.
+  // Starting from sideStart, traverse the molecular graph without
+  // crossing through the center atom or the exclude atom.
+  //
+  // This partitions the molecule into two subgraphs separated by
+  // the bond between sideStart and center.
+  //
+
+  std::vector<unsigned int> result;
+  std::queue<unsigned int> queue;
+  std::unordered_set<unsigned int> visited;
+
+  // Don't cross these atoms
+  visited.insert(center);
+  visited.insert(exclude);
+
+  queue.push(sideStart);
+
+  while (!queue.empty()) {
+    auto current = queue.front();
+    queue.pop();
+
+    if (visited.count(current)) {
+      continue;
+    }
+    visited.insert(current);
+
+    // Only include atoms that have embedded coordinates
+    if (d_eatoms.find(current) != d_eatoms.end()) {
+      result.push_back(current);
+    }
+
+    // Add neighbors to queue
+    auto atom = dp_mol->getAtomWithIdx(current);
+    for (const auto bond : dp_mol->atomBonds(atom)) {
+      auto neighbor = bond->getOtherAtomIdx(current);
+      if (!visited.count(neighbor)) {
+        queue.push(neighbor);
+      }
+    }
+  }
+  return result;
+}
+
+bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
+                                        unsigned int centerAtom,
+                                        unsigned int nextAtom,
+                                        double angleIncrement,
+                                        const double *dmat) {
+  //
+  // Open the angle at centerAtom by rotating one side.
+  //
+  // Key: We want to make the angle LARGER (closer to 180°).
+  // This straightens out the chain and increases separation along the path.
+  //
+  // Try both rotation directions and use the one which actually opens the
+  // angle. This also handles collinear vectors without an arbitrary choice.
+  //
+
+  PRECONDITION(dp_mol, "");
+  PRECONDITION(dmat, "");
+
+  // Get vectors from center to the two neighbors
+  auto v1 = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
+  auto v2 = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
+
+  // Partition atoms into two sides
+  auto atomsSide1 = getAtomsOnSide(centerAtom, prevAtom, nextAtom);
+  auto atomsSide2 = getAtomsOnSide(centerAtom, nextAtom, prevAtom);
+
+  // If the two traversals overlap, there is an alternate path around the
+  // center. Rotating either partial side would distort bonds in that cycle.
+  std::unordered_set<unsigned int> side1Atoms(atomsSide1.begin(),
+                                              atomsSide1.end());
+  if (std::any_of(atomsSide2.begin(), atomsSide2.end(),
+                  [&](auto aid) { return side1Atoms.count(aid); })) {
+    return false;
+  }
+
+  const auto containsFixedAtom = [&](const auto &atoms) {
+    return std::any_of(atoms.begin(), atoms.end(), [&](auto aid) {
+      return d_eatoms.at(aid).df_fixed;
+    });
+  };
+  const auto side1Fixed = containsFixedAtom(atomsSide1);
+  const auto side2Fixed = containsFixedAtom(atomsSide2);
+  if (side1Fixed && side2Fixed) {
+    return false;
+  }
+
+  // Prefer the smaller side, unless that would move a coordinate-constrained
+  // atom. The center is the pivot and is never moved.
+  bool rotateSide1 = side2Fixed ||
+                     (!side1Fixed && atomsSide1.size() < atomsSide2.size());
+  auto &atomsToMove = rotateSide1 ? atomsSide1 : atomsSide2;
+
+  const auto vectorLength = [](const auto &v) {
+    return std::sqrt(v.x * v.x + v.y * v.y);
+  };
+  const auto angleBetween = [&](const auto &a, const auto &b) {
+    const auto denominator = vectorLength(a) * vectorLength(b);
+    if (denominator < 1e-8) {
+      return -1.0;
+    }
+    const auto cosine = std::clamp((a.x * b.x + a.y * b.y) / denominator,
+                                   -1.0, 1.0);
+    return std::acos(cosine);
+  };
+  const auto originalAngle = angleBetween(v1, v2);
+  if (originalAngle < 0.0) {
+    return false;
+  }
+
+  double rotationAngle = 0.0;
+  // Trial-rotate only the adjacent atom in each direction. This is inexpensive
+  // and avoids choosing an arbitrary or angle-closing direction for collinear
+  // and near-180-degree configurations; the selected side is rotated only once
+  // below after an angle-increasing direction has been found.
+  for (const auto candidate : {angleIncrement, -angleIncrement}) {
+    RDGeom::Transform2D trial;
+    trial.SetTransform(d_eatoms[centerAtom].loc, candidate);
+    auto movedPoint = d_eatoms[rotateSide1 ? prevAtom : nextAtom].loc;
+    trial.TransformPoint(movedPoint);
+    const auto movedVector = movedPoint - d_eatoms[centerAtom].loc;
+    const auto fixedVector = rotateSide1 ? v2 : v1;
+    if (angleBetween(movedVector, fixedVector) > originalAngle + 1e-8) {
+      rotationAngle = candidate;
+      break;
+    }
+  }
+  if (rotationAngle == 0.0) {
+    return false;
+  }
+
+  // Apply the rotation
+  RDGeom::Transform2D trans;
+  trans.SetTransform(d_eatoms[centerAtom].loc, rotationAngle);
+
+  for (auto aid : atomsToMove) {
+    trans.TransformPoint(d_eatoms[aid].loc);
+  }
+  return true;
+}
+
+void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
+  //
+  // Path Angle Expansion collision resolution
+  //
+  // Runs after bond flipping, angle opening, and bond shortening.
+  // Works by systematically opening angles along the chain between colliding
+  // atoms.
+  //
+  // Algorithm:
+  //   1. Find shortest path between colliding atoms
+  //   2. Identify expandable angles in the path
+  //   3. Incrementally open angles at these positions
+  //   4. Rotate the smaller fragment on each side
+  //   5. Stop if collision resolved or max expansion reached
+  //
+  // Key constraints:
+  //   - Skip angles where all 3 atoms (prev-center-next) are in SAME ring
+  //   - This preserves ring geometry while allowing ring-chain junction
+  //   expansion
+  //   - Maximum 15° expansion per angle (prevents unrealistic geometries)
+  //   - 5° increments (small steps to detect new collisions early)
+  //   - Revert if expansion makes things worse
+  //
+
+  // OPTIMIZATION: Pre-compute ring membership for each atom
+  // Build a map: atom_id -> ring indices containing that atom
+  std::unordered_map<int, std::unordered_set<int>> atomRings;
+  auto ringInfo = dp_mol->getRingInfo();
+  for (size_t ringIdx = 0; ringIdx < ringInfo->atomRings().size(); ++ringIdx) {
+    const auto &ring = ringInfo->atomRings()[ringIdx];
+    for (auto atomId : ring) {
+      atomRings[atomId].insert(ringIdx);
+    }
+  }
+
+  auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+  // Earlier collision-resolution stages historically treat very short bonds
+  // as collisions. Preserve that behavior there, but do not let a shortened
+  // bond's own endpoints become an actionable clash for path expansion. Work
+  // through atom clashes first, then check bond crossings. Mixing both kinds
+  // in one queue can reject an atom-clash improvement merely because crossings
+  // remain for the second stage.
+  auto findPathAngleCollisions = [&]() {
+    auto collisions = this->findCollisions(dmat, 0, 0);
+    if (collisions.empty()) {
+      collisions = this->findCollisions(dmat, 1, 0);
+    }
+    return collisions;
+  };
+  const auto canonicalCollision = [](const PAIR_I_I &collision) {
+    return PAIR_I_I(std::min(collision.first, collision.second),
+                    std::max(collision.first, collision.second));
+  };
+  struct CollisionHash {
+    std::size_t operator()(const PAIR_I_I &collision) const noexcept {
+      size_t res = 0;
+      boost::hash_combine(res, collision.first);
+      boost::hash_combine(res, collision.second);
+      return res;
+    }
+  };
+  std::unordered_set<PAIR_I_I, CollisionHash> skippedCollisions;
+  auto filterSkippedCollisions = [&](std::vector<PAIR_I_I> collisions) {
+    collisions.erase(
+        std::remove_if(collisions.begin(), collisions.end(),
+                       [&](const auto &collision) {
+                         return skippedCollisions.count(
+                                    canonicalCollision(collision)) != 0;
+                       }),
+        collisions.end());
+    return collisions;
+  };
+  auto allColls = findPathAngleCollisions();
+  auto colls = filterSkippedCollisions(allColls);
+
+  // Track total rotation applied at each angle
+  // Key: (collision pair, atom index), Value: cumulative rotation in radians
+  std::unordered_map<PAIR_I_I, std::unordered_map<unsigned int, double>,
+                     CollisionHash>
+      angleTotals;
+
+  unsigned int iter = 0;
+
+  while (iter < MAX_ANGLE_EXPANSION_ITERS && colls.size()) {
+    auto collision = colls[0];
+    auto aid1 = collision.first;
+    auto aid2 = collision.second;
+
+    // Find shortest path between colliding atoms
+    auto path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
+
+    if (path.size() < 3) {
+      skippedCollisions.insert(canonicalCollision(collision));
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // Find expandable atoms: interior atoms where the angle can be expanded
+    // Skip angles where all three atoms (prev-center-next) are in the SAME ring
+    // This preserves ring geometry while allowing expansion at ring junctions
+    auto pathVec = std::vector<int>(path.begin(), path.end());
+    std::vector<unsigned int> expandablePositions;
+
+    for (size_t i = 1; i < pathVec.size() - 1; ++i) {
+      auto prevAtom = pathVec[i - 1];
+      auto centerAtom = pathVec[i];
+      auto nextAtom = pathVec[i + 1];
+
+      // Check if all three atoms are in the SAME ring using ring membership
+      // lookups.
+      bool allInSameRing = false;
+      if (atomRings.count(prevAtom) && atomRings.count(centerAtom) &&
+          atomRings.count(nextAtom)) {
+        const auto &prevRings = atomRings.at(prevAtom);
+        const auto &centerRings = atomRings.at(centerAtom);
+        const auto &nextRings = atomRings.at(nextAtom);
+        allInSameRing = std::any_of(
+            prevRings.begin(), prevRings.end(), [&](const auto ringIdx) {
+              return centerRings.count(ringIdx) && nextRings.count(ringIdx);
+            });
+      }
+
+      if (allInSameRing) {
+        // All three atoms in same ring - skip to preserve ring geometry
+        continue;
+      }
+
+      expandablePositions.push_back(i);
+    }
+
+    if (expandablePositions.empty()) {
+      skippedCollisions.insert(canonicalCollision(collision));
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // Save state
+    auto prevCollisionCount = allColls.size();
+    std::unordered_map<int, RDGeom::Point2D> savedPositions;
+
+    for (const auto &ea : d_eatoms) {
+      savedPositions[ea.first] = ea.second.loc;
+    }
+
+    // Try expanding each angle by one increment
+    bool anyExpanded = false;
+
+    for (auto pos : expandablePositions) {
+      auto centerAtom = pathVec[pos];
+
+      // Check if this angle has reached maximum expansion
+      if (angleTotals[canonicalCollision(collision)][centerAtom] >=
+          MAX_ANGLE_EXPANSION) {
+        continue;
+      }
+
+      auto prevAtom = pathVec[pos - 1];
+      auto nextAtom = pathVec[pos + 1];
+
+      // Try opening this angle (making it larger, towards 180°)
+      if (openAngleByIncrement(prevAtom, centerAtom, nextAtom,
+                               ANGLE_EXPANSION_INCREMENT, dmat)) {
+        angleTotals[canonicalCollision(collision)][centerAtom] +=
+            ANGLE_EXPANSION_INCREMENT;
+        anyExpanded = true;
+      }
+    }
+
+    if (!anyExpanded) {
+      skippedCollisions.insert(canonicalCollision(collision));
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // OPTIMIZATION: Only recompute distance matrix after atom positions changed
+    dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+
+    // Check if expansion helped or made things worse
+    auto newColls = findPathAngleCollisions();
+
+    // accept if we have fewer or same collisions, otherwise revert
+    if (newColls.size() > prevCollisionCount) {
+      // Created MORE collisions - revert
+
+      // Restore all atom positions
+      for (auto &ea : d_eatoms) {
+        ea.second.loc = savedPositions[ea.first];
+      }
+
+      // Clear rotation tracking for this collision and give up on it
+      angleTotals.erase(canonicalCollision(collision));
+      skippedCollisions.insert(canonicalCollision(collision));
+
+      // OPTIMIZATION: Only recompute if we reverted
+      dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+      allColls = findPathAngleCollisions();
+      colls = filterSkippedCollisions(allColls);
+    } else {
+      allColls = std::move(newColls);
+      colls = filterSkippedCollisions(allColls);
+    }
+    // Otherwise accept (fewer or same collisions)
+    ++iter;
+  }
+}
+
 }  // namespace RDDepict

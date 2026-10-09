@@ -797,6 +797,22 @@ python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
   }
   return python::tuple(res);
 }
+
+python::object MolToCDXMLBlockHelper(
+    const RDKit::ROMol &mol, RDKit::v2::CDXMLParser::CDXMLFormat format) {
+  auto block = RDKit::v2::CDXMLParser::MolToCDXMLBlock(mol, format);
+  // if CDXML return string
+  // if CDX return byteszo
+
+  if (format == RDKit::v2::CDXMLParser::CDXMLFormat::CDX) {
+    PyObject *py_bytes = PyBytes_FromStringAndSize(block.data(), block.size());
+    return python::object(python::handle<>(py_bytes));
+  } else {
+    return python::object(
+        python::handle<>(PyUnicode_FromString(block.c_str())));
+  }
+}
+
 namespace {
 python::object translateMetadataToList(
     const std::vector<std::pair<std::string, std::string>> &metadata) {
@@ -1312,8 +1328,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToMolBlock",
-      (std::string(*)(const ROMol &, const MolWriterParams &,
-                      int))RDKit::MolToMolBlock,
+      (std::string (*)(const ROMol &, const MolWriterParams &,
+                       int))RDKit::MolToMolBlock,
       (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
       docString.c_str());
 
@@ -1335,8 +1351,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToMolBlock",
-              (std::string(*)(const ROMol &, bool, int, bool,
-                              bool))RDKit::MolToMolBlock,
+              (std::string (*)(const ROMol &, bool, int, bool,
+                               bool))RDKit::MolToMolBlock,
               (python::arg("mol"), python::arg("includeStereo") = true,
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("forceV3000") = false),
@@ -1356,8 +1372,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n ";
   python::def(
       "MolToV3KMolBlock",
-      (std::string(*)(const ROMol &, const MolWriterParams &,
-                      int))RDKit::MolToV3KMolBlock,
+      (std::string (*)(const ROMol &, const MolWriterParams &,
+                       int))RDKit::MolToV3KMolBlock,
       (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
       docString.c_str());
 
@@ -1379,7 +1395,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::def(
       "MolToV3KMolBlock",
-      (std::string(*)(const ROMol &, bool, int, bool))RDKit::MolToV3KMolBlock,
+      (std::string (*)(const ROMol &, bool, int, bool))RDKit::MolToV3KMolBlock,
       (python::arg("mol"), python::arg("includeStereo") = true,
        python::arg("confId") = -1, python::arg("kekulize") = true),
       docString.c_str());
@@ -1495,8 +1511,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToMrvBlock",
-              (std::string(*)(const ROMol &, bool, int, bool,
-                              bool))RDKit::MolToMrvBlock,
+              (std::string (*)(const ROMol &, bool, int, bool,
+                               bool))RDKit::MolToMrvBlock,
               (python::arg("mol"), python::arg("includeStereo") = true,
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("prettyPrint") = false),
@@ -1516,8 +1532,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToMrvBlock",
-      (std::string(*)(const ROMol &, const MrvWriterParams &,
-                      int))RDKit::MolToMrvBlock,
+      (std::string (*)(const ROMol &, const MrvWriterParams &,
+                       int))RDKit::MolToMrvBlock,
       (python::arg("mol"), python::arg("params"), python::arg("confId") = -1),
       docString.c_str());
 
@@ -1814,8 +1830,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def("__setattr__", &safeSetattr);
 
   python::def("MolToSmiles",
-              (std::string(*)(const ROMol &,
-                              const SmilesWriteParams &))RDKit::MolToSmiles,
+              (std::string (*)(const ROMol &,
+                               const SmilesWriteParams &))RDKit::MolToSmiles,
               (python::arg("mol"), python::arg("params")),
               "Returns the canonical SMILES string for a molecule");
 
@@ -1849,8 +1865,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToSmiles",
-      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool, bool,
-                      bool))RDKit::MolToSmiles,
+      (std::string (*)(const ROMol &, bool, bool, int, bool, bool, bool, bool,
+                       bool))RDKit::MolToSmiles,
       (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
@@ -1972,8 +1988,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::def(
       "MolToCXSmiles",
-      (std::string(*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
-                      RestoreBondDirOption))RDKit::MolToCXSmiles,
+      (std::string (*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
+                       RestoreBondDirOption))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("params"),
        python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
        python::arg("restoreBondDirs") =
@@ -2007,8 +2023,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToCXSmiles",
-      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool,
-                      bool))RDKit::MolToCXSmiles,
+      (std::string (*)(const ROMol &, bool, bool, int, bool, bool, bool,
+                       bool))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
@@ -2096,7 +2112,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToSmarts",
-              (std::string(*)(const ROMol &, bool, int))RDKit::MolToSmarts,
+              (std::string (*)(const ROMol &, bool, int))RDKit::MolToSmarts,
               (python::arg("mol"), python::arg("isomericSmiles") = true,
                python::arg("rootedAtAtom") = -1),
               docString.c_str());
@@ -2113,8 +2129,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToSmarts",
-              (std::string(*)(const ROMol &,
-                              const SmilesWriteParams &))RDKit::MolToSmarts,
+              (std::string (*)(const ROMol &,
+                               const SmilesWriteParams &))RDKit::MolToSmarts,
               (python::arg("mol"), python::arg("params")), docString.c_str());
 
   docString =
@@ -2150,7 +2166,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToCXSmarts",
-              (std::string(*)(const ROMol &, bool))RDKit::MolToCXSmarts,
+              (std::string (*)(const ROMol &, bool))RDKit::MolToCXSmarts,
               (python::arg("mol"), python::arg("isomericSmiles") = true),
               docString.c_str());
 
@@ -2701,8 +2717,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules",
       python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
-      .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
-          python::args("self", "sanitize", "removeHs", "format")))
+      .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool,
+                        bool>((python::arg("self"), python::arg("sanitize"),
+                               python::arg("removeHs"), python::arg("format"),
+                               python::arg("parseQueries") = false,
+                               python::arg("strictQueryParsing") = false)))
       .def_readwrite("sanitize",
                      &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
                      "controls whether or not the molecule is sanitized before "
@@ -2714,6 +2733,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
+      .def_readwrite(
+        "parseQueries",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
+        "controls whether CDXML query constructs are preserved as query atoms and bonds")
+      .def_readwrite(
+        "strictQueryParsing",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
+        "controls whether unsupported CDXML query constructs raise instead of warning")
       .def("__setattr__", &safeSetattr);
 
   docString =
@@ -2760,6 +2787,37 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::def("MolsFromCDXML", MolsFromCDXMLHelper,
               (python::arg("cdxml"), python::arg("params")), docString.c_str());
+
+  docString =
+      R"DOC(brief write a CDX or CDXML block from a molecule
+
+      The RDKit is optionally built with the Revvity ChemDraw parser
+      If this is available, CDX and CDXML can be written
+        Note that the CDXML format is large and complex, the RDKit doesn't
+        support full functionality, just the base ones required for molecule and
+        reaction parsing.
+
+      Note: If the ChemDraw extensions are unavailable, an exception will be thrown
+       please use the support function HasChemDrawCDXSupport() to check
+       whether ChemDraw writing support is enabled.
+
+      Note: For CDXML this returns a UTF-8 string <str>
+            For CDX this returns a byte sting <bytes>
+
+      ARGUMENTS:
+
+        - mol: the molecule to write
+
+        - format: CDXMLFormat [default CDXML]
+
+      RETURNS:
+        the CDXML or CDX block)DOC";
+
+  python::def(
+      "MolToCDXMLBlock", MolToCDXMLBlockHelper,
+      (python::arg("mol"),
+       python::arg("format") = RDKit::v2::CDXMLParser::CDXMLFormat::CDXML),
+      docString.c_str());
 
   docString = "Returns true if the RDKit is built with ChemDraw CDX support";
   python::def("HasChemDrawCDXSupport",

@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include "DepictUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -28,7 +29,11 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
-  typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
+  typedef enum {
+    UNSPECIFIED = 0,
+    CISTRANS,
+    RING
+  } EAtomType;
 
   EmbeddedAtom() { neighs.clear(); }
 
@@ -52,6 +57,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
       return *this;
     }
 
+    aid = other.aid;
     loc = other.loc;
     angle = other.angle;
     nbr1 = other.nbr1;
@@ -318,10 +324,19 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   */
   void flipAboutBond(unsigned int bondId, bool flipEnd = true);
 
+  //! \brief flip one ring of a spiro compound to resolve collisions
+  /*!
+    \param spiroAid - the spiro center atom index
+  */
+  void flipAboutSpiroCenter(unsigned int spiroAid);
+
   void openAngles(const double *dmat, unsigned int aid1, unsigned int aid2);
 
+  //! Find atom clashes and, optionally, non-adjacent bond intersections.
+  //! Bonded atom pairs can be excluded when shortened bonds are expected.
   std::vector<PAIR_I_I> findCollisions(const double *dmat,
-                                       bool includeBonds = 1);
+                                       bool includeBonds = true,
+                                       bool includeBondedAtoms = true);
 
   void computeDistMat(DOUBLE_SMART_PTR &dmat);
 
@@ -337,9 +352,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 
-  //! Remove collisions in a structure by flipping rotatable bonds
+  //! Remove collisions in a structure by flipping rotatable bonds and spiro centers
   //! along the shortest path between two colliding atoms
-  void removeCollisionsBondFlip();
+  void removeCollisionsBondAndSpiroFlip();
+  
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
@@ -347,6 +364,12 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   //! Remove collisions by shortening bonds along the shortest path between the
   /// atoms
   void removeCollisionsShortenBonds();
+
+  //! Remove collisions by expanding angles along the path between colliding atoms
+  //! Runs after bond flipping, angle opening, and bond shortening.
+  //! Only expands angles where the three atoms (prev-center-next) are NOT all
+  //! in the same ring, preserving ring geometry while allowing ring-chain expansion.
+  void removeCollisionsPathAngleExpansion();
 
   //! helpers functions to
 
@@ -371,9 +394,50 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
  private:
   double totalDensity();
 
+  // Helper methods for collision resolution
+  bool tryResolvingCollisionWithBondFlip(
+      const std::pair<unsigned int, unsigned int> &cAids,
+      unsigned int ncols,
+      double prevDensity,
+      std::map<int, unsigned int> &doneBonds,
+      const double *dmat);
+
+  bool tryResolvingCollisionWithSpiroFlip(
+      const std::pair<unsigned int, unsigned int> &cAids,
+      unsigned int ncols,
+      double prevDensity,
+      std::map<int, unsigned int> &doneSpiros,
+      const boost::dynamic_bitset<> &spiroCenters,
+      const double *dmat);
+
+  // Helper methods for path angle expansion collision resolution
+
+  //! Get all atoms on one side of a bond/angle, using BFS traversal
+  //! \param center - the center atom (pivot point)
+  //! \param sideStart - starting atom on the side to collect
+  //! \param exclude - atom on the opposite side (don't cross to this side)
+  //! \return vector of atom indices on the sideStart side
+  std::vector<unsigned int> getAtomsOnSide(unsigned int center,
+                                            unsigned int sideStart,
+                                            unsigned int exclude);
+
+  //! Open an angle by rotating one side around the center atom
+  //! Makes the angle LARGER (closer to 180°) to expand the chain
+  //! \param prevAtom - first atom forming the angle
+  //! \param centerAtom - center atom (pivot point for rotation)
+  //! \param nextAtom - second atom forming the angle
+  //! \param angleIncrement - amount to open the angle (radians)
+  //! \param dmat - distance matrix (for reference)
+  //! \return true if a side could be rotated without moving fixed atoms or
+  //! distorting a cycle
+  bool openAngleByIncrement(unsigned int prevAtom,
+                            unsigned int centerAtom,
+                            unsigned int nextAtom,
+                            double angleIncrement,
+                            const double *dmat);
+
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                       unsigned int ring_count);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates);

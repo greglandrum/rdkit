@@ -10,6 +10,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <cmath>
 #include <random>
@@ -21,6 +22,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Rings.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -297,7 +299,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
@@ -310,14 +312,11 @@ TEST_CASE("test3") {
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 6);
   BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
-  // VECT_INT_VECT_I ri;
-  // for (ri == bfrs.begin(); ri != bfrs.end(); ri++) {
   for (auto bring : bfrs) {
-    INT_VECT_I mi;
     BOOST_LOG(rdInfoLog) << "( ";
-    // for (mi = (*ri).begin(); mi != (*ri).end(); mi++) {
-    for (mi = bring.begin(); mi != bring.end(); mi++) {
-      BOOST_LOG(rdInfoLog) << " " << (*mi);
+
+    for (const auto &mi : bring) {
+      BOOST_LOG(rdInfoLog) << " " << mi;
     }
     BOOST_LOG(rdInfoLog) << ")\n";
   }
@@ -340,15 +339,19 @@ TEST_CASE("test3") {
   REQUIRE(bfs == 2);
   delete m;
 
-  // Counterexamples in ring perception figure 4:
+  // This was a counterexamples in ring perception figure 4:
   //  * The native Figueras algorithm cannot work on this molecule, it will
   //    fail after finding one ring. Naive modified Figueras finds a 6 membered
   //    ring, which is wrong.
+  // RingDecomposerLib uses an exhaustive search, and finds the correct SSSR,
+  // which Figueras didn't do.
   smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
   m = SmilesToMol(smi, 0, 0);
   bfs = MolOps::findSSSR(*m);
-  REQUIRE(bfs == 7);
+  REQUIRE(bfs == 8);
   bfrs.resize(0);
+  // Running Figueras to find extra rings to be used in Symmetrization
+  // won't find any extra rings, and we keep the ones from the SSSR.
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 8);
   for (auto bring : bfrs) {
@@ -372,8 +375,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 3);
-  REQUIRE(sssr[0].size() == 6);
-  REQUIRE(sssr[1].size() == 5);
+  REQUIRE(sssr[0].size() == 5);
+  REQUIRE(sssr[1].size() == 6);
   REQUIRE(sssr[2].size() == 6);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -413,9 +416,9 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 4);
-  REQUIRE(sssr[0].size() == 6);
+  REQUIRE(sssr[0].size() == 5);
   REQUIRE(sssr[1].size() == 5);
-  REQUIRE(sssr[2].size() == 5);
+  REQUIRE(sssr[2].size() == 6);
   REQUIRE(sssr[3].size() == 6);
   delete m;
 
@@ -424,8 +427,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 2);
-  REQUIRE(sssr[0].size() == 4);
-  REQUIRE(sssr[1].size() == 3);
+  REQUIRE(sssr[0].size() == 3);
+  REQUIRE(sssr[1].size() == 4);
 
   REQUIRE(m->getRingInfo()->numAtomRings(0) == 1);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(0, 4));
@@ -491,6 +494,31 @@ TEST_CASE("test3") {
   REQUIRE(m->getRingInfo()->numAtomRings(4) == 3);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(4, 4));
   delete m;
+}
+
+TEST_CASE("pickFusedRings handles deeply fused systems without recursion") {
+  // Set this to a large number to make sure mols with lots of rings
+  // don't trigger a stack overflow in pickFusedRings.
+  constexpr int numRings = 10000;
+
+  INT_INT_VECT_MAP neighMap;
+  for (int ring = 0; ring < numRings; ++ring) {
+    if (ring) {
+      neighMap[ring].push_back(ring - 1);
+    }
+    if (ring + 1 < numRings) {
+      neighMap[ring].push_back(ring + 1);
+    }
+  }
+
+  INT_VECT fused;
+  boost::dynamic_bitset<> done(numRings);
+  RingUtils::pickFusedRings(0, neighMap, fused, done);
+
+  REQUIRE(fused.size() == numRings);
+  REQUIRE(done.count() == numRings);
+  REQUIRE(fused.front() == 0);
+  REQUIRE(fused.back() == numRings - 1);
 }
 
 TEST_CASE("test4") {
@@ -1570,12 +1598,11 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
   refSmi = MolToSmiles(*m2, 1);
-  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  CHECK(refSmi == R"SMI(C/C(F)=C(C)/C(=C(/C)Cl)C(/F)=C(/C)F)SMI");
   m = SmilesToMol(refSmi);
   REQUIRE(m);
   smi = MolToSmiles(*m, 1);
-  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
-  REQUIRE(refSmi == smi);
+  CHECK(refSmi == smi);
 
   int nEs = 0, nZs = 0, nDbl = 0;
   for (RWMol::BondIterator bondIt = m->beginBonds(); bondIt != m->endBonds();
@@ -1814,21 +1841,21 @@ TEST_CASE("Testing shortest path code") {
 
     INT_LIST path = MolOps::getShortestPath(*m, 1, 20);
     REQUIRE(path.size() == 7);
-    INT_LIST_CI pi = path.begin();
+    auto pi = path.begin();
     REQUIRE((*pi) == 1);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 2);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 3);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 16);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 17);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 18);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 20);
-    pi++;
+    ++pi;
     delete m;
   }
   {
@@ -1839,9 +1866,9 @@ TEST_CASE("Testing shortest path code") {
     INT_LIST path = MolOps::getShortestPath(*m, 0, 1);
     std::cerr << "path: " << path.size() << std::endl;
     REQUIRE(path.size() == 2);
-    INT_LIST_CI pi = path.begin();
+    auto pi = path.begin();
     REQUIRE((*pi) == 0);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 1);
 
     path = MolOps::getShortestPath(*m, 1, 2);
@@ -1858,19 +1885,19 @@ TEST_CASE("Testing shortest path code") {
 
     INT_LIST path = MolOps::getShortestPath(*m, 8, 11);
     REQUIRE(path.size() == 7);
-    INT_LIST_CI pi = path.begin();
+    auto pi = path.begin();
     REQUIRE((*pi) == 8);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 7);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 2);
-    pi++;
-    pi++;  // two equally long routes here
-    pi++;  // two equally long routes here
+    ++pi;
+    ++pi;  // two equally long routes here
+    ++pi;  // two equally long routes here
     REQUIRE((*pi) == 10);
-    pi++;
+    ++pi;
     REQUIRE((*pi) == 11);
-    pi++;
+    ++pi;
     delete m;
   }
 }
@@ -3430,7 +3457,8 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
   REQUIRE(m);
   std::string smi = MolToSmiles(*m, true);
   std::cerr << "smi: " << smi << std::endl;
-  REQUIRE(smi == "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
+  REQUIRE(smi ==
+          R"SMI(Cc1ccc(S(=O)(=O)\N=C2/CC(=N\C(C)(C)C)/C2=N\C(C)(C)C)cc1)SMI");
   delete m;
 }
 
@@ -3891,9 +3919,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[2], mmap[3])->getBondType() ==
             Bond::DOUBLE);
@@ -3927,9 +3954,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[10], mmap[11])->getBondType() ==
             Bond::DOUBLE);
@@ -4057,9 +4083,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[1], mmap[2])->getBondType() ==
             Bond::DOUBLE);
@@ -4086,9 +4111,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[4], mmap[5])->getBondType() ==
             Bond::DOUBLE);
@@ -4133,9 +4157,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
 
     REQUIRE(m2->getBondBetweenAtoms(mmap[1], mmap[2])->getBondType() ==
@@ -4204,9 +4227,8 @@ TEST_CASE("Testing canonicalization basics") {
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
 
     REQUIRE(m2->getBondBetweenAtoms(mmap[21], mmap[13])->getBondType() ==
@@ -4228,9 +4250,8 @@ TEST_CASE("Testing canonicalization basics") {
     m2 = SmilesToMol(tsmi);
     REQUIRE(SubstructMatch(*m, *m2, mv));
     mmap.clear();
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[21], mmap[13])->getBondType() ==
             Bond::DOUBLE);
@@ -4265,9 +4286,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(SubstructMatch(*m, *m2, mv));
     std::map<int, int> mmap;
     mmap.clear();
-    for (MatchVectType::const_iterator mvit = mv.begin(); mvit != mv.end();
-         ++mvit) {
-      mmap[mvit->second] = mvit->first;
+    for (auto &mvit : mv) {
+      mmap[mvit.second] = mvit.first;
     }
     REQUIRE(m2->getBondBetweenAtoms(mmap[1], mmap[2])->getBondType() ==
             Bond::DOUBLE);
@@ -5256,14 +5276,15 @@ TEST_CASE(
     delete m;
   }
   {
-    std::vector<std::string> smilesVec;
-    smilesVec.emplace_back("C1=C[CH+]1");
-    smilesVec.emplace_back("C1=CC=C[CH+]C=C1");
-    smilesVec.emplace_back("c1c[cH+]1");
-    smilesVec.emplace_back("c1ccc[cH+]cc1");
-    for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
-         smiles != smilesVec.end(); ++smiles) {
-      RWMol *m = SmilesToMol(*smiles);
+    constexpr std::array<const char *, 4> testSmiles = {
+        "C1=C[CH+]1",
+        "C1=CC=C[CH+]C=C1",
+        "c1c[cH+]1",
+        "c1ccc[cH+]cc1",
+    };
+    for (const auto &smiles : testSmiles) {
+      CAPTURE(smiles);
+      auto m = SmilesToMol(smiles);
       REQUIRE(m);
       bool allConjugated = true;
       for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i) {
@@ -6384,7 +6405,7 @@ TEST_CASE("Testing github #805 : Pre-condition Violation: bad bond type") {
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getStereo() != Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1CSC(c2cccs2)C\1=[P+](\[O-])OCC)SMI");
+    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1\CSC(c2cccs2)\C1=[P+](\[O-])OCC)SMI");
     delete m;
   }
   {
@@ -6700,7 +6721,7 @@ TEST_CASE(
     sstrm.str("");
     REQUIRE(sstrm.str() == "");
     RWMol m;
-    QueryAtom *qa = new QueryAtom();
+    auto qa = new QueryAtom();
     qa->setQuery(makeAtomTypeQuery(1, aromatic));
     qa->expandQuery(makeAtomNumQuery(6),
                     Queries::CompositeQueryType::COMPOSITE_OR);
@@ -6934,9 +6955,24 @@ TEST_CASE(
       REQUIRE(m);
       REQUIRE(m->getNumAtoms() == 204);
       REQUIRE(m->getNumBonds() == 244);
-      REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
+      // FindSSSR now uses RingDecomposerLib, which doesn't fail on this
+      REQUIRE_NOTHROW(MolOps::findSSSR(*m));
     }
-    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
+    {
+      // symmetrizeSSSR (used in sanitization) has also been updated to the RDL,
+      // so normal sanitization should work too:
+      REQUIRE_NOTHROW(v2::SmilesParse::MolFromSmiles(smiles));
+    }
+
+    {
+      // legacy SymmetrizeSSSR uses the old SSSR code, which fails on this
+      // molecule.  So if we use the legacy code, we should get an exception:
+      std::unique_ptr<RWMol> m{SmilesToMol(smiles, 0, false)};
+      REQUIRE(m);
+      REQUIRE_THROWS_AS(
+          MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY),
+          ValueErrorException);
+    }
   }
 }
 
@@ -6953,6 +6989,19 @@ TEST_CASE(
     REQUIRE(!failed);
     delete m;
   }
+}
+
+TEST_CASE("adjustHs preserves hydrogens lost during aromaticity perception") {
+  std::unique_ptr<RWMol> mol{
+      SmilesToMol("O=C1NC=CC2=C1C=CC=C2", 0, false)};
+  REQUIRE(mol);
+
+  MolOps::sanitizeMol(*mol);
+
+  const auto nitrogen = mol->getAtomWithIdx(2);
+  CHECK(nitrogen->getIsAromatic());
+  CHECK(nitrogen->getNumExplicitHs() == 1);
+  CHECK(nitrogen->getNumImplicitHs() == 0);
 }
 
 TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
@@ -7754,15 +7803,13 @@ M  END)CTAB";
   REQUIRE(v86.dotProduct(v16) < -1e-4);
 }
 
-#ifdef RDK_USE_URF
 TEST_CASE("Testing ring family calculation") {
   {
     constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -7783,8 +7830,7 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -7794,12 +7840,16 @@ TEST_CASE("Testing ring family calculation") {
     REQUIRE(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
 
-    REQUIRE(numRings == 14);
+    REQUIRE(numRings == 20);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
+
+    auto nrings =
+        MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
+    REQUIRE(nrings == 14);
+
     delete m;
   }
 }
-#endif
 
 TEST_CASE("Testing adding coordinates to a terminal atom") {
   auto mol = R"CTAB(
@@ -8006,4 +8056,55 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
+}
+
+TEST_CASE("Github #9398: Macrocycle ether aromaticity") {
+  SECTION("as reported") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    auto m = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12"_smiles;
+    REQUIRE(m);
+
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+  }
+  SECTION("test edge cases") {
+    {
+      // eight-membered ring is a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)c(=O)o1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getIsAromatic());
+    }
+    {
+      // nine-membered ring is not a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)ooo1"_smiles;
+      REQUIRE(m);
+      CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+    }
+
+    // m->debugMol(std::cerr);
+  }
+}
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 6);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
+
+  auto nrings =
+      MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
+  REQUIRE(nrings == 5);
 }

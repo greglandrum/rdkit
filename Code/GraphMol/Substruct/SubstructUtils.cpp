@@ -11,7 +11,6 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/Substruct/SubstructUtils.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -41,8 +40,8 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
         d_minIdx(-1),
         d_isSorted(false) {
     PRECONDITION(!matches.empty(), "matches must not be empty");
-    auto na = d_mol.getNumAtoms();
-    d_sumIndices = static_cast<double>(na * (na + 1) / 2);
+    auto dbl_na = static_cast<double>(d_mol.getNumAtoms());
+    d_sumIndices = std::max(1.0, dbl_na * (dbl_na + 1) / 2.0);
     unsigned int i = 0;
     d_matchIdxVsScore.reserve(d_matches.size());
     for (const auto &match : d_matches) {

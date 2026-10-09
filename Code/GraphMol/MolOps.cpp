@@ -23,8 +23,6 @@
 #include <RDGeneral/BoostStartInclude.h>
 
 #include <boost/graph/connected_components.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
 #include <boost/property_map/property_map.hpp>
@@ -36,6 +34,7 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
@@ -372,7 +371,9 @@ void cleanUpOrganometallics(RWMol &mol) {
   }
 }
 
-void adjustHs(RWMol &mol) {
+namespace {
+void adjustHs(RWMol &mol,
+              const boost::dynamic_bitset<> *atomsToAdjust) {
   //
   //  Go through and adjust the number of implicit and explicit Hs
   //  on each atom in the molecule.
@@ -384,6 +385,9 @@ void adjustHs(RWMol &mol) {
   //  valence of everything has been calculated.
   //
   for (auto atom : mol.atoms()) {
+    if (atomsToAdjust && !(*atomsToAdjust)[atom->getIdx()]) {
+      continue;
+    }
     int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
     int origExplicitV = atom->getNumExplicitHs();
@@ -411,6 +415,24 @@ void adjustHs(RWMol &mol) {
     }
   }
 }
+
+void includeAromaticAtoms(const RWMol &mol,
+                          boost::dynamic_bitset<> &atomsToAdjust) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      atomsToAdjust[atom->getIdx()] = 1;
+    }
+  }
+  for (const auto bond : mol.bonds()) {
+    if (bond->getIsAromatic()) {
+      atomsToAdjust[bond->getBeginAtomIdx()] = 1;
+      atomsToAdjust[bond->getEndAtomIdx()] = 1;
+    }
+  }
+}
+}  // namespace
+
+void adjustHs(RWMol &mol) { adjustHs(mol, nullptr); }
 
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
@@ -560,6 +582,25 @@ void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
   }
 }
+
+namespace {
+// Kekulize as part of sanitization. We normally use canonical=false here
+// because it's faster and sufficient for the vast majority of molecules.
+// The atom-index-order traversal it uses, however, is not guaranteed to
+// find a Kekule structure within the default back-tracking budget even
+// when one exists: for large, densely-fused aromatic ring systems, whether
+// that budget is enough can depend on the (arbitrary) order atoms were
+// numbered in, which in turn can depend on incidental details like which
+// atom a SMILES was rooted at (GitHub #8403). If the fast attempt fails,
+// fall back to the slower, order-independent canonical traversal before
+// concluding that the molecule really can't be kekulized.
+void kekulizeForSanitize(RWMol &mol) {
+  if (!MolOps::KekulizeIfPossible(mol, true, false)) {
+    MolOps::Kekulize(mol, true, true);
+  }
+}
+}  // namespace
+
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -589,16 +630,27 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     mol.updatePropertyCache(false);
   }
 
-  operationThatFailed = SANITIZE_SYMMRINGS;
-  if (sanitizeOps & operationThatFailed) {
-    VECT_INT_VECT arings;
-    MolOps::symmetrizeSSSR(mol, arings);
+  const bool trackAromaticAtomsForAdjustHs =
+      (sanitizeOps & SANITIZE_ADJUSTHS) &&
+      (sanitizeOps & (SANITIZE_KEKULIZE | SANITIZE_SETAROMATICITY));
+  boost::dynamic_bitset<> atomsToAdjustHs(
+      trackAromaticAtomsForAdjustHs ? mol.getNumAtoms() : 0);
+  if (trackAromaticAtomsForAdjustHs) {
+    includeAromaticAtoms(mol, atomsToAdjustHs);
   }
 
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
-    Kekulize(mol);
+    kekulizeForSanitize(mol);
+  }
+
+  operationThatFailed = SANITIZE_SYMMRINGS;
+  if (sanitizeOps & operationThatFailed) {
+    VECT_INT_VECT arings;
+    bool recalcSSSR = false;
+    MolOps::symmetrizeSSSR(mol, arings, SymmetrizeSSSRAlgorithm::DEFAULT,
+                           recalcSSSR);
   }
 
   // look for radicals:
@@ -618,6 +670,9 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_SETAROMATICITY;
   if (sanitizeOps & operationThatFailed) {
     setAromaticity(mol);
+    if (trackAromaticAtomsForAdjustHs) {
+      includeAromaticAtoms(mol, atomsToAdjustHs);
+    }
   }
 
   // set conjugation
@@ -646,7 +701,11 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // adjust Hydrogen counts:
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
-    adjustHs(mol);
+    if (trackAromaticAtomsForAdjustHs) {
+      adjustHs(mol, &atomsToAdjustHs);
+    } else {
+      adjustHs(mol);
+    }
   }
 
   // now that everything has been cleaned up, go through and check/update the
@@ -692,7 +751,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   operation = SANITIZE_KEKULIZE;
   if (sanitizeOps & operation) {
     try {
-      Kekulize(mol);
+      kekulizeForSanitize(mol);
     } catch (const MolSanitizeException &e) {
       res.emplace_back(e.copy());
     }
@@ -871,8 +930,8 @@ unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
     comMap[mi].push_back(i);
   }
 
-  for (INT_INT_VECT_MAP_CI mci = comMap.begin(); mci != comMap.end(); mci++) {
-    frags.push_back((*mci).second);
+  for (auto &mci : comMap) {
+    frags.push_back(std::move(mci.second));
   }
   return rdcast<unsigned int>(frags.size());
 }
@@ -1011,12 +1070,11 @@ template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
 int getFormalCharge(const ROMol &mol) {
-  int accum = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    accum += (*atomIt)->getFormalCharge();
-  }
-  return accum;
+  auto res = std::accumulate(mol.atoms().begin(), mol.atoms().end(), 0,
+                             [](int accum, const auto atom) {
+                               return accum + atom->getFormalCharge();
+                             });
+  return res;
 };
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
@@ -1238,13 +1296,50 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
   return idx;
 }
 
+}  // namespace details
+
+unsigned int getAttachmentPointLabelNumber(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return 0;
+  }
+  std::string label;
+  if (!atom->getPropIfPresent(common_properties::atomLabel, label) ||
+      label.size() <= attachmentPointLabelPrefix.size() ||
+      label.compare(0, attachmentPointLabelPrefix.size(),
+                    attachmentPointLabelPrefix) != 0) {
+    return 0;
+  }
+  // lexical_cast accepts a leading sign, so check the suffix ourselves
+  const auto suffix = label.substr(attachmentPointLabelPrefix.size());
+  if (suffix.find_first_not_of("0123456789") != std::string::npos) {
+    return 0;
+  }
+  unsigned int result = 0;
+  try {
+    result = boost::lexical_cast<unsigned int>(suffix);
+  } catch (const boost::bad_lexical_cast &) {
+    return 0;
+  }
+  return result;
+}
+
+bool isMarkedAttachmentPoint(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  return atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+         (atom->hasProp(common_properties::_fromAttachPoint) ||
+          getAttachmentPointLabelNumber(atom));
+}
+
+namespace details {
+
 bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
   if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
     return false;
   }
-  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+  if (markedOnly && !isMarkedAttachmentPoint(atom)) {
     return false;
   }
   // we know that the atom is degree 1
@@ -1277,7 +1372,7 @@ bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
 
 void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
   for (auto atom : mol.atoms()) {
-    int value;
+    int value = 0;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
       std::vector<int> tgtVals;
       if (value == 1 || value == -1) {
@@ -1289,7 +1384,7 @@ void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
       if (tgtVals.empty()) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for molAttachPoint: " << value << " on atom "
-            << atom->getIdx() << ". Not expanding this atttachment point."
+            << atom->getIdx() << ". Not expanding this attachment point."
             << std::endl;
         continue;
       }
@@ -1309,12 +1404,18 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
   for (auto atom : mol.atoms()) {
     if (details::isAttachmentPoint(atom, markedOnly)) {
       int value = 0;
-      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      const bool hasNativeMarker =
+          atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
       if (markedOnly && (value < 0 || value > 2)) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for _fromAttachPoint: " << value << " on atom "
             << atom->getIdx() << ". Not collapsing this atom" << std::endl;
         continue;
+      }
+      if (markedOnly && !hasNativeMarker) {
+        // _AP<n> labels identify explicit attachment points, but n is not an
+        // MDL ATTCHPT position. Treat a label-only atom as position 1.
+        value = 1;
       }
       if (!markedOnly && !value) {
         value = 1;

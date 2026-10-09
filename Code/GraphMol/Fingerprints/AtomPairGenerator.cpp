@@ -32,10 +32,9 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   auto *atomInvariants = new std::vector<std::uint32_t>(mol.getNumAtoms());
 
-  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-       atomItI != mol.endAtoms(); ++atomItI) {
-    (*atomInvariants)[(*atomItI)->getIdx()] =
-        getAtomCode(*atomItI, 0, df_includeChirality) -
+  for (const auto atom : mol.atoms()) {
+    (*atomInvariants)[atom->getIdx()] =
+        getAtomCode(atom, 0, df_includeChirality) -
         (df_topologicalTorsionCorrection ? 2 : 0);
   }
 
@@ -107,7 +106,7 @@ void AtomPairArguments::fromJSON(const boost::property_tree::ptree &pt) {
 
 template <typename OutputType>
 void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitInfoMap) {
     (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomIdFirst,
@@ -200,17 +199,13 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
   }
 
-  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-       atomItI != mol.endAtoms(); ++atomItI) {
-    unsigned int i = (*atomItI)->getIdx();
+  for (unsigned int i = 0; i < atomCount; ++i) {
     if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(), i) !=
                            ignoreAtoms->end()) {
       continue;
     }
 
-    for (ROMol::ConstAtomIterator atomItJ = atomItI + 1;
-         atomItJ != mol.endAtoms(); ++atomItJ) {
-      unsigned int j = (*atomItJ)->getIdx();
+    for (unsigned int j = i + 1; j < atomCount; ++j) {
       if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
                                    j) != ignoreAtoms->end()) {
         continue;

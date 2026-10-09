@@ -1,6 +1,10 @@
 rdkit_library(GraphMol
         Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
-        MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
+        MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp
+        MacroAtomInfo.cpp
+        MacroMol.cpp
+        MacroMolTemplate.cpp
+        PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
         ConjugHybrid.cpp AddHs.cpp
@@ -12,11 +16,10 @@ rdkit_library(GraphMol
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
-if (RDK_USE_URF)
-    target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
-    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+
+target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
+if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_link_libraries(GraphMol_static PUBLIC ${RDK_URF_LIBS}_static)
-    endif ()
 endif ()
 
 rdkit_headers(Atom.h
@@ -43,6 +46,10 @@ rdkit_headers(Atom.h
         Rings.h
         ROMol.h
         RWMol.h
+        MacroAtomInfo.h
+        MacroBondInfo.h
+        MacroMol.h
+        MacroMolTemplate.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -78,6 +85,7 @@ add_subdirectory(MolAlign)
 add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
+add_subdirectory(GaussianShape)
 
 add_subdirectory(MolDraw2D)
 
@@ -109,7 +117,7 @@ if (RDK_BUILD_MOLINTERCHANGE_SUPPORT)
     add_subdirectory(MolInterchange)
 endif (RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 
-if (RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
+if (RDK_BUILD_SLN_SUPPORT)
     if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS_EQUAL 4.8)
         message("Skipping SLN build with gcc version <= 4.8")
     else ()
@@ -117,8 +125,12 @@ if (RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
     endif ()
 endif ()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
+endif ()
+
+if (RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
 endif ()
 
 add_subdirectory(MolStandardize)
@@ -190,6 +202,9 @@ rdkit_catch_test(canonTestsCatch catch_canon.cpp
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
         LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
 
+rdkit_catch_test(molrangesTestsCatch catch_molranges.cpp
+        LINK_LIBRARIES GraphMol)
+
 rdkit_catch_test(queryTestsCatch catch_queries.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
 
@@ -205,3 +220,10 @@ rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
 rdkit_catch_test(molopsTestsCatch catch_molops.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
+rdkit_catch_test(testMacroMol testMacroMol.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesParse GraphMol RDStreams)
+
+rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)

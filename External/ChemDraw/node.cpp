@@ -28,22 +28,95 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// #include "node.h"
+#include "node.h"
+#include "chemdraw.h"
 #include "fragment.h"
 #include "utils.h"
 
 namespace RDKit {
 namespace ChemDraw {
+namespace {
+enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
+
+bool isRQueryLabel(const std::string &label) {
+  return !label.empty() && label[0] == 'R';
+}
+
+bool isAnyNonHydrogenQueryLabel(const std::string &label) {
+  return label == "A" || label == "a";
+}
+
+bool isWildcardQueryLabel(const std::string &label) {
+  return label == "*" || isRQueryLabel(label);
+}
+
+void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
+                                const PageData &pagedata,
+                                bool restrictImplicitHydrogens,
+                                int ringBondCount,
+                                bool ringBondCountAtLeast,
+                                int substituentCount,
+                                int maxSubstituentCount,
+                                AtomUnsaturationConstraint unsaturation) {
+  if (!pagedata.parseQueries) {
+    return;
+  }
+  if (!restrictImplicitHydrogens && ringBondCount < 0 &&
+      !ringBondCountAtLeast && substituentCount < 0 &&
+      maxSubstituentCount < 0 &&
+      unsaturation == AtomUnsaturationConstraint::None) {
+    return;
+  }
+
+  auto *queryAtom = static_cast<QueryAtom *>(
+      QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+  queryAtom->setNoImplicit(true);
+
+  if (restrictImplicitHydrogens) {
+    queryAtom->expandQuery(makeAtomImplicitHCountQuery(0));
+  }
+  if (ringBondCount >= 0) {
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+  } else if (ringBondCountAtLeast) {
+    queryAtom->expandQuery(makeAtomRingBondCountQuery<ATOM_LESSEQUAL_QUERY>(
+        4, "less_AtomRingBondCount"));
+  }
+  if (substituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomExplicitDegreeQuery(substituentCount));
+  }
+  if (maxSubstituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        0, maxSubstituentCount, false, false, queryAtomExplicitDegree,
+        "range_AtomExplicitDegree"));
+  }
+  if (unsaturation != AtomUnsaturationConstraint::None) {
+    auto *unsaturationQuery = makeAtomUnsaturatedQuery();
+    if (unsaturation == AtomUnsaturationConstraint::MustBeAbsent) {
+      unsaturationQuery->setNegation(true);
+    }
+    queryAtom->expandQuery(unsaturationQuery);
+  }
+
+  atom = queryAtom;
+}
+
+bool shouldHonorNeedsCleanHydrogens(
+    const CDXNode &node, int elemno, const v2::ChemDrawParserParams &params) {
+  return params.sanitize &&
+         params.needsCleanPolicy == v2::NeedsCleanPolicy::TrustSource &&
+         node.m_nodeType == kCDXNodeType_Element && node.m_needsClean &&
+         elemno != 1 && node.m_numHydrogens == 0 &&
+         node.m_radical == kCDXRadical_None;
+}
+}  // namespace
+
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missingFragId, int externalAttachment) {
+    int &missingFragId, const v2::ChemDrawParserParams &params,
+    int externalAttachment) {
   int atom_id = node.GetObjectID();
   int elemno = node.m_elementNum;  // default to carbon
-  // UINT16 max is not addigned?
-  int num_hydrogens =
-      node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
-  bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = 0;
   if ((node.m_charge & 0x00FFFFFF) == 0) {
     charge = node.m_charge >> 24;
@@ -53,6 +126,75 @@ bool parseNode(
   int atommap = 0;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
+  bool restrict_implicit_hydrogens = node.m_implicitHydrogens;
+  int ring_bond_count = -1;
+  bool ring_bond_count_at_least = false;
+  bool ring_bond_count_as_drawn = false;
+  int substituent_count = -1;
+  int max_substituent_count = -1;
+  int free_sites = -1;
+  int link_count_low = -1;
+  int link_count_high = -1;
+  std::vector<unsigned int> variable_attachment_ids;
+  bool restrict_rxn_change = node.m_restrictRxnChange;
+  int rxn_stereo = 0;
+  AtomUnsaturationConstraint unsaturation = AtomUnsaturationConstraint::None;
+
+  switch (node.m_ringBondCount) {
+    case kCDXRingBondCount_NoRingBonds:
+      ring_bond_count = 0;
+      break;
+    case kCDXRingBondCount_SimpleRing:
+      ring_bond_count = 2;
+      break;
+    case kCDXRingBondCount_Fusion:
+      ring_bond_count = 3;
+      break;
+    case kCDXRingBondCount_SpiroOrHigher:
+      ring_bond_count_at_least = true;
+      break;
+    case kCDXRingBondCount_AsDrawn:
+      ring_bond_count_as_drawn = true;
+      break;
+    default:
+      break;
+  }
+
+  switch (node.m_unsaturation) {
+    case kCDXUnsaturation_MustBeAbsent:
+      unsaturation = AtomUnsaturationConstraint::MustBeAbsent;
+      break;
+    case kCDXUnsaturation_MustBePresent:
+      unsaturation = AtomUnsaturationConstraint::MustBePresent;
+      break;
+    default:
+      break;
+  }
+
+  switch (node.m_rxnStereo) {
+    case kCDXReactionStereo_Inversion:
+      rxn_stereo = 1;
+      break;
+    case kCDXReactionStereo_Retention:
+      rxn_stereo = 2;
+      break;
+    default:
+      break;
+  }
+
+  switch (node.m_substituentCode) {
+    case kCDXProp_Atom_RestrictFreeSites:
+      free_sites = node.m_substituentCount;
+      break;
+    case kCDXProp_Atom_RestrictSubstituentsExactly:
+      substituent_count = node.m_substituentCount;
+      break;
+    case kCDXProp_Atom_RestrictSubstituentsUpTo:
+      max_substituent_count = node.m_substituentCount;
+      break;
+    default:
+      break;
+  }
 
   bool checkForRGroup = false;
   ;
@@ -99,23 +241,21 @@ bool parseNode(
     }
     case kCDXNodeType_GenericNickname: {
       if (node.m_genericNickname.size()) {
-        switch (node.m_genericNickname[0]) {
-          case 'R': {
-            checkForRGroup = true;
-            elemno = 0;
-            query_label = node.m_genericNickname;
-            break;
-          }
-          case 'A':
-          case 'Q':
-          case 'X':
-          case 'M': {
-            elemno = 0;
-            query_label = node.m_genericNickname;
-          } break;
-          default:
-            std::cerr << "Unhandled generic nickname: "
-                      << node.m_genericNickname << std::endl;
+        if (isRQueryLabel(node.m_genericNickname)) {
+          checkForRGroup = true;
+          elemno = 0;
+          query_label = node.m_genericNickname;
+        } else if (isAnyNonHydrogenQueryLabel(node.m_genericNickname) ||
+                   node.m_genericNickname == "Q" ||
+                   node.m_genericNickname == "X" ||
+                   node.m_genericNickname == "M" ||
+                   node.m_genericNickname == "MH" ||
+                   node.m_genericNickname == "*") {
+          elemno = 0;
+          query_label = node.m_genericNickname;
+        } else {
+          std::cerr << "Unhandled generic nickname: "
+                    << node.m_genericNickname << std::endl;
         }
       }
       break;
@@ -131,10 +271,26 @@ bool parseNode(
     case kCDXNodeType_NamedAlternativeGroup:
       break;
     case kCDXNodeType_MultiAttachment:
+      if (pagedata.parseQueries) {
+        elemno = 0;
+      }
+      if (node.m_attachments) {
+        variable_attachment_ids.assign(node.m_attachments->begin(),
+                                       node.m_attachments->end());
+      }
       break;
     case kCDXNodeType_VariableAttachment:
+      if (pagedata.parseQueries) {
+        elemno = 0;
+      }
+      if (node.m_attachments) {
+        variable_attachment_ids.assign(node.m_attachments->begin(),
+                                       node.m_attachments->end());
+      }
       break;
     case kCDXNodeType_LinkNode:
+      link_count_low = node.m_linkCountLow;
+      link_count_high = node.m_linkCountHigh;
       break;
     case kCDXNodeType_Monomer:
       break;
@@ -167,6 +323,9 @@ bool parseNode(
     }
   }
 
+  // AND and OR enhanced stereo have stereogroup numbers in the chemdraw format
+  //  ABSOLUTE does not, we need to store these and add them at the end
+  bool hasStereo = true;
   StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
   switch (node.m_enhancedStereoType) {
     case kCDXEnhancedStereo_Absolute:
@@ -179,14 +338,30 @@ bool parseNode(
       grouptype = StereoGroupType::STEREO_OR;
       break;
     default:
+      hasStereo = false;
       break;
   }
 
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
+  // In the default sanitized mode, treat explicit zero-H counts on NeedsClean
+  // element atoms as advisory and let sanitization recompute hydrogens.
+  // TrustExplicitHydrogens preserves the literal source metadata instead.
+  const bool honorNeedsCleanHydrogens =
+      shouldHonorNeedsCleanHydrogens(node, elemno, params);
+  bool explicitHs =
+      node.m_numHydrogens != kNumHydrogenUnspecified &&
+      !honorNeedsCleanHydrogens;
+  // UINT16 max is not addigned?
+  int num_hydrogens = explicitHs ? node.m_numHydrogens : 0;
   Atom *rd_atom = new Atom(elemno);
   rd_atom->setFormalCharge(charge);
   rd_atom->setNumExplicitHs(num_hydrogens);
   rd_atom->setNoImplicit(explicitHs);
+  if (node.m_abnormalValence) {
+    rd_atom->setNoImplicit(true);
+    mol.setProp<CDXMLSanitizationHint>(CDXML_SANITIZATION_HINTS,
+                                       CDXMLSanitizationHint::radical);
+  }
 
   rd_atom->setIsotope(isotope);
   if (rgroup_num >= 0) {
@@ -244,9 +419,9 @@ bool parseNode(
   const bool takeOwnership = true;
   auto idx = mol.addAtom(rd_atom, updateLabels, takeOwnership);
   if (query_label.size()) {
-    if (query_label[0] == 'R') {
+    if (isWildcardQueryLabel(query_label)) {
       rd_atom = addquery(makeAtomNullQuery(), query_label, mol, idx);
-    } else if (query_label == "A") {
+    } else if (isAnyNonHydrogenQueryLabel(query_label)) {
       rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
     } else if (query_label == "Q") {
       rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
@@ -267,6 +442,7 @@ bool parseNode(
           q->addChild(
               QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
         }
+        q->setNegation(node.m_negativeList);
         rd_atom = addquery(q, query_label, mol, idx);
         rd_atom->setAtomicNum(elementlist.front());
       }
@@ -275,6 +451,30 @@ bool parseNode(
     } else {
       rd_atom->setProp(common_properties::atomLabel, query_label);
     }
+  }
+  applyAtomQueryRestrictions(mol, rd_atom, pagedata,
+                             restrict_implicit_hydrogens, ring_bond_count,
+                             ring_bond_count_at_least, substituent_count,
+                             max_substituent_count, unsaturation);
+  if (ring_bond_count_as_drawn) {
+    rd_atom->setProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP, 1);
+  }
+  if (free_sites >= 0) {
+    rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+  }
+  if (link_count_low > 0 && link_count_high >= link_count_low) {
+    rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
+    rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
+  }
+  if (pagedata.parseQueries && !variable_attachment_ids.empty()) {
+    rd_atom->setProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP,
+                     variable_attachment_ids);
+  }
+  if (pagedata.parseQueries && restrict_rxn_change) {
+    rd_atom->setProp(common_properties::molRxnExactChange, 1);
+  }
+  if (pagedata.parseQueries && rxn_stereo) {
+    rd_atom->setProp(common_properties::molInversionFlag, rxn_stereo);
   }
 
   switch (node.m_radical) {
@@ -293,7 +493,13 @@ bool parseNode(
     }
   }
 
-  if (node.m_enhancedStereoGroupNum > 0) {
+  if (hasStereo) {
+    if(grouptype ==  StereoGroupType::STEREO_AND || grouptype ==  StereoGroupType::STEREO_OR) {
+      if(node.m_enhancedStereoGroupNum == 0) {
+	std::cerr << "Warning: Enhanced Stereo missing stereogroup number" << std::endl;
+      }
+    }
+    // All ABS stereo gets set to enhancedstereogroupnum 0
     auto key = std::make_pair(node.m_enhancedStereoGroupNum, grouptype);
     auto &stereo = sgroups[key];
     stereo.sgroup = node.m_enhancedStereoGroupNum;
@@ -310,7 +516,7 @@ bool parseNode(
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
         if (!parseFragment(mol, (CDXFragment &)(*fragment.second), pagedata,
-                           missingFragId, atom_id)) {
+                           missingFragId, params, atom_id)) {
           return false;
         }
         mol.setProp<bool>(NEEDS_FUSE, true);
