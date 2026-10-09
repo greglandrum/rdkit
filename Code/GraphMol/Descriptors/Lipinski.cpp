@@ -500,9 +500,14 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
 }
 
 namespace {
+constexpr std::string_view assignStereoFoundNone =
+    "_descriptorsAssignStereoFoundNoCenters";
 bool hasPossibleStereoAssigned(const ROMol &mol) {
   if (!mol.hasProp(common_properties::_StereochemDone)) {
     return false;
+  }
+  if (mol.hasProp(assignStereoFoundNone)) {
+    return true;
   }
   for (const auto &atom : mol.atoms()) {
     if (atom->hasProp(common_properties::_ChiralityPossible)) {
@@ -519,14 +524,20 @@ void assignPossibleStereoIfNeeded(const ROMol &mol) {
     constexpr bool force = true;
     constexpr bool flagPossible = true;
     MolOps::assignStereochemistry(tmol, cleanIt, force, flagPossible);
+    bool possibleStereoFound = false;
     for (const auto &atom : tmol.atoms()) {
       int chiralityPossible = 0;
       if (atom->getPropIfPresent(common_properties::_ChiralityPossible,
                                  chiralityPossible)) {
+        possibleStereoFound = true;
         mol.getAtomWithIdx(atom->getIdx())
             ->setProp(common_properties::_ChiralityPossible, chiralityPossible,
                       true);
       }
+    }
+    if (possibleStereoFound) {
+      bool computed = true;
+      mol.setProp(assignStereoFoundNone, true, computed);
     }
   }
 }
