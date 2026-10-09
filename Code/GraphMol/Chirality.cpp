@@ -2386,7 +2386,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   if (!keepGoing && (hasPotentialStereoAtoms || hasPotentialStereoBonds)) {
     // we need to assign ranks for later use, like writing double bonds to mol
     // files properly
-    Chirality::assignAtomChiralCodes(mol, atomRanks, true);
+    Chirality::assignAtomChiralCodes(mol, atomRanks, flagPossibleStereoCenters);
   }
   bool changedStereoAtoms, changedStereoBonds;
   while (keepGoing) {
@@ -2660,13 +2660,11 @@ bool canBeStereoBond(const Bond *bond) {
         // if two neighbors havr the same CIP ranking, this is not stereo
         const auto otherAtom = nbrBond->getOtherAtom(atom);
         int rank;
-        if (RDKit::Chirality::getUseLegacyStereoPerception()) {
+        // Prefer rankings from the new stereo perception code if available,
+        // otherwise use the legacy CIP rankings if they are there
+        if (!otherAtom->getPropIfPresent(common_properties::_ChiralAtomRank,
+                                         rank)) {
           if (!otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
-            rank = -1;
-          }
-        } else {  // NOT legacy stereo
-          if (!otherAtom->getPropIfPresent(common_properties::_ChiralAtomRank,
-                                           rank)) {
             rank = -1;
           }
         }
@@ -2806,6 +2804,11 @@ void GetMolFileBondStereoInfo(
       }
     }
   } else if (bond->getBondType() == Bond::DOUBLE) {
+    // the code to check to see if the bond should be crossed doesn't work
+    // if we haven't perceived potential stereo.
+    if (!bond->getOwningMol().hasProp(detail::_PotentialStereo)) {
+      Chirality::findPotentialStereo(bond->getOwningMol());
+    }
     if (Chirality::shouldBeACrossedBond(bond)) {
       dir = Bond::BondDir::EITHERDOUBLE;
     }
