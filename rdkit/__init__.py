@@ -19,7 +19,7 @@ if sys.platform == "win32":
   except ImportError:
     if 'RDLIBDIR' in os.environ:
       os.add_dll_directory(os.environ['RDLIBDIR'])
-    else:
+    elif 'RDBASE' in os.environ:
       os.add_dll_directory(os.path.join(os.environ['RDBASE'], "lib"))
 
 
