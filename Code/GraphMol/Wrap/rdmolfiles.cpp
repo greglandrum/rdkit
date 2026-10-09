@@ -561,9 +561,9 @@ python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
 }
 
 ROMol *MolFromPNGFile(const std::string &filename, python::object pyParams) {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   if (pyParams) {
-    params = python::extract<SmilesParserParams>(pyParams);
+    params = python::extract<v2::SmilesParse::SmilesParserParams>(pyParams);
   }
   ROMol *newM = nullptr;
   try {
@@ -579,9 +579,9 @@ ROMol *MolFromPNGFile(const std::string &filename, python::object pyParams) {
 }
 
 ROMol *MolFromPNGString(python::object png, python::object pyParams) {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   if (pyParams) {
-    params = python::extract<SmilesParserParams>(pyParams);
+    params = python::extract<v2::SmilesParse::SmilesParserParams>(pyParams);
   }
   ROMol *newM = nullptr;
   try {
@@ -681,7 +681,7 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata,
 python::object MolsFromPNGFile(const std::string &filename,
                                const std::string &tag,
                                python::object pyParams) {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   if (pyParams) {
     params = python::extract<SmilesParserParams>(pyParams);
   }
@@ -706,9 +706,9 @@ python::object MolsFromPNGFile(const std::string &filename,
 
 python::tuple MolsFromPNGString(python::object png, const std::string &tag,
                                 python::object pyParams) {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   if (pyParams) {
-    params = python::extract<SmilesParserParams>(pyParams);
+    params = python::extract<v2::SmilesParse::SmilesParserParams>(pyParams);
   }
   auto mols = PNGStringToMols(pyObjectToString(png), tag, params);
   python::list res;
@@ -2734,13 +2734,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
       .def_readwrite(
-        "parseQueries",
-        &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
-        "controls whether CDXML query constructs are preserved as query atoms and bonds")
+          "parseQueries",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
+          "controls whether CDXML query constructs are preserved as query atoms and bonds")
       .def_readwrite(
-        "strictQueryParsing",
-        &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
-        "controls whether unsupported CDXML query constructs raise instead of warning")
+          "strictQueryParsing",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
+          "controls whether unsupported CDXML query constructs raise instead of warning")
       .def("__setattr__", &safeSetattr);
 
   docString =
